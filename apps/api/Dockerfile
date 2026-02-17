@@ -17,7 +17,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3001
 
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/prisma ./prisma
 COPY --from=builder /app/apps/api/package.json ./package.json
