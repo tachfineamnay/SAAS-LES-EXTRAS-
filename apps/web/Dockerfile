@@ -10,6 +10,7 @@ RUN npm ci
 FROM deps AS builder
 WORKDIR /app
 COPY . .
+RUN mkdir -p apps/web/public
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build -w @lesextras/web
 
