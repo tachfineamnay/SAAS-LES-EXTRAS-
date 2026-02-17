@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lesextras}
+      POSTGRES_USER: ${POSTGRES_USER:-lesextras}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lesextras} -d ${POSTGRES_DB:-lesextras}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 3001
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://les-extras.com,https://www.les-extras.com,https://desk.les-extras.com,http://localhost:3000,http://127.0.0.1:3000}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-lesextras}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lesextras}?schema=public
+    expose:
+      - "3001"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      PORT: 3000
+      API_BASE_URL: http://api:3001/api
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.les-extras.com/api}
+      APP_WEB_HOST: ${APP_WEB_HOST:-les-extras.com}
+      APP_DESK_HOST: ${APP_DESK_HOST:-desk.les-extras.com}
+      JWT_SECRET: ${JWT_SECRET}
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:-LesExtrasDemo!2026}
+    expose:
+      - "3000"
+
+volumes:
+  postgres_data:

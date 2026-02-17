@@ -1,0 +1,24 @@
+{
+  "name": "lesextras",
+  "private": true,
+  "packageManager": "npm@10.9.2",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "prisma:generate": "npm run prisma:generate -w @lesextras/api",
+    "prisma:migrate": "npm run prisma:migrate -w @lesextras/api",
+    "prisma:seed": "npm run prisma:seed -w @lesextras/api",
+    "verify:system": "ts-node --transpile-only scripts/verify-system.ts",
+    "validate:build": "ts-node --transpile-only scripts/validate-build.ts"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "turbo": "^2.4.4",
+    "typescript": "^5.7.3"
+  }
+}

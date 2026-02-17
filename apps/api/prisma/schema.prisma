@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  TALENT
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  VERIFIED
+  BANNED
+}
+
+enum ReliefMissionStatus {
+  OPEN
+  ASSIGNED
+  COMPLETED
+  CANCELLED
+}
+
+enum ServiceType {
+  WORKSHOP
+  TRAINING
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  PAID
+  CANCELLED
+}
+
+model User {
+  id             String          @id @default(cuid())
+  email          String          @unique
+  password       String
+  role           UserRole
+  status         UserStatus      @default(PENDING)
+  isAvailable    Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  profile        Profile?
+  clientMissions ReliefMission[] @relation("ClientMissions")
+  ownerServices  Service[]       @relation("OwnerServices")
+  clientBookings Booking[]       @relation("ClientBookings")
+  talentBookings Booking[]       @relation("TalentBookings")
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  firstName String
+  lastName  String
+  bio       String?
+  avatar    String?
+  jobTitle  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ReliefMission {
+  id        String             @id @default(cuid())
+  title     String
+  dateStart DateTime
+  dateEnd   DateTime
+  hourlyRate  Float
+  status    ReliefMissionStatus @default(OPEN)
+  address   String
+  clientId  String
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  client    User               @relation("ClientMissions", fields: [clientId], references: [id], onDelete: Restrict)
+  bookings  Booking[]
+
+  @@index([clientId])
+}
+
+model Service {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  price       Float
+  type        ServiceType
+  capacity    Int
+  isFeatured  Boolean     @default(false)
+  isHidden    Boolean     @default(false)
+  ownerId     String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  owner       User        @relation("OwnerServices", fields: [ownerId], references: [id], onDelete: Restrict)
+  bookings    Booking[]
+
+  @@index([ownerId])
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  status          BookingStatus @default(PENDING)
+  message         String?
+  scheduledAt     DateTime      @default(now())
+  clientId        String
+  talentId        String?
+  reliefMissionId String?
+  serviceId       String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  client          User          @relation("ClientBookings", fields: [clientId], references: [id], onDelete: Restrict)
+  talent          User?         @relation("TalentBookings", fields: [talentId], references: [id], onDelete: SetNull)
+  reliefMission   ReliefMission?  @relation(fields: [reliefMissionId], references: [id], onDelete: SetNull)
+  service         Service?      @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  invoice         Invoice?
+
+  @@index([clientId])
+  @@index([talentId])
+  @@index([reliefMissionId])
+  @@index([serviceId])
+}
+
+model Invoice {
+  id        String   @id @default(cuid())
+  url       String
+  amount    Float
+  bookingId String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}

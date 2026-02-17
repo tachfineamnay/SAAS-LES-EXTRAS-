@@ -1,0 +1,27 @@
+import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { AdminOffersModule } from "./admin-offers/admin-offers.module";
+import { AdminUsersModule } from "./admin-users/admin-users.module";
+import { AuthModule } from "./auth/auth.module";
+import { BookingsModule } from "./bookings/bookings.module";
+import { HealthController } from "./health.controller";
+import { MissionsModule } from "./missions/missions.module";
+import { PrismaModule } from "./prisma/prisma.module";
+import { ServicesModule } from "./services/services.module";
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    PrismaModule,
+    AdminUsersModule,
+    AdminOffersModule,
+    AuthModule,
+    MissionsModule,
+    ServicesModule,
+    BookingsModule,
+  ],
+  controllers: [HealthController],
+})
+export class AppModule {}
