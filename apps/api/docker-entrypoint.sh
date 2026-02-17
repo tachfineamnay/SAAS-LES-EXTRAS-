@@ -1,6 +1,11 @@
 #!/bin/sh
 set -e
 
+if [ -z "${DATABASE_URL}" ]; then
+  echo "DATABASE_URL is required."
+  exit 1
+fi
+
 echo "Waiting for database and running migrations..."
 attempts=0
 until npx prisma migrate deploy --schema prisma/schema.prisma; do
@@ -15,4 +20,5 @@ until npx prisma migrate deploy --schema prisma/schema.prisma; do
 done
 
 echo "Migrations applied."
+echo "Starting API..."
 exec node dist/main.js

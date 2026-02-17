@@ -1,7 +1,6 @@
-import { UserRole } from "@prisma/client";
 import { IsEmail, IsIn, IsString, MinLength } from "class-validator";
 
-const PUBLIC_REGISTER_ROLES = [UserRole.CLIENT, UserRole.TALENT] as const;
+const PUBLIC_REGISTER_ROLES = ["CLIENT", "TALENT"] as const;
 type PublicRegisterRole = (typeof PUBLIC_REGISTER_ROLES)[number];
 
 export class RegisterDto {

@@ -3,21 +3,13 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 const ADMIN_SESSION_COOKIE = "lesextras_admin_token";
-const DEFAULT_DESK_HOST = "desk.les-extras.com";
+const FRONT_RUNTIME = "front";
+const DESK_RUNTIME = "desk";
+type AppRuntime = typeof FRONT_RUNTIME | typeof DESK_RUNTIME;
 
-function normalizeHost(host: string): string {
-  const firstValue = host.split(",")[0] ?? "";
-  const withoutPort = firstValue.trim().toLowerCase().split(":")[0] ?? "";
-  return withoutPort;
-}
-
-function getRequestHost(request: NextRequest): string {
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  if (forwardedHost) {
-    return normalizeHost(forwardedHost);
-  }
-
-  return normalizeHost(request.nextUrl.host);
+function getAppRuntime(): AppRuntime {
+  const runtime = (process.env.APP_RUNTIME ?? FRONT_RUNTIME).toLowerCase();
+  return runtime === DESK_RUNTIME ? DESK_RUNTIME : FRONT_RUNTIME;
 }
 
 async function hasValidAdminSession(request: NextRequest): Promise<boolean> {
@@ -37,14 +29,8 @@ async function hasValidAdminSession(request: NextRequest): Promise<boolean> {
 }
 
 export async function middleware(request: NextRequest) {
-  const host = getRequestHost(request);
+  const runtime = getAppRuntime();
   const pathname = request.nextUrl.pathname;
-  const deskHost = (process.env.APP_DESK_HOST ?? DEFAULT_DESK_HOST).toLowerCase();
-  const isLocalDevHost =
-    process.env.NODE_ENV !== "production" &&
-    (host === "localhost" || host === "127.0.0.1");
-
-  const isDeskHost = host === deskHost || isLocalDevHost;
   const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");
   const isAdminLoginPath = pathname === "/admin/login";
   const isAdminAuthApiPath = pathname.startsWith("/api/admin-auth/");
@@ -53,30 +39,34 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (isDeskHost) {
-    if (!isAdminPath) {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
-
-    if (isAdminLoginPath) {
-      const isValidSession = await hasValidAdminSession(request);
-      if (isValidSession) {
-        return NextResponse.redirect(new URL("/admin", request.url));
-      }
-
-      return NextResponse.next();
-    }
-
-    const isValidSession = await hasValidAdminSession(request);
-    if (!isValidSession) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+  if (runtime === FRONT_RUNTIME) {
+    if (isAdminPath) {
+      return NextResponse.redirect(new URL("/marketplace", request.url));
     }
 
     return NextResponse.next();
   }
 
-  if (isAdminPath) {
-    return NextResponse.redirect(new URL("/marketplace", request.url));
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL("/admin", request.url));
+  }
+
+  if (!isAdminPath) {
+    return NextResponse.redirect(new URL("/admin", request.url));
+  }
+
+  if (isAdminLoginPath) {
+    const isValidSession = await hasValidAdminSession(request);
+    if (isValidSession) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+
+    return NextResponse.next();
+  }
+
+  const isValidSession = await hasValidAdminSession(request);
+  if (!isValidSession) {
+    return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
   return NextResponse.next();

@@ -26,66 +26,77 @@ Comptes démo seedés:
 - `directeur@mecs-avenir.fr` / `LesExtrasDemo!2026`
 - `karim.educ@gmail.com` / `LesExtrasDemo!2026`
 
-## Déploiement Coolify v4 (Docker Stack)
+## Déploiement Coolify v4 (3 services Dockerfile)
 
-Le repo fournit un stack compose prêt pour Coolify:
+Production cible:
 
-- `docker-compose.coolify.yml`
-- `apps/api/Dockerfile`
-- `apps/web/Dockerfile`
+- `Front` (web client): `les-extras.com`
+- `Desk` (web admin): `desk.les-extras.com`
+- `API` (Nest): `api.les-extras.com`
+- `DB`: service managé/externe (pas de stack compose prod)
 
-### Variables à configurer dans Coolify
+### Dockerfiles utilisés
 
-- `POSTGRES_PASSWORD` (secret)
-- `POSTGRES_DB` (optionnel, défaut: `lesextras`)
-- `POSTGRES_USER` (optionnel, défaut: `lesextras`)
-- `JWT_SECRET` (secret)
-- `JWT_EXPIRES_IN` (optionnel, défaut: `7d`)
-- `CORS_ORIGINS` (optionnel, défaut: allowlist prod + localhost)
-- `NEXT_PUBLIC_API_URL` (optionnel, défaut: `https://api.les-extras.com/api`)
-- `APP_WEB_HOST` (optionnel, défaut: `les-extras.com`)
-- `APP_DESK_HOST` (optionnel, défaut: `desk.les-extras.com`)
-- `DEMO_USER_PASSWORD` (optionnel, défaut: `LesExtrasDemo!2026`)
+- Web (Front + Desk): `apps/web/Dockerfile`
+- API: `apps/api/Dockerfile`
 
-### Procédure
+Le fichier `docker-compose.coolify.yml` reste utile pour local/backup, mais n'est plus le mode recommandé pour la prod.
 
-1. Créer un **Stack** dans Coolify depuis ce repo Git.
-2. Sélectionner `docker-compose.coolify.yml`.
-3. Déclarer les variables/secrets ci-dessus.
-4. Configurer les domaines:
-   - `web`: `les-extras.com` et `desk.les-extras.com`
-   - `api`: `api.les-extras.com`
-5. Déployer.
+### Variables Coolify par service
 
-Au démarrage, l'API exécute automatiquement:
+#### Service Front
 
-- `prisma migrate deploy`
+- `APP_RUNTIME=front`
+- `API_BASE_URL=https://api.les-extras.com/api`
+- `NEXT_PUBLIC_API_URL=https://api.les-extras.com/api`
+- `DEMO_USER_PASSWORD=password123`
 
-Le seed démo n'est pas exécuté automatiquement en production.
+#### Service Desk
 
-### Préflight local Docker
+- `APP_RUNTIME=desk`
+- `API_BASE_URL=https://api.les-extras.com/api`
+- `NEXT_PUBLIC_API_URL=https://api.les-extras.com/api`
+- `JWT_SECRET=<identique a l'API>`
+- `DEMO_USER_PASSWORD=password123`
 
-```bash
-docker compose -f docker-compose.coolify.yml config
-docker compose -f docker-compose.coolify.yml build
-docker compose -f docker-compose.coolify.yml up -d
-```
+#### Service API
+
+- `DATABASE_URL=<postgres-url-complete>`
+- `JWT_SECRET=<secret-jwt>`
+- `JWT_EXPIRES_IN=7d`
+- `CORS_ORIGINS=https://les-extras.com,https://www.les-extras.com,https://desk.les-extras.com,https://api.les-extras.com`
+- `PORT=3001`
+
+### Procédure Coolify
+
+1. Créer 3 applications séparées (Build Pack Dockerfile).
+2. Configurer le repository Git identique sur les 3 apps.
+3. Paramétrer les Dockerfiles:
+   - Front: `apps/web/Dockerfile`
+   - Desk: `apps/web/Dockerfile`
+   - API: `apps/api/Dockerfile`
+4. Définir les domaines:
+   - Front -> `les-extras.com`
+   - Desk -> `desk.les-extras.com`
+   - API -> `api.les-extras.com`
+5. Déclarer les variables d'environnement ci-dessus.
+6. Déployer API d'abord, puis Front et Desk.
+
+Au démarrage API, les migrations Prisma sont exécutées automatiquement via l'entrypoint (`prisma migrate deploy`).
 
 ## Routing multi-domaines (prod)
 
-- `les-extras.com`:
+- Mode Front (`APP_RUNTIME=front`):
   - `/` redirige vers `/marketplace`
   - `/admin*` redirige vers `/marketplace`
-- `desk.les-extras.com`:
-  - accès back-office uniquement
+- Mode Desk (`APP_RUNTIME=desk`):
+  - `/` et routes non admin redirigent vers `/admin`
   - `/admin/login` public
   - `/admin*` protégé par session admin JWT
-- `api.les-extras.com`:
-  - API NestJS sous préfixe `/api`
 
 ## Checklist DNS (avant go-live)
 
-1. Créer un enregistrement DNS pour `les-extras.com` vers Coolify.
-2. Créer un enregistrement DNS pour `desk.les-extras.com` vers Coolify.
-3. Créer un enregistrement DNS pour `api.les-extras.com` vers Coolify.
-4. Vérifier le certificat TLS auto-généré sur les 3 domaines.
+1. Créer un enregistrement DNS pour `les-extras.com`.
+2. Créer un enregistrement DNS pour `desk.les-extras.com`.
+3. Créer un enregistrement DNS pour `api.les-extras.com`.
+4. Vérifier TLS sur les 3 domaines.

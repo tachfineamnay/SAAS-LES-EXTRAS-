@@ -6,8 +6,7 @@ const DEFAULT_CORS_ORIGINS = [
   "https://les-extras.com",
   "https://www.les-extras.com",
   "https://desk.les-extras.com",
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
+  "https://api.les-extras.com",
 ];
 
 function parseCorsOrigins(): string[] {
