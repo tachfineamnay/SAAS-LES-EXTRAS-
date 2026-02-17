@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  return NextResponse.json(
-    {
-      status: "ok",
-      service: "lesextras-web",
+  return new NextResponse("OK", {
+    status: 200,
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
     },
-    { status: 200 },
-  );
+  });
 }
