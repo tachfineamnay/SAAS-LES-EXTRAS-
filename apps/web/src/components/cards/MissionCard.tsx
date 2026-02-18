@@ -156,7 +156,7 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Veuillez compléter votre profil pour postuler</p>
+                <p>Votre compte doit être validé par un administrateur pour postuler.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

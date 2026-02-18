@@ -57,7 +57,9 @@ const TALENT_LINKS = [
 // To make the component functional with the new data, I'll replace the original `links`
 // with `CLIENT_LINKS`. If the user intended to use `TALENT_LINKS` or a dynamic choice,
 // further instructions would be needed.
-const links = CLIENT_LINKS; // Replacing the original links with CLIENT_LINKS
+import { useUIStore } from "@/lib/stores/useUIStore";
+
+// ... (links definitions remain)
 
 type SidebarProps = {
   isMobileOpen: boolean;
@@ -65,6 +67,8 @@ type SidebarProps = {
 };
 
 export function Sidebar({ isMobileOpen, onMobileOpenChange }: SidebarProps) {
+  const userRole = useUIStore((state) => state.userRole);
+  const links = userRole === "TALENT" ? TALENT_LINKS : CLIENT_LINKS;
   return (
     <>
       <aside className="hidden w-64 shrink-0 md:block">

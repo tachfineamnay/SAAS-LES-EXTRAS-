@@ -19,12 +19,12 @@ export default async function DashboardPage() {
         redirect("/login");
     }
 
-    const userRole = session.user.role;
-    const token = session.token;
+    const { role: userRole } = session.user;
+    const { token } = session;
 
     // Fetch data with token
     const bookingsData = await getBookingsPageData(token);
-    const marketplaceData = await getMarketplaceData(token);
+    // marketplaceData was unused in original code, removing it unless needed later
 
     // Filter bookings
     const pendingBookings = bookingsData.lines.filter((b) => b.status === "PENDING");

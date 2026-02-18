@@ -16,6 +16,7 @@ import {
   BookingLineType,
   BookingsPageData,
 } from "./types/bookings.types";
+import { NotificationsService } from "../notifications/notifications.service";
 
 const UNKNOWN_COUNTERPART = "À confirmer";
 const SERVICE_ADDRESS_PLACEHOLDER = "Adresse non renseignée";
@@ -72,7 +73,10 @@ function parseLineType(value: string): BookingLineType {
 
 @Injectable()
 export class BookingsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) { }
 
   async getBookingsPageData(user: AuthenticatedUser): Promise<BookingsPageData> {
     const lines: BookingLine[] = [];
@@ -535,6 +539,15 @@ export class BookingsService {
       },
     });
 
+    // Notify Talent
+    if (booking.talentId) {
+      await this.notifications.create({
+        userId: booking.talentId,
+        message: `Vous avez été recruté pour la mission "${booking.reliefMission?.title ?? 'Mission'}" !`,
+        type: "SUCCESS",
+      });
+    }
+
     return { ok: true };
   }
 
@@ -604,10 +617,19 @@ export class BookingsService {
         data: {
           bookingId: booking.id,
           amount: Math.round(amount * 100) / 100,
-          url: `/invoices/${booking.id}.pdf`,
+          url: `/invoices/${booking.id}/download`,
         },
       }),
     ]);
+
+    // Notify Client (invoice available)
+    if (booking.reliefMission) {
+      await this.notifications.create({
+        userId: booking.reliefMission.clientId,
+        message: `Mission terminée. Votre facture de ${Math.round(amount * 100) / 100}€ est disponible.`,
+        type: "SUCCESS",
+      });
+    }
 
     return { ok: true };
   }

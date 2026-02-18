@@ -8,6 +8,8 @@ import { HealthController } from "./health.controller";
 import { MissionsModule } from "./missions/missions.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { ServicesModule } from "./services/services.module";
+import { NotificationsModule } from "./notifications/notifications.module";
+import { InvoicesModule } from "./invoices/invoices.module";
 
 @Module({
   imports: [
@@ -21,7 +23,9 @@ import { ServicesModule } from "./services/services.module";
     MissionsModule,
     ServicesModule,
     BookingsModule,
+    NotificationsModule,
+    InvoicesModule,
   ],
   controllers: [HealthController],
 })
-export class AppModule {}
+export class AppModule { }
