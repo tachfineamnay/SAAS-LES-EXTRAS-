@@ -23,6 +23,7 @@ export type BookingLine = {
   status: BookingLineStatus;
   address: string;
   contactEmail: string;
+  relatedBookingId?: string;
 };
 
 export type BookingsPageData = {
@@ -43,6 +44,10 @@ type CancelBookingInput = {
 type BookingDetailsInput = {
   lineType: BookingLineType;
   lineId: string;
+};
+
+type ActionBookingInput = {
+  bookingId: string;
 };
 
 async function getRoleToken(role: DashboardRole): Promise<string> {
@@ -88,4 +93,36 @@ export async function getBookingLineDetails(
       token,
     },
   );
+}
+
+export async function confirmBookingLine(
+  input: ActionBookingInput,
+  role: DashboardRole,
+): Promise<{ ok: true }> {
+  const token = await getRoleToken(role);
+
+  await apiRequest<{ ok: true }>("/bookings/confirm", {
+    method: "POST",
+    token,
+    body: input,
+  });
+
+  revalidatePath("/bookings");
+  return { ok: true };
+}
+
+export async function completeBookingLine(
+  input: ActionBookingInput,
+  role: DashboardRole,
+): Promise<{ ok: true }> {
+  const token = await getRoleToken(role);
+
+  await apiRequest<{ ok: true }>("/bookings/complete", {
+    method: "POST",
+    token,
+    body: input,
+  });
+
+  revalidatePath("/bookings");
+  return { ok: true };
 }

@@ -8,6 +8,7 @@ import { BookingStatus, ReliefMissionStatus, UserRole } from "@prisma/client";
 import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
 import { PrismaService } from "../prisma/prisma.service";
 import { CancelBookingLineDto } from "./dto/cancel-booking-line.dto";
+import { ActionBookingDto } from "./dto/action-booking.dto";
 import {
   BookingDetails,
   BookingLine,
@@ -24,6 +25,7 @@ const NEXT_STEP_STATUSES = new Set<BookingLineStatus>([
   "CONFIRMED",
   "PAID",
   "ASSIGNED",
+  "COMPLETED",
 ]);
 
 function normalizeMissionStatus(status: ReliefMissionStatus): BookingLineStatus {
@@ -70,7 +72,7 @@ function parseLineType(value: string): BookingLineType {
 
 @Injectable()
 export class BookingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async getBookingsPageData(user: AuthenticatedUser): Promise<BookingsPageData> {
     const lines: BookingLine[] = [];
@@ -152,6 +154,10 @@ export class BookingsService {
           status: normalizeMissionStatus(mission.status),
           address: mission.address,
           contactEmail: interlocutor,
+          relatedBookingId: mission.bookings.find(
+            (booking) =>
+              booking.status !== BookingStatus.CANCELLED && Boolean(booking.talent?.email),
+          )?.id,
         });
       }
 
@@ -168,6 +174,7 @@ export class BookingsService {
           status: booking.status,
           address: SERVICE_ADDRESS_PLACEHOLDER,
           contactEmail: interlocutor,
+          relatedBookingId: booking.id,
         });
       }
     } else {
@@ -244,6 +251,7 @@ export class BookingsService {
           status: normalizeMissionStatus(booking.reliefMission.status),
           address: booking.reliefMission.address,
           contactEmail: interlocutor,
+          relatedBookingId: booking.id,
         });
       }
 
@@ -258,6 +266,7 @@ export class BookingsService {
           status: booking.status,
           address: SERVICE_ADDRESS_PLACEHOLDER,
           contactEmail: interlocutor,
+          relatedBookingId: booking.id,
         });
       }
     }
@@ -407,9 +416,9 @@ export class BookingsService {
       const contactEmail =
         user.role === UserRole.CLIENT
           ? (mission.bookings.find(
-              (booking) =>
-                booking.status !== BookingStatus.CANCELLED && Boolean(booking.talent?.email),
-            )?.talent?.email ?? UNKNOWN_COUNTERPART)
+            (booking) =>
+              booking.status !== BookingStatus.CANCELLED && Boolean(booking.talent?.email),
+          )?.talent?.email ?? UNKNOWN_COUNTERPART)
           : (mission.client.email ?? UNKNOWN_COUNTERPART);
 
       return {
@@ -460,5 +469,118 @@ export class BookingsService {
       address: SERVICE_ADDRESS_PLACEHOLDER,
       contactEmail,
     };
+  }
+
+  async confirmBooking(
+    bookingId: string,
+    user: AuthenticatedUser,
+  ): Promise<{ ok: true }> {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        reliefMission: true,
+        service: true,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException("Booking not found");
+    }
+
+    const isMissionClient =
+      booking.reliefMission && booking.reliefMission.clientId === user.id;
+    const isServiceOwner =
+      booking.service && booking.service.ownerId === user.id;
+
+    if (!isMissionClient && !isServiceOwner) {
+      throw new ForbiddenException("You cannot confirm this booking");
+    }
+
+    if (booking.status !== "PENDING") {
+      throw new BadRequestException("Booking is not pending");
+    }
+
+    await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        status: "CONFIRMED",
+      },
+    });
+
+    return { ok: true };
+  }
+
+  async completeBooking(
+    bookingId: string,
+    user: AuthenticatedUser,
+  ): Promise<{ ok: true }> {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        reliefMission: true,
+        service: true,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException("Booking not found");
+    }
+
+    // Authorization: Mission Client (Director) or Service Client (Attendee?? No, usually Provider marks complete? Or Client?)
+    // In "les-extras", the Client recruits. So Client validates work is done.
+
+    // For Service (Atelier):
+    // If I buy a ticket, the event happens.
+    // Maybe the Owner checks me in -> Completed?
+    // Let's assume for now Client (Booking owner) or Mission Client can complete.
+
+    // Actually, usually the one paying validates completion?
+    // Mission: Client pays Talent. Client validates.
+    // Service: Client pays Owner. Client attends?
+
+    // Let's restrain to Mission Client for now as that's the main "extras" flow.
+    const isMissionClient =
+      booking.reliefMission && booking.reliefMission.clientId === user.id;
+
+    if (!isMissionClient) {
+      // If it's a service, maybe just auto-complete on date?
+      // For now, allow simple completion if user is involved?
+      // Let's start with Mission Client only for manual completion.
+      if (booking.service) {
+        // Service flow might be different (e.g. scan QR).
+        // Let's allow Service Owner to complete?
+        if (booking.service.ownerId !== user.id) {
+          throw new ForbiddenException("You cannot complete this booking");
+        }
+      } else {
+        throw new ForbiddenException("You cannot complete this booking");
+      }
+    }
+
+    if (booking.status !== "CONFIRMED") {
+      throw new BadRequestException("Booking must be confirmed before completion");
+    }
+
+    const amount = booking.reliefMission
+      ? (booking.reliefMission.hourlyRate *
+        (booking.reliefMission.dateEnd.getTime() - booking.reliefMission.dateStart.getTime())) /
+      (1000 * 60 * 60)
+      : (booking.service?.price ?? 0);
+
+    await this.prisma.$transaction([
+      this.prisma.booking.update({
+        where: { id: bookingId },
+        data: { status: "COMPLETED" },
+      }),
+      this.prisma.invoice.create({
+        data: {
+          bookingId: booking.id,
+          amount: Math.round(amount * 100) / 100,
+          url: `/invoices/${booking.id}.pdf`,
+        },
+      }),
+    ]);
+
+    return { ok: true };
   }
 }

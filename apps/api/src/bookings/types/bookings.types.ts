@@ -17,6 +17,7 @@ export type BookingLine = {
   status: BookingLineStatus;
   address: string;
   contactEmail: string;
+  relatedBookingId?: string;
 };
 
 export type BookingsPageData = {

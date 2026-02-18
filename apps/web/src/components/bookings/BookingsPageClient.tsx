@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { CalendarClock, CircleUserRound, Eye, MapPin, XCircle } from "lucide-react";
+import { CalendarClock, Check, CheckCheck, CircleUserRound, Eye, MapPin, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   cancelBookingLine,
+  completeBookingLine,
+  confirmBookingLine,
   getBookingLineDetails,
   getBookingsPageData,
   type BookingDetails,
@@ -106,6 +108,40 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
         toast.success("Réservation annulée.");
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Impossible d'annuler cette réservation.");
+      }
+    });
+  };
+
+  const handleConfirm = (line: BookingLine) => {
+    if (!line.relatedBookingId) {
+      toast.error("Impossible de confirmer cette réservation (ID manquant).");
+      return;
+    }
+    startActionLoading(async () => {
+      try {
+        await confirmBookingLine({ bookingId: line.relatedBookingId! }, userRole);
+        const refreshedData = await getBookingsPageData(userRole);
+        setData(refreshedData);
+        toast.success("Réservation confirmée (Recruté).");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Impossible de confirmer.");
+      }
+    });
+  };
+
+  const handleComplete = (line: BookingLine) => {
+    if (!line.relatedBookingId) {
+      toast.error("Impossible de terminer cette réservation (ID manquant).");
+      return;
+    }
+    startActionLoading(async () => {
+      try {
+        await completeBookingLine({ bookingId: line.relatedBookingId! }, userRole);
+        const refreshedData = await getBookingsPageData(userRole);
+        setData(refreshedData);
+        toast.success("Mission terminée. Facture générée.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Impossible de terminer.");
       }
     });
   };
@@ -212,9 +248,34 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
                       onClick={() => handleCancel(line)}
                       disabled={isActionLoading || !canCancel(line.status)}
                     >
-                      <XCircle className="mr-1 h-4 w-4" />
                       Annuler
                     </Button>
+
+                    {userRole === "CLIENT" && line.status === "PENDING" && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                        onClick={() => handleConfirm(line)}
+                        disabled={isActionLoading}
+                      >
+                        <Check className="mr-1 h-4 w-4" />
+                        Recruter
+                      </Button>
+                    )}
+
+                    {userRole === "CLIENT" && line.status === "CONFIRMED" && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => handleComplete(line)}
+                        disabled={isActionLoading}
+                      >
+                        <CheckCheck className="mr-1 h-4 w-4" />
+                        Terminer
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
