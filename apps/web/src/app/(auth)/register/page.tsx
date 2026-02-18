@@ -2,37 +2,33 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { UserRole } from "@prisma/client";
-import { Briefcase, Building2, ChevronRight, Loader2 } from "lucide-react";
+import { useFormState, useFormStatus } from "react-dom";
+import { Briefcase, Building2, ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { register, RegisterState } from "@/app/actions/auth";
 
-// This would typically come from an auth action
-// import { register } from "@/app/actions/auth";
+const initialState: RegisterState = { message: "", errors: {} };
+
+function SubmitButton() {
+    const { pending } = useFormStatus();
+
+    return (
+        <Button className="w-full" type="submit" disabled={pending}>
+            {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Continuer
+        </Button>
+    );
+}
 
 export default function RegisterPage({ searchParams }: { searchParams: { role?: string } }) {
     const defaultRole = searchParams.role === "CLIENT" ? "CLIENT" : "TALENT";
     const [role, setRole] = useState<"CLIENT" | "TALENT">(defaultRole);
-    const [isLoading, setIsLoading] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsLoading(true);
-
-        // Simulate registration delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        // In a real app, we would call the server action here
-        // const formData = new FormData(e.currentTarget);
-        // await register(formData);
-
-        setIsLoading(false);
-        // Redirect handled by action
-    };
+    const [state, formAction] = useFormState(register, initialState);
 
     return (
         <div className="container relative flex h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
@@ -106,20 +102,48 @@ export default function RegisterPage({ searchParams }: { searchParams: { role?: 
                             </div>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+                        {state?.message && (
+                            <Alert variant="destructive" className="mt-4">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertTitle>Erreur</AlertTitle>
+                                <AlertDescription>{state.message}</AlertDescription>
+                            </Alert>
+                        )}
+
+                        <form action={formAction} className="mt-8 space-y-4">
                             <input type="hidden" name="role" value={role} />
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
-                                <Input id="email" name="email" type="email" placeholder="m@example.com" required />
+                                <Input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    placeholder="m@example.com"
+                                    required
+                                    aria-describedby="email-error"
+                                />
+                                {state?.errors?.email && (
+                                    <p id="email-error" className="text-sm text-red-500">
+                                        {state.errors.email.join(", ")}
+                                    </p>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="password">Mot de passe</Label>
-                                <Input id="password" name="password" type="password" required />
+                                <Input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    required
+                                    aria-describedby="password-error"
+                                />
+                                {state?.errors?.password && (
+                                    <p id="password-error" className="text-sm text-red-500">
+                                        {state.errors.password.join(", ")}
+                                    </p>
+                                )}
                             </div>
-                            <Button className="w-full" type="submit" disabled={isLoading}>
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Continuer
-                            </Button>
+                            <SubmitButton />
                         </form>
                     </Tabs>
 
