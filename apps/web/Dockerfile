@@ -13,6 +13,7 @@ FROM deps AS builder
 WORKDIR /app
 COPY . .
 RUN mkdir -p apps/web/public
+RUN npx prisma generate --schema=./apps/api/prisma/schema.prisma
 RUN npm run build -w @lesextras/web
 
 FROM node:20-alpine AS runner
