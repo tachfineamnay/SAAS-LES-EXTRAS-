@@ -62,33 +62,37 @@ export function ServiceCard({ service }: ServiceCardProps) {
   };
 
   return (
-    <Card className="flex h-full flex-col">
-      <CardHeader className="space-y-3">
+    <Card className="flex h-full flex-col border-border/50 shadow-sm hover:shadow-md transition-all">
+      <CardHeader className="space-y-3 pb-3">
         <div className="flex items-center justify-between gap-3">
-          <Avatar className="h-12 w-12 border">
+          <Avatar className="h-10 w-10 border">
             <AvatarFallback>{getAvatarFallback(service.title)}</AvatarFallback>
           </Avatar>
-          <Badge variant="secondary">{getServiceCategoryLabel(service.type)}</Badge>
+          <Badge variant="secondary" className="font-normal">{getServiceCategoryLabel(service.type)}</Badge>
         </div>
-        <CardTitle className="text-lg">{service.title}</CardTitle>
+        <CardTitle className="text-lg leading-tight">{service.title}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-3 text-sm text-muted-foreground">
+      <CardContent className="flex flex-1 flex-col gap-3 text-sm text-muted-foreground pb-2">
         {service.description ? <p className="line-clamp-2">{service.description}</p> : null}
-        <div className="text-2xl font-semibold text-foreground">
+
+        <div className="flex items-center gap-4 pt-2">
+          <div className="flex items-center gap-1.5">
+            <Clock3 className="h-3.5 w-3.5" />
+            <span>{getServiceDuration(service.type)}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Users className="h-3.5 w-3.5" />
+            <span>Max {service.capacity}</span>
+          </div>
+        </div>
+
+        <div className="mt-auto text-xl font-bold text-foreground pt-1">
           {moneyFormatter.format(service.price)}
-          <span className="ml-1 text-sm font-medium text-muted-foreground">forfait</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Clock3 className="h-4 w-4" />
-          <span>Durée estimée: {getServiceDuration(service.type)}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4" />
-          <span>Capacité max: {service.capacity}</span>
+          <span className="ml-1 text-sm font-medium text-muted-foreground">HT</span>
         </div>
       </CardContent>
-      <CardFooter>
-        <Button className="w-full" onClick={handleBook} disabled={isPending}>
+      <CardFooter className="pt-3">
+        <Button className="w-full" onClick={handleBook} disabled={isPending} variant="outline">
           {isPending ? "Réservation..." : "Réserver"}
         </Button>
       </CardFooter>

@@ -15,6 +15,11 @@ type SerializedMission = {
   address: string;
   hourlyRate: number;
   status: MissionStatus;
+  // Enhanced fields
+  isUrgent?: boolean;
+  isNetworkMatch?: boolean;
+  establishmentName?: string;
+  requiredDiploma?: string[];
 };
 
 type SerializedService = {
@@ -49,6 +54,19 @@ type CreateServiceInput = {
   capacity: number;
 };
 
+// Helper to determine urgency (start within 24h)
+function checkUrgency(dateString: string): boolean {
+  try {
+    const start = new Date(dateString);
+    const now = new Date();
+    const diffMs = start.getTime() - now.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    return diffHours > 0 && diffHours < 24;
+  } catch {
+    return false;
+  }
+}
+
 export async function getMarketplaceData(): Promise<MarketplaceData> {
   try {
     const [clientAuth, talentAuth] = await Promise.all([
@@ -67,8 +85,22 @@ export async function getMarketplaceData(): Promise<MarketplaceData> {
       }),
     ]);
 
+    // Enhance missions with urgency logic and mock signals
+    const enhancedMissions = missions.map((m) => ({
+      ...m,
+      isUrgent: checkUrgency(m.dateStart),
+      isNetworkMatch: Math.random() > 0.7, // Mock: 30% chance of being a network match
+      establishmentName: "EHPAD Les Mimosas", // Mock name
+      requiredDiploma: ["Infirmier DE", "Permis B"], // Mock diplomas
+    })).sort((a, b) => {
+      // Sort by urgency first, then date
+      if (a.isUrgent && !b.isUrgent) return -1;
+      if (!a.isUrgent && b.isUrgent) return 1;
+      return new Date(a.dateStart).getTime() - new Date(b.dateStart).getTime();
+    });
+
     return {
-      missions,
+      missions: enhancedMissions,
       services,
       isDegraded: false,
     };

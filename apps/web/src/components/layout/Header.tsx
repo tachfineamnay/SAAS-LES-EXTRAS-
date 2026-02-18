@@ -37,23 +37,23 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
 
         <div className="flex items-center gap-2 sm:gap-3">
           <Badge variant="secondary" className="hidden sm:inline-flex">
-            {userRole}
+            {userRole === "CLIENT" ? "ÉTABLISSEMENT" : "FREELANCE"}
           </Badge>
 
           <Select value={userRole} onValueChange={(value) => setUserRole(value as UserRole)}>
-            <SelectTrigger className="w-[130px]">
+            <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Rôle" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="CLIENT">CLIENT</SelectItem>
-              <SelectItem value="TALENT">TALENT</SelectItem>
+              <SelectItem value="CLIENT">ÉTABLISSEMENT</SelectItem>
+              <SelectItem value="TALENT">FREELANCE</SelectItem>
             </SelectContent>
           </Select>
 
           {userRole === "CLIENT" ? (
             <Button className="bg-red-600 text-white hover:bg-red-700" onClick={openSOSModal}>
               <Siren className="h-4 w-4" />
-              SOS URGENT
+              RENFORT IMMÉDIAT
             </Button>
           ) : (
             <Button className="bg-blue-600 text-white hover:bg-blue-700" onClick={openPublishModal}>

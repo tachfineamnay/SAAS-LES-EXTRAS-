@@ -5,7 +5,7 @@ import { BentoGrid, BentoCard } from "@/components/dashboard/BentoGrid";
 import { StatsWidget } from "@/components/dashboard/StatsWidget";
 import { BookingListWidget } from "@/components/dashboard/BookingListWidget";
 import { NetworkWidget } from "@/components/dashboard/NetworkWidget";
-import { DollarSign, Calendar, Users, Briefcase, FileText } from "lucide-react";
+import { DollarSign, Calendar, Users, Briefcase, FileText, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
@@ -72,7 +72,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
                     {/* Réseau de confiance */}
                     <BentoCard
-                        title="Réseau de confiance"
+                        title="Mon Réseau"
                         icon={<Users className="h-6 w-6" />}
                         rowSpan={2}
                     >
@@ -168,5 +168,3 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </div>
     );
 }
-
-import { CheckCircle } from "lucide-react";

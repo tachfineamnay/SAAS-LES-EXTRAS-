@@ -36,7 +36,7 @@ export function BookingListWidget({
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">
                                         <span className="font-medium">
-                                            {booking.typeLabel}
+                                            {booking.typeLabel === "Mission SOS" ? "Renfort" : booking.typeLabel}
                                         </span>
                                         <Badge variant={booking.status === "CONFIRMED" ? "default" : "secondary"}>
                                             {booking.status === "CONFIRMED" ? "Confirmé" : "En attente"}
