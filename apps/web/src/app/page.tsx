@@ -31,11 +31,11 @@ export default function HomePage() {
             <span className="text-xl font-bold tracking-tight text-foreground">Les Extras</span>
           </div>
           <nav className="flex items-center gap-4">
-            <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Se connecter
             </Link>
             <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
-              <Link href="/auth/register">Créer un compte</Link>
+              <Link href="/register">Créer un compte</Link>
             </Button>
           </nav>
         </div>
@@ -92,7 +92,7 @@ export default function HomePage() {
                     <Link href="/marketplace">Voir les missions</Link>
                   </Button>
                   <Button asChild variant="outline" className="text-muted-foreground hover:text-foreground">
-                    <Link href="/auth/register?role=TALENT">M'inscrire comme Talent</Link>
+                    <Link href="/register?role=TALENT">M'inscrire comme Talent</Link>
                   </Button>
                 </div>
               </div>
@@ -126,7 +126,7 @@ export default function HomePage() {
                   </p>
                 </div>
                 <Button asChild className="mt-6 w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-                  <Link href="/auth/register?role=CLIENT">Publier une mission</Link>
+                  <Link href="/register?role=CLIENT">Publier une mission</Link>
                 </Button>
               </div>
             </motion.div>
