@@ -28,7 +28,7 @@ export default function HomePage() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-primary" />
-            <span className="text-xl font-bold tracking-tight text-primary">Les Extras</span>
+            <span className="text-xl font-bold tracking-tight text-foreground">Les Extras</span>
           </div>
           <nav className="flex items-center gap-4">
             <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
@@ -51,7 +51,7 @@ export default function HomePage() {
               className="text-4xl font-extrabold tracking-tight sm:text-6xl text-foreground"
             >
               La plateforme des extras <br className="hidden sm:block" />
-              <span className="text-primary">simplifiée</span> et <span className="text-accent">efficace</span>.
+              <span className="text-primary">simplifiée</span> et <span className="text-secondary">efficace</span>.
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -72,7 +72,7 @@ export default function HomePage() {
             className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]"
           >
             {/* Main Action - Talent */}
-            <motion.div variants={item} className="group relative overflow-hidden rounded-[var(--radius)] border bg-card p-8 hover:shadow-md transition-all md:col-span-2">
+            <motion.div variants={item} className="group relative overflow-hidden rounded-[var(--radius)] border bg-card p-8 hover:shadow-lg hover:shadow-primary/5 transition-all md:col-span-2">
               <div className="absolute top-0 right-0 -mt-16 -mr-16 h-64 w-64 rounded-full bg-primary/10 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity" />
 
               <div className="relative h-full flex flex-col justify-between">
@@ -99,7 +99,8 @@ export default function HomePage() {
             </motion.div>
 
             {/* Stat Card */}
-            <motion.div variants={item} className="relative overflow-hidden rounded-[var(--radius)] border bg-gradient-to-b from-primary/5 to-background p-8 flex flex-col items-center justify-center text-center">
+            <motion.div variants={item} className="relative overflow-hidden rounded-[var(--radius)] border bg-white p-8 flex flex-col items-center justify-center text-center shadow-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-50" />
               <div className="relative">
                 <span className="text-5xl font-bold text-primary tracking-tighter">100%</span>
                 <p className="mt-2 text-sm font-medium text-muted-foreground uppercase tracking-widest">Transactionnel</p>
@@ -110,11 +111,11 @@ export default function HomePage() {
             </motion.div>
 
             {/* Client Action */}
-            <motion.div variants={item} className="group relative overflow-hidden rounded-[var(--radius)] border bg-card p-8 hover:shadow-md transition-all">
-              <div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-64 w-64 rounded-full bg-accent/10 blur-3xl opacity-30 group-hover:opacity-80 transition-opacity" />
+            <motion.div variants={item} className="group relative overflow-hidden rounded-[var(--radius)] border bg-card p-8 hover:shadow-lg hover:shadow-secondary/5 transition-all">
+              <div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-64 w-64 rounded-full bg-secondary/10 blur-3xl opacity-30 group-hover:opacity-80 transition-opacity" />
 
               <div className="relative h-full flex flex-col justify-between">
-                <div className="h-12 w-12 rounded-[calc(var(--radius)-4px)] bg-accent/10 flex items-center justify-center mb-6 text-accent">
+                <div className="h-12 w-12 rounded-[calc(var(--radius)-4px)] bg-secondary/10 flex items-center justify-center mb-6 text-secondary">
                   <Building2 className="h-6 w-6" />
                 </div>
                 <div>
@@ -124,32 +125,32 @@ export default function HomePage() {
                     Facturation simplifiée et transparente.
                   </p>
                 </div>
-                <Button asChild className="mt-6 w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+                <Button asChild className="mt-6 w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
                   <Link href="/auth/register?role=CLIENT">Publier une mission</Link>
                 </Button>
               </div>
             </motion.div>
 
             {/* Features / Bento Items */}
-            <motion.div variants={item} className="md:col-span-2 relative overflow-hidden rounded-[var(--radius)] border bg-muted/40 p-8">
+            <motion.div variants={item} className="md:col-span-2 relative overflow-hidden rounded-[var(--radius)] border bg-muted/50 p-8">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 h-full items-center">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-foreground font-medium">
-                    <CheckCircle className="h-5 w-5 text-emerald-500" />
+                    <CheckCircle className="h-5 w-5 text-emerald-600" />
                     <span>Vérifié</span>
                   </div>
                   <p className="text-sm text-muted-foreground">Tous nos talents sont vérifiés par nos équipes.</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-foreground font-medium">
-                    <Calendar className="h-5 w-5 text-blue-500" />
+                    <Calendar className="h-5 w-5 text-secondary" />
                     <span>Flexible</span>
                   </div>
                   <p className="text-sm text-muted-foreground">Gérez vos plannings en temps réel.</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-foreground font-medium">
-                    <Star className="h-5 w-5 text-amber-500" />
+                    <Star className="h-5 w-5 text-primary" />
                     <span>Qualité</span>
                   </div>
                   <p className="text-sm text-muted-foreground">Notez et soyez noté après chaque mission.</p>

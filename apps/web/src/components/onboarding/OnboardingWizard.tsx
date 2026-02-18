@@ -67,7 +67,7 @@ export default function OnboardingWizard({ userId, userRole }: { userId: string,
         router.push("/dashboard");
     };
 
-    const StepIcon = steps[currentStep].icon;
+    const StepIcon = steps[currentStep]?.icon || User;
 
     return (
         <div className="max-w-2xl mx-auto py-12 px-4">
@@ -114,7 +114,7 @@ export default function OnboardingWizard({ userId, userRole }: { userId: string,
                 >
                     <Card className="border-2">
                         <CardHeader>
-                            <CardTitle>Étape {currentStep + 1} : {steps[currentStep].title}</CardTitle>
+                            <CardTitle>Étape {currentStep + 1} : {steps[currentStep]?.title}</CardTitle>
                             <CardDescription>
                                 Complétez les informations ci-dessous.
                             </CardDescription>
