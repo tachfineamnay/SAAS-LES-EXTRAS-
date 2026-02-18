@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Compass, UserRound, WalletCards } from "lucide-react";
 import {
   Compass,
   UserRound,

@@ -51,10 +51,17 @@ type ActionBookingInput = {
 
 
 
-export async function getBookingsPageData(token: string): Promise<BookingsPageData> {
+export async function getBookingsPageData(token?: string): Promise<BookingsPageData> {
+  let activeToken = token;
+  if (!activeToken) {
+    const session = await getSession();
+    if (!session) throw new Error("Non connecté");
+    activeToken = session.token;
+  }
+
   return apiRequest<BookingsPageData>("/bookings", {
     method: "GET",
-    token,
+    token: activeToken,
   });
 }
 

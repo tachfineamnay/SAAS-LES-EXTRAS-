@@ -83,7 +83,7 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
     let cancelled = false;
     startRoleLoading(async () => {
       try {
-        const nextData = await getBookingsPageData(userRole);
+        const nextData = await getBookingsPageData();
         if (cancelled) {
           return;
         }
@@ -102,8 +102,8 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
   const handleCancel = (line: BookingLine) => {
     startActionLoading(async () => {
       try {
-        await cancelBookingLine({ lineType: line.lineType, lineId: line.lineId }, userRole);
-        const refreshedData = await getBookingsPageData(userRole);
+        await cancelBookingLine({ lineType: line.lineType, lineId: line.lineId });
+        const refreshedData = await getBookingsPageData();
         setData(refreshedData);
         toast.success("Réservation annulée.");
       } catch (error) {
@@ -119,8 +119,8 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
     }
     startActionLoading(async () => {
       try {
-        await confirmBookingLine({ bookingId: line.relatedBookingId! }, userRole);
-        const refreshedData = await getBookingsPageData(userRole);
+        await confirmBookingLine({ bookingId: line.relatedBookingId! });
+        const refreshedData = await getBookingsPageData();
         setData(refreshedData);
         toast.success("Réservation confirmée (Recruté).");
       } catch (error) {
@@ -136,8 +136,8 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
     }
     startActionLoading(async () => {
       try {
-        await completeBookingLine({ bookingId: line.relatedBookingId! }, userRole);
-        const refreshedData = await getBookingsPageData(userRole);
+        await completeBookingLine({ bookingId: line.relatedBookingId! });
+        const refreshedData = await getBookingsPageData();
         setData(refreshedData);
         toast.success("Mission terminée. Facture générée.");
       } catch (error) {
@@ -152,7 +152,7 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
     setIsDetailsOpen(true);
     setIsDetailsLoading(true);
 
-    void getBookingLineDetails({ lineType: line.lineType, lineId: line.lineId }, userRole)
+    void getBookingLineDetails({ lineType: line.lineType, lineId: line.lineId })
       .then((response) => {
         setDetails(response);
       })

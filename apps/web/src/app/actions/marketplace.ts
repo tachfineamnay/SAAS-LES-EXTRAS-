@@ -6,8 +6,8 @@ import { getSession } from "@/lib/session";
 
 export type MissionStatus = "OPEN" | "ASSIGNED" | "COMPLETED" | "CANCELLED";
 
-// Define ServiceType as it's used by SerializedService and CreateServiceInput
-export type ServiceType = "HOME_CARE" | "NURSING_CARE" | "MEDICAL_TRANSPORT";
+// Define ServiceType to match Prisma schema
+export type ServiceType = "WORKSHOP" | "TRAINING";
 
 type SerializedService = {
   id: string;
@@ -72,18 +72,26 @@ type SerializedMission = {
 
 // ...
 
-export async function getMarketplaceData(token: string): Promise<MarketplaceData> {
+export async function getMarketplaceData(token?: string): Promise<MarketplaceData> {
+  let activeToken = token;
+  if (!activeToken) {
+    const session = await getSession();
+    if (!session) throw new Error("Non connecté");
+    activeToken = session.token;
+  }
+
   try {
     const [missions, services] = await Promise.all([
       apiRequest<SerializedMission[]>("/missions", {
         method: "GET",
-        token,
+        token: activeToken,
       }),
       apiRequest<SerializedService[]>("/services", {
         method: "GET",
-        token,
+        token: activeToken,
       }),
     ]);
+    // ... (rest of the function stays same)
 
     // Enhance missions with urgency logic and mock signals
     const enhancedMissions = missions.map((m) => ({
