@@ -96,6 +96,7 @@ export class BookingsService {
                 createdAt: "desc",
               },
               select: {
+                id: true,
                 status: true,
                 talent: {
                   select: {
@@ -197,6 +198,7 @@ export class BookingsService {
             scheduledAt: "asc",
           },
           select: {
+            id: true,
             reliefMission: {
               select: {
                 id: true,
