@@ -12,7 +12,16 @@ import { fromZonedTime, toZonedTime } from "date-fns-tz";
 const prisma = new PrismaClient();
 
 const PARIS_TIMEZONE = "Europe/Paris";
-const DEMO_PASSWORD = "LesExtrasDemo!2026";
+const DEFAULT_DEMO_PASSWORD = "password123";
+const DEMO_PASSWORD =
+  process.env.SEED_DEMO_PASSWORD ??
+  process.env.DEMO_USER_PASSWORD ??
+  DEFAULT_DEMO_PASSWORD;
+const DEMO_PASSWORD_SOURCE = process.env.SEED_DEMO_PASSWORD
+  ? "SEED_DEMO_PASSWORD"
+  : process.env.DEMO_USER_PASSWORD
+    ? "DEMO_USER_PASSWORD"
+    : "default(password123)";
 const SALT_ROUNDS = 10;
 
 type SeedUser = {
@@ -377,6 +386,7 @@ async function upsertServices(userIdByEmail: Map<string, string>): Promise<void>
 export async function main(): Promise<void> {
   console.log("Seeding LesExtras demo data...");
   console.log(`Timezone seed: ${PARIS_TIMEZONE}`);
+  console.log(`Demo password source: ${DEMO_PASSWORD_SOURCE}`);
 
   const userIdByEmail = await upsertUsersAndProfiles();
   console.log(`Seed users done (${userIdByEmail.size} users)`);
@@ -385,10 +395,13 @@ export async function main(): Promise<void> {
   await upsertServices(userIdByEmail);
 
   console.log("Seed missions/services done");
-  console.log("Demo credentials:");
-  console.log("  email: admin@lesextras.local        | password: LesExtrasDemo!2026");
-  console.log("  email: directeur@mecs-avenir.fr | password: LesExtrasDemo!2026");
-  console.log("  email: karim.educ@gmail.com     | password: LesExtrasDemo!2026");
+  console.log("Demo credentials emails:");
+  console.log("  admin@lesextras.local");
+  console.log("  directeur@mecs-avenir.fr");
+  console.log("  karim.educ@gmail.com");
+  console.log(
+    "Demo password is configured by env (SEED_DEMO_PASSWORD/DEMO_USER_PASSWORD) and is not printed.",
+  );
   console.log("Seed completed successfully.");
 }
 

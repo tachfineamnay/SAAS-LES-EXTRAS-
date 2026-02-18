@@ -23,8 +23,15 @@ npm run prisma:seed
 
 Comptes démo seedés:
 
-- `directeur@mecs-avenir.fr` / `LesExtrasDemo!2026`
-- `karim.educ@gmail.com` / `LesExtrasDemo!2026`
+- `directeur@mecs-avenir.fr`
+- `karim.educ@gmail.com`
+- `admin@lesextras.local`
+
+Le mot de passe seed est piloté par:
+
+- `SEED_DEMO_PASSWORD` (prioritaire)
+- sinon `DEMO_USER_PASSWORD`
+- sinon fallback `password123`
 
 ## Déploiement Coolify v4 (3 services Dockerfile)
 
@@ -65,6 +72,7 @@ Le fichier `docker-compose.coolify.yml` reste utile pour local/backup, mais n'es
 - `JWT_SECRET=<secret-jwt>`
 - `JWT_EXPIRES_IN=7d`
 - `CORS_ORIGINS=https://les-extras.com,https://www.les-extras.com,https://desk.les-extras.com,https://api.les-extras.com`
+- `SEED_DEMO_PASSWORD=password123`
 - `PORT=3001`
 
 ### Procédure Coolify
@@ -81,6 +89,28 @@ Le fichier `docker-compose.coolify.yml` reste utile pour local/backup, mais n'es
    - API -> `api.les-extras.com`
 5. Déclarer les variables d'environnement ci-dessus.
 6. Déployer API d'abord, puis Front et Desk.
+
+### Healthchecks Coolify recommandes
+
+#### Front / Desk
+
+- Method: `GET`
+- Scheme: `http`
+- Host: `127.0.0.1`
+- Port: `3000`
+- Path: `/health`
+- Return Code: `200`
+- Response Text: vide
+
+#### API
+
+- Method: `GET`
+- Scheme: `http`
+- Host: `127.0.0.1`
+- Port: `3001`
+- Path: `/api/health`
+- Return Code: `200`
+- Response Text: vide
 
 Au démarrage API, les migrations Prisma sont exécutées automatiquement via l'entrypoint (`prisma migrate deploy`).
 

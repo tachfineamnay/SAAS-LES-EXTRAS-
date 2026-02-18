@@ -8,9 +8,16 @@ import { useUIStore } from "@/lib/stores/useUIStore";
 type MarketListProps = {
   missions: MissionCardProps["mission"][];
   services: ServiceCardProps["service"][];
+  isDegraded?: boolean;
+  degradedReason?: string;
 };
 
-export function MarketList({ missions, services }: MarketListProps) {
+export function MarketList({
+  missions,
+  services,
+  isDegraded = false,
+  degradedReason,
+}: MarketListProps) {
   const userRole = useUIStore((state) => state.userRole);
   const isTalent = userRole === "TALENT";
 
@@ -24,6 +31,18 @@ export function MarketList({ missions, services }: MarketListProps) {
             : "Ateliers et formations disponibles à la réservation."}
         </p>
       </div>
+
+      {isDegraded ? (
+        <Card className="border-amber-300 bg-amber-50">
+          <CardHeader>
+            <CardTitle className="text-amber-900">Mode Degrade</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-amber-800">
+            {degradedReason ??
+              "Données temporairement indisponibles, veuillez réessayer dans quelques instants."}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {isTalent ? (
         missions.length > 0 ? (

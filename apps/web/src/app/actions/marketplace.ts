@@ -29,6 +29,8 @@ type SerializedService = {
 export type MarketplaceData = {
   missions: SerializedMission[];
   services: SerializedService[];
+  isDegraded: boolean;
+  degradedReason?: string;
 };
 
 type CreateMissionInput = {
@@ -48,26 +50,44 @@ type CreateServiceInput = {
 };
 
 export async function getMarketplaceData(): Promise<MarketplaceData> {
-  const [clientAuth, talentAuth] = await Promise.all([
-    getDemoAuth("CLIENT"),
-    getDemoAuth("TALENT"),
-  ]);
+  try {
+    const [clientAuth, talentAuth] = await Promise.all([
+      getDemoAuth("CLIENT"),
+      getDemoAuth("TALENT"),
+    ]);
 
-  const [missions, services] = await Promise.all([
-    apiRequest<SerializedMission[]>("/missions", {
-      method: "GET",
-      token: talentAuth.token,
-    }),
-    apiRequest<SerializedService[]>("/services", {
-      method: "GET",
-      token: clientAuth.token,
-    }),
-  ]);
+    const [missions, services] = await Promise.all([
+      apiRequest<SerializedMission[]>("/missions", {
+        method: "GET",
+        token: talentAuth.token,
+      }),
+      apiRequest<SerializedService[]>("/services", {
+        method: "GET",
+        token: clientAuth.token,
+      }),
+    ]);
 
-  return {
-    missions,
-    services,
-  };
+    return {
+      missions,
+      services,
+      isDegraded: false,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Erreur inconnue lors du chargement de la marketplace.";
+
+    console.error("[marketplace] degraded mode enabled:", message);
+
+    return {
+      missions: [],
+      services: [],
+      isDegraded: true,
+      degradedReason:
+        "Données temporairement indisponibles. Vérifiez la connexion API et les comptes démo.",
+    };
+  }
 }
 
 export async function createMissionFromSOS(input: CreateMissionInput): Promise<{ ok: true }> {

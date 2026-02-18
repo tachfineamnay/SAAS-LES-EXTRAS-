@@ -18,7 +18,8 @@ type AuthResponse = {
   };
 };
 
-const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD ?? "LesExtrasDemo!2026";
+const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD ?? "password123";
+const AUTH_ENDPOINT = "/auth/login";
 
 const DEMO_CREDENTIALS: Record<DemoRole, { email: string }> = {
   CLIENT: { email: "directeur@mecs-avenir.fr" },
@@ -37,7 +38,7 @@ export async function getDemoAuth(role: DemoRole): Promise<DemoAuthSession> {
   const credentials = DEMO_CREDENTIALS[role];
 
   try {
-    const response = await apiRequest<AuthResponse>("/auth/login", {
+    const response = await apiRequest<AuthResponse>(AUTH_ENDPOINT, {
       method: "POST",
       body: {
         email: credentials.email,
@@ -46,7 +47,9 @@ export async function getDemoAuth(role: DemoRole): Promise<DemoAuthSession> {
     });
 
     if (response.user.role !== role) {
-      throw new Error("Role mismatch for demo user.");
+      throw new Error(
+        `Role mismatch for demo user (expected=${role}, got=${response.user.role}).`,
+      );
     }
 
     const session = {
@@ -59,7 +62,7 @@ export async function getDemoAuth(role: DemoRole): Promise<DemoAuthSession> {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown auth error";
     throw new Error(
-      `Impossible de connecter le compte démo ${role}. Vérifiez le seed API (${message}).`,
+      `Impossible de connecter le compte démo ${role}. endpoint=${AUTH_ENDPOINT}; cause=${message}; vérifiez DEMO_USER_PASSWORD et le seed API.`,
     );
   }
 }
