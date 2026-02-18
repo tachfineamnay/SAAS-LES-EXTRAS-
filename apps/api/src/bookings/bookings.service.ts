@@ -103,6 +103,11 @@ export class BookingsService {
                     email: true,
                   },
                 },
+                invoice: {
+                  select: {
+                    url: true,
+                  },
+                },
               },
             },
           },
@@ -135,6 +140,11 @@ export class BookingsService {
                 },
               },
             },
+            invoice: {
+              select: {
+                url: true,
+              },
+            },
           },
         }),
       ]);
@@ -159,6 +169,9 @@ export class BookingsService {
             (b) =>
               b.status !== BookingStatus.CANCELLED && Boolean(b.talent?.email),
           )?.id,
+          invoiceUrl: mission.bookings.find(
+            (b) => b.status === BookingStatus.COMPLETED || b.status === BookingStatus.PAID,
+          )?.invoice?.url,
         });
       }
 
@@ -176,6 +189,7 @@ export class BookingsService {
           address: SERVICE_ADDRESS_PLACEHOLDER,
           contactEmail: interlocutor,
           relatedBookingId: booking.id,
+          invoiceUrl: booking.invoice?.url,
         });
       }
     } else {
@@ -212,6 +226,11 @@ export class BookingsService {
                 },
               },
             },
+            invoice: {
+              select: {
+                url: true,
+              },
+            },
           },
         }),
         this.prisma.booking.findMany({
@@ -231,6 +250,11 @@ export class BookingsService {
             client: {
               select: {
                 email: true,
+              },
+            },
+            invoice: {
+              select: {
+                url: true,
               },
             },
           },
@@ -254,6 +278,7 @@ export class BookingsService {
           address: mb.reliefMission.address,
           contactEmail: interlocutor,
           relatedBookingId: mb.id,
+          invoiceUrl: mb.invoice?.url,
         });
       }
 
@@ -269,6 +294,7 @@ export class BookingsService {
           address: SERVICE_ADDRESS_PLACEHOLDER,
           contactEmail: interlocutor,
           relatedBookingId: booking.id,
+          invoiceUrl: booking.invoice?.url,
         });
       }
     }

@@ -18,6 +18,7 @@ export type BookingLine = {
   address: string;
   contactEmail: string;
   relatedBookingId?: string;
+  invoiceUrl?: string;
 };
 
 export type BookingsPageData = {

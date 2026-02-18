@@ -1,40 +1,48 @@
 import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
 import { getMarketplaceData } from "@/app/actions/marketplace";
-import { getBookingsPageData, BookingLine } from "@/app/actions/bookings";
+import { getBookingsPageData } from "@/app/actions/bookings";
 import { BentoGrid, BentoCard } from "@/components/dashboard/BentoGrid";
 import { StatsWidget } from "@/components/dashboard/StatsWidget";
 import { BookingListWidget } from "@/components/dashboard/BookingListWidget";
 import { NetworkWidget } from "@/components/dashboard/NetworkWidget";
-import { DollarSign, Calendar, Users, Briefcase, FileText, CheckCircle } from "lucide-react";
+import { DollarSign, Calendar, Users, Briefcase, FileText, CheckCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TrustChecklistWidget } from "@/components/dashboard/TrustChecklistWidget";
 
 export const dynamic = "force-dynamic";
 
-type DashboardPageProps = {
-    searchParams: { view?: string };
-};
+export default async function DashboardPage() {
+    const session = await getSession();
 
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-    const view = searchParams.view === "TALENT" ? "TALENT" : "CLIENT";
+    if (!session) {
+        redirect("/login");
+    }
 
-    // Fetch data
-    const marketplaceData = await getMarketplaceData();
-    const bookingsData = await getBookingsPageData(view);
+    const userRole = session.user.role;
+    const token = session.token;
 
-    // Filter bookings based on view
-    const pendingBookings = bookingsData.lines.filter(b => b.status === "PENDING");
-    const confirmedBookings = bookingsData.lines.filter(b => b.status === "CONFIRMED" || b.status === "ASSIGNED");
-    const completedBookings = bookingsData.lines.filter(b => b.status === "COMPLETED" || b.status === "PAID");
+    // Fetch data with token
+    const bookingsData = await getBookingsPageData(token);
+    const marketplaceData = await getMarketplaceData(token);
 
-    if (view === "CLIENT") {
+    // Filter bookings
+    const pendingBookings = bookingsData.lines.filter((b) => b.status === "PENDING");
+    const confirmedBookings = bookingsData.lines.filter(
+        (b) => b.status === "CONFIRMED" || b.status === "ASSIGNED",
+    );
+    const completedBookings = bookingsData.lines.filter(
+        (b) => b.status === "COMPLETED" || b.status === "PAID",
+    );
+
+    if (userRole === "CLIENT") {
         return (
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold tracking-tight">Tableau de bord Établissement</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">
+                        Tableau de bord Établissement
+                    </h1>
                     <div className="flex gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                            <a href="?view=TALENT">Vue Freelance</a>
-                        </Button>
                         <Button size="sm">Publier une mission</Button>
                     </div>
                 </div>
@@ -55,13 +63,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     </BentoCard>
 
                     {/* Facturation */}
-                    <BentoCard
-                        title="Facturation"
-                        icon={<FileText className="h-6 w-6" />}
-                    >
+                    <BentoCard title="Facturation" icon={<FileText className="h-6 w-6" />}>
                         <div className="flex flex-col gap-4 h-full justify-between">
                             <div>
-                                <p className="text-sm text-muted-foreground mb-1">Dépenses ce mois-ci</p>
+                                <p className="text-sm text-muted-foreground mb-1">
+                                    Dépenses ce mois-ci
+                                </p>
                                 <div className="text-3xl font-bold">1 250,00 €</div>
                             </div>
                             <Button variant="outline" className="w-full">
@@ -98,11 +105,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold tracking-tight">Tableau de bord Freelance</h1>
+                <h1 className="text-3xl font-bold tracking-tight">
+                    Tableau de bord Freelance
+                </h1>
                 <div className="flex gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                        <a href="?view=CLIENT">Vue Établissement</a>
-                    </Button>
                     <Button size="sm">Trouver une mission</Button>
                 </div>
             </div>
@@ -123,10 +129,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 </BentoCard>
 
                 {/* Gains */}
-                <BentoCard
-                    title="Gains cumulés"
-                    icon={<DollarSign className="h-6 w-6" />}
-                >
+                <BentoCard title="Gains cumulés" icon={<DollarSign className="h-6 w-6" />}>
                     <div className="flex flex-col gap-4 h-full justify-between">
                         <div>
                             <p className="text-sm text-muted-foreground mb-1">Total gagné</p>
@@ -163,6 +166,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                         description="Depuis votre inscription"
                         className="border-0 shadow-none p-0"
                     />
+                </BentoCard>
+
+                {/* Checklist de confiance */}
+                <BentoCard
+                    title="Checklist Confiance"
+                    icon={<ShieldCheck className="h-6 w-6" />}
+                    rowSpan={2}
+                >
+                    <TrustChecklistWidget />
                 </BentoCard>
             </BentoGrid>
         </div>

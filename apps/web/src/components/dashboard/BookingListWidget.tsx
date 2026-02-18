@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BookingLine } from "@/app/actions/bookings";
-import { Calendar, ChevronRight, MapPin } from "lucide-react";
+import { Calendar, ChevronRight, MapPin, Download } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -55,25 +55,36 @@ export function BookingListWidget({
                                         )}
                                     </div>
                                 </div>
-                                <Button variant="ghost" size="icon" asChild>
-                                    <Link href={`/bookings/${booking.lineType.toLowerCase()}/${booking.lineId}`}>
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Link>
-                                </Button>
+                                <div className="flex gap-2">
+                                    {booking.invoiceUrl && (
+                                        <Button variant="outline" size="icon" asChild title="Télécharger la facture">
+                                            <a href={booking.invoiceUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                                                <Download className="h-4 w-4" />
+                                            </a>
+                                        </Button>
+                                    )}
+                                    <Button variant="ghost" size="icon" asChild>
+                                        <Link href={`/bookings/${booking.lineType.toLowerCase()}/${booking.lineId}`}>
+                                            <ChevronRight className="h-4 w-4" />
+                                        </Link>
+                                    </Button>
+                                </div>
                             </div>
                         ))
                     )}
                 </div>
-            </ScrollArea>
-            {bookings.length > 0 && (
-                <div className="mt-4 pt-4 border-t flex justify-end">
-                    <Button variant="link" size="sm" asChild className="px-0">
-                        <Link href={viewAllLink}>
-                            Voir tout <ChevronRight className="ml-1 h-3 w-3" />
-                        </Link>
-                    </Button>
-                </div>
-            )}
-        </div>
+            </ScrollArea >
+            {
+                bookings.length > 0 && (
+                    <div className="mt-4 pt-4 border-t flex justify-end">
+                        <Button variant="link" size="sm" asChild className="px-0">
+                            <Link href={viewAllLink}>
+                                Voir tout <ChevronRight className="ml-1 h-3 w-3" />
+                            </Link>
+                        </Button>
+                    </div>
+                )
+            }
+        </div >
     );
 }

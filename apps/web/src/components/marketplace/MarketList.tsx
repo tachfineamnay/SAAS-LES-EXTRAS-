@@ -12,6 +12,7 @@ type MarketListProps = {
   services: ServiceCardProps["service"][];
   isDegraded?: boolean;
   degradedReason?: string;
+  isVerified?: boolean;
 };
 
 export function MarketList({
@@ -19,6 +20,7 @@ export function MarketList({
   services,
   isDegraded = false,
   degradedReason,
+  isVerified = true,
 }: MarketListProps) {
   const userRole = useUIStore((state) => state.userRole);
   const isTalent = userRole === "TALENT";
@@ -74,7 +76,7 @@ export function MarketList({
         missions.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {missions.map((mission) => (
-              <MissionCard key={mission.id} mission={mission} />
+              <MissionCard key={mission.id} mission={mission} isVerified={isVerified} />
             ))}
           </div>
         ) : (

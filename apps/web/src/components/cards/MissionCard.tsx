@@ -10,6 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 export type MissionCardProps = {
   mission: {
     id: string;
@@ -19,11 +26,13 @@ export type MissionCardProps = {
     address: string;
     hourlyRate: number;
     status: MissionStatus;
+    isRenfort?: boolean;
     isUrgent?: boolean;
     isNetworkMatch?: boolean;
     establishmentName?: string;
     requiredDiploma?: string[];
   };
+  isVerified?: boolean;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
@@ -42,13 +51,15 @@ const moneyFormatter = new Intl.NumberFormat("fr-FR", {
   maximumFractionDigits: 0,
 });
 
-export function MissionCard({ mission }: MissionCardProps) {
+export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const dateStart = new Date(mission.dateStart);
   const dateEnd = new Date(mission.dateEnd);
 
   const handleApply = () => {
+    if (!isVerified) return;
+
     startTransition(async () => {
       try {
         await applyToMission(mission.id);
@@ -130,9 +141,26 @@ export function MissionCard({ mission }: MissionCardProps) {
       </CardContent>
 
       <CardFooter className="pt-3">
-        <Button className="w-full" onClick={handleApply} disabled={isPending} size="lg">
-          {isPending ? "Envoi..." : "Postuler"}
-        </Button>
+        {isVerified ? (
+          <Button className="w-full" onClick={handleApply} disabled={isPending} size="lg">
+            {isPending ? "Envoi..." : "Postuler"}
+          </Button>
+        ) : (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0} className="w-full">
+                  <Button className="w-full" disabled variant="secondary" size="lg">
+                    Postuler
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Veuillez compléter votre profil pour postuler</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </CardFooter>
     </Card>
   );

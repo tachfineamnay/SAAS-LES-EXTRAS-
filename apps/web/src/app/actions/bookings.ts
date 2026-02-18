@@ -1,8 +1,6 @@
-"use server";
-
 import { revalidatePath } from "next/cache";
-import { getDemoAuth } from "@/app/actions/_shared/demo-auth";
 import { apiRequest } from "@/lib/api";
+import { getSession } from "@/lib/session";
 
 export type DashboardRole = "CLIENT" | "TALENT";
 export type BookingLineType = "MISSION" | "SERVICE_BOOKING";
@@ -24,6 +22,7 @@ export type BookingLine = {
   address: string;
   contactEmail: string;
   relatedBookingId?: string;
+  invoiceUrl?: string;
 };
 
 export type BookingsPageData = {
@@ -50,13 +49,9 @@ type ActionBookingInput = {
   bookingId: string;
 };
 
-async function getRoleToken(role: DashboardRole): Promise<string> {
-  const auth = await getDemoAuth(role);
-  return auth.token;
-}
 
-export async function getBookingsPageData(role: DashboardRole): Promise<BookingsPageData> {
-  const token = await getRoleToken(role);
+
+export async function getBookingsPageData(token: string): Promise<BookingsPageData> {
   return apiRequest<BookingsPageData>("/bookings", {
     method: "GET",
     token,
@@ -65,13 +60,13 @@ export async function getBookingsPageData(role: DashboardRole): Promise<Bookings
 
 export async function cancelBookingLine(
   input: CancelBookingInput,
-  role: DashboardRole,
 ): Promise<{ ok: true }> {
-  const token = await getRoleToken(role);
+  const session = await getSession();
+  if (!session) throw new Error("Non connecté");
 
   await apiRequest<{ ok: true }>("/bookings/cancel", {
     method: "POST",
-    token,
+    token: session.token,
     body: input,
   });
 
@@ -82,28 +77,28 @@ export async function cancelBookingLine(
 
 export async function getBookingLineDetails(
   input: BookingDetailsInput,
-  role: DashboardRole,
 ): Promise<BookingDetails> {
-  const token = await getRoleToken(role);
+  const session = await getSession();
+  if (!session) throw new Error("Non connecté");
 
   return apiRequest<BookingDetails>(
     `/bookings/${input.lineType}/${input.lineId}/details`,
     {
       method: "GET",
-      token,
+      token: session.token,
     },
   );
 }
 
 export async function confirmBookingLine(
   input: ActionBookingInput,
-  role: DashboardRole,
 ): Promise<{ ok: true }> {
-  const token = await getRoleToken(role);
+  const session = await getSession();
+  if (!session) throw new Error("Non connecté");
 
   await apiRequest<{ ok: true }>("/bookings/confirm", {
     method: "POST",
-    token,
+    token: session.token,
     body: input,
   });
 
@@ -113,13 +108,13 @@ export async function confirmBookingLine(
 
 export async function completeBookingLine(
   input: ActionBookingInput,
-  role: DashboardRole,
 ): Promise<{ ok: true }> {
-  const token = await getRoleToken(role);
+  const session = await getSession();
+  if (!session) throw new Error("Non connecté");
 
   await apiRequest<{ ok: true }>("/bookings/complete", {
     method: "POST",
-    token,
+    token: session.token,
     body: input,
   });
 

@@ -1,26 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getDemoAuth } from "@/app/actions/_shared/demo-auth";
 import { apiRequest } from "@/lib/api";
+import { getSession } from "@/lib/session";
 
 export type MissionStatus = "OPEN" | "ASSIGNED" | "COMPLETED" | "CANCELLED";
-export type ServiceType = "WORKSHOP" | "TRAINING";
 
-type SerializedMission = {
-  id: string;
-  title: string;
-  dateStart: string;
-  dateEnd: string;
-  address: string;
-  hourlyRate: number;
-  status: MissionStatus;
-  // Enhanced fields
-  isUrgent?: boolean;
-  isNetworkMatch?: boolean;
-  establishmentName?: string;
-  requiredDiploma?: string[];
-};
+// Define ServiceType as it's used by SerializedService and CreateServiceInput
+export type ServiceType = "HOME_CARE" | "NURSING_CARE" | "MEDICAL_TRANSPORT";
 
 type SerializedService = {
   id: string;
@@ -67,21 +54,34 @@ function checkUrgency(dateString: string): boolean {
   }
 }
 
-export async function getMarketplaceData(): Promise<MarketplaceData> {
-  try {
-    const [clientAuth, talentAuth] = await Promise.all([
-      getDemoAuth("CLIENT"),
-      getDemoAuth("TALENT"),
-    ]);
+type SerializedMission = {
+  id: string;
+  title: string;
+  dateStart: string;
+  dateEnd: string;
+  address: string;
+  hourlyRate: number;
+  status: MissionStatus;
+  isRenfort: boolean;
+  // Enhanced fields
+  isUrgent?: boolean;
+  isNetworkMatch?: boolean;
+  establishmentName?: string;
+  requiredDiploma?: string[];
+};
 
+// ...
+
+export async function getMarketplaceData(token: string): Promise<MarketplaceData> {
+  try {
     const [missions, services] = await Promise.all([
       apiRequest<SerializedMission[]>("/missions", {
         method: "GET",
-        token: talentAuth.token,
+        token,
       }),
       apiRequest<SerializedService[]>("/services", {
         method: "GET",
-        token: clientAuth.token,
+        token,
       }),
     ]);
 
@@ -93,7 +93,9 @@ export async function getMarketplaceData(): Promise<MarketplaceData> {
       establishmentName: "EHPAD Les Mimosas", // Mock name
       requiredDiploma: ["Infirmier DE", "Permis B"], // Mock diplomas
     })).sort((a, b) => {
-      // Sort by urgency first, then date
+      // Sort by isRenfort (true first), then urgency, then date
+      if (a.isRenfort && !b.isRenfort) return -1;
+      if (!a.isRenfort && b.isRenfort) return 1;
       if (a.isUrgent && !b.isUrgent) return -1;
       if (!a.isUrgent && b.isUrgent) return 1;
       return new Date(a.dateStart).getTime() - new Date(b.dateStart).getTime();
@@ -117,17 +119,18 @@ export async function getMarketplaceData(): Promise<MarketplaceData> {
       services: [],
       isDegraded: true,
       degradedReason:
-        "Données temporairement indisponibles. Vérifiez la connexion API et les comptes démo.",
+        "Données temporairement indisponibles. Vérifiez la connexion API.",
     };
   }
 }
 
 export async function createMissionFromSOS(input: CreateMissionInput): Promise<{ ok: true }> {
-  const clientAuth = await getDemoAuth("CLIENT");
+  const session = await getSession();
+  if (!session) throw new Error("Non connecté");
 
   await apiRequest("/missions", {
     method: "POST",
-    token: clientAuth.token,
+    token: session.token,
     body: input,
   });
 
@@ -137,11 +140,12 @@ export async function createMissionFromSOS(input: CreateMissionInput): Promise<{
 }
 
 export async function createServiceFromPublish(input: CreateServiceInput): Promise<{ ok: true }> {
-  const talentAuth = await getDemoAuth("TALENT");
+  const session = await getSession();
+  if (!session) throw new Error("Non connecté");
 
   await apiRequest("/services", {
     method: "POST",
-    token: talentAuth.token,
+    token: session.token,
     body: input,
   });
 
@@ -155,11 +159,12 @@ export async function applyToMission(missionId: string): Promise<{ ok: true }> {
     throw new Error("Mission manquante.");
   }
 
-  const talentAuth = await getDemoAuth("TALENT");
+  const session = await getSession();
+  if (!session) throw new Error("Non connecté");
 
   await apiRequest(`/missions/${missionId}/apply`, {
     method: "POST",
-    token: talentAuth.token,
+    token: session.token,
   });
 
   revalidatePath("/marketplace");
@@ -172,11 +177,12 @@ export async function bookService(serviceId: string): Promise<{ ok: true }> {
     throw new Error("Service manquant.");
   }
 
-  const clientAuth = await getDemoAuth("CLIENT");
+  const session = await getSession();
+  if (!session) throw new Error("Non connecté");
 
   await apiRequest(`/services/${serviceId}/book`, {
     method: "POST",
-    token: clientAuth.token,
+    token: session.token,
   });
 
   revalidatePath("/marketplace");
