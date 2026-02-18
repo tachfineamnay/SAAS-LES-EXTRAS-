@@ -155,8 +155,8 @@ export class BookingsService {
           address: mission.address,
           contactEmail: interlocutor,
           relatedBookingId: mission.bookings.find(
-            (booking) =>
-              booking.status !== BookingStatus.CANCELLED && Boolean(booking.talent?.email),
+            (b) =>
+              b.status !== BookingStatus.CANCELLED && Boolean(b.talent?.email),
           )?.id,
         });
       }
@@ -235,23 +235,23 @@ export class BookingsService {
         }),
       ]);
 
-      for (const booking of missionBookings) {
-        if (!booking.reliefMission) {
+      for (const mb of missionBookings) {
+        if (!mb.reliefMission) {
           continue;
         }
 
-        const interlocutor = booking.reliefMission.client.email ?? UNKNOWN_COUNTERPART;
+        const interlocutor = mb.reliefMission.client.email ?? UNKNOWN_COUNTERPART;
 
         lines.push({
-          lineId: booking.reliefMission.id,
+          lineId: mb.reliefMission.id,
           lineType: "MISSION",
-          date: booking.reliefMission.dateStart.toISOString(),
+          date: mb.reliefMission.dateStart.toISOString(),
           typeLabel: "Mission SOS",
           interlocutor,
-          status: normalizeMissionStatus(booking.reliefMission.status),
-          address: booking.reliefMission.address,
+          status: normalizeMissionStatus(mb.reliefMission.status),
+          address: mb.reliefMission.address,
           contactEmail: interlocutor,
-          relatedBookingId: booking.id,
+          relatedBookingId: mb.id,
         });
       }
 
