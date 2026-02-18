@@ -55,17 +55,28 @@ model User {
   talentBookings Booking[]       @relation("TalentBookings")
 }
 
+
 model Profile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  firstName String
-  lastName  String
-  bio       String?
-  avatar    String?
-  jobTitle  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  firstName      String
+  lastName       String
+  bio            String?
+  avatar         String?
+  jobTitle       String?
+  phone          String?
+  address        String?
+  city           String?
+  zipCode        String?
+  country        String?
+  skills         String[]
+  companyName    String?
+  siret          String?
+  tvaNumber      String?
+  onboardingStep Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ReliefMission {
