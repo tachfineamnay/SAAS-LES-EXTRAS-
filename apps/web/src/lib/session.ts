@@ -10,6 +10,7 @@ export type Session = {
         id: string;
         email: string;
         role: UserRole;
+        onboardingStep: number;
     };
 };
 
