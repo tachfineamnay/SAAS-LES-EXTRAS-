@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { apiRequest } from "@/lib/api";
 import { z } from "zod";
+import { createSession } from "@/lib/session";
+import { UserRole } from "@/lib/stores/useUIStore";
 
 const RegisterSchema = z.object({
     email: z.string().email({ message: "Email invalide" }),
@@ -20,6 +22,16 @@ export type RegisterState = {
     };
     message?: string;
 } | undefined;
+
+type AuthResponse = {
+    accessToken: string;
+    user: {
+        id: string;
+        email: string;
+        role: "CLIENT" | "TALENT" | "ADMIN";
+        onboardingStep: number;
+    };
+};
 
 export async function register(prevState: RegisterState, formData: FormData): Promise<RegisterState> {
     const validatedFields = RegisterSchema.safeParse({
@@ -38,9 +50,19 @@ export async function register(prevState: RegisterState, formData: FormData): Pr
     const { email, password, role } = validatedFields.data;
 
     try {
-        await apiRequest("/auth/register", {
+        const response = await apiRequest<AuthResponse>("/auth/register", {
             method: "POST",
             body: { email, password, role },
+        });
+
+        await createSession({
+            token: response.accessToken,
+            user: {
+                id: response.user.id,
+                email: response.user.email,
+                role: response.user.role as UserRole,
+                onboardingStep: response.user.onboardingStep,
+            },
         });
     } catch (error) {
         const message = error instanceof Error ? error.message : "Une erreur est survenue lors de l'inscription.";
@@ -49,6 +71,6 @@ export async function register(prevState: RegisterState, formData: FormData): Pr
         };
     }
 
-    // Redirect on success
-    redirect("/welcome");
+    // Redirect to dashboard now that we have a session
+    redirect("/dashboard");
 }

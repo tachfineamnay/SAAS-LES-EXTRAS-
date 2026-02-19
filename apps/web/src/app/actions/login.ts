@@ -26,6 +26,7 @@ type AuthResponse = {
         id: string;
         email: string;
         role: "CLIENT" | "TALENT" | "ADMIN";
+        onboardingStep: number;
     };
 };
 
@@ -55,6 +56,7 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
                 id: response.user.id,
                 email: response.user.email,
                 role: response.user.role as UserRole,
+                onboardingStep: response.user.onboardingStep,
             },
         });
     } catch (error) {

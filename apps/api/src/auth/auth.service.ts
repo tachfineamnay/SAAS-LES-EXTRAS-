@@ -18,6 +18,7 @@ type AuthResponse = {
     id: string;
     email: string;
     role: UserRole;
+    onboardingStep: number;
   };
 };
 
@@ -55,7 +56,10 @@ export class AuthService {
 
     return {
       accessToken: await this.signToken(user.id, user.email, user.role, 0),
-      user,
+      user: {
+        ...user,
+        onboardingStep: 0,
+      },
     };
   }
 
@@ -91,6 +95,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         role: user.role,
+        onboardingStep: user.onboardingStep,
       },
     };
   }
