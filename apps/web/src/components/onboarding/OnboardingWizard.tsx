@@ -41,30 +41,33 @@ export default function OnboardingWizard({ userId, userRole }: { userId: string,
     const nextStep = async () => {
         setLoading(true);
 
-        // Save current step data
-        const res = await updateProfile(userId, {
-            ...formData,
-            onboardingStep: currentStep + 1
-        });
+        try {
+            // Save current step data
+            await updateProfile(currentStep + 1, {
+                ...formData,
+            });
 
-        setLoading(false);
-
-        if (res.ok) {
             if (currentStep < steps.length - 1) {
                 setCurrentStep(prev => prev + 1);
             } else {
                 await finalizeOnboarding();
             }
-        } else {
+        } catch (error) {
             toast.error("Erreur lors de la sauvegarde.");
+        } finally {
+            setLoading(false);
         }
     };
 
     const finalizeOnboarding = async () => {
         setLoading(true);
-        await completeOnboarding(userId);
-        toast.success("Profil complété !");
-        router.push("/dashboard");
+        try {
+            await completeOnboarding();
+            toast.success("Profil complété !");
+            router.push("/dashboard");
+        } catch (error) {
+            toast.error("Une erreur est survenue.");
+        }
     };
 
     const StepIcon = steps[currentStep]?.icon || User;

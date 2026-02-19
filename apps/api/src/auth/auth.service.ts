@@ -26,7 +26,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
     const existingUser = await this.prisma.user.findUnique({
@@ -54,7 +54,7 @@ export class AuthService {
     });
 
     return {
-      accessToken: await this.signToken(user.id, user.email, user.role),
+      accessToken: await this.signToken(user.id, user.email, user.role, 0),
       user,
     };
   }
@@ -68,6 +68,7 @@ export class AuthService {
         role: true,
         status: true,
         password: true,
+        onboardingStep: true,
       },
     });
 
@@ -85,7 +86,7 @@ export class AuthService {
     }
 
     return {
-      accessToken: await this.signToken(user.id, user.email, user.role),
+      accessToken: await this.signToken(user.id, user.email, user.role, user.onboardingStep),
       user: {
         id: user.id,
         email: user.email,
@@ -98,11 +99,13 @@ export class AuthService {
     id: string,
     email: string,
     role: UserRole,
+    onboardingStep: number,
   ): Promise<string> {
     const payload: JwtPayload = {
       sub: id,
       email,
       role,
+      onboardingStep,
     };
     return this.jwtService.signAsync(payload);
   }

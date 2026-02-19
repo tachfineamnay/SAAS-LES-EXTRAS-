@@ -10,6 +10,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { ServicesModule } from "./services/services.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { InvoicesModule } from "./invoices/invoices.module";
+import { UsersModule } from "./users/users.module";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { InvoicesModule } from "./invoices/invoices.module";
     BookingsModule,
     NotificationsModule,
     InvoicesModule,
+    UsersModule,
   ],
   controllers: [HealthController],
 })

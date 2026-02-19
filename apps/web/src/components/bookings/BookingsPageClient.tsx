@@ -88,7 +88,9 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
           return;
         }
         setData(nextData);
-        setLoadedRole(userRole);
+        if (userRole) {
+          setLoadedRole(userRole);
+        }
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Impossible de charger les réservations.");
       }

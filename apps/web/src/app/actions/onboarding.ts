@@ -65,3 +65,5 @@ export async function completeOnboarding() {
     revalidatePath("/dashboard");
     revalidatePath("/marketplace");
 }
+
+export const updateProfile = saveOnboardingStep;

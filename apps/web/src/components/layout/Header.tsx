@@ -40,7 +40,7 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
             {userRole === "CLIENT" ? "ÉTABLISSEMENT" : "FREELANCE"}
           </Badge>
 
-          <Select value={userRole} onValueChange={(value) => setUserRole(value as UserRole)}>
+          <Select value={userRole || undefined} onValueChange={(value) => setUserRole(value as UserRole)}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Rôle" />
             </SelectTrigger>
