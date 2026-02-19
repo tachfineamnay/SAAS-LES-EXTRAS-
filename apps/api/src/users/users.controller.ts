@@ -8,13 +8,13 @@ export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
     @Patch("me/onboarding")
-    updateOnboarding(@Request() req, @Body() body: { step: number;[key: string]: any }) {
+    updateOnboarding(@Request() req: any, @Body() body: { step: number;[key: string]: any }) {
         const { step, ...data } = body;
         return this.usersService.updateOnboardingStep(req.user.id, step, data);
     }
 
     @Post("me/onboarding/complete")
-    completeOnboarding(@Request() req) {
+    completeOnboarding(@Request() req: any) {
         return this.usersService.completeOnboarding(req.user.id);
     }
 }
