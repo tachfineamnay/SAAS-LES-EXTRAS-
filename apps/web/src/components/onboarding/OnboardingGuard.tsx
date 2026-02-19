@@ -28,8 +28,9 @@ export function OnboardingGuard({ children, userRole, onboardingStep }: Onboardi
         return <>{children}</>;
     }
 
-    // Assuming max steps = 4 for now.
-    const isComplete = onboardingStep >= 4;
+    // CLIENT flow has 3 steps, TALENT flow has 4 steps
+    const maxSteps = userRole === "TALENT" ? 4 : 3;
+    const isComplete = onboardingStep >= maxSteps;
 
     if (!isComplete) {
         return (
