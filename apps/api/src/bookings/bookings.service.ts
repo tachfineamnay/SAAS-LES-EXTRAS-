@@ -532,12 +532,36 @@ export class BookingsService {
       throw new BadRequestException("Booking is not pending");
     }
 
-    await this.prisma.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: "CONFIRMED",
-      },
-    });
+    // Mission Assignment Logic
+    if (booking.reliefMissionId) {
+      await this.prisma.$transaction([
+        // 1. Confirm this booking
+        this.prisma.booking.update({
+          where: { id: bookingId },
+          data: { status: "CONFIRMED" },
+        }),
+        // 2. Mark Mission as ASSIGNED
+        this.prisma.reliefMission.update({
+          where: { id: booking.reliefMissionId },
+          data: { status: ReliefMissionStatus.ASSIGNED },
+        }),
+        // 3. Cancel other PENDING bookings for this mission
+        this.prisma.booking.updateMany({
+          where: {
+            reliefMissionId: booking.reliefMissionId,
+            id: { not: bookingId },
+            status: "PENDING",
+          },
+          data: { status: "CANCELLED" },
+        }),
+      ]);
+    } else {
+      // Standard Service Confirmation
+      await this.prisma.booking.update({
+        where: { id: bookingId },
+        data: { status: "CONFIRMED" },
+      });
+    }
 
     // Notify Talent
     if (booking.talentId) {

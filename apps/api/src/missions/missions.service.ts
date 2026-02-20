@@ -117,4 +117,26 @@ export class MissionsService {
       },
     });
   }
+
+  async getManagedMissions(clientId: string) {
+    return this.prisma.reliefMission.findMany({
+      where: {
+        clientId,
+        status: { in: [ReliefMissionStatus.OPEN, ReliefMissionStatus.ASSIGNED] },
+      },
+      orderBy: { dateStart: 'asc' },
+      include: {
+        bookings: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            talent: {
+              include: {
+                profile: true
+              }
+            }
+          }
+        }
+      }
+    });
+  }
 }

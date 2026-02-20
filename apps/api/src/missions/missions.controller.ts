@@ -11,7 +11,7 @@ import { MissionsService } from "./missions.service";
 
 @Controller("missions")
 export class MissionsController {
-  constructor(private readonly missionsService: MissionsService) {}
+  constructor(private readonly missionsService: MissionsService) { }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -28,6 +28,13 @@ export class MissionsController {
   @Roles(UserRole.TALENT)
   findAll(@Query() filter: FindMissionsQueryDto) {
     return this.missionsService.findAll(filter);
+  }
+
+  @Get("managed")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CLIENT)
+  getManagedMissions(@CurrentUser() user: AuthenticatedUser) {
+    return this.missionsService.getManagedMissions(user.id);
   }
 
   @Post(":missionId/apply")

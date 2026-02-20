@@ -7,6 +7,10 @@ import { SerializedMission } from "@/app/actions/marketplace"; // Ensure this im
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { QuoteCreationModal } from "../dashboard/QuoteCreationModal";
+import { applyToMission } from "@/app/actions/missions";
+import { toast } from "sonner";
+import { useState } from "react";
+import { Loader2, Zap } from "lucide-react";
 
 interface MissionCardProps {
     mission: SerializedMission;
@@ -19,6 +23,24 @@ export function MissionCard({ mission }: MissionCardProps) {
 
     const clientName = mission.client?.profile?.companyName || "Établissement Confidentiel";
     const city = mission.client?.profile?.city || mission.address.split(',').pop()?.trim() || "Localisation inconnue";
+
+    const [isPending, setIsPending] = useState(false);
+
+    const handleApply = async () => {
+        setIsPending(true);
+        const result = await applyToMission(mission.id);
+        setIsPending(false);
+
+        if (result.ok) {
+            toast.success("Candidature envoyée !", {
+                description: "L'établissement a été notifié de votre intérêt."
+            });
+        } else {
+            toast.error("Erreur", {
+                description: result.error || "Impossible de postuler."
+            });
+        }
+    };
 
     return (
         <Card className="flex flex-col h-full hover:shadow-md transition-shadow">
@@ -52,18 +74,18 @@ export function MissionCard({ mission }: MissionCardProps) {
                 </div>
             </CardContent>
             <CardFooter className="p-4 pt-0">
-                <QuoteCreationModal
-                    trigger={
-                        <Button className="w-full">Proposer mes services</Button>
-                    }
-                    initialData={{
-                        establishmentId: mission.id, // TODO: This should be clientId? The Modal implementation I saw used establishmentId. 
-                        // Wait, Quote relates to Etablishment. 
-                        // And optionally ReliefMission.
-                        // I should pass description as "Candidature pour: title"
-                        description: `Candidature pour la mission : ${mission.title} (${format(startDate, "dd/MM/yyyy")})`
-                    }}
-                />
+                <Button
+                    className="w-full font-bold gap-2"
+                    onClick={handleApply}
+                    disabled={isPending}
+                >
+                    {isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <Zap className="h-4 w-4 fill-current" />
+                    )}
+                    {isPending ? "Envoi..." : "Postuler (1-clic)"}
+                </Button>
             </CardFooter>
         </Card>
     );
