@@ -27,6 +27,7 @@ import {
 const CLIENT_LINKS = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
+  { href: "/dashboard/packs", label: "Acheter des crédits", icon: WalletCards },
   { href: "/dashboard/renforts", label: "Mes Renforts", icon: Briefcase },
   { href: "/dashboard/inbox", label: "Boîte de réception", icon: Mail },
   { href: "/settings", label: "Paramètres", icon: Settings },
