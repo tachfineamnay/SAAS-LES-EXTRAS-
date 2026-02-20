@@ -590,11 +590,34 @@ export class BookingsService {
       throw new BadRequestException("Booking must be confirmed before completion");
     }
 
-    // NEW FLOW: Complete -> Awaiting Payment
-    await this.prisma.booking.update({
-      where: { id: bookingId },
-      data: { status: BookingStatus.COMPLETED_AWAITING_PAYMENT },
-    });
+    // Calculate Amount
+    let amount = 0;
+    const b = booking as any;
+    if (b.quote) {
+      amount = b.quote.amount;
+    } else if (b.reliefMission) {
+      const durationHours = (b.reliefMission.dateEnd.getTime() - b.reliefMission.dateStart.getTime()) / (1000 * 60 * 60);
+      amount = b.reliefMission.hourlyRate * durationHours;
+    } else if (b.service) {
+      amount = b.service.price;
+    }
+
+    // NEW FLOW: Complete -> Awaiting Payment + Generate Pending Invoice
+    await this.prisma.$transaction([
+      this.prisma.booking.update({
+        where: { id: bookingId },
+        data: { status: BookingStatus.COMPLETED_AWAITING_PAYMENT },
+      }),
+      this.prisma.invoice.create({
+        data: {
+          bookingId: booking.id,
+          amount: Math.round(amount * 100) / 100,
+          url: `/invoices/${booking.id}/download`,
+          status: "PENDING_PAYMENT",
+          invoiceNumber: `F-${new Date().getFullYear()}-${booking.id.slice(-6).toUpperCase()}`,
+        },
+      }),
+    ]);
 
     // Notify Talent
     if (booking.talentId) {
@@ -631,29 +654,15 @@ export class BookingsService {
       throw new BadRequestException("Booking must be completed and awaiting payment");
     }
 
-    let amount = 0;
-    const b = booking as any;
-    if (b.quote) {
-      amount = b.quote.amount;
-    } else if (b.reliefMission) {
-      const durationHours = (b.reliefMission.dateEnd.getTime() - b.reliefMission.dateStart.getTime()) / (1000 * 60 * 60);
-      amount = b.reliefMission.hourlyRate * durationHours;
-    } else if (b.service) {
-      amount = b.service.price;
-    }
-
     await this.prisma.$transaction([
       this.prisma.booking.update({
         where: { id: bookingId },
         data: { status: "PAID" },
       }),
-      this.prisma.invoice.create({
+      this.prisma.invoice.update({
+        where: { bookingId: booking.id },
         data: {
-          bookingId: booking.id,
-          amount: Math.round(amount * 100) / 100,
-          url: `/invoices/${booking.id}/download`,
           status: "PAID",
-          invoiceNumber: `F-${new Date().getFullYear()}-${booking.id.slice(-6).toUpperCase()}`,
         },
       }),
     ]);
