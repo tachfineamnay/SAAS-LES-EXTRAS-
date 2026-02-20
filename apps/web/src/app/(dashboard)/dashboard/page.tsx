@@ -15,6 +15,9 @@ import { QuoteListWidget } from "@/components/dashboard/QuoteListWidget";
 import { PaymentValidationWidget } from "@/components/dashboard/PaymentValidationWidget";
 import { MissionsToValidateWidget } from "@/components/dashboard/client/MissionsToValidateWidget";
 import { UpcomingMissionsWidget } from "@/components/dashboard/client/UpcomingMissionsWidget";
+import { ClientInvoicesWidget } from "@/components/dashboard/client/ClientInvoicesWidget";
+import { ClientArchivesWidget } from "@/components/dashboard/client/ClientArchivesWidget";
+import { getInvoices } from "@/actions/finance";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +34,12 @@ export default async function DashboardPage() {
     // Fetch data with token
     const bookingsData = await getBookingsPageData(token);
     const quotes = userRole === "CLIENT" ? await getQuotes(token) : [];
+
+    // NEW: Fetch invoices for client
+    const invoices = await getInvoices();
+    // getInvoices reads session internally, so we don't pass token if the action does it.
+    // But wait, the action `getInvoices` I saw earlier imports `getSession`, so it handles it. 
+    // It returns `any`.
 
     // Filter bookings
     const pendingBookings = bookingsData.lines.filter((b) => b.status === "PENDING");
@@ -94,7 +103,26 @@ export default async function DashboardPage() {
                         <UpcomingMissionsWidget bookings={upcomingMissions} />
                     </BentoCard>
 
-                    {/* Offers / Quotes Received - Priority */}
+                    {/* Facturation / Invoices - NEW */}
+                    <BentoCard
+                        title="Mes Factures"
+                        icon={<FileText className="h-6 w-6" />}
+                        colSpan={2}
+                        rowSpan={2}
+                    >
+                        <ClientInvoicesWidget invoices={invoices} />
+                    </BentoCard>
+
+                    {/* Historique / Archives - NEW */}
+                    <BentoCard
+                        title="Historique & Archives"
+                        icon={<Briefcase className="h-6 w-6" />}
+                        rowSpan={2}
+                    >
+                        <ClientArchivesWidget bookings={completedBookings} />
+                    </BentoCard>
+
+                    {/* Offers / Quotes Received */}
                     <BentoCard
                         title="Propositions Reçues"
                         icon={<FileText className="h-6 w-6" />}
@@ -104,7 +132,7 @@ export default async function DashboardPage() {
                         <QuoteListWidget quotes={pendingQuotes} />
                     </BentoCard>
 
-                    {/* Freelances disponibles (PENDING on my missions) */}
+                    {/* Candidatures */}
                     <BentoCard
                         title="Candidatures"
                         icon={<Users className="h-6 w-6" />}
@@ -115,21 +143,6 @@ export default async function DashboardPage() {
                             emptyMessage="Aucune candidature en attente."
                             viewAllLink="/bookings?status=PENDING"
                         />
-                    </BentoCard>
-
-                    {/* Facturation */}
-                    <BentoCard title="Facturation" icon={<FileText className="h-6 w-6" />}>
-                        <div className="flex flex-col gap-4 h-full justify-between">
-                            <div>
-                                <p className="text-sm text-muted-foreground mb-1">
-                                    Dépenses ce mois-ci
-                                </p>
-                                <div className="text-3xl font-bold">1 250,00 €</div>
-                            </div>
-                            <Button variant="outline" className="w-full">
-                                Télécharger les factures
-                            </Button>
-                        </div>
                     </BentoCard>
 
                     {/* Réseau de confiance */}
