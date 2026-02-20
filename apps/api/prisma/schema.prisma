@@ -31,13 +31,7 @@ enum ServiceType {
   TRAINING
 }
 
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  PAID
-  COMPLETED
-  CANCELLED
-}
+
 
 model User {
   id             String          @id @default(cuid())
@@ -120,6 +114,7 @@ model ReliefMission {
   updatedAt DateTime           @updatedAt
   client    User               @relation("ClientMissions", fields: [clientId], references: [id], onDelete: Restrict)
   bookings  Booking[]
+  quotes    Quote[]
 
   @@index([clientId])
 }

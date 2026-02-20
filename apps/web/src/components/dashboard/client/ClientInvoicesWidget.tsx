@@ -77,9 +77,10 @@ export function ClientInvoicesWidget({ invoices }: ClientInvoicesWidgetProps) {
                                     {invoice.amount.toFixed(2)} €
                                 </TableCell>
                                 <TableCell>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                        <a href={invoice.url} target="_blank" rel="noopener noreferrer">
+                                    <Button variant="ghost" size="icon" asChild title="Télécharger la facture">
+                                        <a href={invoice.url} target="_blank" rel="noopener noreferrer" title="Télécharger la facture">
                                             <Download className="h-4 w-4" />
+                                            <span className="sr-only">Télécharger la facture</span>
                                         </a>
                                     </Button>
                                 </TableCell>

@@ -61,8 +61,9 @@ export function BookingListWidget({
                                 <div className="flex gap-2">
                                     {booking.invoiceUrl && (
                                         <Button variant="outline" size="icon" asChild title="Télécharger la facture">
-                                            <a href={booking.invoiceUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                                            <a href={booking.invoiceUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} title="Télécharger la facture">
                                                 <Download className="h-4 w-4" />
+                                                <span className="sr-only">Télécharger la facture</span>
                                             </a>
                                         </Button>
                                     )}
