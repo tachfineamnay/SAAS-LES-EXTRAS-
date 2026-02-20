@@ -43,122 +43,143 @@ export default function HomePage() {
 
       <main className="pt-32 pb-16 px-6">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-16 text-center">
+          <div className="mb-20 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center rounded-full border px-4 py-1.5 text-sm font-semibold text-primary mb-6 bg-primary/5"
+            >
+              <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
+              Le réseau d'intervention rapide du médico-social
+            </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-4xl font-extrabold tracking-tight sm:text-6xl text-foreground"
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-4xl font-extrabold tracking-tight sm:text-6xl text-foreground max-w-4xl mx-auto"
             >
-              La plateforme des extras <br className="hidden sm:block" />
-              <span className="text-primary">simplifiée</span> et <span className="text-secondary">efficace</span>.
+              Ne laissez plus l'absence d'un soignant <span className="text-primary">désorganiser vos équipes</span>.
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto"
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="mt-6 text-xl text-muted-foreground max-w-2xl mx-auto"
             >
-              Connectez-vous aux meilleures opportunités ou trouvez les talents qu'il vous faut.
-              Sans abonnement, sans contrainte, 100% transparent.
+              Publiez un besoin de renfort en 30 secondes. Les professionnels disponibles autour de vous postulent en un clic. <br className="hidden sm:block" />
+              <span className="font-medium text-foreground">Zéro paperasse, facturation automatique en euros.</span>
             </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="mt-10 flex flex-col sm:flex-row justify-center gap-4"
+            >
+              <Button asChild size="lg" className="h-12 px-8 text-lg font-semibold shadow-lg shadow-primary/20">
+                <Link href="/register?role=CLIENT">Trouver un renfort</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="h-12 px-8 text-lg">
+                <Link href="/register?role=TALENT">Voir les missions</Link>
+              </Button>
+            </motion.div>
           </div>
 
-          {/* Bento Grid */}
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]"
-          >
-            {/* Main Action - Talent */}
-            <motion.div variants={item} className="group relative overflow-hidden rounded-[var(--radius)] border bg-card p-8 hover:shadow-lg hover:shadow-primary/5 transition-all md:col-span-2">
-              <div className="absolute top-0 right-0 -mt-16 -mr-16 h-64 w-64 rounded-full bg-primary/10 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity" />
+          {/* SECTION UTILITÉ (Établissements) */}
+          <section className="mb-24">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">De l'urgence à la solution en quelques minutes.</h2>
+              <p className="text-muted-foreground text-lg">Pour les Directeurs et Cadres de Santé</p>
+            </div>
 
-              <div className="relative h-full flex flex-col justify-between">
-                <div>
-                  <div className="h-12 w-12 rounded-[calc(var(--radius)-4px)] bg-primary/10 flex items-center justify-center mb-6 text-primary">
-                    <Briefcase className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-card-foreground mb-2">Je cherche des missions</h3>
-                  <p className="text-muted-foreground max-w-md">
-                    Accédez à des centaines de missions dans le secteur médico-social.
-                    Gérez votre emploi du temps et recevez vos paiements rapidement.
-                  </p>
+            <motion.div
+              variants={container}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            >
+              <motion.div variants={item} className="flex flex-col items-center text-center p-6 rounded-2xl bg-muted/30 border border-border/50">
+                <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 text-primary">
+                  <Building2 className="h-7 w-7" />
                 </div>
-
-                <div className="flex gap-4 mt-8">
-                  <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-                    <Link href="/marketplace">Voir les missions</Link>
-                  </Button>
-                  <Button asChild variant="outline" className="text-muted-foreground hover:text-foreground">
-                    <Link href="/register?role=TALENT">M'inscrire comme Freelance</Link>
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Stat Card */}
-            <motion.div variants={item} className="relative overflow-hidden rounded-[var(--radius)] border bg-white p-8 flex flex-col items-center justify-center text-center shadow-sm">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-50" />
-              <div className="relative">
-                <span className="text-5xl font-bold text-primary tracking-tighter">100%</span>
-                <p className="mt-2 text-sm font-medium text-muted-foreground uppercase tracking-widest">Transactionnel</p>
-                <p className="mt-4 text-muted-foreground text-sm">
-                  Pas d'abonnement caché. <br />Vous ne payez que ce que vous utilisez.
+                <h3 className="text-xl font-bold mb-3">Diffusion ciblée</h3>
+                <p className="text-muted-foreground">
+                  Fini les appels dans le vide. Votre alerte part instantanément aux profils locaux qualifiés (AS, IDE, AES) qui correspondent à vos critères.
                 </p>
-              </div>
-            </motion.div>
+              </motion.div>
 
-            {/* Client Action */}
-            <motion.div variants={item} className="group relative overflow-hidden rounded-[var(--radius)] border bg-card p-8 hover:shadow-lg hover:shadow-secondary/5 transition-all">
-              <div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-64 w-64 rounded-full bg-secondary/10 blur-3xl opacity-30 group-hover:opacity-80 transition-opacity" />
-
-              <div className="relative h-full flex flex-col justify-between">
-                <div className="h-12 w-12 rounded-[calc(var(--radius)-4px)] bg-secondary/10 flex items-center justify-center mb-6 text-secondary">
-                  <Building2 className="h-6 w-6" />
+              <motion.div variants={item} className="flex flex-col items-center text-center p-6 rounded-2xl bg-muted/30 border border-border/50">
+                <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 text-primary">
+                  <CheckCircle className="h-7 w-7" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-card-foreground mb-2">Je recrute des freelances</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Trouvez des profils vérifiés pour vos besoins ponctuels.
-                    Facturation simplifiée et transparente.
+                <h3 className="text-xl font-bold mb-3">Validation express</h3>
+                <p className="text-muted-foreground">
+                  Recevez les candidatures en temps réel. Comparez les profils, consultez leurs notes et bloquez votre renfort en un clic.
+                </p>
+              </motion.div>
+
+              <motion.div variants={item} className="flex flex-col items-center text-center p-6 rounded-2xl bg-muted/30 border border-border/50">
+                <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 text-primary">
+                  <Star className="h-7 w-7" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Zéro friction administrative</h3>
+                <p className="text-muted-foreground">
+                  Contrats, relevés d'heures et facturation sont générés automatiquement. Vous ne gérez que l'essentiel : vos équipes.
+                </p>
+              </motion.div>
+            </motion.div>
+          </section>
+
+          {/* SECTION MOTIVATION (Freelances) */}
+          <section className="mb-24">
+            <div className="relative overflow-hidden rounded-3xl bg-primary text-primary-foreground px-6 py-16 sm:px-12 sm:py-24">
+              <div className="absolute top-0 right-0 -mt-20 -mr-20 h-[500px] w-[500px] rounded-full bg-white/5 blur-3xl opacity-50" />
+              <div className="absolute bottom-0 left-0 -mb-20 -ml-20 h-[500px] w-[500px] rounded-full bg-white/5 blur-3xl opacity-50" />
+
+              <div className="relative z-10 max-w-7xl mx-auto">
+                <div className="text-center mb-16">
+                  <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-6">Indépendants : Remplissez votre planning selon vos conditions.</h2>
+                  <p className="text-primary-foreground/80 text-lg max-w-2xl mx-auto">
+                    Rejoignez la communauté des soignants libres et valorisez votre expertise.
                   </p>
                 </div>
-                <Button asChild className="mt-6 w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-                  <Link href="/register?role=CLIENT">Publier une mission</Link>
-                </Button>
-              </div>
-            </motion.div>
 
-            {/* Features / Bento Items */}
-            <motion.div variants={item} className="md:col-span-2 relative overflow-hidden rounded-[var(--radius)] border bg-muted/50 p-8">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 h-full items-center">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-foreground font-medium">
-                    <CheckCircle className="h-5 w-5 text-emerald-600" />
-                    <span>Vérifié</span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                  <div className="flex flex-col gap-4">
+                    <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xl border border-white/20">1</div>
+                    <h3 className="text-2xl font-bold">Postulez en 1 clic</h3>
+                    <p className="text-primary-foreground/70 leading-relaxed">
+                      Notre système "Fast-Apply" vous permet de répondre à une urgence sans rédiger de devis ni de lettre de motivation.
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">Tous nos freelances sont vérifiés par nos équipes.</p>
+
+                  <div className="flex flex-col gap-4">
+                    <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xl border border-white/20">2</div>
+                    <h3 className="text-2xl font-bold">Facturation automatique</h3>
+                    <p className="text-primary-foreground/70 leading-relaxed">
+                      Concentrez-vous sur votre métier. La plateforme édite vos factures et sécurise vos paiements en temps et en heure.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-4">
+                    <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xl border border-white/20">3</div>
+                    <h3 className="text-2xl font-bold">Diversifiez vos revenus</h3>
+                    <p className="text-primary-foreground/70 leading-relaxed">
+                      Ne vous limitez pas aux renforts. Proposez directement vos propres ateliers et formations aux établissements du réseau.
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-foreground font-medium">
-                    <Calendar className="h-5 w-5 text-secondary" />
-                    <span>Flexible</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Gérez vos plannings en temps réel.</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-foreground font-medium">
-                    <Star className="h-5 w-5 text-primary" />
-                    <span>Qualité</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Notez et soyez noté après chaque mission.</p>
+
+                <div className="mt-16 text-center">
+                  <Button asChild size="lg" variant="secondary" className="h-14 px-10 text-lg font-bold shadow-xl">
+                    <Link href="/register?role=TALENT">Créer mon profil Freelance</Link>
+                  </Button>
+                  <p className="mt-4 text-sm text-primary-foreground/60">Inscription gratuite. Commission transparente de 0% pour les 100 premiers inscrits.</p>
                 </div>
               </div>
-            </motion.div>
-
-          </motion.div>
+            </div>
+          </section>
         </div>
       </main>
 
