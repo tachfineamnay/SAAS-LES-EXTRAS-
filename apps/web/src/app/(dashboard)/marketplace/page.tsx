@@ -1,5 +1,6 @@
-import { getMarketplaceData } from "@/app/actions/marketplace";
-import { MarketList } from "@/components/marketplace/MarketList";
+import { getAvailableMissions, getMarketplaceCatalogue } from "@/app/actions/marketplace";
+import { FreelanceJobBoard } from "@/components/marketplace/FreelanceJobBoard";
+import { ClientCatalogue } from "@/components/marketplace/ClientCatalogue";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 
@@ -9,15 +10,19 @@ export default async function MarketplacePage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const { missions, services, isDegraded, degradedReason } =
-    await getMarketplaceData(session.token);
+  if (session.user.role === "TALENT") {
+    const missions = await getAvailableMissions(session.token);
+    return <FreelanceJobBoard missions={missions} />;
+  }
+
+  if (session.user.role === "CLIENT") {
+    const { services, talents } = await getMarketplaceCatalogue(session.token);
+    return <ClientCatalogue services={services} talents={talents} />;
+  }
 
   return (
-    <MarketList
-      missions={missions}
-      services={services}
-      isDegraded={isDegraded}
-      degradedReason={degradedReason}
-    />
+    <div className="p-8 text-center text-muted-foreground">
+      <p>Accès non autorisé ou rôle inconnu.</p>
+    </div>
   );
 }

@@ -40,4 +40,18 @@ export class UsersService {
             }
         });
     }
+    async findAllTalents() {
+        return this.prisma.user.findMany({
+            where: {
+                role: "TALENT",
+                status: "VERIFIED",
+            },
+            include: {
+                profile: true,
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+    }
 }

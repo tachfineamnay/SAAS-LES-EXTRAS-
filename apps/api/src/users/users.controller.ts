@@ -17,4 +17,8 @@ export class UsersController {
     completeOnboarding(@Request() req: any) {
         return this.usersService.completeOnboarding(req.user.id);
     }
+    @Get("talents")
+    getTalents() {
+        return this.usersService.findAllTalents();
+    }
 }

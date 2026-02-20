@@ -15,7 +15,7 @@ import { FindMissionsQueryDto } from "./dto/find-missions-query.dto";
 
 @Injectable()
 export class MissionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async createMission(dto: CreateMissionDto, clientId: string) {
     const dateStart = new Date(dto.dateStart);
@@ -65,6 +65,13 @@ export class MissionsService {
       where,
       orderBy: {
         dateStart: "asc",
+      },
+      include: {
+        client: {
+          include: {
+            profile: true,
+          },
+        },
       },
     });
   }
