@@ -11,6 +11,7 @@ import { ServicesModule } from "./services/services.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { InvoicesModule } from "./invoices/invoices.module";
 import { UsersModule } from "./users/users.module";
+import { QuotesModule } from './quotes/quotes.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { UsersModule } from "./users/users.module";
     NotificationsModule,
     InvoicesModule,
     UsersModule,
+    QuotesModule,
   ],
   controllers: [HealthController],
 })

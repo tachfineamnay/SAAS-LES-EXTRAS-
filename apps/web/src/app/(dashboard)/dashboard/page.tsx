@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { getMarketplaceData } from "@/app/actions/marketplace";
 import { getBookingsPageData } from "@/app/actions/bookings";
+import { getQuotes } from "@/actions/quotes";
 import { BentoGrid, BentoCard } from "@/components/dashboard/BentoGrid";
 import { StatsWidget } from "@/components/dashboard/StatsWidget";
 import { BookingListWidget } from "@/components/dashboard/BookingListWidget";
@@ -9,6 +9,9 @@ import { NetworkWidget } from "@/components/dashboard/NetworkWidget";
 import { DollarSign, Calendar, Users, Briefcase, FileText, CheckCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TrustChecklistWidget } from "@/components/dashboard/TrustChecklistWidget";
+import { QuoteCreationModal } from "@/components/dashboard/QuoteCreationModal";
+import { QuoteListWidget } from "@/components/dashboard/QuoteListWidget";
+import { PaymentValidationWidget } from "@/components/dashboard/PaymentValidationWidget";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +27,7 @@ export default async function DashboardPage() {
 
     // Fetch data with token
     const bookingsData = await getBookingsPageData(token);
-    // marketplaceData was unused in original code, removing it unless needed later
+    const quotes = userRole === "CLIENT" ? await getQuotes(token) : [];
 
     // Filter bookings
     const pendingBookings = bookingsData.lines.filter((b) => b.status === "PENDING");
@@ -36,6 +39,9 @@ export default async function DashboardPage() {
     );
 
     if (userRole === "CLIENT") {
+        const pendingQuotes = quotes.filter((q: any) => q.status === "PENDING");
+        const awaitingPaymentBookings = bookingsData.lines.filter((b) => b.status === "COMPLETED_AWAITING_PAYMENT");
+
         return (
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -48,11 +54,32 @@ export default async function DashboardPage() {
                 </div>
 
                 <BentoGrid>
+                    {/* Payments to Validate - High Priority */}
+                     {awaitingPaymentBookings.length > 0 && (
+                        <BentoCard
+                            title="Paiements à Valider"
+                            icon={<DollarSign className="h-6 w-6 text-green-600" />}
+                            colSpan={2}
+                            rowSpan={Math.max(1, awaitingPaymentBookings.length > 2 ? 2 : 1)}
+                        >
+                            <PaymentValidationWidget bookings={awaitingPaymentBookings} />
+                        </BentoCard>
+                     )}
+
+                    {/* Offers / Quotes Received - Priority */}
+                    <BentoCard
+                        title="Propositions Reçues"
+                        icon={<FileText className="h-6 w-6" />}
+                        colSpan={2}
+                        rowSpan={2}
+                    >
+                        <QuoteListWidget quotes={pendingQuotes} />
+                    </BentoCard>
+
                     {/* Freelances disponibles (PENDING on my missions) */}
                     <BentoCard
-                        title="Freelances disponibles"
+                        title="Candidatures"
                         icon={<Users className="h-6 w-6" />}
-                        colSpan={2}
                         rowSpan={2}
                     >
                         <BookingListWidget
@@ -109,7 +136,8 @@ export default async function DashboardPage() {
                     Tableau de bord Freelance
                 </h1>
                 <div className="flex gap-2">
-                    <Button size="sm">Trouver une mission</Button>
+                    <QuoteCreationModal />
+                    <Button size="sm" variant="outline">Trouver une mission</Button>
                 </div>
             </div>
 

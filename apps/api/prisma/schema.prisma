@@ -54,7 +54,8 @@ model User {
   ownerServices  Service[]       @relation("OwnerServices")
   clientBookings Booking[]       @relation("ClientBookings")
   talentBookings Booking[]       @relation("TalentBookings")
-  notifications  Notification[]
+  freelanceQuotes Quote[]         @relation("FreelanceQuotes")
+  establishmentQuotes Quote[]     @relation("EstablishmentQuotes")
 }
 
 model Profile {
@@ -126,6 +127,42 @@ model Service {
   @@index([ownerId])
 }
 
+enum QuoteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Quote {
+  id              String         @id @default(cuid())
+  amount          Float
+  description     String
+  startDate       DateTime
+  endDate         DateTime
+  status          QuoteStatus    @default(PENDING)
+  freelanceId     String
+  establishmentId String
+  reliefMissionId String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  freelance       User           @relation("FreelanceQuotes", fields: [freelanceId], references: [id])
+  establishment   User           @relation("EstablishmentQuotes", fields: [establishmentId], references: [id])
+  reliefMission   ReliefMission? @relation(fields: [reliefMissionId], references: [id])
+  booking         Booking?
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  PAID
+  COMPLETED
+  COMPLETED_AWAITING_PAYMENT
+  CANCELLED
+}
+
+// ... existing models ...
+
 model Booking {
   id              String        @id @default(cuid())
   status          BookingStatus @default(PENDING)
@@ -135,12 +172,14 @@ model Booking {
   talentId        String?
   reliefMissionId String?
   serviceId       String?
+  quoteId         String?       @unique
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   client          User          @relation("ClientBookings", fields: [clientId], references: [id], onDelete: Restrict)
   talent          User?         @relation("TalentBookings", fields: [talentId], references: [id], onDelete: SetNull)
-  reliefMission   ReliefMission?  @relation(fields: [reliefMissionId], references: [id], onDelete: SetNull)
+  reliefMission   ReliefMission? @relation(fields: [reliefMissionId], references: [id], onDelete: SetNull)
   service         Service?      @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  quote           Quote?        @relation(fields: [quoteId], references: [id])
   invoice         Invoice?
 
   @@index([clientId])

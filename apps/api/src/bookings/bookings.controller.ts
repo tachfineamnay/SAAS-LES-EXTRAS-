@@ -52,4 +52,12 @@ export class BookingsController {
   ) {
     return this.bookingsService.completeBooking(dto.bookingId, user);
   }
+
+  @Post("authorize-payment")
+  authorizePayment(
+    @Body() dto: ActionBookingDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.bookingsService.authorizePayment(dto.bookingId, user);
+  }
 }

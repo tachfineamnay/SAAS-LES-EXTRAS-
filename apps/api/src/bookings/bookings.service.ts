@@ -567,33 +567,21 @@ export class BookingsService {
       throw new NotFoundException("Booking not found");
     }
 
-    // Authorization: Mission Client (Director) or Service Client (Attendee?? No, usually Provider marks complete? Or Client?)
-    // In "les-extras", the Client recruits. So Client validates work is done.
-
-    // For Service (Atelier):
-    // If I buy a ticket, the event happens.
-    // Maybe the Owner checks me in -> Completed?
-    // Let's assume for now Client (Booking owner) or Mission Client can complete.
-
-    // Actually, usually the one paying validates completion?
-    // Mission: Client pays Talent. Client validates.
-    // Service: Client pays Owner. Client attends?
-
-    // Let's restrain to Mission Client for now as that's the main "extras" flow.
     const isMissionClient =
       booking.reliefMission && booking.reliefMission.clientId === user.id;
 
-    if (!isMissionClient) {
-      // If it's a service, maybe just auto-complete on date?
-      // For now, allow simple completion if user is involved?
-      // Let's start with Mission Client only for manual completion.
-      if (booking.service) {
-        // Service flow might be different (e.g. scan QR).
-        // Let's allow Service Owner to complete?
-        if (booking.service.ownerId !== user.id) {
-          throw new ForbiddenException("You cannot complete this booking");
-        }
-      } else {
+    if (isMissionClient) {
+      // Mission flow: Client completes -> Awaiting Payment
+    } else if (booking.service) {
+      // Service flow: Owner completes -> Awaiting Payment? 
+      // Or maybe Service flow is simpler. Let's start with Mission flow focus.
+      if (booking.service.ownerId !== user.id) {
+        throw new ForbiddenException("You cannot complete this booking");
+      }
+    } else {
+      // Direct booking? (Quote without mission)
+      // Check if user is the client
+      if (booking.clientId !== user.id) {
         throw new ForbiddenException("You cannot complete this booking");
       }
     }
@@ -602,31 +590,76 @@ export class BookingsService {
       throw new BadRequestException("Booking must be confirmed before completion");
     }
 
-    const amount = booking.reliefMission
-      ? (booking.reliefMission.hourlyRate *
-        (booking.reliefMission.dateEnd.getTime() - booking.reliefMission.dateStart.getTime())) /
-      (1000 * 60 * 60)
-      : (booking.service?.price ?? 0);
+    // NEW FLOW: Complete -> Awaiting Payment
+    await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: BookingStatus.COMPLETED_AWAITING_PAYMENT },
+    });
+
+    // Notify Talent
+    if (booking.talentId) {
+      await this.notifications.create({
+        userId: booking.talentId,
+        message: `Mission marquée comme terminée. En attente de validation du paiement.`,
+        type: "INFO",
+      });
+    }
+
+    return { ok: true };
+  }
+
+  async authorizePayment(
+    bookingId: string,
+    user: AuthenticatedUser,
+  ): Promise<{ ok: true }> {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        reliefMission: true,
+        service: true,
+        quote: true,
+      },
+    });
+
+    if (!booking) throw new NotFoundException("Booking not found");
+
+    if (booking.clientId !== user.id) {
+      throw new ForbiddenException("Only the client can authorize payment");
+    }
+
+    if (booking.status !== BookingStatus.COMPLETED_AWAITING_PAYMENT) {
+      throw new BadRequestException("Booking must be completed and awaiting payment");
+    }
+
+    let amount = 0;
+    if (booking.quote) {
+      amount = booking.quote.amount;
+    } else if (booking.reliefMission) {
+      const durationHours = (booking.reliefMission.dateEnd.getTime() - booking.reliefMission.dateStart.getTime()) / (1000 * 60 * 60);
+      amount = booking.reliefMission.hourlyRate * durationHours;
+    } else if (booking.service) {
+      amount = booking.service.price;
+    }
 
     await this.prisma.$transaction([
       this.prisma.booking.update({
         where: { id: bookingId },
-        data: { status: "COMPLETED" },
+        data: { status: BookingStatus.PAID }, // or COMPLETED? Enum says PAID.
       }),
       this.prisma.invoice.create({
         data: {
           bookingId: booking.id,
           amount: Math.round(amount * 100) / 100,
-          url: `/invoices/${booking.id}/download`,
+          url: `/invoices/${booking.id}/download`, // Mock URL generator
         },
       }),
     ]);
 
-    // Notify Client (invoice available)
-    if (booking.reliefMission) {
+    // Notify Talent
+    if (booking.talentId) {
       await this.notifications.create({
-        userId: booking.reliefMission.clientId,
-        message: `Mission terminée. Votre facture de ${Math.round(amount * 100) / 100}€ est disponible.`,
+        userId: booking.talentId,
+        message: `Paiement validé ! Facture de ${Math.round(amount * 100) / 100}€ générée.`,
         type: "SUCCESS",
       });
     }
