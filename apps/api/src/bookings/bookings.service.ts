@@ -532,6 +532,16 @@ export class BookingsService {
       throw new BadRequestException("Booking is not pending");
     }
 
+    // Check Client Credits
+    const clientProfile = await this.prisma.profile.findUnique({
+      where: { userId: user.id },
+      select: { availableCredits: true },
+    });
+
+    if (!clientProfile || clientProfile.availableCredits <= 0) {
+      throw new ForbiddenException("Solde insuffisant. Veuillez acheter un pack pour valider cette mission.");
+    }
+
     // Mission Assignment Logic
     if (booking.reliefMissionId) {
       await this.prisma.$transaction([
@@ -554,13 +564,24 @@ export class BookingsService {
           },
           data: { status: "CANCELLED" },
         }),
+        // 4. Decriment Credits
+        this.prisma.profile.update({
+          where: { userId: user.id },
+          data: { availableCredits: { decrement: 1 } },
+        }),
       ]);
     } else {
       // Standard Service Confirmation
-      await this.prisma.booking.update({
-        where: { id: bookingId },
-        data: { status: "CONFIRMED" },
-      });
+      await this.prisma.$transaction([
+        this.prisma.booking.update({
+          where: { id: bookingId },
+          data: { status: "CONFIRMED" },
+        }),
+        this.prisma.profile.update({
+          where: { userId: user.id },
+          data: { availableCredits: { decrement: 1 } },
+        }),
+      ]);
     }
 
     // Notify Talent

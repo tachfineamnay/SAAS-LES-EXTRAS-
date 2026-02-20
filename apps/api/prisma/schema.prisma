@@ -53,6 +53,7 @@ model User {
   sentMessages     DirectMessage[] @relation("SentMessages")
   receivedMessages DirectMessage[] @relation("ReceivedMessages")
   notifications    Notification[]
+  packPurchases    PackPurchase[]
 }
 
 model DirectMessage {

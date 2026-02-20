@@ -7,6 +7,7 @@ import { BentoGrid, BentoCard } from "@/components/dashboard/BentoGrid";
 import { StatsWidget } from "@/components/dashboard/StatsWidget";
 import { BookingListWidget } from "@/components/dashboard/BookingListWidget";
 
+import { CreditsWidget } from "@/components/dashboard/CreditsWidget";
 import { DollarSign, Calendar, Users, Briefcase, FileText, CheckCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TrustChecklistWidget } from "@/components/dashboard/TrustChecklistWidget";
@@ -18,6 +19,7 @@ import { UpcomingMissionsWidget } from "@/components/dashboard/client/UpcomingMi
 import { ClientInvoicesWidget } from "@/components/dashboard/client/ClientInvoicesWidget";
 import { ClientArchivesWidget } from "@/components/dashboard/client/ClientArchivesWidget";
 import { getInvoices } from "@/actions/finance";
+import { getCredits } from "@/actions/credits";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +32,12 @@ export default async function DashboardPage() {
 
     const { role: userRole } = session.user;
     const { token } = session;
+
+    // Fetch credits for client
+    let availableCredits = 0;
+    if (userRole === "CLIENT") {
+        availableCredits = await getCredits();
+    }
 
     // Fetch data with token
     const bookingsData = await getBookingsPageData(token);
@@ -104,6 +112,13 @@ export default async function DashboardPage() {
                     </BentoCard>
 
                     {/* Facturation / Invoices - NEW */}
+                    <BentoCard
+                        title="Mes Packs"
+                        icon={<DollarSign className="h-6 w-6" />}
+                    >
+                        <CreditsWidget credits={availableCredits} />
+                    </BentoCard>
+
                     <BentoCard
                         title="Mes Factures"
                         icon={<FileText className="h-6 w-6" />}
