@@ -143,7 +143,7 @@ export function MissionsTable({ missions }: MissionsTableProps) {
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="w-full sm:max-w-lg">
           <SheetHeader>
-            <SheetTitle>Détail mission SOS</SheetTitle>
+            <SheetTitle>Détail mission Renfort</SheetTitle>
             <SheetDescription>Lecture rapide du contenu avant modération.</SheetDescription>
           </SheetHeader>
 

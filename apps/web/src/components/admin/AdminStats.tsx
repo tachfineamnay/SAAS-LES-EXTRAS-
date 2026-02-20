@@ -63,7 +63,7 @@ export function AdminStats({ data }: AdminStatsProps) {
         </CardHeader>
         <CardContent>
           <p className="text-2xl font-semibold text-slate-900">{data.sosConversionRate}%</p>
-          <p className="text-xs text-muted-foreground">Missions SOS pourvues</p>
+          <p className="text-xs text-muted-foreground">Missions Renforts pourvues</p>
         </CardContent>
       </Card>
     </div>

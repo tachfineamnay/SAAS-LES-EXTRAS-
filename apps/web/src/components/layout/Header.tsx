@@ -14,7 +14,7 @@ type HeaderProps = {
 export function Header({ onOpenMobileSidebar }: HeaderProps) {
   const userRole = useUIStore((state) => state.userRole);
   const setUserRole = useUIStore((state) => state.setUserRole);
-  const openSOSModal = useUIStore((state) => state.openSOSModal);
+  const openRenfortModal = useUIStore((state) => state.openRenfortModal);
   const openPublishModal = useUIStore((state) => state.openPublishModal);
 
   return (
@@ -73,9 +73,9 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
           </Select>
 
           {userRole === "CLIENT" ? (
-            <Button className="bg-red-600 text-white hover:bg-red-700" onClick={openSOSModal}>
+            <Button className="bg-red-600 text-white hover:bg-red-700" onClick={openRenfortModal}>
               <Siren className="h-4 w-4" />
-              RENFORT IMMÉDIAT
+              DEMANDER UN RENFORT
             </Button>
           ) : (
             <Button className="bg-blue-600 text-white hover:bg-blue-700" onClick={openPublishModal}>

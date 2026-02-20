@@ -4,15 +4,15 @@ import { create } from "zustand";
 
 export type UserRole = "CLIENT" | "TALENT";
 
-interface UIState {
-  isSOSModalOpen: boolean;
+export interface UIState {
+  isRenfortModalOpen: boolean;
   isPublishModalOpen: boolean;
   userRole: "CLIENT" | "TALENT" | null;
   onboardingStep: number;
   isMobileOpen: boolean;
 
-  openSOSModal: () => void;
-  closeSOSModal: () => void;
+  openRenfortModal: () => void;
+  closeRenfortModal: () => void;
   openPublishModal: () => void;
   closePublishModal: () => void;
   toggleMobile: () => void;
@@ -22,13 +22,13 @@ interface UIState {
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  isSOSModalOpen: false,
+  isRenfortModalOpen: false,
   isPublishModalOpen: false,
   isMobileOpen: false,
   userRole: "CLIENT",
   onboardingStep: 0,
-  openSOSModal: () => set({ isSOSModalOpen: true }),
-  closeSOSModal: () => set({ isSOSModalOpen: false }),
+  openRenfortModal: () => set({ isRenfortModalOpen: true }),
+  closeRenfortModal: () => set({ isRenfortModalOpen: false }),
   openPublishModal: () => set({ isPublishModalOpen: true }),
   closePublishModal: () => set({ isPublishModalOpen: false }),
   toggleMobile: () => set((state) => ({ isMobileOpen: !state.isMobileOpen })),

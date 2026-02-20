@@ -31,7 +31,7 @@ export default async function SosDashboardPage() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">Gestion des Urgences SOS</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Gestion des Renforts</h1>
                 <p className="text-muted-foreground">
                     Gérez vos missions de renfort et validez les candidatures des freelances.
                 </p>
@@ -42,7 +42,7 @@ export default async function SosDashboardPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Aucune mission en cours</CardTitle>
-                            <CardDescription>Vous n'avez pas de mission SOS active.</CardDescription>
+                            <CardDescription>Vous n'avez pas de demande de renfort active.</CardDescription>
                         </CardHeader>
                     </Card>
                 ) : (

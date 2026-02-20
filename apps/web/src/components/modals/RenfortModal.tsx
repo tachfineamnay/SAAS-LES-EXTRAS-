@@ -2,7 +2,7 @@
 
 import { FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { createMissionFromSOS } from "@/app/actions/marketplace";
+import { createMissionFromRenfort } from "@/app/actions/marketplace";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,17 +24,17 @@ const defaultForm = {
   hourlyRate: "",
 };
 
-export function SOSModal() {
-  const isOpen = useUIStore((state) => state.isSOSModalOpen);
-  const openSOSModal = useUIStore((state) => state.openSOSModal);
-  const closeSOSModal = useUIStore((state) => state.closeSOSModal);
+export function RenfortModal() {
+  const isOpen = useUIStore((state) => state.isRenfortModalOpen);
+  const openRenfortModal = useUIStore((state) => state.openRenfortModal);
+  const closeRenfortModal = useUIStore((state) => state.closeRenfortModal);
   const [form, setForm] = useState(defaultForm);
   const [isPending, startTransition] = useTransition();
 
   const resetForm = () => setForm(defaultForm);
 
   const handleClose = () => {
-    closeSOSModal();
+    closeRenfortModal();
     resetForm();
   };
 
@@ -58,7 +58,7 @@ export function SOSModal() {
           throw new Error("Tarif horaire invalide.");
         }
 
-        await createMissionFromSOS({
+        await createMissionFromRenfort({
           title: form.role,
           dateStart: dateStart.toISOString(),
           dateEnd: dateEnd.toISOString(),
@@ -66,10 +66,10 @@ export function SOSModal() {
           hourlyRate,
         });
 
-        toast.success("Alerte SOS diffusée !");
+        toast.success("Demande de renfort diffusée !");
         handleClose();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Impossible de créer la mission SOS.");
+        toast.error(error instanceof Error ? error.message : "Impossible de créer la demande.");
       }
     });
   };
@@ -79,7 +79,7 @@ export function SOSModal() {
       open={isOpen}
       onOpenChange={(open) => {
         if (open) {
-          openSOSModal();
+          openRenfortModal();
           return;
         }
         handleClose();
@@ -87,7 +87,7 @@ export function SOSModal() {
     >
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Lancer un SOS</DialogTitle>
+          <DialogTitle>Publier une demande de renfort</DialogTitle>
           <DialogDescription>Décrivez votre besoin urgent, on diffuse immédiatement.</DialogDescription>
         </DialogHeader>
 
@@ -148,10 +148,10 @@ export function SOSModal() {
           <DialogFooter>
             <Button
               type="submit"
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={isPending}
             >
-              {isPending ? "Diffusion..." : "Diffuser l'alerte"}
+              {isPending ? "Publication..." : "Publier la demande"}
             </Button>
           </DialogFooter>
         </form>

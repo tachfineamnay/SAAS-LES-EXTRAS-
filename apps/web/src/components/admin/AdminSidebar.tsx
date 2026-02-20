@@ -31,7 +31,7 @@ const links = [
   },
   {
     href: "/admin/missions",
-    label: "Missions SOS",
+    label: "Missions Renforts",
     icon: TriangleAlert,
   },
   {
@@ -75,7 +75,7 @@ function AdminNav({ onNavigate }: AdminNavProps) {
               "flex items-center gap-2.5 rounded-md border border-transparent px-3 py-2 text-sm transition-colors",
               "text-slate-300 hover:bg-slate-800 hover:text-slate-100",
               isActive &&
-                "border-slate-700 bg-slate-800 text-slate-50 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.2)]",
+              "border-slate-700 bg-slate-800 text-slate-50 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.2)]",
             )}
           >
             <Icon className="h-4 w-4" />

@@ -178,7 +178,7 @@ export async function getService(id: string, token?: string): Promise<Serialized
   }
 }
 
-export async function createMissionFromSOS(input: CreateMissionInput): Promise<{ ok: true }> {
+export async function createMissionFromRenfort(input: CreateMissionInput): Promise<{ ok: true }> {
   const session = await getSession();
   if (!session) throw new Error("Non connecté");
 

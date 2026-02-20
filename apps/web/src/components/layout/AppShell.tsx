@@ -2,30 +2,32 @@
 
 import { useState } from "react";
 import { PublishModal } from "@/components/modals/PublishModal";
-import { SOSModal } from "@/components/modals/SOSModal";
+import { RenfortModal } from "@/components/modals/RenfortModal";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
+import { useUIStore } from "@/lib/stores/useUIStore";
 
-type AppShellProps = {
-  children: React.ReactNode;
-};
+export function RenfortModalWrapper() {
+  const isOpen = useUIStore((state) => state.isRenfortModalOpen);
+  if (!isOpen) return null;
+  return <RenfortModal />;
+}
 
-export function AppShell({ children }: AppShellProps) {
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+export function AppShell({ children }: { children: React.ReactNode }) {
+  const [isMobileOpen, setMobileOpen] = useState(false);
+  const userRole = useUIStore((state) => state.userRole);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Header onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)} />
-      <div className="mx-auto flex w-full max-w-[1400px] gap-6 px-4 py-6 sm:px-6 lg:px-8">
-        <Sidebar
-          isMobileOpen={isMobileSidebarOpen}
-          onMobileOpenChange={setIsMobileSidebarOpen}
-        />
-        <main className="min-h-[calc(100vh-8rem)] flex-1">{children}</main>
+    <div className="flex h-screen w-full flex-col bg-muted/40 font-sans text-foreground antialiased md:flex-row">
+      <Sidebar isMobileOpen={isMobileOpen} onMobileOpenChange={setMobileOpen} />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Header onOpenMobileSidebar={() => setMobileOpen(true)} />
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          {children}
+        </main>
       </div>
-
-      <SOSModal />
+      <RenfortModalWrapper />
       <PublishModal />
       <Toaster richColors position="top-right" />
     </div>
