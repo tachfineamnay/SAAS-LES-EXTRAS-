@@ -2,7 +2,7 @@ import { IsDateString, IsOptional, IsString } from "class-validator";
 
 export class BookServiceDto {
     @IsDateString()
-    date: string;
+    date!: string;
 
     @IsOptional()
     @IsString()

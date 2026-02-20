@@ -678,6 +678,14 @@ export class BookingsService {
       throw new BadRequestException("Booking must be completed and awaiting payment");
     }
 
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { bookingId: booking.id },
+    });
+
+    if (!invoice) {
+      throw new NotFoundException("Invoice not found");
+    }
+
     await this.prisma.$transaction([
       this.prisma.booking.update({
         where: { id: bookingId },
@@ -695,7 +703,7 @@ export class BookingsService {
     if (booking.talentId) {
       await this.notifications.create({
         userId: booking.talentId,
-        message: `Paiement validé ! Facture de ${Math.round(amount * 100) / 100}€ générée.`,
+        message: `Paiement validé ! Facture de ${invoice.amount}€ générée.`,
         type: "SUCCESS",
       });
     }

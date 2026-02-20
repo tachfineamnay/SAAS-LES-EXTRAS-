@@ -3,11 +3,11 @@ import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-
 export class CreateQuoteDto {
     @IsString()
     @IsNotEmpty()
-    establishmentId: string;
+    establishmentId!: string;
 
     @IsString()
     @IsNotEmpty()
-    freelanceId: string;
+    freelanceId!: string;
 
     @IsString()
     @IsOptional()
@@ -15,17 +15,17 @@ export class CreateQuoteDto {
 
     @IsNumber()
     @IsNotEmpty()
-    amount: number;
+    amount!: number;
 
     @IsString()
     @IsNotEmpty()
-    description: string;
+    description!: string;
 
     @IsDateString()
     @IsNotEmpty()
-    startDate: string;
+    startDate!: string;
 
     @IsDateString()
     @IsNotEmpty()
-    endDate: string;
+    endDate!: string;
 }

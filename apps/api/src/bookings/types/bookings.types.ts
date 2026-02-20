@@ -6,7 +6,8 @@ export type BookingLineStatus =
   | "PAID"
   | "CANCELLED"
   | "ASSIGNED"
-  | "COMPLETED";
+  | "COMPLETED"
+  | "COMPLETED_AWAITING_PAYMENT";
 
 export type BookingLine = {
   lineId: string;
