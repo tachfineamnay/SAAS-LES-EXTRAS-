@@ -5,17 +5,43 @@ import { CreateServiceDto } from "./dto/create-service.dto";
 
 @Injectable()
 export class ServicesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async findAll() {
     return this.prisma.service.findMany({
       where: {
         isHidden: false,
       },
+      include: {
+        owner: {
+          include: {
+            profile: true,
+          },
+        },
+      },
       orderBy: {
         createdAt: "desc",
       },
     });
+  }
+
+  async findOne(id: string) {
+    const service = await this.prisma.service.findUnique({
+      where: { id },
+      include: {
+        owner: {
+          include: {
+            profile: true,
+          },
+        },
+      },
+    });
+
+    if (!service) {
+      throw new NotFoundException("Service not found");
+    }
+
+    return service;
   }
 
   async createService(dto: CreateServiceDto, ownerId: string) {
@@ -31,7 +57,7 @@ export class ServicesService {
     });
   }
 
-  async bookService(serviceId: string, clientId: string) {
+  async bookService(serviceId: string, clientId: string, date: Date, message?: string) {
     const service = await this.prisma.service.findUnique({
       where: { id: serviceId },
       select: {
@@ -44,16 +70,18 @@ export class ServicesService {
       throw new NotFoundException("Service not found");
     }
 
+    // Check for existing pending booking for same service/client
     const existingBooking = await this.prisma.booking.findFirst({
       where: {
         serviceId,
         clientId,
+        status: BookingStatus.PENDING,
       },
       select: { id: true },
     });
 
     if (existingBooking) {
-      throw new ConflictException("Service already booked");
+      throw new ConflictException("Une demande est déjà en cours pour ce service");
     }
 
     return this.prisma.booking.create({
@@ -62,7 +90,8 @@ export class ServicesService {
         clientId,
         talentId: service.ownerId,
         serviceId: service.id,
-        scheduledAt: new Date(),
+        scheduledAt: date,
+        message,
       },
     });
   }

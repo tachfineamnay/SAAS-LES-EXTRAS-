@@ -218,7 +218,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
                                                         {skill}
                                                         <Button
                                                             variant="ghost"
-                                                            size="xs"
+                                                            size="sm"
                                                             type="button"
                                                             onClick={() => removeSkill(skill)}
                                                             className="h-4 w-4 ml-1 hover:bg-transparent text-muted-foreground hover:text-foreground"

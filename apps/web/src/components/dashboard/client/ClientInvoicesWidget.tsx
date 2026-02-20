@@ -46,7 +46,8 @@ export function ClientInvoicesWidget({ invoices }: ClientInvoicesWidgetProps) {
     return (
         <div className="flex flex-col h-full">
             <div className="flex justify-end mb-2">
-                <Button variant="outline" size="xs" onClick={handleExportCsv} className="h-7 text-xs">
+                <Button variant="outline" size="sm" onClick={handleExportCsv}>
+                    <Download className="mr-2 h-4 w-4" />
                     Exporter CSV
                 </Button>
             </div>

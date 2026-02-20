@@ -16,9 +16,16 @@ export default async function AccountPage() {
   });
 
   // If no profile (should happen in onboarding, but safety fallback), use session data for defaults
-  const initialData = profile || {
-    firstName: session.user.name?.split(" ")[0] || "",
-    lastName: session.user.name?.split(" ").slice(1).join(" ") || "",
+  const defaultValues = {
+    firstName: profile?.firstName || "",
+    lastName: profile?.lastName || "",
+    jobTitle: profile?.jobTitle || "",
+    bio: profile?.bio || "",
+    avatar: profile?.avatar || undefined,
+    city: profile?.city || "",
+    zipCode: profile?.zipCode || "",
+    siret: profile?.siret || "",
+    tvaNumber: profile?.tvaNumber || "",
   };
 
   return (
@@ -31,7 +38,7 @@ export default async function AccountPage() {
       </div>
 
       <div className="max-w-4xl mx-auto pb-10">
-        <ProfileForm initialData={{ ...initialData, email: session.user.email }} />
+        <ProfileForm initialData={defaultValues} />
       </div>
     </div>
   );

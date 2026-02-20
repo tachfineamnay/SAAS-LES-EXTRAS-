@@ -16,6 +16,16 @@ type SerializedService = {
   price: number;
   type: ServiceType;
   capacity: number;
+  owner?: {
+    id: string;
+    profile?: {
+      firstName: string;
+      lastName: string;
+      avatar: string | null;
+      jobTitle: string | null;
+      bio: string | null;
+    } | null;
+  };
 };
 
 export type MarketplaceData = {
@@ -132,6 +142,25 @@ export async function getMarketplaceData(token?: string): Promise<MarketplaceDat
   }
 }
 
+export async function getService(id: string, token?: string): Promise<SerializedService | null> {
+  let activeToken = token;
+  if (!activeToken) {
+    const session = await getSession();
+    if (!session) return null;
+    activeToken = session.token;
+  }
+
+  try {
+    return await apiRequest<SerializedService>(`/services/${id}`, {
+      method: "GET",
+      token: activeToken,
+    });
+  } catch (error) {
+    console.error("GetService error:", error);
+    return null;
+  }
+}
+
 export async function createMissionFromSOS(input: CreateMissionInput): Promise<{ ok: true }> {
   const session = await getSession();
   if (!session) throw new Error("Non connecté");
@@ -180,20 +209,34 @@ export async function applyToMission(missionId: string): Promise<{ ok: true }> {
   return { ok: true };
 }
 
-export async function bookService(serviceId: string): Promise<{ ok: true }> {
+export async function bookService(
+  serviceId: string,
+  date: Date,
+  message?: string
+): Promise<{ ok: true } | { error: string }> {
   if (!serviceId) {
-    throw new Error("Service manquant.");
+    return { error: "Service manquant." };
   }
 
   const session = await getSession();
-  if (!session) throw new Error("Non connecté");
+  if (!session) return { error: "Non connecté" };
 
-  await apiRequest(`/services/${serviceId}/book`, {
-    method: "POST",
-    token: session.token,
-  });
+  try {
+    await apiRequest(`/services/${serviceId}/book`, {
+      method: "POST",
+      token: session.token,
+      body: {
+        date: date.toISOString(),
+        message,
+      },
+    });
 
-  revalidatePath("/marketplace");
-  revalidatePath("/bookings");
-  return { ok: true };
+    revalidatePath("/marketplace");
+    revalidatePath("/bookings");
+    return { ok: true };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Erreur lors de la réservation"
+    };
+  }
 }

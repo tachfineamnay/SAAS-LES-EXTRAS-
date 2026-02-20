@@ -18,25 +18,20 @@ import { createQuote } from "@/actions/quote-actions";
 import { toast } from "sonner";
 import { FileText, Loader2 } from "lucide-react";
 
-export function QuoteCreationModal() {
+interface QuoteCreationModalProps {
+    trigger?: React.ReactNode;
+    initialData?: {
+        establishmentId?: string;
+        description?: string;
+    };
+}
+
+export function QuoteCreationModal({ trigger, initialData }: QuoteCreationModalProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
     async function handleSubmit(formData: FormData) {
         setLoading(true);
-        // In a real app we would get freelanceId from session context or passed as prop
-        // For now let's assume the action handles it or we pass a hidden field if we had the ID.
-        // Wait, the action expects freelanceId. We need to inject it or fetch it.
-        // Client components don't have session easily unless passed.
-        // Let's rely on the action to get session? 
-        // The previous action I wrote expects freelanceId in formData.
-        // I should update the action to get it from session.
-        // But for now, let's assume we pass it or the user fills it (bad UX).
-        // Better: Update action to use getSession().
-
-        // Let's fix the action first? Or assume I fix it. 
-        // I'll update the action next.
-
         const result = await createQuote(formData);
         setLoading(false);
 
@@ -51,10 +46,12 @@ export function QuoteCreationModal() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="gap-2">
-                    <FileText className="h-4 w-4" />
-                    Émettre une proposition
-                </Button>
+                {trigger || (
+                    <Button className="gap-2">
+                        <FileText className="h-4 w-4" />
+                        Émettre une proposition
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -67,7 +64,13 @@ export function QuoteCreationModal() {
                     {/* Mock Inputs for IDs for now, ideally Select or hidden */}
                     <div className="grid gap-2">
                         <Label htmlFor="establishmentId">ID Établissement (Demo)</Label>
-                        <Input id="establishmentId" name="establishmentId" placeholder="cl..." required />
+                        <Input
+                            id="establishmentId"
+                            name="establishmentId"
+                            placeholder="cl..."
+                            required
+                            defaultValue={initialData?.establishmentId}
+                        />
                     </div>
                     {/* Freelance ID should be hidden/injected by server */}
                     <div className="grid gap-2">
@@ -90,7 +93,13 @@ export function QuoteCreationModal() {
 
                     <div className="grid gap-2">
                         <Label htmlFor="description">Détails de l'intervention</Label>
-                        <Textarea id="description" name="description" placeholder="Description de la mission..." required />
+                        <Textarea
+                            id="description"
+                            name="description"
+                            placeholder="Description de la mission..."
+                            required
+                            defaultValue={initialData?.description}
+                        />
                     </div>
 
                     <DialogFooter>

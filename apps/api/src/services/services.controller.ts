@@ -6,17 +6,25 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
 import { CreateServiceDto } from "./dto/create-service.dto";
+import { BookServiceDto } from "./dto/book-service.dto";
 import { ServicesService } from "./services.service";
 
 @Controller("services")
 export class ServicesController {
-  constructor(private readonly servicesService: ServicesService) {}
+  constructor(private readonly servicesService: ServicesService) { }
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CLIENT, UserRole.TALENT)
   findAll() {
     return this.servicesService.findAll();
+  }
+
+  @Get(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CLIENT, UserRole.TALENT)
+  findOne(@Param("id") id: string) {
+    return this.servicesService.findOne(id);
   }
 
   @Post()
@@ -32,7 +40,11 @@ export class ServicesController {
   @Post(":serviceId/book")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CLIENT)
-  bookService(@Param("serviceId") serviceId: string, @CurrentUser() user: AuthenticatedUser) {
-    return this.servicesService.bookService(serviceId, user.id);
+  bookService(
+    @Param("serviceId") serviceId: string,
+    @Body() dto: BookServiceDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    return this.servicesService.bookService(serviceId, user.id, new Date(dto.date), dto.message);
   }
 }
