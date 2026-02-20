@@ -6,7 +6,7 @@ import { getQuotes } from "@/actions/quotes";
 import { BentoGrid, BentoCard } from "@/components/dashboard/BentoGrid";
 import { StatsWidget } from "@/components/dashboard/StatsWidget";
 import { BookingListWidget } from "@/components/dashboard/BookingListWidget";
-import { NetworkWidget } from "@/components/dashboard/NetworkWidget";
+
 import { DollarSign, Calendar, Users, Briefcase, FileText, CheckCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TrustChecklistWidget } from "@/components/dashboard/TrustChecklistWidget";
@@ -145,14 +145,7 @@ export default async function DashboardPage() {
                         />
                     </BentoCard>
 
-                    {/* Réseau de confiance */}
-                    <BentoCard
-                        title="Mon Réseau"
-                        icon={<Users className="h-6 w-6" />}
-                        rowSpan={2}
-                    >
-                        <NetworkWidget />
-                    </BentoCard>
+
 
                     {/* Stats rapides */}
                     <BentoCard>

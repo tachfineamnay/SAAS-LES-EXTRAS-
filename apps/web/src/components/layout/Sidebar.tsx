@@ -22,12 +22,13 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
+
+
 const CLIENT_LINKS = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
   { href: "/dashboard/renforts", label: "Mes Renforts", icon: Briefcase },
   { href: "/dashboard/inbox", label: "Boîte de réception", icon: Mail },
-  { href: "/network", label: "Mon Réseau", icon: Users },
   { href: "/settings", label: "Paramètres", icon: Settings },
 ];
 
@@ -36,14 +37,8 @@ const TALENT_LINKS = [
   { href: "/marketplace", label: "Offres de Renforts", icon: ShoppingBag },
   { href: "/bookings", label: "Mon Agenda", icon: CalendarDays },
   { href: "/dashboard/inbox", label: "Boîte de réception", icon: Mail },
-  { href: "/network", label: "Mon Réseau", icon: Users },
   { href: "/settings", label: "Paramètres", icon: Settings },
 ];
-
-// The original 'links' array is removed as per the instruction's implied replacement.
-// For now, we'll use CLIENT_LINKS as a default, assuming the component will be updated
-// to accept a prop to choose between CLIENT_LINKS and TALENT_LINKS.
-// If the instruction intended to replace the existing 'links' array with one of these,
 // it would need to specify which one, or how to select.
 // Given the instruction only provides the new definitions, and the original `links`
 // array is not explicitly removed, but the new ones are inserted, I will assume
