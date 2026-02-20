@@ -1,10 +1,19 @@
-import { Controller, Get, Param, Res } from '@nestjs/common';
+import { Controller, Get, Param, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { InvoicesService } from './invoices.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/types/jwt-payload.type';
 
 @Controller('invoices')
+@UseGuards(JwtAuthGuard)
 export class InvoicesController {
     constructor(private readonly invoicesService: InvoicesService) { }
+
+    @Get()
+    async findAll(@CurrentUser() user: AuthenticatedUser) {
+        return this.invoicesService.findAll(user);
+    }
 
     @Get(':id/download')
     async downloadInvoice(@Param('id') id: string, @Res() res: Response) {

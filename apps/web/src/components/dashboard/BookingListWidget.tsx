@@ -1,8 +1,11 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BookingLine } from "@/app/actions/bookings";
-import { Calendar, ChevronRight, MapPin, Download } from "lucide-react";
+import { QuoteCreationModal } from "@/components/dashboard/QuoteCreationModal";
+import { Calendar, ChevronRight, MapPin, Download, RefreshCcw } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +66,23 @@ export function BookingListWidget({
                                             </a>
                                         </Button>
                                     )}
+                                    {/* Renewal Action for Completed Missions */}
+                                    {(booking.status === "COMPLETED" || booking.status === "PAID") && (
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            <QuoteCreationModal
+                                                initialData={{
+                                                    establishmentId: booking.relatedBookingId,
+                                                    description: `Renouvellement: ${booking.typeLabel} - ${booking.address}`,
+                                                }}
+                                                trigger={
+                                                    <Button variant="outline" size="sm" className="gap-1 h-9">
+                                                        <RefreshCcw className="h-3 w-3" />
+                                                        <span className="sr-only sm:not-sr-only">Renouveler</span>
+                                                    </Button>
+                                                }
+                                            />
+                                        </div>
+                                    )}
                                     <Button variant="ghost" size="icon" asChild>
                                         <Link href={`/bookings/${booking.lineType.toLowerCase()}/${booking.lineId}`}>
                                             <ChevronRight className="h-4 w-4" />
@@ -73,18 +93,16 @@ export function BookingListWidget({
                         ))
                     )}
                 </div>
-            </ScrollArea >
-            {
-                bookings.length > 0 && (
-                    <div className="mt-4 pt-4 border-t flex justify-end">
-                        <Button variant="link" size="sm" asChild className="px-0">
-                            <Link href={viewAllLink}>
-                                Voir tout <ChevronRight className="ml-1 h-3 w-3" />
-                            </Link>
-                        </Button>
-                    </div>
-                )
-            }
-        </div >
+            </ScrollArea>
+            {bookings.length > 0 && (
+                <div className="mt-4 pt-4 border-t flex justify-end">
+                    <Button variant="link" size="sm" asChild className="px-0">
+                        <Link href={viewAllLink}>
+                            Voir tout <ChevronRight className="ml-1 h-3 w-3" />
+                        </Link>
+                    </Button>
+                </div>
+            )}
+        </div>
     );
 }

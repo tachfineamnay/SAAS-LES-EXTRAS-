@@ -632,25 +632,28 @@ export class BookingsService {
     }
 
     let amount = 0;
-    if (booking.quote) {
-      amount = booking.quote.amount;
-    } else if (booking.reliefMission) {
-      const durationHours = (booking.reliefMission.dateEnd.getTime() - booking.reliefMission.dateStart.getTime()) / (1000 * 60 * 60);
-      amount = booking.reliefMission.hourlyRate * durationHours;
-    } else if (booking.service) {
-      amount = booking.service.price;
+    const b = booking as any;
+    if (b.quote) {
+      amount = b.quote.amount;
+    } else if (b.reliefMission) {
+      const durationHours = (b.reliefMission.dateEnd.getTime() - b.reliefMission.dateStart.getTime()) / (1000 * 60 * 60);
+      amount = b.reliefMission.hourlyRate * durationHours;
+    } else if (b.service) {
+      amount = b.service.price;
     }
 
     await this.prisma.$transaction([
       this.prisma.booking.update({
         where: { id: bookingId },
-        data: { status: BookingStatus.PAID }, // or COMPLETED? Enum says PAID.
+        data: { status: "PAID" },
       }),
       this.prisma.invoice.create({
         data: {
           bookingId: booking.id,
           amount: Math.round(amount * 100) / 100,
-          url: `/invoices/${booking.id}/download`, // Mock URL generator
+          url: `/invoices/${booking.id}/download`,
+          status: "PAID",
+          invoiceNumber: `F-${new Date().getFullYear()}-${booking.id.slice(-6).toUpperCase()}`,
         },
       }),
     ]);

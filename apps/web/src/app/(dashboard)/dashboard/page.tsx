@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getBookingsPageData } from "@/app/actions/bookings";
 import { getQuotes } from "@/actions/quotes";
@@ -55,7 +56,7 @@ export default async function DashboardPage() {
 
                 <BentoGrid>
                     {/* Payments to Validate - High Priority */}
-                     {awaitingPaymentBookings.length > 0 && (
+                    {awaitingPaymentBookings.length > 0 && (
                         <BentoCard
                             title="Paiements à Valider"
                             icon={<DollarSign className="h-6 w-6 text-green-600" />}
@@ -64,7 +65,7 @@ export default async function DashboardPage() {
                         >
                             <PaymentValidationWidget bookings={awaitingPaymentBookings} />
                         </BentoCard>
-                     )}
+                    )}
 
                     {/* Offers / Quotes Received - Priority */}
                     <BentoCard
@@ -137,6 +138,12 @@ export default async function DashboardPage() {
                 </h1>
                 <div className="flex gap-2">
                     <QuoteCreationModal />
+                    <Button size="sm" variant="outline" asChild>
+                        <Link href="/dashboard/finance">
+                            <DollarSign className="mr-2 h-4 w-4" />
+                            Mes Finances
+                        </Link>
+                    </Button>
                     <Button size="sm" variant="outline">Trouver une mission</Button>
                 </div>
             </div>

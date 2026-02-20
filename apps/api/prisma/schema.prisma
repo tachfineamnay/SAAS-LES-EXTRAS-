@@ -188,12 +188,19 @@ model Booking {
   @@index([serviceId])
 }
 
+enum InvoiceStatus {
+  PENDING_PAYMENT
+  PAID
+}
+
 model Invoice {
-  id        String   @id @default(cuid())
-  url       String
-  amount    Float
-  bookingId String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  id            String        @id @default(cuid())
+  invoiceNumber String?       @unique // Optional initially to allow backfill if needed, or default null
+  status        InvoiceStatus @default(PENDING_PAYMENT)
+  url           String
+  amount        Float
+  bookingId     String        @unique
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  booking       Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
