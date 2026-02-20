@@ -106,7 +106,7 @@ export default function LoginPage() {
 
                     <div className="text-xs text-muted-foreground text-center mt-4 border-t pt-4">
                         <p className="font-semibold mb-1">Comptes Démo :</p>
-                        <p>Client: directeur@mecs-avenir.fr</p>
+                        <p>Établissement: directeur@mecs-avenir.fr</p>
                         <p>Freelance: karim.educ@gmail.com</p>
                         <p>Mdp: password123</p>
                     </div>

@@ -60,8 +60,8 @@ export default function RegisterPage({ searchParams }: { searchParams: { role?: 
 
                     <Tabs defaultValue={defaultRole} onValueChange={(v) => setRole(v as any)} className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="TALENT">Talent</TabsTrigger>
-                            <TabsTrigger value="CLIENT">Client</TabsTrigger>
+                            <TabsTrigger value="TALENT">Freelance</TabsTrigger>
+                            <TabsTrigger value="CLIENT">Établissement</TabsTrigger>
                         </TabsList>
 
                         <div className="mt-4 grid gap-4">

@@ -92,7 +92,7 @@ export default function HomePage() {
                     <Link href="/marketplace">Voir les missions</Link>
                   </Button>
                   <Button asChild variant="outline" className="text-muted-foreground hover:text-foreground">
-                    <Link href="/register?role=TALENT">M'inscrire comme Talent</Link>
+                    <Link href="/register?role=TALENT">M'inscrire comme Freelance</Link>
                   </Button>
                 </div>
               </div>
@@ -119,7 +119,7 @@ export default function HomePage() {
                   <Building2 className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-card-foreground mb-2">Je recrute des extras</h3>
+                  <h3 className="text-xl font-bold text-card-foreground mb-2">Je recrute des freelances</h3>
                   <p className="text-muted-foreground text-sm">
                     Trouvez des profils vérifiés pour vos besoins ponctuels.
                     Facturation simplifiée et transparente.
@@ -139,7 +139,7 @@ export default function HomePage() {
                     <CheckCircle className="h-5 w-5 text-emerald-600" />
                     <span>Vérifié</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">Tous nos talents sont vérifiés par nos équipes.</p>
+                  <p className="text-sm text-muted-foreground">Tous nos freelances sont vérifiés par nos équipes.</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-foreground font-medium">
