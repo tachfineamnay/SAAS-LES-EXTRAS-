@@ -11,6 +11,7 @@ import {
   Users,
   Settings,
   CalendarDays,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ const CLIENT_LINKS = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
   { href: "/bookings", label: "Mes Missions", icon: Briefcase },
+  { href: "/dashboard/inbox", label: "Boîte de réception", icon: Mail },
   { href: "/network", label: "Mon Réseau", icon: Users },
   { href: "/settings", label: "Paramètres", icon: Settings },
 ];
@@ -33,6 +35,7 @@ const TALENT_LINKS = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/marketplace", label: "Offres de Renforts", icon: ShoppingBag },
   { href: "/bookings", label: "Mon Agenda", icon: CalendarDays },
+  { href: "/dashboard/inbox", label: "Boîte de réception", icon: Mail },
   { href: "/network", label: "Mon Réseau", icon: Users },
   { href: "/settings", label: "Paramètres", icon: Settings },
 ];
@@ -76,10 +79,15 @@ export function Sidebar({ isMobileOpen, onMobileOpenChange }: SidebarProps) {
           {links.map((link) => {
             const Icon = link.icon;
             return (
-              <Button key={link.label} variant="ghost" asChild className="w-full justify-start">
+              <Button key={link.label} variant="ghost" asChild className="w-full justify-start relative">
                 <Link href={link.href}>
-                  <Icon className="h-4 w-4" />
-                  {link.label}
+                  <Icon className="h-4 w-4 mr-2" />
+                  <span>{link.label}</span>
+                  {link.href === "/dashboard/inbox" && (
+                    <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white">
+                      3
+                    </span>
+                  )}
                 </Link>
               </Button>
             );
