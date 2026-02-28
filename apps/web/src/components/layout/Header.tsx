@@ -1,11 +1,12 @@
 "use client";
 
-import { Menu, Rocket, Siren, Bell } from "lucide-react";
+import { Menu, Siren, Bell, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useUIStore, type UserRole } from "@/lib/stores/useUIStore";
+import { cn } from "@/lib/utils";
 
 type HeaderProps = {
   onOpenMobileSidebar: () => void;
@@ -18,8 +19,9 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
   const openPublishModal = useUIStore((state) => state.openPublishModal);
 
   return (
-    <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-[12px] border-b border-border/40 shadow-sm">
-      <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 glass-surface-dense border-b border-border/40">
+      <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6">
+        {/* Left — mobile menu + breadcrumb slot */}
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -30,14 +32,14 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="flex items-center gap-2">
-            <div className="h-2.5 w-2.5 rounded-full bg-primary" aria-hidden="true" />
-            <span className="text-lg font-semibold tracking-tight text-foreground">
-              LesExtras
-            </span>
+          {/* Mobile logo */}
+          <div className="flex items-center gap-1.5 md:hidden">
+            <div className="h-6 w-6 rounded-md bg-primary shrink-0" aria-hidden="true" />
+            <span className="text-sm font-semibold tracking-tight">LesExtras</span>
           </div>
         </div>
 
+        {/* Right — actions */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Notifications */}
           <DropdownMenu>
@@ -48,58 +50,67 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
                 className="relative min-h-[44px] min-w-[44px]"
                 aria-label="Notifications (1 nouvelle)"
               >
-                <Bell className="h-5 w-5" />
+                <Bell className="h-4 w-4" />
                 <span
-                  className="absolute top-2 right-2 h-2 w-2 rounded-full bg-destructive"
+                  className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-destructive"
                   aria-hidden="true"
                 />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 glass-surface">
-              <DropdownMenuItem>
-                <div className="flex flex-col gap-1">
+              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/40">
+                Notifications
+              </div>
+              <DropdownMenuItem className="py-3">
+                <div className="flex flex-col gap-0.5">
                   <span className="font-medium text-sm">Nouveau message</span>
                   <span className="text-xs text-muted-foreground">
                     Jean Dupont vous a envoyé un message.
                   </span>
                 </div>
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-center text-xs text-muted-foreground">
-                Voir toutes les notifications
-              </DropdownMenuItem>
+              <div className="border-t border-border/40">
+                <DropdownMenuItem className="justify-center text-xs text-muted-foreground py-2">
+                  Voir tout
+                </DropdownMenuItem>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Badge variant="quiet" className="hidden sm:inline-flex">
+          {/* Role indicator */}
+          <Badge variant="quiet" className="hidden sm:inline-flex text-xs">
             {userRole === "CLIENT" ? "ÉTABLISSEMENT" : "FREELANCE"}
           </Badge>
 
+          {/* Demo role switcher */}
           <Select value={userRole || undefined} onValueChange={(value) => setUserRole(value as UserRole)}>
-            <SelectTrigger className="w-[140px] h-10">
+            <SelectTrigger className="w-[130px] h-9 text-xs">
               <SelectValue placeholder="Rôle" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="CLIENT">ÉTABLISSEMENT</SelectItem>
-              <SelectItem value="TALENT">FREELANCE</SelectItem>
+              <SelectItem value="CLIENT">Établissement</SelectItem>
+              <SelectItem value="TALENT">Freelance</SelectItem>
             </SelectContent>
           </Select>
 
+          {/* CTA */}
           {userRole === "CLIENT" ? (
             <Button
               onClick={openRenfortModal}
-              className="shadow-sm"
+              size="sm"
+              className="shadow-sm min-h-[44px] gap-2"
             >
-              <Siren className="h-4 w-4" />
-              <span className="hidden sm:inline">DEMANDER UN RENFORT</span>
+              <Siren className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">RENFORT</span>
             </Button>
           ) : (
             <Button
               variant="secondary"
               onClick={openPublishModal}
-              className="shadow-sm"
+              size="sm"
+              className="shadow-sm min-h-[44px]"
             >
-              <Rocket className="h-4 w-4" />
-              <span className="hidden sm:inline">PUBLIER OFFRE</span>
+              <span className="hidden sm:inline">PUBLIER</span>
             </Button>
           )}
         </div>

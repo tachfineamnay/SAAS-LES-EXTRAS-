@@ -74,7 +74,12 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
   };
 
   return (
-    <Card className={cn("flex flex-col h-full border-border/50 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-ring", mission.isUrgent && "border-destructive/30 bg-destructive/[0.03]")}>
+    <Card className={cn(
+      "flex flex-col h-full rounded-2xl transition-all duration-200",
+      "bg-card/70 backdrop-blur-[10px] border border-border/40 shadow-sm",
+      "hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-ring",
+      mission.isUrgent && "border-destructive/30"
+    )}>
       <CardHeader className="space-y-4 pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1">

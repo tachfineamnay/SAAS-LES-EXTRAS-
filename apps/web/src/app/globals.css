@@ -53,37 +53,110 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: hsl(var(--primary) / 0.18);
+    color: hsl(var(--foreground));
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 99px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
   }
 }
 
 @layer utilities {
+
   /* Glass surfaces */
   .glass-surface {
     @apply bg-card/70 backdrop-blur-[12px] border border-border/40;
   }
+
   .glass-surface-dense {
     @apply bg-card/85 backdrop-blur-[8px] border border-border/30;
   }
 
   /* Background halos — position with absolute on a wrapper */
   .halo-primary {
-    background: radial-gradient(
-      600px circle at top right,
-      hsl(var(--primary) / 0.06),
-      transparent 70%
-    );
+    background: radial-gradient(600px circle at top right,
+        hsl(var(--primary) / 0.06),
+        transparent 70%);
   }
+
   .halo-secondary {
-    background: radial-gradient(
-      400px circle at bottom left,
-      hsl(var(--secondary) / 0.04),
-      transparent 70%
-    );
+    background: radial-gradient(400px circle at bottom left,
+        hsl(var(--secondary) / 0.04),
+        transparent 70%);
+  }
+
+  /* Auth split-layout brand panel halos */
+  .auth-brand-halo-primary {
+    background: radial-gradient(600px circle at top right,
+        hsl(var(--primary) / 0.2),
+        transparent 70%);
+  }
+
+  .auth-brand-halo-secondary {
+    background: radial-gradient(600px circle at bottom left,
+        hsl(var(--secondary) / 0.2),
+        transparent 70%);
+  }
+
+
+  /* Skeleton shimmer */
+  .skeleton {
+    @apply bg-muted/70 animate-pulse rounded-md;
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .skeleton-shimmer {
+    @apply relative overflow-hidden bg-muted/70 rounded-md;
+  }
+
+  .skeleton-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+        transparent,
+        hsl(var(--card) / 0.6),
+        transparent);
+    animation: shimmer 1.6s infinite;
   }
 }
 
 /* Accessibility — reduced motion */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

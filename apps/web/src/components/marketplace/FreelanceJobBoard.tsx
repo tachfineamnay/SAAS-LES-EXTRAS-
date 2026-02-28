@@ -5,7 +5,9 @@ import { useState } from "react";
 import { SerializedMission } from "@/app/actions/marketplace";
 import { MissionCard } from "./MissionCard";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Search, Briefcase, MapPin } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface FreelanceJobBoardProps {
     missions: SerializedMission[];
@@ -14,41 +16,58 @@ interface FreelanceJobBoardProps {
 export function FreelanceJobBoard({ missions }: FreelanceJobBoardProps) {
     const [search, setSearch] = useState("");
 
-    const filteredMissions = missions.filter(m => {
+    const filteredMissions = missions.filter((m) => {
         if (!search) return true;
-        const searchLower = search.toLowerCase();
+        const q = search.toLowerCase();
         return (
-            m.title.toLowerCase().includes(searchLower) ||
-            m.address.toLowerCase().includes(searchLower) ||
-            m.client?.profile?.city?.toLowerCase().includes(searchLower) ||
+            m.title.toLowerCase().includes(q) ||
+            m.address.toLowerCase().includes(q) ||
+            m.client?.profile?.city?.toLowerCase().includes(q) ||
             false
         );
     });
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Missions de renfort</h1>
-                    <p className="text-muted-foreground">Trouvez des missions adaptées à vos compétences.</p>
-                </div>
-                <div className="relative w-full md:w-72">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            {/* Page header */}
+            <header className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Marketplace</p>
+                <h1 className="text-3xl font-bold tracking-tight">Missions de renfort</h1>
+                <p className="text-sm text-muted-foreground">
+                    {missions.length} mission{missions.length !== 1 ? "s" : ""} disponible{missions.length !== 1 ? "s" : ""}.
+                </p>
+            </header>
+
+            {/* Search bar — glass sticky */}
+            <div className="sticky top-[57px] z-20 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 glass-surface-dense border-y border-border/40">
+                <div className="max-w-xl relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <Input
-                        placeholder="Rechercher par ville, titre..."
-                        className="pl-8"
+                        id="mission-search"
+                        placeholder="Ville, titre, établissement…"
+                        className="pl-9 h-11 bg-background/60"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
+                        aria-label="Rechercher une mission"
                     />
                 </div>
             </div>
 
+            {/* Results */}
             {filteredMissions.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed rounded-xl">
-                    <p className="text-muted-foreground">Aucune mission ne correspond à votre recherche.</p>
-                </div>
+                <EmptyState
+                    icon={Briefcase}
+                    title="Aucune mission trouvée"
+                    description={
+                        search
+                            ? `Aucun résultat pour "${search}". Essayez un autre terme.`
+                            : "Il n'y a pas encore de missions disponibles."
+                    }
+                    primaryAction={{ label: "Effacer la recherche", onClick: () => setSearch("") }}
+                    tips="Les nouvelles missions sont publiées quotidiennement."
+                />
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredMissions.map((mission) => (
                         <MissionCard key={mission.id} mission={mission} />
                     ))}

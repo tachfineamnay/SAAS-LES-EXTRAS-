@@ -3,13 +3,12 @@ import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getBookingsPageData } from "@/app/actions/bookings";
 import { getQuotes } from "@/actions/quotes";
-import { BentoGrid, BentoCard } from "@/components/dashboard/BentoGrid";
-import { StatsWidget } from "@/components/dashboard/StatsWidget";
+import { getInvoices } from "@/actions/finance";
+import { getCredits } from "@/actions/credits";
+import { BentoSection } from "@/components/layout/BentoSection";
+import { KpiTile } from "@/components/dashboard/KpiTile";
 import { BookingListWidget } from "@/components/dashboard/BookingListWidget";
-
 import { CreditsWidget } from "@/components/dashboard/CreditsWidget";
-import { DollarSign, Calendar, Users, Briefcase, FileText, CheckCircle, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { TrustChecklistWidget } from "@/components/dashboard/TrustChecklistWidget";
 import { QuoteCreationModal } from "@/components/dashboard/QuoteCreationModal";
 import { QuoteListWidget } from "@/components/dashboard/QuoteListWidget";
@@ -18,248 +17,364 @@ import { MissionsToValidateWidget } from "@/components/dashboard/client/Missions
 import { UpcomingMissionsWidget } from "@/components/dashboard/client/UpcomingMissionsWidget";
 import { ClientInvoicesWidget } from "@/components/dashboard/client/ClientInvoicesWidget";
 import { ClientArchivesWidget } from "@/components/dashboard/client/ClientArchivesWidget";
-import { getInvoices } from "@/actions/finance";
-import { getCredits } from "@/actions/credits";
+import { GlassCard, GlassCardHeader, GlassCardContent } from "@/components/ui/glass-card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
+import {
+    DollarSign,
+    Calendar,
+    Users,
+    Briefcase,
+    FileText,
+    CheckCircle,
+    ShieldCheck,
+    Siren,
+    TrendingUp,
+} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
     const session = await getSession();
-
-    if (!session) {
-        redirect("/login");
-    }
+    if (!session) redirect("/login");
 
     const { role: userRole } = session.user;
     const { token } = session;
 
-    // Fetch credits for client
     let availableCredits = 0;
     if (userRole === "CLIENT") {
         availableCredits = await getCredits();
     }
 
-    // Fetch data with token
     const bookingsData = await getBookingsPageData(token);
     const quotes = userRole === "CLIENT" ? await getQuotes(token) : [];
-
-    // NEW: Fetch invoices for client
     const invoices = await getInvoices();
-    // getInvoices reads session internally, so we don't pass token if the action does it.
-    // But wait, the action `getInvoices` I saw earlier imports `getSession`, so it handles it. 
-    // It returns `any`.
 
-    // Filter bookings
     const pendingBookings = bookingsData.lines.filter((b) => b.status === "PENDING");
     const confirmedBookings = bookingsData.lines.filter(
-        (b) => b.status === "CONFIRMED" || b.status === "ASSIGNED",
+        (b) => b.status === "CONFIRMED" || b.status === "ASSIGNED"
     );
     const completedBookings = bookingsData.lines.filter(
-        (b) => b.status === "COMPLETED" || b.status === "PAID",
+        (b) => b.status === "COMPLETED" || b.status === "PAID"
     );
 
+    // ─────────────────────────────────────────────────────────────────
+    // CLIENT VIEW
+    // ─────────────────────────────────────────────────────────────────
     if (userRole === "CLIENT") {
         const pendingQuotes = quotes.filter((q: any) => q.status === "PENDING");
-        const awaitingPaymentBookings = bookingsData.lines.filter((b) => b.status === "COMPLETED_AWAITING_PAYMENT");
-
-        const now = new Date();
-        const confirmedBookingsAll = bookingsData.lines.filter(b => b.status === "CONFIRMED" || b.status === "ASSIGNED");
-
-        // Logic for missions to validate: In a real app we would check end date.
-        // For this demo, we can't easily filter by date string "DD/MM/YYYY" without parsing.
-        // We will assume "CONFIRMED" are upcoming. 
-        // If we want to simulate validation, we would need a status "PENDING_VALIDATION".
-        // But since we don't have it, we'll keep the widget empty or mock it if needed.
-        // Let's pass an empty array for now or a filtered list if we add logic later.
+        const awaitingPaymentBookings = bookingsData.lines.filter(
+            (b) => b.status === "COMPLETED_AWAITING_PAYMENT"
+        );
         const missionsToValidate: any[] = [];
-
-        const upcomingMissions = confirmedBookingsAll;
+        const upcomingMissions = confirmedBookings;
 
         return (
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold tracking-tight">
-                        Tableau de bord Établissement
-                    </h1>
-                    <div className="flex gap-2">
-                        <Button size="sm">Publier une mission</Button>
+            <div className="space-y-8">
+                {/* Page header */}
+                <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                    <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Espace Établissement</p>
+                        <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
+                        <p className="text-sm text-muted-foreground">Vue d'ensemble de vos renforts et opérations.</p>
                     </div>
-                </div>
+                    <Button size="sm" className="shadow-sm self-start sm:self-auto gap-2 min-h-[44px]">
+                        <Siren className="h-4 w-4" aria-hidden="true" />
+                        Demander un renfort
+                    </Button>
+                </header>
 
-                {/* Alert Zone for Validation */}
+                {/* Alert zone */}
                 <MissionsToValidateWidget bookings={missionsToValidate} />
 
-                <BentoGrid>
-                    {/* Payments to Validate - High Priority */}
+                {/* KPI row */}
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                    <KpiTile
+                        label="Renforts actifs"
+                        value={confirmedBookings.length}
+                        icon={Briefcase}
+                        iconColor="text-secondary"
+                    />
+                    <KpiTile
+                        label="En attente paiement"
+                        value={awaitingPaymentBookings.length}
+                        icon={DollarSign}
+                        iconColor="text-amber-600"
+                    />
+                    <KpiTile
+                        label="Crédits disponibles"
+                        value={availableCredits}
+                        icon={TrendingUp}
+                        iconColor="text-emerald-600"
+                    />
+                    <KpiTile
+                        label="Propositions reçues"
+                        value={pendingQuotes.length}
+                        icon={FileText}
+                        iconColor="text-primary"
+                    />
+                </div>
+
+                {/* Main bento */}
+                <BentoSection cols={3} gap="md">
+                    {/* Upcoming missions — wide */}
+                    <GlassCard className="md:col-span-2">
+                        <GlassCardHeader>
+                            <div className="flex items-center gap-2.5">
+                                <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                                    <Calendar className="h-4 w-4 text-primary" aria-hidden="true" />
+                                </div>
+                                <div>
+                                    <h2 className="text-base font-semibold tracking-tight">Renforts à venir</h2>
+                                    <p className="text-xs text-muted-foreground">Missions confirmées</p>
+                                </div>
+                            </div>
+                        </GlassCardHeader>
+                        <GlassCardContent>
+                            <UpcomingMissionsWidget bookings={upcomingMissions} />
+                        </GlassCardContent>
+                    </GlassCard>
+
+                    {/* Credits */}
+                    <GlassCard>
+                        <GlassCardHeader>
+                            <div className="flex items-center gap-2.5">
+                                <div className="h-9 w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                                    <DollarSign className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                                </div>
+                                <h2 className="text-base font-semibold tracking-tight">Mes Crédits</h2>
+                            </div>
+                        </GlassCardHeader>
+                        <GlassCardContent>
+                            <CreditsWidget credits={availableCredits} />
+                        </GlassCardContent>
+                    </GlassCard>
+
+                    {/* Payment validation */}
                     {awaitingPaymentBookings.length > 0 && (
-                        <BentoCard
-                            title="Paiements à Valider"
-                            icon={<DollarSign className="h-6 w-6 text-green-600" />}
-                            colSpan={2}
-                            rowSpan={Math.max(1, awaitingPaymentBookings.length > 2 ? 2 : 1)}
-                        >
-                            <PaymentValidationWidget bookings={awaitingPaymentBookings} />
-                        </BentoCard>
+                        <GlassCard className="md:col-span-2">
+                            <GlassCardHeader>
+                                <div className="flex items-center gap-2.5">
+                                    <div className="h-9 w-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                                        <DollarSign className="h-4 w-4 text-amber-600" aria-hidden="true" />
+                                    </div>
+                                    <h2 className="text-base font-semibold tracking-tight">Paiements à valider</h2>
+                                </div>
+                            </GlassCardHeader>
+                            <GlassCardContent>
+                                <PaymentValidationWidget bookings={awaitingPaymentBookings} />
+                            </GlassCardContent>
+                        </GlassCard>
                     )}
 
-                    {/* Planning / Upcoming Missions */}
-                    <BentoCard
-                        title="Mes Renforts à Venir"
-                        icon={<Calendar className="h-6 w-6" />}
-                        rowSpan={2}
-                    >
-                        <UpcomingMissionsWidget bookings={upcomingMissions} />
-                    </BentoCard>
+                    {/* Invoices */}
+                    <GlassCard className="md:col-span-2">
+                        <GlassCardHeader>
+                            <div className="flex items-center gap-2.5">
+                                <div className="h-9 w-9 rounded-xl bg-secondary/10 flex items-center justify-center">
+                                    <FileText className="h-4 w-4 text-secondary" aria-hidden="true" />
+                                </div>
+                                <h2 className="text-base font-semibold tracking-tight">Mes Factures</h2>
+                            </div>
+                        </GlassCardHeader>
+                        <GlassCardContent>
+                            <ClientInvoicesWidget invoices={invoices} />
+                        </GlassCardContent>
+                    </GlassCard>
 
-                    {/* Facturation / Invoices - NEW */}
-                    <BentoCard
-                        title="Mes Packs"
-                        icon={<DollarSign className="h-6 w-6" />}
-                    >
-                        <CreditsWidget credits={availableCredits} />
-                    </BentoCard>
-
-                    <BentoCard
-                        title="Mes Factures"
-                        icon={<FileText className="h-6 w-6" />}
-                        colSpan={2}
-                        rowSpan={2}
-                    >
-                        <ClientInvoicesWidget invoices={invoices} />
-                    </BentoCard>
-
-                    {/* Historique / Archives - NEW */}
-                    <BentoCard
-                        title="Historique & Archives"
-                        icon={<Briefcase className="h-6 w-6" />}
-                        rowSpan={2}
-                    >
-                        <ClientArchivesWidget bookings={completedBookings} />
-                    </BentoCard>
-
-                    {/* Offers / Quotes Received */}
-                    <BentoCard
-                        title="Propositions Reçues"
-                        icon={<FileText className="h-6 w-6" />}
-                        colSpan={2}
-                        rowSpan={2}
-                    >
-                        <QuoteListWidget quotes={pendingQuotes} />
-                    </BentoCard>
+                    {/* Quotes */}
+                    <GlassCard>
+                        <GlassCardHeader>
+                            <div className="flex items-center gap-2.5">
+                                <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                                    <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
+                                </div>
+                                <h2 className="text-base font-semibold tracking-tight">Propositions</h2>
+                            </div>
+                        </GlassCardHeader>
+                        <GlassCardContent>
+                            <QuoteListWidget quotes={pendingQuotes} />
+                        </GlassCardContent>
+                    </GlassCard>
 
                     {/* Candidatures */}
-                    <BentoCard
-                        title="Candidatures"
-                        icon={<Users className="h-6 w-6" />}
-                        rowSpan={2}
-                    >
-                        <BookingListWidget
-                            bookings={pendingBookings}
-                            emptyMessage="Aucune candidature en attente."
-                            viewAllLink="/bookings?status=PENDING"
-                        />
-                    </BentoCard>
+                    <GlassCard>
+                        <GlassCardHeader>
+                            <div className="flex items-center gap-2.5">
+                                <div className="h-9 w-9 rounded-xl bg-secondary/10 flex items-center justify-center">
+                                    <Users className="h-4 w-4 text-secondary" aria-hidden="true" />
+                                </div>
+                                <h2 className="text-base font-semibold tracking-tight">Candidatures</h2>
+                            </div>
+                        </GlassCardHeader>
+                        <GlassCardContent>
+                            <BookingListWidget
+                                bookings={pendingBookings}
+                                emptyMessage="Aucune candidature en attente."
+                                viewAllLink="/bookings?status=PENDING"
+                            />
+                        </GlassCardContent>
+                    </GlassCard>
 
-
-
-                    {/* Stats rapides */}
-                    <BentoCard>
-                        <StatsWidget
-                            title="Missions actives"
-                            value={confirmedBookings.length}
-                            icon={<Briefcase className="h-4 w-4" />}
-                            description="En cours ou à venir"
-                            className="border-0 shadow-none p-0"
-                        />
-                    </BentoCard>
-                </BentoGrid>
+                    {/* Archives */}
+                    <GlassCard className="md:col-span-2">
+                        <GlassCardHeader>
+                            <div className="flex items-center gap-2.5">
+                                <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center">
+                                    <Briefcase className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                                </div>
+                                <h2 className="text-base font-semibold tracking-tight">Historique & Archives</h2>
+                            </div>
+                        </GlassCardHeader>
+                        <GlassCardContent>
+                            <ClientArchivesWidget bookings={completedBookings} />
+                        </GlassCardContent>
+                    </GlassCard>
+                </BentoSection>
             </div>
         );
     }
 
-    // TALENT VIEW
+    // ─────────────────────────────────────────────────────────────────
+    // TALENT / FREELANCE VIEW
+    // ─────────────────────────────────────────────────────────────────
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold tracking-tight">
-                    Tableau de bord Freelance
-                </h1>
-                <div className="flex gap-2">
+        <div className="space-y-8">
+            {/* Page header */}
+            <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                <div className="space-y-1">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Espace Freelance</p>
+                    <h1 className="text-3xl font-bold tracking-tight">Mon Tableau de bord</h1>
+                    <p className="text-sm text-muted-foreground">Suivez vos missions, candidatures et revenus.</p>
+                </div>
+                <div className="flex gap-2 self-start sm:self-auto">
                     <QuoteCreationModal />
-                    <Button size="sm" variant="outline" asChild>
-                        <Link href="/dashboard/finance">
-                            <DollarSign className="mr-2 h-4 w-4" />
-                            Mes Finances
+                    <Button variant="glass-outline" size="sm" className="min-h-[44px]" asChild>
+                        <Link href="/marketplace">
+                            Trouver une mission
                         </Link>
                     </Button>
-                    <Button size="sm" variant="outline">Trouver une mission</Button>
                 </div>
+            </header>
+
+            {/* KPI row */}
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                <KpiTile
+                    label="Missions à venir"
+                    value={confirmedBookings.length}
+                    icon={Calendar}
+                    iconColor="text-secondary"
+                />
+                <KpiTile
+                    label="Gains cumulés"
+                    value="850 €"
+                    icon={DollarSign}
+                    iconColor="text-emerald-600"
+                    trend="up"
+                    trendLabel="+12% ce mois"
+                />
+                <KpiTile
+                    label="Missions réalisées"
+                    value={completedBookings.length}
+                    icon={CheckCircle}
+                    iconColor="text-primary"
+                />
+                <KpiTile
+                    label="Candidatures"
+                    value={pendingBookings.length}
+                    icon={Briefcase}
+                    iconColor="text-amber-600"
+                />
             </div>
 
-            <BentoGrid>
-                {/* Mon Agenda */}
-                <BentoCard
-                    title="Mon Agenda"
-                    icon={<Calendar className="h-6 w-6" />}
-                    colSpan={2}
-                    rowSpan={2}
-                >
-                    <BookingListWidget
-                        bookings={confirmedBookings}
-                        emptyMessage="Aucune mission prévue."
-                        viewAllLink="/bookings"
-                    />
-                </BentoCard>
-
-                {/* Gains */}
-                <BentoCard title="Gains cumulés" icon={<DollarSign className="h-6 w-6" />}>
-                    <div className="flex flex-col gap-4 h-full justify-between">
-                        <div>
-                            <p className="text-sm text-muted-foreground mb-1">Total gagné</p>
-                            <div className="text-3xl font-bold">850,00 €</div>
+            {/* Main bento */}
+            <BentoSection cols={3} gap="md">
+                {/* Agenda — wide */}
+                <GlassCard className="md:col-span-2">
+                    <GlassCardHeader>
+                        <div className="flex items-center gap-2.5">
+                            <div className="h-9 w-9 rounded-xl bg-secondary/10 flex items-center justify-center">
+                                <Calendar className="h-4 w-4 text-secondary" aria-hidden="true" />
+                            </div>
+                            <div>
+                                <h2 className="text-base font-semibold tracking-tight">Mon Agenda</h2>
+                                <p className="text-xs text-muted-foreground">Missions confirmées</p>
+                            </div>
                         </div>
-                        <div className="flex items-center text-xs text-muted-foreground">
-                            <span className="text-emerald-600 font-medium flex items-center mr-1">
-                                +12%
-                            </span>
-                            par rapport au mois dernier
+                    </GlassCardHeader>
+                    <GlassCardContent>
+                        <BookingListWidget
+                            bookings={confirmedBookings}
+                            emptyMessage="Aucune mission prévue."
+                            viewAllLink="/bookings"
+                        />
+                    </GlassCardContent>
+                </GlassCard>
+
+                {/* Trust checklist */}
+                <GlassCard>
+                    <GlassCardHeader>
+                        <div className="flex items-center gap-2.5">
+                            <div className="h-9 w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                                <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                            </div>
+                            <h2 className="text-base font-semibold tracking-tight">Profil & Confiance</h2>
                         </div>
-                    </div>
-                </BentoCard>
+                    </GlassCardHeader>
+                    <GlassCardContent>
+                        <TrustChecklistWidget />
+                    </GlassCardContent>
+                </GlassCard>
 
-                {/* Mes Postulations */}
-                <BentoCard
-                    title="Mes Candidatures"
-                    icon={<Briefcase className="h-6 w-6" />}
-                    rowSpan={2}
-                >
-                    <BookingListWidget
-                        bookings={pendingBookings}
-                        emptyMessage="Aucune candidature en cours."
-                        viewAllLink="/bookings"
-                    />
-                </BentoCard>
+                {/* Candidatures */}
+                <GlassCard className="md:col-span-2">
+                    <GlassCardHeader>
+                        <div className="flex items-center gap-2.5">
+                            <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                                <Briefcase className="h-4 w-4 text-primary" aria-hidden="true" />
+                            </div>
+                            <div>
+                                <h2 className="text-base font-semibold tracking-tight">Mes Candidatures</h2>
+                                <p className="text-xs text-muted-foreground">En cours de traitement</p>
+                            </div>
+                        </div>
+                    </GlassCardHeader>
+                    <GlassCardContent>
+                        <BookingListWidget
+                            bookings={pendingBookings}
+                            emptyMessage="Aucune candidature en cours."
+                            viewAllLink="/bookings"
+                        />
+                    </GlassCardContent>
+                </GlassCard>
 
-                {/* Missions complétées */}
-                <BentoCard>
-                    <StatsWidget
-                        title="Missions réalisées"
-                        value={completedBookings.length}
-                        icon={<CheckCircle className="h-4 w-4" />}
-                        description="Depuis votre inscription"
-                        className="border-0 shadow-none p-0"
-                    />
-                </BentoCard>
-
-                {/* Checklist de confiance */}
-                <BentoCard
-                    title="Checklist Confiance"
-                    icon={<ShieldCheck className="h-6 w-6" />}
-                    rowSpan={2}
-                >
-                    <TrustChecklistWidget />
-                </BentoCard>
-            </BentoGrid>
+                {/* Gains card */}
+                <GlassCard>
+                    <GlassCardHeader>
+                        <div className="flex items-center gap-2.5">
+                            <div className="h-9 w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                                <TrendingUp className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                            </div>
+                            <h2 className="text-base font-semibold tracking-tight">Mes Finances</h2>
+                        </div>
+                    </GlassCardHeader>
+                    <GlassCardContent>
+                        <div className="space-y-3">
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Total gagné</p>
+                                <p className="text-3xl font-bold">850,00 €</p>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-semibold text-emerald-600">+12%</span>
+                                <span className="text-xs text-muted-foreground">par rapport au mois dernier</span>
+                            </div>
+                            <Button variant="glass-outline" size="sm" className="w-full min-h-[44px]" asChild>
+                                <Link href="/finance">Voir mes finances</Link>
+                            </Button>
+                        </div>
+                    </GlassCardContent>
+                </GlassCard>
+            </BentoSection>
         </div>
     );
 }

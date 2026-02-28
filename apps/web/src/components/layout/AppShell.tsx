@@ -16,12 +16,17 @@ export function RenfortModalWrapper() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setMobileOpen] = useState(false);
-  const userRole = useUIStore((state) => state.userRole);
 
   return (
-    <div className="flex h-screen w-full flex-col bg-muted/40 font-sans text-foreground antialiased md:flex-row">
+    <div className="relative flex h-screen w-full flex-col bg-background font-sans text-foreground antialiased md:flex-row overflow-hidden">
+      {/* Background halos */}
+      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
+        <div className="absolute inset-0 halo-primary" />
+        <div className="absolute inset-0 halo-secondary" />
+      </div>
+
       <Sidebar isMobileOpen={isMobileOpen} onMobileOpenChange={setMobileOpen} />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
         <Header onOpenMobileSidebar={() => setMobileOpen(true)} />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {children}
