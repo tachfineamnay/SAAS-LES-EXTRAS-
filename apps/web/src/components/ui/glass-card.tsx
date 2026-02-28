@@ -10,10 +10,10 @@ const glassCardVariants = cva(
         variants: {
             variant: {
                 glass:
-                    "bg-card/70 backdrop-blur-[12px] border border-border/40 shadow-sm",
+                    "bg-white/60 backdrop-blur-xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
                 solid: "bg-card border border-border shadow-sm",
                 interactive:
-                    "bg-card border border-border shadow-sm hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-ring cursor-pointer",
+                    "bg-white/60 backdrop-blur-xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] focus-within:ring-2 focus-within:ring-ring cursor-pointer",
             },
         },
         defaultVariants: {

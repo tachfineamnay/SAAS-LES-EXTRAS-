@@ -89,23 +89,23 @@
 
   /* Glass surfaces */
   .glass-surface {
-    @apply bg-card/70 backdrop-blur-[12px] border border-border/40;
+    @apply bg-white/60 backdrop-blur-xl border border-white/80 shadow-[0_8px_30px_rgb(0, 0, 0, 0.04)];
   }
 
   .glass-surface-dense {
-    @apply bg-card/85 backdrop-blur-[8px] border border-border/30;
+    @apply bg-white/80 backdrop-blur-md border border-white/60 shadow-sm;
   }
 
   /* Background halos — position with absolute on a wrapper */
   .halo-primary {
-    background: radial-gradient(600px circle at top right,
-        hsl(var(--primary) / 0.06),
+    background: radial-gradient(700px circle at top right,
+        hsl(var(--primary) / 0.15),
         transparent 70%);
   }
 
   .halo-secondary {
-    background: radial-gradient(400px circle at bottom left,
-        hsl(var(--secondary) / 0.04),
+    background: radial-gradient(600px circle at bottom left,
+        hsl(var(--secondary) / 0.12),
         transparent 70%);
   }
 
