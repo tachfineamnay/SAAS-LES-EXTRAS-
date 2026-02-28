@@ -102,7 +102,7 @@ export default function RegisterPage({ searchParams }: { searchParams: { role?: 
                                     key={r.value}
                                     type="button"
                                     role="radio"
-                                    aria-checked={isSelected}
+                                    aria-checked={isSelected ? "true" : "false"}
                                     onClick={() => setRole(r.value)}
                                     className={cn(
                                         "flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all duration-200",
