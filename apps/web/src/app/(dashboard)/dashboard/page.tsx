@@ -249,7 +249,7 @@ export default async function DashboardPage() {
                 </div>
                 <div className="flex gap-2 self-start sm:self-auto">
                     <QuoteCreationModal />
-                    <Button variant="glass-outline" size="sm" className="min-h-[44px]" asChild>
+                    <Button variant="glass" size="sm" className="min-h-[44px]" asChild>
                         <Link href="/marketplace">
                             Trouver une mission
                         </Link>
@@ -368,7 +368,7 @@ export default async function DashboardPage() {
                                 <span className="text-xs font-semibold text-emerald-600">+12%</span>
                                 <span className="text-xs text-muted-foreground">par rapport au mois dernier</span>
                             </div>
-                            <Button variant="glass-outline" size="sm" className="w-full min-h-[44px]" asChild>
+                            <Button variant="glass" size="sm" className="w-full min-h-[44px]" asChild>
                                 <Link href="/finance">Voir mes finances</Link>
                             </Button>
                         </div>
