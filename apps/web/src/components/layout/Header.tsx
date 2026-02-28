@@ -18,21 +18,23 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
   const openPublishModal = useUIStore((state) => state.openPublishModal);
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-[12px] border-b border-border/40 shadow-sm">
+      <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden min-h-[44px] min-w-[44px]"
             aria-label="Ouvrir le menu"
             onClick={onOpenMobileSidebar}
           >
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-            <span className="text-lg font-semibold tracking-tight">LesExtras</span>
+            <div className="h-2.5 w-2.5 rounded-full bg-primary" aria-hidden="true" />
+            <span className="text-lg font-semibold tracking-tight text-foreground">
+              LesExtras
+            </span>
           </div>
         </div>
 
@@ -40,16 +42,26 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
           {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative min-h-[44px] min-w-[44px]"
+                aria-label="Notifications (1 nouvelle)"
+              >
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-600" />
+                <span
+                  className="absolute top-2 right-2 h-2 w-2 rounded-full bg-destructive"
+                  aria-hidden="true"
+                />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuContent align="end" className="w-80 glass-surface">
               <DropdownMenuItem>
                 <div className="flex flex-col gap-1">
-                  <span className="font-medium">Nouveau message</span>
-                  <span className="text-xs text-muted-foreground">Jean Dupont vous a envoyé un message.</span>
+                  <span className="font-medium text-sm">Nouveau message</span>
+                  <span className="text-xs text-muted-foreground">
+                    Jean Dupont vous a envoyé un message.
+                  </span>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuItem className="text-center text-xs text-muted-foreground">
@@ -58,12 +70,12 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Badge variant="secondary" className="hidden sm:inline-flex">
+          <Badge variant="quiet" className="hidden sm:inline-flex">
             {userRole === "CLIENT" ? "ÉTABLISSEMENT" : "FREELANCE"}
           </Badge>
 
           <Select value={userRole || undefined} onValueChange={(value) => setUserRole(value as UserRole)}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[140px] h-10">
               <SelectValue placeholder="Rôle" />
             </SelectTrigger>
             <SelectContent>
@@ -73,14 +85,21 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
           </Select>
 
           {userRole === "CLIENT" ? (
-            <Button className="bg-red-600 text-white hover:bg-red-700" onClick={openRenfortModal}>
+            <Button
+              onClick={openRenfortModal}
+              className="shadow-sm"
+            >
               <Siren className="h-4 w-4" />
-              DEMANDER UN RENFORT
+              <span className="hidden sm:inline">DEMANDER UN RENFORT</span>
             </Button>
           ) : (
-            <Button className="bg-blue-600 text-white hover:bg-blue-700" onClick={openPublishModal}>
+            <Button
+              variant="secondary"
+              onClick={openPublishModal}
+              className="shadow-sm"
+            >
               <Rocket className="h-4 w-4" />
-              PUBLIER OFFRE
+              <span className="hidden sm:inline">PUBLIER OFFRE</span>
             </Button>
           )}
         </div>

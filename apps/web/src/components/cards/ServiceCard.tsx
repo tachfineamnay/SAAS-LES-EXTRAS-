@@ -38,10 +38,8 @@ function getServiceCategoryLabel(type: "WORKSHOP" | "TRAINING"): string {
   return type === "WORKSHOP" ? "Atelier" : "Formation";
 }
 
-function getServiceColor(type: "WORKSHOP" | "TRAINING"): string {
-  return type === "WORKSHOP"
-    ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-    : "bg-purple-100 text-purple-700 hover:bg-purple-200";
+function getServiceBadgeVariant(type: "WORKSHOP" | "TRAINING"): "info" | "default" {
+  return type === "WORKSHOP" ? "info" : "default";
 }
 
 function getAvatarFallback(name: string): string {
@@ -61,12 +59,12 @@ export function ServiceCard({ service }: ServiceCardProps) {
 
   return (
     <Link href={`/marketplace/services/${service.id}`} className="block h-full group">
-      <Card className="flex h-full flex-col border border-border/60 shadow-sm hover:shadow-md transition-all hover:border-primary/50 overflow-hidden">
+      <Card className="flex h-full flex-col border border-border/60 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-ring overflow-hidden">
         <CardHeader className="p-4 pb-2 space-y-3">
           <div className="flex items-center justify-between">
             <Badge
-              variant="secondary"
-              className={cn("font-medium px-2.5 py-0.5 rounded-md", getServiceColor(service.type))}
+              variant={getServiceBadgeVariant(service.type)}
+              className="font-medium px-2.5 py-0.5 rounded-md"
             >
               {getServiceCategoryLabel(service.type)}
             </Badge>
@@ -109,7 +107,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
             </div>
           </div>
 
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
             <ChevronRight className="h-4 w-4" />
           </Button>
         </CardFooter>

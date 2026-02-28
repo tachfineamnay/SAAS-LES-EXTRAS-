@@ -14,34 +14,41 @@ export default function AdminLayout({
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <div className="flex min-h-screen">
+    <div className="relative min-h-screen bg-background">
+      {/* Subtle background halos */}
+      <div className="pointer-events-none fixed inset-0 z-0 halo-primary" aria-hidden="true" />
+      <div className="pointer-events-none fixed inset-0 z-0 halo-secondary" aria-hidden="true" />
+
+      <div className="relative z-10 flex min-h-screen">
         <AdminSidebar
           isMobileOpen={isMobileSidebarOpen}
           onMobileOpenChange={setIsMobileSidebarOpen}
         />
 
         <div className="flex min-h-screen flex-1 flex-col">
-          <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:px-6">
+          {/* Glass topbar */}
+          <header className="sticky top-0 z-30 bg-card/80 backdrop-blur-[12px] border-b border-border/40 shadow-sm px-4 py-3 md:px-6">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
-                  className="md:hidden"
+                  className="md:hidden min-h-[44px] min-w-[44px]"
                   aria-label="Ouvrir la navigation admin"
                   onClick={() => setIsMobileSidebarOpen(true)}
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Back Office</p>
-                  <h1 className="text-lg font-semibold text-slate-900">Le Desk</h1>
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Back Office
+                  </p>
+                  <h1 className="text-lg font-semibold text-foreground">Le Desk</h1>
                 </div>
               </div>
 
               <form action={adminLogout}>
-                <Button type="submit" variant="outline" size="sm">
+                <Button type="submit" variant="ghost" size="sm" className="gap-1.5">
                   <LogOut className="h-4 w-4" />
                   Déconnexion
                 </Button>

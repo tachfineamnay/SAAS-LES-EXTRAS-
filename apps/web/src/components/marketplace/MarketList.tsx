@@ -2,10 +2,12 @@
 
 import { MissionCard, type MissionCardProps } from "@/components/cards/MissionCard";
 import { ServiceCard, type ServiceCardProps } from "@/components/cards/ServiceCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { BentoSection } from "@/components/layout/BentoSection";
 import { useUIStore } from "@/lib/stores/useUIStore";
-import { Filter, SlidersHorizontal } from "lucide-react";
+import { Filter, SlidersHorizontal, Briefcase, ShoppingBag } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 type MarketListProps = {
   missions: MissionCardProps["mission"][];
@@ -29,7 +31,7 @@ export function MarketList({
     <section className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Marketplace</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Marketplace</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {isTalent
               ? "Missions de Renforts disponibles pour les freelances."
@@ -39,15 +41,15 @@ export function MarketList({
 
         {isTalent && (
           <div className="flex flex-wrap gap-2 items-center">
-            <Button variant="outline" size="sm" className="h-8 text-xs rounded-full">
-              <Filter className="h-3 w-3 mr-1" />
+            <Button variant="glass" size="sm" className="h-8 text-xs rounded-full">
+              <Filter className="h-3 w-3 mr-1" aria-hidden="true" />
               Tous les diplômes
             </Button>
-            <Button variant="outline" size="sm" className="h-8 text-xs rounded-full">
-              <SlidersHorizontal className="h-3 w-3 mr-1" />
+            <Button variant="glass" size="sm" className="h-8 text-xs rounded-full">
+              <SlidersHorizontal className="h-3 w-3 mr-1" aria-hidden="true" />
               Spécialisation
             </Button>
-            <Button variant="outline" size="sm" className="h-8 text-xs rounded-full">
+            <Button variant="glass" size="sm" className="h-8 text-xs rounded-full">
               Date
             </Button>
           </div>
@@ -55,22 +57,21 @@ export function MarketList({
       </div>
 
       {isTalent && missions.length > 0 && (
-        <div className="mb-2 text-xs text-muted-foreground font-medium">
-          {missions.length} mission{missions.length > 1 ? 's' : ''} de renfort disponible{missions.length > 1 ? 's' : ''}
+        <div className="text-xs text-muted-foreground font-medium">
+          <Badge variant="quiet" className="mr-1">{missions.length}</Badge>
+          mission{missions.length > 1 ? "s" : ""} de renfort disponible{missions.length > 1 ? "s" : ""}
         </div>
       )}
 
-      {isDegraded ? (
-        <Card className="border-amber-300 bg-amber-50">
-          <CardHeader>
-            <CardTitle className="text-amber-900">Mode Dégradé</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-amber-800">
+      {isDegraded && (
+        <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+          <p className="text-sm font-medium text-amber-700">Mode Dégradé</p>
+          <p className="text-sm text-amber-600 mt-1">
             {degradedReason ??
               "Données temporairement indisponibles, veuillez réessayer dans quelques instants."}
-          </CardContent>
-        </Card>
-      ) : null}
+          </p>
+        </div>
+      )}
 
       {isTalent ? (
         missions.length > 0 ? (
@@ -80,14 +81,13 @@ export function MarketList({
             ))}
           </div>
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Aucune mission de renfort ouverte</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Les nouvelles urgences apparaîtront ici dès leur publication par les établissements.
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Briefcase}
+            title="Aucune mission de renfort ouverte"
+            description="Les nouvelles urgences apparaîtront ici dès leur publication par les établissements."
+            primaryAction={{ label: "Rafraîchir", onClick: () => window.location.reload() }}
+            tips="Activez les notifications pour être alerté en temps réel."
+          />
         )
       ) : services.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -96,14 +96,12 @@ export function MarketList({
           ))}
         </div>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Aucun service disponible</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            Revenez plus tard pour découvrir de nouvelles offres.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={ShoppingBag}
+          title="Aucun service disponible"
+          description="Revenez plus tard pour découvrir de nouvelles offres."
+          tips="Les freelances publient régulièrement de nouveaux ateliers et formations."
+        />
       )}
     </section>
   );

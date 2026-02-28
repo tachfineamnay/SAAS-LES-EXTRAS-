@@ -55,3 +55,41 @@
     @apply bg-background text-foreground antialiased;
   }
 }
+
+@layer utilities {
+  /* Glass surfaces */
+  .glass-surface {
+    @apply bg-card/70 backdrop-blur-[12px] border border-border/40;
+  }
+  .glass-surface-dense {
+    @apply bg-card/85 backdrop-blur-[8px] border border-border/30;
+  }
+
+  /* Background halos — position with absolute on a wrapper */
+  .halo-primary {
+    background: radial-gradient(
+      600px circle at top right,
+      hsl(var(--primary) / 0.06),
+      transparent 70%
+    );
+  }
+  .halo-secondary {
+    background: radial-gradient(
+      400px circle at bottom left,
+      hsl(var(--secondary) / 0.04),
+      transparent 70%
+    );
+  }
+}
+
+/* Accessibility — reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

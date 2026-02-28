@@ -2,9 +2,9 @@
 
 import { FormEvent, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { AlertCircle } from "lucide-react";
 import { adminLogin } from "@/app/actions/admin-auth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -34,17 +34,37 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl">Le Desk</CardTitle>
-          <CardDescription>Connexion administrateur</CardDescription>
-        </CardHeader>
-        <CardContent>
+    <main className="relative flex min-h-screen items-center justify-center bg-background px-4">
+      {/* Background halos */}
+      <div className="pointer-events-none fixed inset-0 halo-primary" aria-hidden="true" />
+      <div className="pointer-events-none fixed inset-0 halo-secondary" aria-hidden="true" />
+
+      <div className="relative z-10 w-full max-w-md">
+        {/* Glass login card */}
+        <div className="glass-surface rounded-lg p-8 shadow-sm">
+          <div className="space-y-1 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-2.5 w-2.5 rounded-full bg-primary" aria-hidden="true" />
+              <span className="text-lg font-semibold tracking-tight text-foreground">
+                LesExtras
+              </span>
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Le Desk</h1>
+            <p className="text-sm text-muted-foreground">Connexion administrateur</p>
+          </div>
+
           <form className="space-y-4" onSubmit={onSubmit}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" autoComplete="username" required />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="username"
+                required
+                aria-invalid={error ? "true" : undefined}
+                className="h-11"
+              />
             </div>
 
             <div className="space-y-2">
@@ -55,17 +75,24 @@ export default function AdminLoginPage() {
                 type="password"
                 autoComplete="current-password"
                 required
+                aria-invalid={error ? "true" : undefined}
+                className="h-11"
               />
             </div>
 
-            {error ? <p className="text-sm text-red-600">{error}</p> : null}
+            {error && (
+              <div className="flex items-start gap-2 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2.5 text-sm text-destructive" role="alert">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" aria-hidden="true" />
+                <span>{error}</span>
+              </div>
+            )}
 
-            <Button className="w-full" type="submit" disabled={isPending}>
-              {isPending ? "Connexion..." : "Se connecter"}
+            <Button className="w-full h-11 shadow-sm" type="submit" disabled={isPending}>
+              {isPending ? "Connexion…" : "Se connecter"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </main>
   );
 }

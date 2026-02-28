@@ -59,7 +59,7 @@ function AdminNav({ onNavigate }: AdminNavProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="space-y-1.5">
+    <nav className="space-y-1" aria-label="Administration">
       {links.map((link) => {
         const Icon = link.icon;
         const isActive =
@@ -72,13 +72,17 @@ function AdminNav({ onNavigate }: AdminNavProps) {
             href={link.href}
             onClick={onNavigate}
             className={cn(
-              "flex items-center gap-2.5 rounded-md border border-transparent px-3 py-2 text-sm transition-colors",
-              "text-slate-300 hover:bg-slate-800 hover:text-slate-100",
+              "flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium",
+              "transition-all duration-200",
+              "text-muted-foreground hover:bg-accent hover:text-foreground",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              "min-h-[44px]",
               isActive &&
-              "border-slate-700 bg-slate-800 text-slate-50 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.2)]",
+              "bg-primary/10 text-primary border-l-2 border-primary rounded-l-none"
             )}
+            aria-current={isActive ? "page" : undefined}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{link.label}</span>
           </Link>
         );
@@ -90,21 +94,27 @@ function AdminNav({ onNavigate }: AdminNavProps) {
 export function AdminSidebar({ isMobileOpen, onMobileOpenChange }: AdminSidebarProps) {
   return (
     <>
-      <aside className="hidden w-72 shrink-0 border-r border-slate-800 bg-slate-900 text-slate-100 md:block">
-        <div className="px-5 py-5">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Super Admin</p>
-          <p className="mt-1 text-xl font-semibold">Le Desk</p>
-        </div>
-        <div className="px-3 pb-4">
-          <AdminNav />
+      {/* Desktop sidebar — glass surface */}
+      <aside className="hidden w-60 shrink-0 md:block">
+        <div className="sticky top-0 h-screen overflow-y-auto glass-surface rounded-none border-l-0 border-t-0 border-b-0">
+          <div className="px-5 py-5">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              Super Admin
+            </p>
+            <p className="mt-1 text-xl font-semibold text-foreground">Le Desk</p>
+          </div>
+          <div className="px-3 pb-4">
+            <AdminNav />
+          </div>
         </div>
       </aside>
 
+      {/* Mobile sidebar — Sheet */}
       <Sheet open={isMobileOpen} onOpenChange={onMobileOpenChange}>
-        <SheetContent side="left" className="w-[290px] border-slate-800 bg-slate-900 text-slate-100">
+        <SheetContent side="left" className="w-[280px] glass-surface">
           <SheetHeader>
-            <SheetTitle className="text-slate-100">Le Desk</SheetTitle>
-            <SheetDescription className="text-slate-400">
+            <SheetTitle>Le Desk</SheetTitle>
+            <SheetDescription>
               Navigation administration.
             </SheetDescription>
           </SheetHeader>

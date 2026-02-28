@@ -24,8 +24,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { StatusPill } from "@/components/ui/status-pill";
+import { DataTableShell } from "@/components/data/DataTableShell";
+import { FilterBar, type FilterDefinition } from "@/components/data/FilterBar";
+import {
+  TableCell,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Sheet,
   SheetContent,
@@ -33,14 +38,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 type UsersTableProps = {
   initialUsers: AdminUserRow[];
@@ -54,28 +51,28 @@ const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   year: "numeric",
 });
 
-function getRoleBadgeClass(role: AdminUserRole): string {
-  if (role === "CLIENT") {
-    return "bg-blue-100 text-blue-700 hover:bg-blue-100";
-  }
+const ROLE_FILTERS: FilterDefinition[] = [
+  {
+    key: "role",
+    label: "Tous les rôles",
+    options: [
+      { label: "Client", value: "CLIENT" },
+      { label: "Talent", value: "TALENT" },
+      { label: "Admin", value: "ADMIN" },
+    ],
+  },
+];
 
-  if (role === "TALENT") {
-    return "bg-violet-100 text-violet-700 hover:bg-violet-100";
-  }
-
-  return "bg-slate-200 text-slate-800 hover:bg-slate-200";
+function getRoleBadgeVariant(role: AdminUserRole): "info" | "default" | "quiet" {
+  if (role === "CLIENT") return "info";
+  if (role === "TALENT") return "default";
+  return "quiet";
 }
 
-function getStatusBadgeClass(status: AdminUserStatus): string {
-  if (status === "VERIFIED") {
-    return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100";
-  }
-
-  if (status === "BANNED") {
-    return "bg-red-100 text-red-700 hover:bg-red-100";
-  }
-
-  return "bg-amber-100 text-amber-700 hover:bg-amber-100";
+function getStatusKey(status: AdminUserStatus): "active" | "pending" | "cancelled" {
+  if (status === "VERIFIED") return "active";
+  if (status === "BANNED") return "cancelled";
+  return "pending";
 }
 
 function getAvatarFallback(name: string): string {
@@ -95,8 +92,6 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profile, setProfile] = useState<AdminUserProfileDetails | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
-
-  const hasUsers = users.length > 0;
 
   const requestFilters = useMemo(
     () => ({
@@ -175,143 +170,133 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
       });
   };
 
+  const handleFilterChange = (key: string, value: string) => {
+    if (key === "role") setRoleFilter(value as RoleFilter);
+  };
+
+  const handleReset = () => {
+    setSearch("");
+    setRoleFilter("ALL");
+  };
+
   return (
-    <section className="space-y-4">
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_220px]">
-        <Input
-          placeholder="Rechercher par email..."
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-
-        <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value as RoleFilter)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Filtrer par rôle" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">Tous les rôles</SelectItem>
-            <SelectItem value="CLIENT">CLIENT</SelectItem>
-            <SelectItem value="TALENT">TALENT</SelectItem>
-            <SelectItem value="ADMIN">ADMIN</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="rounded-lg border bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nom</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Rôle</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Date d'inscription</TableHead>
-              <TableHead className="w-[70px] text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {!hasUsers ? (
-              <TableRow>
-                <TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
-                  {isLoadingUsers ? "Chargement..." : "Aucun utilisateur trouvé."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium text-slate-900">{user.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                  <TableCell>
-                    <Badge className={getRoleBadgeClass(user.role)}>{user.role}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusBadgeClass(user.status)}>{user.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {dateFormatter.format(new Date(user.createdAt))}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label="Actions utilisateur">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleOpenProfile(user.id)}>
-                          Voir Profil
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleVerify(user.id)}
-                          disabled={isActionPending || user.status === "VERIFIED"}
-                        >
-                          Valider le compte
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleBan(user.id)}
-                          disabled={isActionPending || user.status === "BANNED"}
-                          className="text-red-700 focus:text-red-700"
-                        >
-                          Suspendre
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem disabled>Se connecter en tant que</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+    <>
+      <DataTableShell
+        columns={["Nom", "Email", "Rôle", "Statut", "Inscription", "Actions"]}
+        isLoading={isLoadingUsers}
+        emptyTitle="Aucun utilisateur trouvé"
+        emptyDescription="Essayez de modifier vos critères de recherche."
+        filterSlot={
+          <FilterBar
+            filters={ROLE_FILTERS}
+            activeFilters={{ role: roleFilter }}
+            onFilterChange={handleFilterChange}
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Rechercher par email…"
+            onReset={handleReset}
+          />
+        }
+      >
+        {users.map((user) => (
+          <TableRow key={user.id}>
+            <TableCell className="font-medium text-foreground">{user.name}</TableCell>
+            <TableCell className="text-muted-foreground">{user.email}</TableCell>
+            <TableCell>
+              <Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge>
+            </TableCell>
+            <TableCell>
+              <StatusPill status={getStatusKey(user.status)} label={user.status} />
+            </TableCell>
+            <TableCell className="text-muted-foreground">
+              {dateFormatter.format(new Date(user.createdAt))}
+            </TableCell>
+            <TableCell className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9"
+                    aria-label="Actions utilisateur"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleOpenProfile(user.id)}>
+                    Voir Profil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleVerify(user.id)}
+                    disabled={isActionPending || user.status === "VERIFIED"}
+                  >
+                    Valider le compte
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleBan(user.id)}
+                    disabled={isActionPending || user.status === "BANNED"}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    Suspendre
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem disabled>Se connecter en tant que</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
+          </TableRow>
+        ))}
+      </DataTableShell>
 
       <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md">
+        <SheetContent side="right" className="w-full sm:max-w-md glass-surface">
           <SheetHeader>
             <SheetTitle>Profil utilisateur</SheetTitle>
             <SheetDescription>Détails du compte sélectionné.</SheetDescription>
           </SheetHeader>
 
           {isProfileLoading ? (
-            <p className="mt-6 text-sm text-muted-foreground">Chargement du profil...</p>
+            <p className="mt-6 text-sm text-muted-foreground">Chargement du profil…</p>
           ) : profile ? (
             <div className="mt-6 space-y-4">
               <div className="flex items-center gap-3">
-                <Avatar className="h-12 w-12 border">
-                  <AvatarFallback>{getAvatarFallback(profile.name)}</AvatarFallback>
+                <Avatar className="h-12 w-12 border border-border/50">
+                  <AvatarFallback className="bg-muted text-muted-foreground">
+                    {getAvatarFallback(profile.name)}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium text-slate-900">{profile.name}</p>
+                  <p className="font-medium text-foreground">{profile.name}</p>
                   <p className="text-sm text-muted-foreground">{profile.email}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="rounded-md border bg-slate-50 px-3 py-2">
+                <div className="rounded-md border border-border/50 bg-muted/50 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Rôle</p>
-                  <p className="font-medium">{profile.role}</p>
+                  <p className="font-medium text-foreground">{profile.role}</p>
                 </div>
-                <div className="rounded-md border bg-slate-50 px-3 py-2">
+                <div className="rounded-md border border-border/50 bg-muted/50 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Statut</p>
-                  <p className="font-medium">{profile.status}</p>
+                  <p className="font-medium text-foreground">{profile.status}</p>
                 </div>
               </div>
 
-              <div className="space-y-2 rounded-md border bg-slate-50 px-3 py-3 text-sm">
+              <div className="space-y-2 rounded-md border border-border/50 bg-muted/50 px-3 py-3 text-sm">
                 <div>
                   <p className="text-xs text-muted-foreground">Date d'inscription</p>
-                  <p className="font-medium">{dateFormatter.format(new Date(profile.createdAt))}</p>
+                  <p className="font-medium text-foreground">{dateFormatter.format(new Date(profile.createdAt))}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Fonction</p>
-                  <p className="font-medium">{profile.jobTitle ?? "Non renseignée"}</p>
+                  <p className="font-medium text-foreground">{profile.jobTitle ?? "Non renseignée"}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Bio</p>
-                  <p className="text-sm">{profile.bio ?? "Non renseignée"}</p>
+                  <p className="text-sm text-foreground">{profile.bio ?? "Non renseignée"}</p>
                 </div>
               </div>
 
@@ -326,7 +311,7 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
                   Valider
                 </Button>
                 <Button
-                  variant="destructive"
+                  variant="danger-soft"
                   className="flex-1"
                   onClick={() => handleBan(profile.id)}
                   disabled={isActionPending || profile.status === "BANNED"}
@@ -341,6 +326,6 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
           )}
         </SheetContent>
       </Sheet>
-    </section>
+    </>
   );
 }

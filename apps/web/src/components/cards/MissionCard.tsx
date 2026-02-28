@@ -74,7 +74,7 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
   };
 
   return (
-    <Card className={cn("flex flex-col h-full border-border/50 shadow-sm hover:shadow-md transition-all", mission.isUrgent && "border-red-200 bg-red-50/10")}>
+    <Card className={cn("flex flex-col h-full border-border/50 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-ring", mission.isUrgent && "border-destructive/30 bg-destructive/[0.03]")}>
       <CardHeader className="space-y-4 pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1">
@@ -87,8 +87,8 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
             </div>
           </div>
           {mission.isUrgent && (
-            <Badge variant="destructive" className="shrink-0 animate-pulse text-[10px] px-2 py-0.5 h-6">
-              <Zap className="h-3 w-3 mr-1" />
+            <Badge variant="error" className="shrink-0 text-[10px] px-2 py-0.5 h-6">
+              <Zap className="h-3 w-3 mr-1" aria-hidden="true" />
               Renfort Immédiat
             </Badge>
           )}
@@ -96,8 +96,8 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
 
         <div className="flex flex-wrap gap-2">
           {mission.isNetworkMatch && (
-            <Badge variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
+            <Badge variant="success" className="text-[10px]">
+              <CheckCircle2 className="h-3 w-3 mr-1" aria-hidden="true" />
               Déjà intervenu
             </Badge>
           )}

@@ -24,7 +24,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
       {/* Header */}
-      <header className="fixed top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
+      <header className="fixed top-0 z-50 w-full border-b border-border/40 bg-card/80 backdrop-blur-[12px] shadow-sm">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-primary" />
@@ -99,7 +99,7 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="grid grid-cols-1 md:grid-cols-3 gap-8"
             >
-              <motion.div variants={item} className="flex flex-col items-center text-center p-6 rounded-2xl bg-muted/30 border border-border/50">
+              <motion.div variants={item} className="flex flex-col items-center text-center p-6 rounded-2xl bg-muted/30 border border-border/50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                 <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 text-primary">
                   <Building2 className="h-7 w-7" />
                 </div>
@@ -109,7 +109,7 @@ export default function HomePage() {
                 </p>
               </motion.div>
 
-              <motion.div variants={item} className="flex flex-col items-center text-center p-6 rounded-2xl bg-muted/30 border border-border/50">
+              <motion.div variants={item} className="flex flex-col items-center text-center p-6 rounded-2xl bg-muted/30 border border-border/50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                 <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 text-primary">
                   <CheckCircle className="h-7 w-7" />
                 </div>
@@ -119,7 +119,7 @@ export default function HomePage() {
                 </p>
               </motion.div>
 
-              <motion.div variants={item} className="flex flex-col items-center text-center p-6 rounded-2xl bg-muted/30 border border-border/50">
+              <motion.div variants={item} className="flex flex-col items-center text-center p-6 rounded-2xl bg-muted/30 border border-border/50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                 <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 text-primary">
                   <Star className="h-7 w-7" />
                 </div>
@@ -185,7 +185,7 @@ export default function HomePage() {
 
       <footer className="border-t bg-muted/30 py-12 px-6">
         <div className="mx-auto max-w-7xl flex flex-col md:flex-row justify-between items-center gap-6 text-muted-foreground text-sm">
-          <p>© 2024 Les Extras. Tous droits réservés.</p>
+          <p>© 2026 Les Extras. Tous droits réservés.</p>
           <div className="flex gap-6">
             <Link href="#" className="hover:text-foreground transition-colors">Politique de confidentialité</Link>
             <Link href="#" className="hover:text-foreground transition-colors">CGU</Link>

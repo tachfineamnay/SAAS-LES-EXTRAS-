@@ -11,6 +11,8 @@ import {
 } from "@/app/actions/admin";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DataTableShell } from "@/components/data/DataTableShell";
+import { TableCell, TableRow } from "@/components/ui/table";
 import {
   Sheet,
   SheetContent,
@@ -18,14 +20,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 type ServicesTableProps = {
   services: AdminServiceRow[];
@@ -93,76 +87,59 @@ export function ServicesTable({ services }: ServicesTableProps) {
 
   return (
     <>
-      <div className="rounded-lg border bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Titre</TableHead>
-              <TableHead>Talent</TableHead>
-              <TableHead>Prix</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="w-[220px] text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
-                  Aucun service à modérer.
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((service) => (
-                <TableRow
-                  key={service.id}
-                  className="cursor-pointer"
-                  onClick={() => handleOpenDetails(service)}
+      <DataTableShell
+        columns={["Titre", "Talent", "Prix", "Type", "Actions"]}
+        emptyTitle="Aucun service à modérer"
+        emptyDescription="Tous les services sont traités."
+      >
+        {rows.map((service) => (
+          <TableRow
+            key={service.id}
+            className="cursor-pointer"
+            onClick={() => handleOpenDetails(service)}
+          >
+            <TableCell className="font-medium text-foreground">{service.title}</TableCell>
+            <TableCell className="text-sm text-muted-foreground">{service.talentName}</TableCell>
+            <TableCell className="text-sm text-foreground">
+              {moneyFormatter.format(service.price)}
+            </TableCell>
+            <TableCell>
+              <Badge variant="quiet">{getTypeLabel(service.type)}</Badge>
+            </TableCell>
+            <TableCell className="text-right">
+              <div className="flex justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant={service.isFeatured ? "default" : "outline"}
+                  disabled={isPending}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void handleToggleFeature(service.id);
+                  }}
                 >
-                  <TableCell className="font-medium text-slate-900">{service.title}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{service.talentName}</TableCell>
-                  <TableCell className="text-sm text-slate-900">
-                    {moneyFormatter.format(service.price)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{getTypeLabel(service.type)}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant={service.isFeatured ? "secondary" : "outline"}
-                        disabled={isPending}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void handleToggleFeature(service.id);
-                        }}
-                      >
-                        <Star className="h-4 w-4" />
-                        {service.isFeatured ? "En avant" : "Mettre en avant"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={service.isHidden ? "secondary" : "outline"}
-                        disabled={isPending}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void handleToggleHide(service.id);
-                        }}
-                      >
-                        {service.isHidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                        {service.isHidden ? "Afficher" : "Masquer"}
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                  <Star className="h-4 w-4" />
+                  {service.isFeatured ? "En avant" : "Mettre en avant"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant={service.isHidden ? "glass" : "outline"}
+                  disabled={isPending}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void handleToggleHide(service.id);
+                  }}
+                >
+                  {service.isHidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                  {service.isHidden ? "Afficher" : "Masquer"}
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </DataTableShell>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-lg">
+        <SheetContent side="right" className="w-full sm:max-w-lg glass-surface">
           <SheetHeader>
             <SheetTitle>Détail service</SheetTitle>
             <SheetDescription>Lecture rapide du contenu publié.</SheetDescription>
@@ -172,39 +149,39 @@ export function ServicesTable({ services }: ServicesTableProps) {
             <div className="mt-6 space-y-4 text-sm">
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Titre</p>
-                <p className="text-base font-medium text-slate-900">{selectedService.title}</p>
+                <p className="text-base font-medium text-foreground">{selectedService.title}</p>
               </div>
 
               <div className="flex items-center gap-2 text-muted-foreground">
-                <UserRound className="h-4 w-4" />
+                <UserRound className="h-4 w-4" aria-hidden="true" />
                 <span>
                   {selectedService.talentName} ({selectedService.talentEmail})
                 </span>
               </div>
 
-              <div className="rounded-md border bg-slate-50 p-3">
+              <div className="rounded-md border border-border/50 bg-muted/50 p-3">
                 <p className="text-xs text-muted-foreground">Description complète</p>
-                <p className="mt-1">
+                <p className="mt-1 text-foreground">
                   {selectedService.description?.trim() || "Aucune description fournie."}
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 rounded-md border bg-slate-50 p-3">
+              <div className="grid grid-cols-2 gap-3 rounded-md border border-border/50 bg-muted/50 p-3">
                 <div>
                   <p className="text-xs text-muted-foreground">Prix</p>
-                  <p className="font-medium">{moneyFormatter.format(selectedService.price)}</p>
+                  <p className="font-medium text-foreground">{moneyFormatter.format(selectedService.price)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Type</p>
-                  <p className="font-medium">{getTypeLabel(selectedService.type)}</p>
+                  <p className="font-medium text-foreground">{getTypeLabel(selectedService.type)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Mise en avant</p>
-                  <p className="font-medium">{selectedService.isFeatured ? "Oui" : "Non"}</p>
+                  <p className="font-medium text-foreground">{selectedService.isFeatured ? "Oui" : "Non"}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Visibilité</p>
-                  <p className="font-medium">{selectedService.isHidden ? "Masqué" : "Visible"}</p>
+                  <p className="font-medium text-foreground">{selectedService.isHidden ? "Masqué" : "Visible"}</p>
                 </div>
               </div>
 
