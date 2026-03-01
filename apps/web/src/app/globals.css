@@ -89,7 +89,7 @@
 
   /* Glass surfaces */
   .glass-surface {
-    @apply bg-white/60 backdrop-blur-xl border border-white/80 shadow-[0_8px_30px_rgb(0, 0, 0, 0.04)];
+    @apply bg-white/60 backdrop-blur-xl border border-white/80 shadow-[0_8px_30px_#0000000a];
   }
 
   .glass-surface-dense {
