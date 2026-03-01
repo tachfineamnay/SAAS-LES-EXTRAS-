@@ -2,51 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════
+   WARM PULSE — Design System 2026
+   Serene · Human · Premium
+   ═══════════════════════════════════════════════ */
+
 @layer base {
   :root {
-    /* ═══════════════════════════════════════
-       ADEPA Les Extras — Hyper-Coral 2026
-       Multi-coral palette + Deep Azure
-       ═══════════════════════════════════════ */
+    /* ── Page Foundation ── */
+    --background: 20 50% 97%;
+    /* Warm peach wash #FBF5F2 */
+    --foreground: 220 20% 14%;
+    /* Charcoal #1F2228 */
 
-    /* Background — Warm Coral Wash */
-    --background: 12 45% 97%;
-    --foreground: 220 25% 10%;
+    /* ── Cards ── */
+    --card: 30 40% 98%;
+    /* Warm cream #FCF9F6 */
+    --card-foreground: 220 20% 14%;
 
-    /* Cards — Warm Cream */
-    --card: 15 35% 99%;
-    --card-foreground: 220 25% 10%;
+    /* ── Popovers ── */
+    --popover: 30 40% 98%;
+    --popover-foreground: 220 20% 14%;
 
-    /* Popovers */
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 10%;
-
-    /* Primary — Hyper Coral (boosted) */
-    --primary: 4 88% 56%;
+    /* ── Primary — Logo Coral ── */
+    --primary: 4 78% 58%;
+    /* #E85B50 */
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary — Intense Ocean Azure (boosted) */
-    --secondary: 218 88% 42%;
+    /* ── Secondary — Trust Azure ── */
+    --secondary: 218 72% 50%;
+    /* #2563EB */
     --secondary-foreground: 0 0% 100%;
 
-    /* Muted — Blush Sand */
-    --muted: 12 30% 92%;
+    /* ── Muted — Warm Sand ── */
+    --muted: 22 25% 91%;
     --muted-foreground: 220 12% 44%;
 
-    /* Accent — Soft Peach Glow */
-    --accent: 14 85% 95%;
+    /* ── Accent — Peach Glow ── */
+    --accent: 14 60% 94%;
     --accent-foreground: 4 78% 48%;
 
-    /* Destructive */
+    /* ── Destructive ── */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    /* Borders — Rose-tinted */
-    --border: 12 22% 87%;
-    --input: 12 22% 87%;
+    /* ── Borders ── */
+    --border: 22 20% 88%;
+    --input: 22 20% 88%;
     --ring: 4 78% 58%;
 
     --radius: 1rem;
+
+    /* ── Extended Coral Scale ── */
+    --coral-50: 14 80% 97%;
+    --coral-100: 14 60% 94%;
+    --coral-200: 12 70% 86%;
+    --coral-300: 10 80% 78%;
+    --coral-400: 8 85% 65%;
+    --coral-500: 4 78% 58%;
+    --coral-600: 2 72% 48%;
+
+    /* ── Extended Azure Scale ── */
+    --azure-300: 218 60% 72%;
+    --azure-500: 218 72% 50%;
+
+    /* ── Emerald ── */
+    --emerald-500: 150 60% 45%;
   }
 
   * {
@@ -62,7 +83,7 @@
   }
 
   ::selection {
-    background-color: hsl(var(--primary) / 0.18);
+    background-color: hsl(var(--primary) / 0.15);
     color: hsl(var(--foreground));
   }
 
@@ -76,118 +97,120 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary) / 0.2);
+    background: hsl(var(--primary) / 0.18);
     border-radius: 99px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary) / 0.35);
+    background: hsl(var(--primary) / 0.32);
   }
 }
 
 @layer utilities {
 
-  /* ═══ GLASS SURFACES (reinforced) ═══ */
-  .glass-surface {
-    @apply bg-white/70 border border-white/50;
-    backdrop-filter: blur(28px) saturate(1.5);
-    -webkit-backdrop-filter: blur(28px) saturate(1.5);
-    box-shadow: 0 8px 40px hsla(4, 88%, 56%, 0.08), 0 2px 6px hsla(0, 0%, 0%, 0.05);
+  /* ═══ WARM GLASS SURFACES ═══ */
+  .glass-warm {
+    background: hsla(30, 40%, 98%, 0.65);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid hsla(22, 20%, 88%, 0.5);
+    box-shadow:
+      0 8px 32px hsla(4, 78%, 58%, 0.05),
+      0 1px 4px hsla(0, 0%, 0%, 0.03),
+      inset 0 1px 0 hsla(0, 0%, 100%, 0.7);
   }
 
-  .glass-surface-dense {
-    @apply bg-white/80 border border-white/50;
-    backdrop-filter: blur(20px) saturate(1.4);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4);
-    box-shadow: 0 4px 20px hsla(4, 88%, 56%, 0.06), 0 1px 3px hsla(0, 0%, 0%, 0.04);
+  .glass-warm-dense {
+    background: hsla(30, 40%, 98%, 0.82);
+    backdrop-filter: blur(20px) saturate(1.35);
+    -webkit-backdrop-filter: blur(20px) saturate(1.35);
+    border: 1px solid hsla(22, 20%, 88%, 0.55);
+    box-shadow:
+      0 4px 16px hsla(4, 78%, 58%, 0.04),
+      0 1px 3px hsla(0, 0%, 0%, 0.03);
   }
 
-  /* ═══ CORAL MESH — Heavy coral glass (reinforced) ═══ */
+  /* ═══ CORAL GLASS — Tinted warm glass ═══ */
   .glass-coral {
     background:
-      linear-gradient(135deg, hsla(4, 88%, 56%, 0.14), hsla(14, 90%, 62%, 0.08), hsla(24, 95%, 70%, 0.04));
-    backdrop-filter: blur(32px) saturate(1.6);
-    -webkit-backdrop-filter: blur(32px) saturate(1.6);
-    border: 1px solid hsla(4, 88%, 56%, 0.22);
+      linear-gradient(135deg,
+        hsla(4, 78%, 58%, 0.08),
+        hsla(14, 85%, 65%, 0.05),
+        hsla(24, 90%, 72%, 0.03));
+    backdrop-filter: blur(28px) saturate(1.5);
+    -webkit-backdrop-filter: blur(28px) saturate(1.5);
+    border: 1px solid hsla(4, 78%, 58%, 0.14);
     box-shadow:
-      0 8px 40px hsla(4, 88%, 56%, 0.1),
-      0 2px 8px hsla(4, 88%, 56%, 0.06),
-      inset 0 1px 0 hsla(0, 0%, 100%, 0.6);
+      0 8px 32px hsla(4, 78%, 58%, 0.06),
+      0 2px 6px hsla(4, 78%, 58%, 0.04),
+      inset 0 1px 0 hsla(0, 0%, 100%, 0.65);
   }
 
-  /* ═══ AZURE GLASS — Intense blue glass (reinforced) ═══ */
+  /* ═══ AZURE GLASS — Cool trust accent glass ═══ */
   .glass-azure {
     background:
-      linear-gradient(135deg, hsla(218, 88%, 42%, 0.12), hsla(228, 80%, 52%, 0.06));
-    backdrop-filter: blur(32px) saturate(1.6);
-    -webkit-backdrop-filter: blur(32px) saturate(1.6);
-    border: 1px solid hsla(218, 88%, 42%, 0.18);
+      linear-gradient(135deg,
+        hsla(218, 72%, 50%, 0.07),
+        hsla(228, 65%, 58%, 0.04));
+    backdrop-filter: blur(28px) saturate(1.5);
+    -webkit-backdrop-filter: blur(28px) saturate(1.5);
+    border: 1px solid hsla(218, 72%, 50%, 0.12);
     box-shadow:
-      0 8px 40px hsla(218, 88%, 42%, 0.08),
-      0 2px 8px hsla(218, 88%, 42%, 0.05),
-      inset 0 1px 0 hsla(0, 0%, 100%, 0.5);
+      0 8px 32px hsla(218, 72%, 50%, 0.05),
+      0 2px 6px hsla(218, 72%, 50%, 0.03),
+      inset 0 1px 0 hsla(0, 0%, 100%, 0.55);
   }
 
-  /* ═══ MESH GRADIENT BACKGROUND — Intensified coral atmosphere ═══ */
-  .mesh-coral-bg {
+  /* ═══ AURORA MESH — Living warm background ═══ */
+  .aurora-mesh {
     background:
-      radial-gradient(ellipse at 20% 0%, hsla(4, 88%, 56%, 0.18) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 15%, hsla(14, 92%, 62%, 0.14) 0%, transparent 45%),
-      radial-gradient(ellipse at 60% 75%, hsla(218, 88%, 42%, 0.1) 0%, transparent 50%),
-      radial-gradient(ellipse at 0% 100%, hsla(24, 95%, 68%, 0.14) 0%, transparent 45%),
-      radial-gradient(ellipse at 50% 40%, hsla(350, 80%, 65%, 0.06) 0%, transparent 40%),
+      radial-gradient(ellipse at 15% 5%, hsla(4, 78%, 58%, 0.12) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 10%, hsla(14, 85%, 65%, 0.10) 0%, transparent 50%),
+      radial-gradient(ellipse at 65% 70%, hsla(218, 72%, 50%, 0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 5% 80%, hsla(24, 90%, 72%, 0.10) 0%, transparent 50%),
+      radial-gradient(ellipse at 45% 35%, hsla(350, 75%, 68%, 0.05) 0%, transparent 45%),
       hsl(var(--background));
   }
 
-  /* ═══ THERMAL GLOW — Strong glowing borders ═══ */
-  .glow-coral {
+  /* ═══ SOFT GLOW SHADOWS ═══ */
+  .glow-coral-soft {
     box-shadow:
-      0 0 30px hsla(4, 88%, 56%, 0.22),
-      0 0 80px hsla(4, 88%, 56%, 0.08),
-      0 4px 20px hsla(4, 88%, 56%, 0.1);
+      0 0 24px hsla(4, 78%, 58%, 0.14),
+      0 0 60px hsla(4, 78%, 58%, 0.05),
+      0 4px 16px hsla(4, 78%, 58%, 0.07);
   }
 
-  .glow-azure {
+  .glow-azure-soft {
     box-shadow:
-      0 0 30px hsla(218, 88%, 42%, 0.18),
-      0 0 80px hsla(218, 88%, 42%, 0.06),
-      0 4px 20px hsla(218, 88%, 42%, 0.08);
+      0 0 24px hsla(218, 72%, 50%, 0.12),
+      0 0 60px hsla(218, 72%, 50%, 0.04),
+      0 4px 16px hsla(218, 72%, 50%, 0.06);
   }
 
-  /* ═══ BACKGROUND HALOS ═══ */
+  /* ═══ HALOS ═══ */
   .halo-primary {
     background: radial-gradient(700px circle at top right,
-        hsl(var(--primary) / 0.12), transparent 70%);
+        hsl(var(--primary) / 0.10), transparent 70%);
   }
 
   .halo-secondary {
     background: radial-gradient(600px circle at bottom left,
-        hsl(var(--secondary) / 0.08), transparent 70%);
+        hsl(var(--secondary) / 0.07), transparent 70%);
   }
 
   .auth-brand-halo-primary {
     background: radial-gradient(600px circle at top right,
-        hsl(var(--primary) / 0.2), transparent 70%);
+        hsl(var(--primary) / 0.18), transparent 70%);
   }
 
   .auth-brand-halo-secondary {
     background: radial-gradient(600px circle at bottom left,
-        hsl(var(--secondary) / 0.2), transparent 70%);
+        hsl(var(--secondary) / 0.18), transparent 70%);
   }
 
   /* ═══ SKELETON ═══ */
   .skeleton {
     @apply bg-muted/70 animate-pulse rounded-md;
-  }
-
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%);
-    }
-
-    100% {
-      transform: translateX(100%);
-    }
   }
 
   .skeleton-shimmer {
@@ -203,6 +226,83 @@
   }
 }
 
+/* ═══ KEYFRAMES ═══ */
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-100%) skewX(-12deg);
+  }
+
+  100% {
+    transform: translateX(200%) skewX(-12deg);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  33% {
+    transform: translateY(-12px) rotate(1deg);
+  }
+
+  66% {
+    transform: translateY(6px) rotate(-0.5deg);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 hsla(4, 78%, 58%, 0.25);
+  }
+
+  50% {
+    box-shadow: 0 0 0 10px hsla(4, 78%, 58%, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 hsla(4, 78%, 58%, 0);
+  }
+}
+
+@keyframes aurora-shift {
+
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    opacity: 0.8;
+    transform: translate(20px, -15px) scale(1.05);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: translate(-15px, 10px) scale(0.97);
+  }
+
+  75% {
+    opacity: 0.75;
+    transform: translate(10px, 20px) scale(1.03);
+  }
+}
+
+/* ═══ REDUCED MOTION ═══ */
 @media (prefers-reduced-motion: reduce) {
 
   *,
