@@ -4,46 +4,46 @@
 
 @layer base {
   :root {
-    /* Warm SaaS Palette - 2026 Edition */
+    /* ═══ ADEPA Les Extras — Coral & Azure Palette 2026 ═══ */
 
-    /* Base - Warm White / Stone */
-    --background: 30 20% 98%;
-    --foreground: 24 10% 10%;
+    /* Background — Soft Coral Cream */
+    --background: 8 40% 97%;
+    --foreground: 220 20% 12%;
 
-    /* Cards - White with subtle warmth */
-    --card: 0 0% 100%;
-    --card-foreground: 24 10% 10%;
+    /* Cards — Warm white with coral haze */
+    --card: 8 30% 99%;
+    --card-foreground: 220 20% 12%;
 
     /* Popovers */
     --popover: 0 0% 100%;
-    --popover-foreground: 24 10% 10%;
+    --popover-foreground: 220 20% 12%;
 
-    /* Primary - Coral Red (Energy & Action) */
-    --primary: 4 90% 58%;
+    /* Primary — Coral (ADEPA signature) */
+    --primary: 4 78% 60%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Ocean Blue (Trust & Info) */
-    --secondary: 238 75% 59%;
+    /* Secondary — Deep Azure (Trust & Depth) */
+    --secondary: 224 76% 48%;
     --secondary-foreground: 0 0% 100%;
 
-    /* Muted - Warm Sand */
-    --muted: 30 20% 94%;
-    --muted-foreground: 24 5% 45%;
+    /* Muted — Rose Sand */
+    --muted: 8 25% 93%;
+    --muted-foreground: 220 10% 46%;
 
-    /* Accent - Soft Rose (Highlights) */
-    --accent: 4 90% 96%;
-    --accent-foreground: 4 90% 58%;
+    /* Accent — Soft Coral Highlight */
+    --accent: 4 80% 95%;
+    --accent-foreground: 4 78% 55%;
 
     /* Destructive */
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    /* Borders & Inputs */
-    --border: 30 10% 88%;
-    --input: 30 10% 88%;
-    --ring: 4 90% 58%;
+    /* Borders — Coral-tinted */
+    --border: 8 18% 88%;
+    --input: 8 18% 88%;
+    --ring: 4 78% 60%;
 
-    /* Modern, Friendly Radius */
+    /* Premium Radius */
     --radius: 1rem;
   }
 
@@ -76,18 +76,18 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--border));
+    background: hsl(var(--primary) / 0.2);
     border-radius: 99px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.4);
+    background: hsl(var(--primary) / 0.35);
   }
 }
 
 @layer utilities {
 
-  /* Glass surfaces */
+  /* ─── Glass surfaces ─── */
   .glass-surface {
     @apply bg-white/60 backdrop-blur-xl border border-white/80 shadow-[0_8px_30px_#0000000a];
   }
@@ -96,20 +96,38 @@
     @apply bg-white/80 backdrop-blur-md border border-white/60 shadow-sm;
   }
 
-  /* Background halos — position with absolute on a wrapper */
+  /* ─── Coral glass — for bento cards ─── */
+  .glass-coral {
+    background: linear-gradient(135deg, hsla(4, 78%, 60%, 0.06), hsla(4, 78%, 60%, 0.02));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsla(4, 78%, 60%, 0.12);
+    box-shadow: 0 8px 32px hsla(4, 78%, 60%, 0.06);
+  }
+
+  /* ─── Azure glass — for accent cards ─── */
+  .glass-azure {
+    background: linear-gradient(135deg, hsla(224, 76%, 48%, 0.06), hsla(224, 76%, 48%, 0.02));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsla(224, 76%, 48%, 0.1);
+    box-shadow: 0 8px 32px hsla(224, 76%, 48%, 0.05);
+  }
+
+  /* ─── Background halos ─── */
   .halo-primary {
     background: radial-gradient(700px circle at top right,
-        hsl(var(--primary) / 0.15),
+        hsl(var(--primary) / 0.12),
         transparent 70%);
   }
 
   .halo-secondary {
     background: radial-gradient(600px circle at bottom left,
-        hsl(var(--secondary) / 0.12),
+        hsl(var(--secondary) / 0.08),
         transparent 70%);
   }
 
-  /* Auth split-layout brand panel halos */
+  /* ─── Auth split-layout brand panel halos ─── */
   .auth-brand-halo-primary {
     background: radial-gradient(600px circle at top right,
         hsl(var(--primary) / 0.2),
@@ -123,7 +141,7 @@
   }
 
 
-  /* Skeleton shimmer */
+  /* ─── Skeleton shimmer ─── */
   .skeleton {
     @apply bg-muted/70 animate-pulse rounded-md;
   }
