@@ -75,10 +75,10 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
 
   return (
     <Card className={cn(
-      "flex flex-col h-full rounded-2xl transition-all duration-200",
-      "bg-card/70 backdrop-blur-[10px] border border-border/40 shadow-sm",
-      "hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-ring",
-      mission.isUrgent && "border-destructive/30"
+      "flex flex-col h-full rounded-2xl transition-all duration-300",
+      "glass-surface",
+      "hover:-translate-y-1 hover:shadow-lg focus-within:ring-2 focus-within:ring-ring",
+      mission.isUrgent && "border-destructive/30 shadow-destructive/5"
     )}>
       <CardHeader className="space-y-4 pb-3">
         <div className="flex items-start justify-between gap-2">
@@ -138,7 +138,7 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
             <MapPin className="h-4 w-4 text-primary/70" />
             <span className="truncate max-w-[140px]">{mission.address.split(',')[0]}</span>
           </div>
-          <div className="text-lg font-bold text-primary">
+          <div className="text-lg font-bold text-emerald-600 tabular-nums">
             {moneyFormatter.format(mission.hourlyRate)}
             <span className="text-xs font-normal text-muted-foreground ml-1">/ h</span>
           </div>
