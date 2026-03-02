@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
-import { Briefcase, Building2, Loader2, ArrowRight, Mail, Lock } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Briefcase, Building2, Loader2, ArrowRight, Mail, Lock, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,26 +19,42 @@ const ROLES = [
         label: "Je cherche des missions",
         sub: "Infirmier, Aide-soignant, Éducateur…",
         icon: Briefcase,
+        color: "teal" as const,
     },
     {
         value: "CLIENT" as const,
         label: "Je recrute des renforts",
         sub: "Établissement, Hôpital, EHPAD…",
         icon: Building2,
+        color: "coral" as const,
     },
+];
+
+const PERKS = [
+    "Inscription gratuite, sans engagement",
+    "Profil visible dès la validation",
+    "Missions adaptées à votre secteur",
+    "Paiement sécurisé, facturation auto",
 ];
 
 function SubmitButton() {
     const { pending } = useFormStatus();
     return (
-        <Button className="w-full min-h-[44px] shadow-sm" type="submit" disabled={pending}>
-            {pending ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            ) : (
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            )}
-            {pending ? "Création du compte…" : "Créer mon compte"}
-        </Button>
+        <motion.div whileTap={{ scale: 0.97 }}>
+            <Button
+                variant="coral"
+                className="w-full min-h-[46px] text-base font-semibold rounded-xl"
+                type="submit"
+                disabled={pending}
+            >
+                {pending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                )}
+                {pending ? "Création du compte…" : "Créer mon compte"}
+            </Button>
+        </motion.div>
     );
 }
 
@@ -47,96 +64,180 @@ export default function RegisterPage({ searchParams }: { searchParams: { role?: 
     const [state, formAction] = useFormState(register, initialState);
 
     return (
-        <div className="flex min-h-screen bg-background">
-            {/* Left brand panel */}
-            <div className="relative hidden lg:flex lg:w-1/2 flex-col bg-foreground p-12 text-background overflow-hidden">
-                <div
-                    className="absolute inset-0 pointer-events-none auth-brand-halo-secondary"
-                    aria-hidden="true"
-                />
+        <div className="flex min-h-screen bg-[hsl(var(--surface-1))]">
+            {/* Left — brand panel (coral gradient) */}
+            <motion.div
+                className="relative hidden lg:flex lg:w-[45%] flex-col bg-[hsl(var(--coral))] p-12 text-white overflow-hidden"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            >
+                {/* Radial blobs */}
+                <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/10 blur-3xl pointer-events-none" aria-hidden="true" />
+                <div className="absolute bottom-10 -left-10 w-56 h-56 rounded-full bg-[hsl(var(--teal)/0.3)] blur-3xl pointer-events-none" aria-hidden="true" />
+
+                {/* Logo */}
                 <div className="relative z-10 flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">LE</span>
+                    <div className="grid grid-cols-2 gap-0.5 w-9 h-9">
+                        <div className="rounded-sm bg-white" />
+                        <div className="rounded-sm bg-[hsl(var(--teal))]" />
+                        <div className="rounded-sm bg-[hsl(var(--teal))]" />
+                        <div className="rounded-sm bg-white/40" />
                     </div>
-                    <span className="text-lg font-semibold">LesExtras</span>
+                    <span className="text-lg font-bold font-display">Les Extras</span>
                 </div>
-                <div className="relative z-10 mt-auto space-y-4">
-                    <p className="text-3xl font-bold leading-tight">
-                        Rejoignez la plateforme de référence du secteur social.
-                    </p>
-                    <p className="text-background/60 text-sm leading-relaxed">
-                        Déjà plus de 500 professionnels et 120 établissements font confiance à LesExtras.
-                    </p>
-                    <div className="pt-4 border-t border-background/10">
-                        <blockquote className="space-y-1">
-                            <p className="text-sm text-background/80 italic">
-                                "Grâce à LesExtras, j'ai trouvé des missions adaptées à mon emploi du temps en quelques clics."
+
+                {/* Content */}
+                <div className="relative z-10 mt-auto space-y-6">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                    >
+                        <p className="text-3xl font-bold leading-tight font-display">
+                            Rejoignez la plateforme de référence du secteur social.
+                        </p>
+                        <p className="mt-3 text-white/70 text-sm leading-relaxed">
+                            Déjà plus de 500 professionnels et 120 établissements font confiance à Les Extras.
+                        </p>
+                    </motion.div>
+
+                    {/* Perk list */}
+                    <motion.ul
+                        className="space-y-2.5"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.45 }}
+                    >
+                        {PERKS.map((perk, i) => (
+                            <motion.li
+                                key={perk}
+                                className="flex items-center gap-2.5 text-sm text-white/85"
+                                initial={{ opacity: 0, x: -8 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.5 + i * 0.07 }}
+                            >
+                                <CheckCircle2 className="h-4 w-4 shrink-0 text-white/70" />
+                                {perk}
+                            </motion.li>
+                        ))}
+                    </motion.ul>
+
+                    <motion.div
+                        className="border-t border-white/20 pt-5"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.7 }}
+                    >
+                        <blockquote className="space-y-2">
+                            <p className="text-sm text-white/85 italic leading-relaxed">
+                                "Grâce à Les Extras, j'ai trouvé des missions en quelques clics."
                             </p>
-                            <footer className="text-xs text-background/50">Sofia Davis, Infirmière</footer>
+                            <footer className="text-xs text-white/50 font-medium">Sofia Davis · Infirmière</footer>
                         </blockquote>
-                    </div>
+                    </motion.div>
                 </div>
-            </div>
+            </motion.div>
 
-            {/* Right form */}
-            <div className="flex flex-1 items-center justify-center p-6 sm:p-10">
-                <div className="w-full max-w-sm space-y-8">
-                    <div className="lg:hidden flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-lg bg-primary" aria-hidden="true" />
-                        <span className="font-semibold">LesExtras</span>
+            {/* Right — form */}
+            <div className="flex flex-1 items-center justify-center p-6 sm:p-10 bg-white">
+                <motion.div
+                    className="w-full max-w-sm space-y-7"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                >
+                    {/* Mobile logo */}
+                    <div className="flex items-center gap-2 lg:hidden">
+                        <div className="grid grid-cols-2 gap-0.5 w-7 h-7">
+                            <div className="rounded-sm bg-[hsl(var(--teal))]" />
+                            <div className="rounded-sm bg-[hsl(var(--coral))]" />
+                            <div className="rounded-sm bg-[hsl(var(--coral))]" />
+                            <div className="rounded-sm bg-[hsl(var(--teal)/0.4)]" />
+                        </div>
+                        <span className="font-bold font-display">Les Extras</span>
                     </div>
 
-                    <div className="space-y-1">
-                        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Étape 1 sur 2</p>
-                        <h1 className="text-2xl font-bold tracking-tight">Créer un compte</h1>
+                    <div className="space-y-1.5">
+                        <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--coral))]">Étape 1 sur 2</p>
+                        <h1 className="text-2xl font-bold tracking-tight font-display">Créer un compte</h1>
                         <p className="text-sm text-muted-foreground">Choisissez votre profil, puis entrez vos informations.</p>
                     </div>
 
                     {/* Role selector */}
                     <div className="grid gap-3" role="radiogroup" aria-label="Type de compte">
-                        {ROLES.map((r) => {
+                        {ROLES.map((r, i) => {
                             const Icon = r.icon;
                             const isSelected = role === r.value;
+                            const isTeal = r.color === "teal";
                             return (
-                                <button
+                                <motion.button
                                     key={r.value}
                                     type="button"
                                     role="radio"
                                     aria-checked={isSelected ? "true" : "false"}
                                     onClick={() => setRole(r.value)}
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.25 + i * 0.08 }}
+                                    whileTap={{ scale: 0.98 }}
                                     className={cn(
-                                        "flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all duration-200",
+                                        "flex items-center gap-4 rounded-2xl border-2 p-4 text-left transition-all duration-200 w-full",
                                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                         isSelected
-                                            ? "border-primary bg-primary/5"
-                                            : "border-border hover:border-border/80 hover:bg-muted/40"
+                                            ? isTeal
+                                                ? "border-[hsl(var(--teal))] bg-[hsl(var(--teal-light))]"
+                                                : "border-[hsl(var(--coral))] bg-[hsl(var(--coral-light))]"
+                                            : "border-border hover:border-border/80 hover:bg-[hsl(var(--surface-1))]"
                                     )}
                                 >
                                     <div
                                         className={cn(
-                                            "flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
-                                            isSelected ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                                            "flex h-10 w-10 items-center justify-center rounded-xl transition-colors shrink-0",
+                                            isSelected
+                                                ? isTeal ? "icon-teal" : "icon-coral"
+                                                : "bg-muted text-muted-foreground"
                                         )}
                                     >
                                         <Icon className="h-5 w-5" aria-hidden="true" />
                                     </div>
-                                    <div>
+                                    <div className="flex-1">
                                         <p className="font-semibold text-sm">{r.label}</p>
                                         <p className="text-xs text-muted-foreground">{r.sub}</p>
                                     </div>
-                                    {isSelected && (
-                                        <div className="ml-auto h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
-                                    )}
-                                </button>
+                                    <AnimatePresence>
+                                        {isSelected && (
+                                            <motion.div
+                                                initial={{ scale: 0, opacity: 0 }}
+                                                animate={{ scale: 1, opacity: 1 }}
+                                                exit={{ scale: 0, opacity: 0 }}
+                                                className={cn(
+                                                    "h-5 w-5 rounded-full flex items-center justify-center",
+                                                    isTeal ? "bg-[hsl(var(--teal))]" : "bg-[hsl(var(--coral))]"
+                                                )}
+                                            >
+                                                <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </motion.button>
                             );
                         })}
                     </div>
 
-                    {state?.message && (
-                        <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2.5" role="alert">
-                            <p className="text-sm text-destructive">{state.message}</p>
-                        </div>
-                    )}
+                    <AnimatePresence>
+                        {state?.message && (
+                            <motion.div
+                                className="rounded-xl bg-destructive/8 border border-destructive/20 px-3.5 py-3"
+                                role="alert"
+                                initial={{ opacity: 0, scale: 0.96 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0 }}
+                            >
+                                <p className="text-sm text-destructive">{state.message}</p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     <form action={formAction} className="space-y-4" noValidate>
                         <input type="hidden" name="role" value={role} />
@@ -191,7 +292,7 @@ export default function RegisterPage({ searchParams }: { searchParams: { role?: 
                     <div className="space-y-3">
                         <p className="text-center text-sm text-muted-foreground">
                             Déjà un compte ?{" "}
-                            <Link href="/login" className="text-primary hover:underline underline-offset-4 font-medium">
+                            <Link href="/login" className="text-[hsl(var(--teal))] hover:underline underline-offset-4 font-semibold">
                                 Se connecter
                             </Link>
                         </p>
@@ -202,8 +303,10 @@ export default function RegisterPage({ searchParams }: { searchParams: { role?: 
                             <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">politique de confidentialité</Link>.
                         </p>
                     </div>
-                </div>
+                </motion.div>
             </div>
         </div>
     );
 }
+
+

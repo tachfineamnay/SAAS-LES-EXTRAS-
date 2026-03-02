@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const inter = Inter({
@@ -19,17 +19,17 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
   display: "swap",
-  weight: ["400", "500", "600"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
-  title: "ADEPA Les Extras — Remplacement médico-social en 47 secondes",
+  title: "Les Extras — Renforts médico-sociaux en quelques minutes",
   description:
-    "Trouvez un soignant de remplacement en 47 secondes. Plateforme premium de mise en relation pour le médico-social : profils vérifiés, matching intelligent, contrats auto-générés.",
-  keywords: ["remplacement", "médico-social", "infirmier", "EHPAD", "soignant", "freelance", "interim"],
+    "Connectez établissements et soignants freelances. Renforts vérifiés, matching intelligent, contrats auto-générés.",
+  keywords: ["remplacement", "médico-social", "infirmier", "EHPAD", "soignant", "freelance"],
   openGraph: {
-    title: "ADEPA Les Extras — Remplacement médico-social en 47 secondes",
-    description: "Plateforme premium de mise en relation pour le médico-social.",
+    title: "Les Extras — Renforts médico-sociaux",
+    description: "Plateforme de mise en relation pour le secteur social & médico-social.",
     type: "website",
   },
 };
@@ -40,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="fr" className={`${plusJakartaSans.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="font-[family-name:var(--font-body)]">{children}</body>
     </html>
   );

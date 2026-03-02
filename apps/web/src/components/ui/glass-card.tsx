@@ -2,28 +2,32 @@
 
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
+import { motion, type HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const glassCardVariants = cva(
-    "rounded-lg text-card-foreground transition-all duration-200",
+    "rounded-2xl text-card-foreground transition-all duration-200",
     {
         variants: {
             variant: {
-                /* Surface glass — fond dark chaud avec teinture teal subtile */
-                glass:
-                    "glass-dark border-0 shadow-warm-card",
-                /* Surface pleine — card standard */
+                /* White card — default clean surface */
                 solid:
-                    "bg-card border border-border shadow-warm-card",
-                /* Surface interactive — hover lift + glow teal */
+                    "bg-card card-shadow border border-border",
+                /* Alias for solid — legacy compatibility */
+                glass:
+                    "bg-card card-shadow border border-border",
+                /* Hover-lift interactive card */
                 interactive:
-                    "glass-dark border-0 shadow-warm-card hover:-translate-y-0.5 hover:shadow-warm-card-lg hover:border hover:border-teal-200 focus-within:ring-2 focus-within:ring-ring cursor-pointer",
-                /* Surface teal — widget primary, KPI actif */
+                    "bg-card card-shadow border border-border hover:card-shadow-md hover:-translate-y-0.5 cursor-pointer",
+                /* Teal tint — KPI primary / trust widget */
                 teal:
-                    "glass-teal shadow-glow-teal",
-                /* Surface coral — widget action urgente */
+                    "bg-[hsl(var(--teal-light))] border border-[hsl(var(--teal)/0.15)]",
+                /* Coral tint — action / urgent widget */
                 coral:
-                    "glass-coral-accent shadow-glow-coral",
+                    "bg-[hsl(var(--coral-light))] border border-[hsl(var(--coral)/0.15)]",
+                /* Muted surface — secondary sections */
+                muted:
+                    "bg-[hsl(var(--surface-2))] border border-border",
             },
         },
         defaultVariants: {
@@ -32,20 +36,42 @@ const glassCardVariants = cva(
     }
 );
 
-export interface GlassCardProps
-    extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof glassCardVariants> {
-    asChild?: boolean;
-}
+type AnimateProps = {
+    animate?: true;
+    delay?: number;
+};
+
+export type GlassCardProps =
+    | (React.HTMLAttributes<HTMLDivElement> &
+          VariantProps<typeof glassCardVariants> &
+          AnimateProps & { animate?: undefined })
+    | (HTMLMotionProps<"div"> &
+          VariantProps<typeof glassCardVariants> &
+          AnimateProps & { animate: true });
 
 const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
-    ({ className, variant, ...props }, ref) => (
-        <div
-            ref={ref}
-            className={cn(glassCardVariants({ variant }), className)}
-            {...props}
-        />
-    )
+    ({ className, variant, animate, delay = 0, ...props }, ref) => {
+        const classes = cn(glassCardVariants({ variant }), className);
+        if (animate) {
+            return (
+                <motion.div
+                    ref={ref as React.Ref<HTMLDivElement>}
+                    className={classes}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay, ease: [0.22, 1, 0.36, 1] }}
+                    {...(props as HTMLMotionProps<"div">)}
+                />
+            );
+        }
+        return (
+            <div
+                ref={ref}
+                className={classes}
+                {...(props as React.HTMLAttributes<HTMLDivElement>)}
+            />
+        );
+    }
 );
 GlassCard.displayName = "GlassCard";
 

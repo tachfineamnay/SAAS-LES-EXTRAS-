@@ -17,21 +17,21 @@ const badgeVariants = cva(
         outline: "text-foreground",
         /* Teal — confiance, validé, actif */
         teal:
-          "bg-teal-100 text-teal-500 border-teal-200",
+          "bg-[hsl(var(--teal-light))] text-[hsl(var(--teal))] border-[hsl(var(--teal)/0.2)]",
         /* Coral — action, urgent, CTA badge */
         coral:
-          "bg-coral-100 text-coral-500 border-coral-200",
+          "bg-[hsl(var(--coral-light))] text-[hsl(var(--coral))] border-[hsl(var(--coral)/0.2)]",
         /* Sand — chaleur, accueil, onboarding */
         sand:
-          "bg-sand-100 text-sand-700 border-sand-100",
+          "bg-[hsl(var(--sand-light))] text-[hsl(var(--sand))] border-[hsl(var(--sand)/0.2)]",
         success:
-          "bg-[hsl(var(--emerald)/0.12)] text-[hsl(var(--emerald))] border-[hsl(var(--emerald)/0.20)]",
+          "bg-[hsl(var(--emerald-light))] text-[hsl(var(--emerald))] border-[hsl(var(--emerald)/0.2)]",
         warning:
-          "bg-[hsl(var(--amber)/0.12)] text-[hsl(var(--amber))] border-[hsl(var(--amber)/0.20)]",
+          "bg-[hsl(var(--amber-light))] text-[hsl(var(--amber))] border-[hsl(var(--amber)/0.2)]",
         info:
-          "bg-teal-100 text-teal-500 border-teal-200",
+          "bg-[hsl(var(--violet-light))] text-[hsl(var(--violet))] border-[hsl(var(--violet)/0.2)]",
         error:
-          "bg-coral-100 text-coral-500 border-coral-200",
+          "bg-[hsl(var(--coral-light))] text-[hsl(var(--coral))] border-[hsl(var(--coral)/0.2)]",
         quiet:
           "bg-muted text-muted-foreground border-transparent",
       },

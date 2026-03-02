@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-background transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -16,23 +16,27 @@ const buttonVariants = cva(
           "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+        ghost: "hover:bg-accent hover:text-accent-foreground active:scale-95",
         link: "text-primary underline-offset-4 hover:underline",
         /* Coral — Action forte (RENFORT, CTA urgent) */
         coral:
-          "bg-[hsl(var(--coral))] text-white hover:bg-[hsl(var(--coral-dim))] shadow-glow-coral active:scale-95",
+          "bg-[hsl(var(--coral))] text-white hover:bg-[hsl(var(--coral)/0.88)] shadow-glow-coral active:scale-[0.97]",
+        /* Teal — primary action variant */
+        teal:
+          "bg-[hsl(var(--teal))] text-white hover:bg-[hsl(var(--teal)/0.88)] shadow-glow-teal active:scale-[0.97]",
         /* Teal soft — action secondaire */
         "teal-soft":
-          "bg-teal-100 text-teal-500 border border-teal-200 hover:bg-teal-200 hover:text-[hsl(var(--teal-dim))]",
+          "bg-[hsl(var(--teal-light))] text-[hsl(var(--teal))] border border-[hsl(var(--teal)/0.2)] hover:bg-[hsl(var(--teal)/0.12)] active:scale-[0.97]",
         /* Coral soft — alerte douce */
         "coral-soft":
-          "bg-coral-100 text-coral-500 border border-coral-200 hover:bg-coral-200",
+          "bg-[hsl(var(--coral-light))] text-[hsl(var(--coral))] border border-[hsl(var(--coral)/0.2)] hover:bg-[hsl(var(--coral)/0.12)] active:scale-[0.97]",
+        /* Glass — light surface button */
         glass:
-          "glass-dark border border-border/50 text-foreground hover:bg-card/80 hover:shadow-warm-card",
+          "bg-card border border-border text-foreground hover:bg-accent/40 hover:shadow-card active:scale-[0.97]",
         "danger-soft":
-          "bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20",
+          "bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 active:scale-[0.97]",
         quiet:
-          "text-muted-foreground hover:text-foreground hover:bg-muted",
+          "text-muted-foreground hover:text-foreground hover:bg-muted active:scale-[0.97]",
       },
       size: {
         default: "h-10 px-4 py-2",
