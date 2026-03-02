@@ -9,10 +9,11 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import {
   ArrowRight, CheckCircle, ShieldCheck, Clock, Star, Zap,
   TrendingUp, Users, BadgeCheck, ArrowUpRight, CalendarDays,
-  FileText, DollarSign, Heart, Briefcase,
-  Lock,
+  FileText, DollarSign, Heart, Briefcase, Lock, BarChart3,
+  Timer, PhoneOff, Sparkles, Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Marquee } from "@/components/ui/marquee";
 
 /* constants */
 const DISPLAY = "font-[family-name:var(--font-display)]";
@@ -72,11 +73,186 @@ function Blob({ className, d = 0 }: { className: string; d?: number }) {
   );
 }
 
+/* ── Colored SaaS Tile ── */
+function SaasTile({ icon: Icon, title, desc, color, metric, metricLabel, span }: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string; desc: string;
+  color: "teal" | "coral" | "violet" | "sand" | "emerald";
+  metric?: string; metricLabel?: string;
+  span?: string;
+}) {
+  const palette: Record<"teal" | "coral" | "violet" | "sand" | "emerald", {
+    bg: string; iconBg: string; iconText: string; border: string; glow: string; metricColor: string;
+  }> = {
+    teal: {
+      bg: "bg-gradient-to-br from-[hsl(var(--teal-light))] to-white",
+      iconBg: "bg-[hsl(var(--teal))]", iconText: "text-white",
+      border: "border-[hsl(var(--teal)/0.20)]",
+      glow: "from-[hsl(var(--teal)/0.15)]",
+      metricColor: "text-[hsl(var(--teal))]",
+    },
+    coral: {
+      bg: "bg-gradient-to-br from-[hsl(var(--coral-light))] to-white",
+      iconBg: "bg-[hsl(var(--coral))]", iconText: "text-white",
+      border: "border-[hsl(var(--coral)/0.20)]",
+      glow: "from-[hsl(var(--coral)/0.15)]",
+      metricColor: "text-[hsl(var(--coral))]",
+    },
+    violet: {
+      bg: "bg-gradient-to-br from-[hsl(var(--violet-light))] to-white",
+      iconBg: "bg-[hsl(var(--violet))]", iconText: "text-white",
+      border: "border-[hsl(var(--violet)/0.20)]",
+      glow: "from-[hsl(var(--violet)/0.15)]",
+      metricColor: "text-[hsl(var(--violet))]",
+    },
+    sand: {
+      bg: "bg-gradient-to-br from-[hsl(var(--sand-light))] to-white",
+      iconBg: "bg-[hsl(var(--sand))]", iconText: "text-white",
+      border: "border-[hsl(var(--sand)/0.20)]",
+      glow: "from-[hsl(var(--sand)/0.15)]",
+      metricColor: "text-[hsl(var(--sand-dim))]",
+    },
+    emerald: {
+      bg: "bg-gradient-to-br from-[hsl(var(--emerald-light))] to-white",
+      iconBg: "bg-[hsl(var(--emerald))]", iconText: "text-white",
+      border: "border-[hsl(var(--emerald)/0.20)]",
+      glow: "from-[hsl(var(--emerald)/0.15)]",
+      metricColor: "text-[hsl(var(--emerald))]",
+    },
+  };
+  const p = palette[color];
+  return (
+    <motion.div variants={rise} className={span}>
+      <Tilt className={`group relative overflow-hidden rounded-2xl p-6 sm:p-7 h-full
+        ${p.bg} border ${p.border} transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-default`}>
+        <div className={`absolute -top-16 -right-16 h-44 w-44 rounded-full blur-3xl opacity-0
+          group-hover:opacity-60 transition-opacity duration-700 bg-gradient-to-br ${p.glow} to-transparent`} />
+        <div className="relative z-10 flex flex-col h-full">
+          <motion.div whileHover={{ rotate: [0, -8, 8, -4, 0], scale: 1.10 }} transition={{ duration: 0.40 }}
+            className={`h-11 w-11 rounded-xl flex items-center justify-center mb-4 ${p.iconBg} shadow-lg`}>
+            <Icon className={`h-5 w-5 ${p.iconText}`} />
+          </motion.div>
+          <h3 className={`${DISPLAY} font-bold text-foreground mb-2 text-base`}>{title}</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed flex-1">{desc}</p>
+          {metric && (
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <span className={`${MONO} text-2xl font-bold ${p.metricColor}`}>{metric}</span>
+              {metricLabel && <span className="text-xs text-muted-foreground ml-2">{metricLabel}</span>}
+            </div>
+          )}
+        </div>
+      </Tilt>
+    </motion.div>
+  );
+}
+
+/* ── Efficiency Chart Bar ── */
+function EfficiencyBar({ label, before, after, unit, delay = 0 }: {
+  label: string; before: number; after: number; unit: string; delay?: number;
+}) {
+  const max = Math.max(before, after);
+  const improvement = Math.round(((before - after) / before) * 100);
+  return (
+    <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true }} transition={{ delay, duration: 0.5 }}
+      className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-foreground">{label}</span>
+        <span className={`${MONO} text-xs font-bold text-[hsl(var(--emerald))] bg-[hsl(var(--emerald-light))] px-2 py-0.5 rounded-full`}>
+          -{improvement}%
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-3">
+          <span className={`${MONO} text-[10px] text-muted-foreground w-12`}>Avant</span>
+          <div className="flex-1 h-6 bg-[hsl(var(--surface-2))] rounded-lg overflow-hidden">
+            <motion.div initial={{ width: 0 }} whileInView={{ width: `${(before / max) * 100}%` }}
+              viewport={{ once: true }} transition={{ delay: delay + 0.3, duration: 0.8, ease: "easeOut" }}
+              className="h-full rounded-lg bg-gradient-to-r from-[hsl(var(--logo-gray)/0.4)] to-[hsl(var(--logo-gray)/0.25)]" />
+          </div>
+          <span className={`${MONO} text-xs text-muted-foreground w-16 text-right`}>{before}{unit}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className={`${MONO} text-[10px] text-[hsl(var(--teal))] font-semibold w-12`}>Après</span>
+          <div className="flex-1 h-6 bg-[hsl(var(--teal-light))] rounded-lg overflow-hidden">
+            <motion.div initial={{ width: 0 }} whileInView={{ width: `${(after / max) * 100}%` }}
+              viewport={{ once: true }} transition={{ delay: delay + 0.5, duration: 0.8, ease: "easeOut" }}
+              className="h-full rounded-lg bg-gradient-to-r from-[hsl(var(--teal))] to-[hsl(var(--teal-mid))]" />
+          </div>
+          <span className={`${MONO} text-xs font-bold text-[hsl(var(--teal))] w-16 text-right`}>{after}{unit}</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ── KPI Ring ── */
+function KpiRing({ value, label, color, suffix = "" }: {
+  value: number; label: string; color: "teal" | "coral" | "emerald"; suffix?: string;
+}) {
+  const { val, ref } = useCounter(value);
+  const colors: Record<"teal" | "coral" | "emerald", string> = {
+    teal: "stroke-[hsl(var(--teal))]",
+    coral: "stroke-[hsl(var(--coral))]",
+    emerald: "stroke-[hsl(var(--emerald))]",
+  };
+  const textColors: Record<"teal" | "coral" | "emerald", string> = {
+    teal: "text-[hsl(var(--teal))]",
+    coral: "text-[hsl(var(--coral))]",
+    emerald: "text-[hsl(var(--emerald))]",
+  };
+  const pct = Math.min(value, 100);
+  const circ = 2 * Math.PI * 38;
+  return (
+    <motion.div variants={rise} className="flex flex-col items-center gap-2">
+      <div className="relative h-24 w-24">
+        <svg viewBox="0 0 80 80" className="h-full w-full -rotate-90">
+          <circle cx="40" cy="40" r="38" fill="none" strokeWidth="5"
+            className="stroke-[hsl(var(--border))]" />
+          <motion.circle cx="40" cy="40" r="38" fill="none" strokeWidth="5"
+            strokeLinecap="round" className={colors[color]}
+            initial={{ strokeDasharray: `0 ${circ}` }}
+            whileInView={{ strokeDasharray: `${(pct / 100) * circ} ${circ}` }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }} />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span ref={ref} className={`${MONO} text-lg font-bold ${textColors[color]}`}>
+            {val}{suffix}
+          </span>
+        </div>
+      </div>
+      <span className="text-xs text-muted-foreground font-medium text-center">{label}</span>
+    </motion.div>
+  );
+}
+
+/* ── Testimonial Card for Marquee ── */
+function TestimonialCard({ quote, name, role, rating }: {
+  quote: string; name: string; role: string; rating: number;
+}) {
+  return (
+    <div className="w-[340px] shrink-0 bg-card border border-border rounded-2xl p-6 card-shadow
+      hover:card-shadow-md transition-all duration-300 cursor-default">
+      <div className="flex gap-0.5 mb-3">
+        {Array.from({ length: rating }).map((_, i) => (
+          <Star key={i} className="h-3.5 w-3.5 fill-[hsl(var(--amber))] text-[hsl(var(--amber))]" />
+        ))}
+      </div>
+      <p className="text-sm text-foreground/80 leading-relaxed mb-4">&ldquo;{quote}&rdquo;</p>
+      <div className="pt-3 border-t border-border">
+        <p className="text-sm font-bold text-foreground">{name}</p>
+        <p className="text-xs text-muted-foreground">{role}</p>
+      </div>
+    </div>
+  );
+}
+
 function LiveDashboardMock() {
   const missions = [
-    { role: "IDE", place: "EHPAD Les Oliviers", time: "Demain 7h–15h", pay: "320€", urgent: true, match: 98 },
-    { role: "AS", place: "Clinique St-Joseph", time: "Jeu. 8h–16h", pay: "245€", urgent: false, match: 91 },
-    { role: "AES", place: "EHPAD Le Parc", time: "Ven. 14h–22h", pay: "210€", urgent: false, match: 87 },
+    { role: "IDE", place: "EHPAD Les Oliviers · Demain 7h-15h", pay: "320€", urgent: true, match: 98 },
+    { role: "AS", place: "Clinique St-Joseph · Jeu. 8h-16h", pay: "245€", urgent: false, match: 91 },
+    { role: "AES", place: "EHPAD Le Parc · Ven. 14h-22h", pay: "210€", urgent: false, match: 87 },
   ];
   return (
     <div className="relative w-full max-w-[440px] mx-auto" aria-hidden="true">
@@ -99,9 +275,9 @@ function LiveDashboardMock() {
                 transition={{ delay: 0.8 + i * 0.18, duration: 0.5 }}
                 className="px-5 py-3.5 flex items-center gap-3.5 hover:bg-[hsl(var(--surface-2))] transition-colors">
                 <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${m.urgent
-                  ? "bg-[hsl(var(--coral-light))] border border-[hsl(var(--coral)/0.20)]"
-                  : "bg-[hsl(var(--teal-light))] border border-[hsl(var(--teal)/0.15)]"}`}>
-                  <Briefcase className={`h-3.5 w-3.5 ${m.urgent ? "text-[hsl(var(--coral))]" : "text-[hsl(var(--teal))]"}`} />
+                  ? "bg-[hsl(var(--coral))] text-white shadow-md"
+                  : "bg-[hsl(var(--teal-light))] border border-[hsl(var(--teal)/0.15)] text-[hsl(var(--teal))]"}`}>
+                  <Briefcase className="h-3.5 w-3.5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
@@ -113,7 +289,7 @@ function LiveDashboardMock() {
                       </motion.span>
                     )}
                   </div>
-                  <p className="text-[10px] text-muted-foreground truncate">{m.place} · {m.time}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{m.place}</p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className={`${MONO} text-xs font-bold text-[hsl(var(--emerald))]`}>{m.pay}</p>
@@ -123,7 +299,7 @@ function LiveDashboardMock() {
             ))}
           </div>
           <div className="px-5 py-3 border-t border-border bg-[hsl(var(--surface-2))] flex items-center justify-between">
-            <span className={`${MONO} text-[10px] text-muted-foreground`}>Confirmé moyen :</span>
+            <span className={`${MONO} text-[10px] text-muted-foreground`}>Mission confirmée :</span>
             <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.2 }}
               className={`${MONO} text-xs font-bold text-[hsl(var(--coral))]`}>47s ⚡</motion.span>
           </div>
@@ -142,31 +318,6 @@ function LiveDashboardMock() {
   );
 }
 
-function Feature({ icon: Icon, title, desc, accent = "teal", span, small }: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string; desc: string; accent?: "teal" | "coral"; span?: string; small?: boolean;
-}) {
-  const isTeal = accent === "teal";
-  return (
-    <motion.div variants={rise} className={span}>
-      <Tilt className={`group relative overflow-hidden rounded-2xl p-6 ${small ? "sm:p-6" : "sm:p-8"} h-full
-        bg-card card-shadow border border-border transition-all duration-300 hover:-translate-y-1 hover:card-shadow-md cursor-default`}>
-        <div className={`absolute -top-12 -right-12 h-36 w-36 rounded-full blur-2xl opacity-0
-          group-hover:opacity-100 transition-opacity duration-700
-          ${isTeal ? "bg-[hsl(var(--teal)/0.10)]" : "bg-[hsl(var(--coral)/0.10)]"}`} />
-        <div className="relative z-10 flex flex-col h-full">
-          <motion.div whileHover={{ rotate: [0, -8, 8, -4, 0], scale: 1.10 }} transition={{ duration: 0.40 }}
-            className={`h-11 w-11 rounded-xl flex items-center justify-center mb-4 ${isTeal ? "icon-teal" : "icon-coral"}`}>
-            <Icon className="h-5 w-5" />
-          </motion.div>
-          <h3 className={`${DISPLAY} font-bold text-foreground mb-2 text-base`}>{title}</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
-        </div>
-      </Tilt>
-    </motion.div>
-  );
-}
-
 function Stat({ value, label, suffix }: { value: number; label: string; suffix?: string }) {
   const { val, ref } = useCounter(value);
   return (
@@ -180,40 +331,31 @@ function Stat({ value, label, suffix }: { value: number; label: string; suffix?:
   );
 }
 
-function Step({ n, title, desc }: { n: string; title: string; desc: string }) {
+function Step({ n, title, desc, color }: { n: string; title: string; desc: string; color: "teal" | "coral" | "violet" }) {
+  const colors: Record<"teal" | "coral" | "violet", { bg: string; text: string }> = {
+    teal: { bg: "bg-[hsl(var(--teal))]", text: "text-white" },
+    coral: { bg: "bg-[hsl(var(--coral))]", text: "text-white" },
+    violet: { bg: "bg-[hsl(var(--violet))]", text: "text-white" },
+  };
+  const c = colors[color];
   return (
-    <motion.div variants={rise} className="relative flex flex-col items-start gap-4">
-      <div className="flex items-center gap-4 w-full">
-        <div className={`${MONO} h-9 w-9 rounded-xl icon-teal flex items-center justify-center text-sm font-bold shrink-0`}>{n}</div>
-        <div className="flex-1 h-px bg-gradient-to-r from-[hsl(var(--teal)/0.3)] to-transparent" />
-      </div>
+    <motion.div variants={rise} className="relative flex flex-col items-center text-center gap-4">
+      <div className={`${MONO} h-12 w-12 rounded-2xl ${c.bg} ${c.text} flex items-center justify-center text-sm font-bold shadow-lg`}>{n}</div>
       <h3 className={`${DISPLAY} font-bold text-foreground text-lg`}>{title}</h3>
-      <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">{desc}</p>
     </motion.div>
   );
 }
 
-function Testimonial({ quote, name, role, rating }: { quote: string; name: string; role: string; rating: number }) {
-  return (
-    <motion.div variants={rise}>
-      <Tilt className="bg-card card-shadow border border-border rounded-2xl p-7 flex flex-col gap-4 h-full hover:card-shadow-md transition-all duration-300 cursor-default">
-        <div className="flex gap-0.5">
-          {Array.from({ length: rating }).map((_, i) => (
-            <motion.div key={i} initial={{ opacity: 0, scale: 0 }} whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }} transition={{ delay: i * 0.06, type: "spring", stiffness: 280 }}>
-              <Star className="h-3.5 w-3.5 fill-[hsl(var(--amber))] text-[hsl(var(--amber))]" />
-            </motion.div>
-          ))}
-        </div>
-        <p className="text-sm text-foreground/80 leading-relaxed">&ldquo;{quote}&rdquo;</p>
-        <div className="mt-auto pt-4 border-t border-border">
-          <p className="text-sm font-bold text-foreground">{name}</p>
-          <p className="text-xs text-muted-foreground">{role}</p>
-        </div>
-      </Tilt>
-    </motion.div>
-  );
-}
+/* ── Testimonials data ── */
+const testimonials = [
+  { quote: "On est passé de 4h de téléphone à 47 secondes. Les Extras a sauvé nos week-ends.", name: "Dr. Marie-Claire Dubois", role: "Directrice · EHPAD La Résidence du Parc", rating: 5 },
+  { quote: "Interface d'une clarté absolue. Mes cadres n'ont eu besoin d'aucune formation.", name: "Thomas Bergeron", role: "DRH · Groupe Santé Horizon", rating: 5 },
+  { quote: "En 3 mois j'ai doublé mes revenus. Le Fast-Apply me laisse me concentrer sur mes patients.", name: "Sophie Martin", role: "Infirmière IDE · Freelance", rating: 5 },
+  { quote: "Le matching intelligent nous a fait économiser 12h/semaine de gestion RH.", name: "Laurent Petit", role: "Directeur · Clinique des Cèdres", rating: 5 },
+  { quote: "Fini les agences d'intérim à 25% de marge. Les Extras c'est 0% de commission.", name: "Claire Fontaine", role: "DAF · EHPAD Les Glycines", rating: 5 },
+  { quote: "J'ai trouvé ma première mission en 2 minutes après l'inscription. Incroyable.", name: "Amadou Diallo", role: "Aide-soignant · Indépendant", rating: 5 },
+];
 
 export default function HomePage() {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -226,13 +368,13 @@ export default function HomePage() {
       <div className="pointer-events-none fixed inset-0 z-0 dot-grid opacity-100" aria-hidden="true" />
       <div className="pointer-events-none fixed inset-0 z-0 bg-ambient-top" aria-hidden="true" />
       <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
-        <Blob className="absolute -top-40 right-[5%] w-[700px] h-[700px] rounded-full bg-gradient-to-br from-[hsl(var(--teal)/0.08)] to-transparent blur-3xl" d={0} />
-        <Blob className="absolute top-[55%] -left-40 w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-[hsl(var(--teal)/0.05)] to-transparent blur-3xl" d={7} />
-        <Blob className="absolute bottom-[8%] right-[20%] w-[400px] h-[400px] rounded-full bg-gradient-to-tl from-[hsl(var(--coral)/0.06)] to-transparent blur-3xl" d={12} />
+        <Blob className="absolute -top-40 right-[5%] w-[700px] h-[700px] rounded-full bg-gradient-to-br from-[hsl(var(--teal)/0.10)] to-transparent blur-3xl" d={0} />
+        <Blob className="absolute top-[55%] -left-40 w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-[hsl(var(--violet)/0.07)] to-transparent blur-3xl" d={7} />
+        <Blob className="absolute bottom-[8%] right-[20%] w-[400px] h-[400px] rounded-full bg-gradient-to-tl from-[hsl(var(--coral)/0.08)] to-transparent blur-3xl" d={12} />
       </div>
 
       <div className="relative z-10">
-        {/* NAVBAR */}
+        {/* ══════════ NAVBAR ══════════ */}
         <motion.header initial={{ y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.05 }} className="fixed top-0 z-50 w-full">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-3">
@@ -242,7 +384,12 @@ export default function HomePage() {
                   className="h-8 w-auto object-contain" priority />
               </Link>
               <div className="hidden md:flex items-center gap-7">
-                {[{ l: "Plateforme", h: "#fonctionnalites" }, { l: "Indépendants", h: "#independants" }, { l: "Avis", h: "#temoignages" }].map(n => (
+                {[
+                  { l: "Plateforme", h: "#fonctionnalites" },
+                  { l: "Résultats", h: "#resultats" },
+                  { l: "Indépendants", h: "#independants" },
+                  { l: "Avis", h: "#temoignages" },
+                ].map(n => (
                   <Link key={n.l} href={n.h}
                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors relative group">
                     {n.l}
@@ -263,17 +410,17 @@ export default function HomePage() {
         </motion.header>
 
         <main>
-          {/* HERO */}
+          {/* ══════════ HERO ══════════ */}
           <section ref={heroRef} className="relative min-h-screen flex items-center pt-28 pb-20 px-6 lg:pt-32">
             <motion.div style={{ y: heroY, opacity: heroO }} className="mx-auto max-w-7xl w-full">
               <div className="flex flex-col lg:flex-row lg:items-center lg:gap-20">
                 <div className="flex-1 max-w-[600px]">
                   <motion.div initial={{ opacity: 0, y: 12, scale: 0.92 }} animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.4, type: "spring" }}
-                    className="inline-flex items-center gap-2.5 rounded-full bg-[hsl(var(--teal-light))] border border-[hsl(var(--teal)/0.20)] px-4 py-1.5 mb-8">
+                    className="inline-flex items-center gap-2.5 rounded-full bg-[hsl(var(--teal-light))] border border-[hsl(var(--teal)/0.25)] px-4 py-1.5 mb-8">
                     <motion.div animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1.6, repeat: Infinity }}
                       className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--emerald))]" />
-                    <span className={`${MONO} text-[11px] text-[hsl(var(--teal))]`}>
+                    <span className={`${MONO} text-[11px] text-[hsl(var(--teal-dim))]`}>
                       Plateforme <span className="font-bold">#1</span> du médico-social — France
                     </span>
                   </motion.div>
@@ -289,7 +436,7 @@ export default function HomePage() {
                       <span className="text-[hsl(var(--coral))]">secondes.</span>
                       <motion.span initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
                         transition={{ delay: 1.1, duration: 0.5, ease: "easeOut" }}
-                        className="absolute -bottom-2 left-0 right-0 h-[2px] rounded-full origin-left bg-gradient-to-r from-[hsl(var(--teal))] to-[hsl(var(--coral))]" />
+                        className="absolute -bottom-2 left-0 right-0 h-[3px] rounded-full origin-left bg-gradient-to-r from-[hsl(var(--teal))] via-[hsl(var(--coral))] to-[hsl(var(--violet))]" />
                     </span>
                   </motion.h1>
 
@@ -309,7 +456,7 @@ export default function HomePage() {
                     className="mt-9 flex flex-col sm:flex-row gap-3">
                     <motion.div whileTap={{ scale: 0.97 }}>
                       <Button asChild size="lg" variant="coral"
-                        className={`${DISPLAY} h-12 px-7 text-base font-semibold rounded-xl w-full sm:w-auto`}>
+                        className={`${DISPLAY} h-12 px-7 text-base font-semibold rounded-xl w-full sm:w-auto shadow-lg shadow-[hsl(var(--coral)/0.25)]`}>
                         <Link href="/register?role=CLIENT">Trouver un renfort <ArrowRight className="ml-2 h-4 w-4" /></Link>
                       </Button>
                     </motion.div>
@@ -326,11 +473,11 @@ export default function HomePage() {
                     {[
                       { icon: BadgeCheck, label: "Inscription gratuite", c: "text-[hsl(var(--emerald))]" },
                       { icon: ShieldCheck, label: "Profils vérifiés", c: "text-[hsl(var(--teal))]" },
-                      { icon: Lock, label: "Zéro paperasse", c: "text-muted-foreground" },
+                      { icon: Lock, label: "Zéro paperasse", c: "text-[hsl(var(--violet))]" },
                     ].map((t, i) => (
                       <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.72 + i * 0.09 }}
-                        className={`flex items-center gap-1.5 text-xs text-muted-foreground ${i === 2 ? "hidden sm:flex" : ""}`}>
+                        className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <t.icon className={`h-3.5 w-3.5 ${t.c}`} />
                         <span>{t.label}</span>
                       </motion.div>
@@ -347,110 +494,198 @@ export default function HomePage() {
             </motion.div>
           </section>
 
-          {/* STATS */}
-          <section className="py-10 relative overflow-hidden">
-            <div className="absolute inset-0 bg-[hsl(var(--surface-2))] border-y border-border" />
-            <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-30px" }}
-              className="relative z-10 mx-auto max-w-5xl flex flex-wrap justify-center gap-10 sm:gap-0 sm:divide-x sm:divide-border">
-              <Stat value={2847} label="Missions ce mois" />
-              <Stat value={47} label="Secondes de match" suffix="s" />
-              <Stat value={98} label="Taux de satisfaction" suffix="%" />
-              <Stat value={0} label="Frais d'inscription" suffix="€" />
-            </motion.div>
+          {/* ══════════ SOCIAL PROOF MARQUEE ══════════ */}
+          <section className="py-5 relative overflow-hidden border-y border-border bg-[hsl(var(--surface-2))]">
+            <Marquee speed={35} pauseOnHover fade className="text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-[hsl(var(--teal))]" />
+                <span className={`${MONO} text-sm font-semibold`}>2 847 missions ce mois</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Timer className="h-4 w-4 text-[hsl(var(--coral))]" />
+                <span className={`${MONO} text-sm font-semibold`}>47s temps de match moyen</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Star className="h-4 w-4 fill-[hsl(var(--amber))] text-[hsl(var(--amber))]" />
+                <span className={`${MONO} text-sm font-semibold`}>98% taux de satisfaction</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-[hsl(var(--violet))]" />
+                <span className={`${MONO} text-sm font-semibold`}>+1 200 indépendants vérifiés</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-[hsl(var(--emerald))]" />
+                <span className={`${MONO} text-sm font-semibold`}>0€ frais d&apos;inscription</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-[hsl(var(--teal))]" />
+                <span className={`${MONO} text-sm font-semibold`}>100% conforme RGPD</span>
+              </div>
+            </Marquee>
           </section>
 
-          {/* FEATURES */}
+          {/* ══════════ COLORED FEATURE TILES ══════════ */}
           <section id="fonctionnalites" className="py-28 px-6">
             <div className="mx-auto max-w-7xl">
               <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ duration: 0.5 }} className="text-center mb-16">
-                <div className={`${MONO} inline-flex items-center gap-2 text-[11px] font-medium text-[hsl(var(--teal))] mb-5
-                  px-3 py-1.5 rounded-full border border-[hsl(var(--teal)/0.20)] bg-[hsl(var(--teal-light))]`}>
-                  Comment ça marche
+                <div className={`${MONO} inline-flex items-center gap-2 text-[11px] font-medium text-[hsl(var(--teal))]
+                  px-3 py-1.5 rounded-full border border-[hsl(var(--teal)/0.25)] bg-[hsl(var(--teal-light))] mb-5`}>
+                  <Sparkles className="h-3 w-3" /> Fonctionnalités
                 </div>
                 <h2 className={`${DISPLAY} text-3xl sm:text-5xl font-bold tracking-tight text-foreground mb-5 leading-[1.10]`}>
-                  De l&apos;urgence à la solution.<br />
-                  <span className="text-[hsl(var(--teal))]">En quelques minutes.</span>
+                  Tout ce dont vous avez besoin.<br />
+                  <span className="text-gradient-brand">Dans une seule plateforme.</span>
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-lg mx-auto">
-                  Tout ce dont un directeur a besoin, dans une seule interface.
+                  Publication, matching, contrats, paiements – chaque étape est automatisée.
                 </p>
               </motion.div>
               <motion.div variants={stagger} initial="hidden" whileInView="show"
-                viewport={{ once: true, margin: "-50px" }} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Feature icon={Zap} title="Publication instantanée"
+                viewport={{ once: true, margin: "-50px" }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <SaasTile icon={Zap} title="Publication instantanée" color="teal"
                   desc="Décrivez votre besoin en 30 secondes. Notre algorithme alerte les profils qualifiés dans un rayon de 30 km."
-                  accent="teal" span="md:col-span-2" />
-                <Feature icon={Users} title="Matching intelligent"
-                  desc="Diplômes, disponibilités, distance, avis. On filtre — vous choisissez." accent="coral" />
-                <Feature icon={Clock} title="Confirmation temps réel"
-                  desc="Le professionnel postule, vous confirmez. 47 secondes en moyenne." accent="teal" />
-                <Feature icon={FileText} title="Contrats auto-générés"
-                  desc="Contrats, heures et factures générés automatiquement. Conformité totale." accent="coral" />
-                <Feature icon={ShieldCheck} title="Profils 100% vérifiés"
-                  desc="Diplômes vérifiés, ADELI/RPPS, expérience et avis — zéro risque." accent="teal" />
+                  metric="30s" metricLabel="pour publier" span="lg:col-span-2" />
+                <SaasTile icon={Users} title="Matching intelligent" color="violet"
+                  desc="Diplômes, disponibilités, distance, avis. On filtre — vous choisissez."
+                  metric="98%" metricLabel="de précision" />
+                <SaasTile icon={Clock} title="Confirmation temps réel" color="coral"
+                  desc="Le professionnel postule, vous confirmez. 47 secondes en moyenne."
+                  metric="47s" metricLabel="en moyenne" />
+                <SaasTile icon={FileText} title="Contrats auto-générés" color="sand"
+                  desc="Contrats, heures et factures générés automatiquement. Conformité totale."
+                  metric="100%" metricLabel="conforme" />
+                <SaasTile icon={ShieldCheck} title="Profils 100% vérifiés" color="emerald"
+                  desc="Diplômes vérifiés, ADELI/RPPS, expérience et avis — zéro risque."
+                  metric="0" metricLabel="risque" />
               </motion.div>
             </div>
           </section>
 
-          {/* 3 STEPS */}
-          <section className="py-20 px-6 relative overflow-hidden">
-            <div className="absolute inset-0 bg-[hsl(var(--surface-2))] border-y border-border" />
-            <div className="relative z-10 mx-auto max-w-5xl">
+          {/* ══════════ EFFICIENCY CHARTS ══════════ */}
+          <section id="resultats" className="py-24 px-6 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--surface-2))] to-background border-y border-border" />
+            <div className="relative z-10 mx-auto max-w-7xl">
+              <div className="flex flex-col lg:flex-row gap-16 lg:gap-20 items-start">
+                {/* Left: Before/After Charts */}
+                <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }} transition={{ duration: 0.6 }}
+                  className="flex-1 w-full">
+                  <div className={`${MONO} inline-flex items-center gap-2 text-[11px] font-medium text-[hsl(var(--coral))]
+                    px-3 py-1.5 rounded-full border border-[hsl(var(--coral)/0.25)] bg-[hsl(var(--coral-light))] mb-5`}>
+                    <BarChart3 className="h-3 w-3" /> Impact mesurable
+                  </div>
+                  <h2 className={`${DISPLAY} text-3xl sm:text-4xl font-bold tracking-tight text-foreground mb-3 leading-tight`}>
+                    Des résultats{" "}
+                    <span className="text-[hsl(var(--coral))]">concrets.</span>
+                  </h2>
+                  <p className="text-lg text-muted-foreground mb-10 max-w-md">
+                    Avant / après l&apos;adoption de Les Extras par nos établissements partenaires.
+                  </p>
+
+                  <div className="space-y-8 bg-card border border-border rounded-2xl p-6 sm:p-8 card-shadow">
+                    <EfficiencyBar label="Temps pour trouver un remplaçant" before={240} after={1} unit=" min" delay={0} />
+                    <EfficiencyBar label="Coût de gestion par mission" before={85} after={0} unit="€" delay={0.15} />
+                    <EfficiencyBar label="Taux de postes non couverts" before={35} after={3} unit="%" delay={0.3} />
+                    <EfficiencyBar label="Temps administratif hebdo" before={12} after={1} unit="h" delay={0.45} />
+                  </div>
+                </motion.div>
+
+                {/* Right: KPI Rings */}
+                <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }}
+                  className="flex-1 w-full">
+                  <div className="bg-card border border-border rounded-2xl p-8 sm:p-10 card-shadow">
+                    <h3 className={`${DISPLAY} text-xl font-bold text-foreground mb-2`}>
+                      Performances clés
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-8">Moyennes sur les 30 derniers jours</p>
+                    <motion.div variants={stagger} initial="hidden" whileInView="show"
+                      viewport={{ once: true }} className="grid grid-cols-3 gap-6">
+                      <KpiRing value={98} label="Satisfaction" color="teal" suffix="%" />
+                      <KpiRing value={47} label="Temps match" color="coral" suffix="s" />
+                      <KpiRing value={96} label="Couverture" color="emerald" suffix="%" />
+                    </motion.div>
+
+                    <div className="mt-10 grid grid-cols-2 gap-4">
+                      {[
+                        { icon: TrendingUp, label: "ROI moyen", value: "x12", color: "text-[hsl(var(--emerald))]", bg: "bg-[hsl(var(--emerald-light))]" },
+                        { icon: PhoneOff, label: "Appels économisés", value: "89%", color: "text-[hsl(var(--violet))]", bg: "bg-[hsl(var(--violet-light))]" },
+                        { icon: Timer, label: "Onboarding", value: "2 min", color: "text-[hsl(var(--teal))]", bg: "bg-[hsl(var(--teal-light))]" },
+                        { icon: DollarSign, label: "Économisé/mois", value: "3 400€", color: "text-[hsl(var(--coral))]", bg: "bg-[hsl(var(--coral-light))]" },
+                      ].map((kpi, i) => (
+                        <motion.div key={i} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }} transition={{ delay: 0.4 + i * 0.08 }}
+                          className={`${kpi.bg} rounded-xl p-4 border border-border/50`}>
+                          <kpi.icon className={`h-4 w-4 ${kpi.color} mb-2`} />
+                          <p className={`${MONO} text-lg font-bold ${kpi.color}`}>{kpi.value}</p>
+                          <p className="text-[11px] text-muted-foreground">{kpi.label}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+          </section>
+
+          {/* ══════════ 3 STEPS ══════════ */}
+          <section className="py-24 px-6">
+            <div className="mx-auto max-w-5xl">
               <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} className="text-center mb-14">
+                viewport={{ once: true }} className="text-center mb-16">
                 <h2 className={`${DISPLAY} text-2xl sm:text-4xl font-bold text-foreground`}>
                   3 étapes, <span className="text-[hsl(var(--coral))]">zéro friction.</span>
                 </h2>
               </motion.div>
               <motion.div variants={stagger} initial="hidden" whileInView="show"
                 viewport={{ once: true, margin: "-40px" }} className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                <Step n="01" title="Publiez le besoin"
+                <Step n="01" title="Publiez le besoin" color="teal"
                   desc="Poste, date, horaires, établissement. 30 secondes, formulaire guidé." />
-                <Step n="02" title="Recevez les candidatures"
+                <Step n="02" title="Recevez les candidatures" color="coral"
                   desc="Les extras locaux vérifiés postulent. Consultez leurs profils complets en un clic." />
-                <Step n="03" title="Confirmez et c'est fait"
+                <Step n="03" title="Confirmez et c'est fait" color="violet"
                   desc="Cliquez Confirmer. Contrat et accès générés automatiquement. 47s en moyenne." />
               </motion.div>
             </div>
           </section>
 
-          {/* FREELANCE */}
+          {/* ══════════ FREELANCE / INDEPENDANTS ══════════ */}
           <section id="independants" className="py-28 px-6">
             <div className="mx-auto max-w-7xl">
               <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ duration: 0.65 }}
                 className="relative rounded-2xl overflow-hidden border border-border card-shadow-md bg-card">
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[hsl(var(--teal))] via-[hsl(var(--teal-mid))] to-[hsl(var(--coral))]" />
-                <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-gradient-to-bl from-[hsl(var(--teal)/0.05)] to-transparent rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-gradient-to-tr from-[hsl(var(--coral)/0.04)] to-transparent rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[hsl(var(--teal))] via-[hsl(var(--violet))] to-[hsl(var(--coral))]" />
+                <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-gradient-to-bl from-[hsl(var(--teal)/0.06)] to-transparent rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-gradient-to-tr from-[hsl(var(--coral)/0.05)] to-transparent rounded-full blur-3xl pointer-events-none" />
                 <div className="relative z-10 p-8 sm:p-14">
                   <div className="flex flex-col lg:flex-row items-start gap-12 lg:gap-20">
                     <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 }}
                       className="flex-1 space-y-6 max-w-xl">
-                      <div className={`${MONO} inline-flex items-center gap-2 text-[11px] font-medium text-[hsl(var(--teal))]
-                        px-3 py-1.5 rounded-full border border-[hsl(var(--teal)/0.20)] bg-[hsl(var(--teal-light))]`}>
-                        Espace Indépendants
+                      <div className={`${MONO} inline-flex items-center gap-2 text-[11px] font-medium text-[hsl(var(--violet))]
+                        px-3 py-1.5 rounded-full border border-[hsl(var(--violet)/0.25)] bg-[hsl(var(--violet-light))]`}>
+                        <Sparkles className="h-3 w-3" /> Espace Indépendants
                       </div>
                       <h2 className={`${DISPLAY} text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight`}>
                         Votre talent mérite{" "}
-                        <span className="text-[hsl(var(--teal))]">mieux qu&apos;un planning vide.</span>
+                        <span className="text-[hsl(var(--violet))]">mieux qu&apos;un planning vide.</span>
                       </h2>
                       <p className="text-lg text-muted-foreground leading-relaxed">
                         Rejoignez un réseau de soignants indépendants qui choisissent leurs missions et maximisent leurs revenus.
                       </p>
                       <div className="space-y-3 pt-1">
                         {[
-                          { icon: Zap, text: "Fast-Apply : postulez en 1 seconde" },
-                          { icon: FileText, text: "Factures et contrats auto-générés" },
-                          { icon: TrendingUp, text: "Vos ateliers sur la marketplace" },
-                          { icon: DollarSign, text: "Paiement garanti sous 72h" },
+                          { icon: Zap, text: "Fast-Apply : postulez en 1 seconde", c: "bg-[hsl(var(--coral))] text-white" },
+                          { icon: FileText, text: "Factures et contrats auto-générés", c: "bg-[hsl(var(--teal))] text-white" },
+                          { icon: TrendingUp, text: "Vos ateliers sur la marketplace", c: "bg-[hsl(var(--violet))] text-white" },
+                          { icon: DollarSign, text: "Paiement garanti sous 72h", c: "bg-[hsl(var(--emerald))] text-white" },
                         ].map((item, i) => (
                           <motion.div key={i} initial={{ opacity: 0, x: -14 }} whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }} transition={{ delay: 0.2 + i * 0.08 }}
                             className="flex items-start gap-3">
-                            <div className="h-7 w-7 rounded-lg icon-teal flex items-center justify-center shrink-0 mt-0.5">
+                            <div className={`h-7 w-7 rounded-lg ${item.c} flex items-center justify-center shrink-0 mt-0.5 shadow-md`}>
                               <item.icon className="h-3.5 w-3.5" />
                             </div>
                             <span className="text-sm font-medium text-foreground/85">{item.text}</span>
@@ -460,7 +695,7 @@ export default function HomePage() {
                       <div className="pt-2 flex items-center gap-4">
                         <motion.div whileTap={{ scale: 0.97 }}>
                           <Button asChild size="lg" variant="coral"
-                            className={`${DISPLAY} h-12 px-7 text-sm font-semibold rounded-xl`}>
+                            className={`${DISPLAY} h-12 px-7 text-sm font-semibold rounded-xl shadow-lg shadow-[hsl(var(--coral)/0.20)]`}>
                             <Link href="/register?role=TALENT">
                               Créer mon profil gratuit <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
@@ -478,7 +713,7 @@ export default function HomePage() {
                       <Tilt className="bg-card card-shadow border border-border rounded-2xl p-6 cursor-default">
                         <div className="flex items-center justify-between mb-5 pb-4 border-b border-border">
                           <div className="flex items-center gap-2.5">
-                            <div className="h-8 w-8 rounded-lg icon-teal flex items-center justify-center">
+                            <div className="h-8 w-8 rounded-lg bg-[hsl(var(--violet))] text-white flex items-center justify-center shadow-md">
                               <TrendingUp className="h-4 w-4" />
                             </div>
                             <div>
@@ -492,13 +727,13 @@ export default function HomePage() {
                         </div>
                         <div className="grid grid-cols-3 gap-2.5 mb-5">
                           {[
-                            { l: "CA mois", v: "2 840€", c: "text-[hsl(var(--emerald))]" },
-                            { l: "Missions", v: "12", c: "text-foreground" },
-                            { l: "Note", v: "4.9★", c: "text-[hsl(var(--amber))]" },
+                            { l: "CA mois", v: "2 840€", c: "text-[hsl(var(--emerald))]", bg: "bg-[hsl(var(--emerald-light))]" },
+                            { l: "Missions", v: "12", c: "text-foreground", bg: "bg-[hsl(var(--surface-2))]" },
+                            { l: "Note", v: "4.9★", c: "text-[hsl(var(--amber))]", bg: "bg-[hsl(var(--amber-light))]" },
                           ].map((k, i) => (
                             <motion.div key={i} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }}
                               viewport={{ once: true }} transition={{ delay: 0.4 + i * 0.08 }}
-                              className="rounded-xl bg-[hsl(var(--surface-2))] border border-border p-3">
+                              className={`rounded-xl ${k.bg} border border-border p-3`}>
                               <p className="text-[9px] text-muted-foreground mb-0.5">{k.l}</p>
                               <p className={`${MONO} text-sm font-semibold ${k.c}`}>{k.v}</p>
                             </motion.div>
@@ -512,7 +747,7 @@ export default function HomePage() {
                             viewport={{ once: true }} transition={{ delay: 0.55 + i * 0.12 }}
                             className="rounded-xl bg-[hsl(var(--surface-2))] border border-border p-3.5 mb-2.5 flex items-center gap-3">
                             <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0
-                              ${m.u ? "icon-coral" : "bg-[hsl(var(--surface-2))] text-muted-foreground border border-border"}`}>
+                              ${m.u ? "bg-[hsl(var(--coral))] text-white shadow-md" : "bg-[hsl(var(--surface-2))] text-muted-foreground border border-border"}`}>
                               <CalendarDays className="h-4 w-4" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -533,43 +768,53 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* TESTIMONIALS */}
-          <section id="temoignages" className="py-24 px-6">
-            <div className="mx-auto max-w-7xl">
+          {/* ══════════ TESTIMONIALS — MARQUEE ══════════ */}
+          <section id="temoignages" className="py-24 px-6 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-background via-[hsl(var(--surface-2)/0.5)] to-background" />
+            <div className="relative z-10 mx-auto max-w-7xl">
               <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} className="text-center mb-14">
-                <div className={`${MONO} inline-flex items-center gap-2 text-[11px] font-medium text-muted-foreground
-                  px-3 py-1.5 rounded-full border border-border bg-[hsl(var(--surface-2))] mb-5`}>
-                  Ce qu&apos;ils en disent
+                <div className={`${MONO} inline-flex items-center gap-2 text-[11px] font-medium text-[hsl(var(--amber))]
+                  px-3 py-1.5 rounded-full border border-[hsl(var(--amber)/0.25)] bg-[hsl(var(--amber-light))] mb-5`}>
+                  <Star className="h-3 w-3 fill-current" /> Témoignages
                 </div>
                 <h2 className={`${DISPLAY} text-3xl sm:text-5xl font-bold tracking-tight text-foreground leading-tight`}>
                   Adopté par des centaines{" "}
                   <span className="text-[hsl(var(--teal))]">d&apos;établissements.</span>
                 </h2>
               </motion.div>
-              <motion.div variants={stagger} initial="hidden" whileInView="show"
-                viewport={{ once: true, margin: "-50px" }} className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <Testimonial quote="On est passé de 4h de téléphone à 47 secondes. Les Extras a sauvé nos week-ends."
-                  name="Dr. Marie-Claire Dubois" role="Directrice · EHPAD La Résidence du Parc" rating={5} />
-                <Testimonial quote="Interface d'une clarté absolue. Mes cadres n'ont eu besoin d'aucune formation."
-                  name="Thomas Bergeron" role="DRH · Groupe Santé Horizon" rating={5} />
-                <Testimonial quote="En 3 mois j'ai doublé mes revenus. Le Fast-Apply me laisse me concentrer sur mes patients."
-                  name="Sophie Martin" role="Infirmière IDE · Freelance" rating={5} />
-              </motion.div>
+
+              {/* Row 1: Forward */}
+              <div className="mb-5">
+                <Marquee speed={30} pauseOnHover fade>
+                  {testimonials.slice(0, 3).map((t, i) => (
+                    <TestimonialCard key={i} {...t} />
+                  ))}
+                </Marquee>
+              </div>
+              {/* Row 2: Reverse */}
+              <div>
+                <Marquee speed={25} pauseOnHover fade reverse>
+                  {testimonials.slice(3, 6).map((t, i) => (
+                    <TestimonialCard key={i} {...t} />
+                  ))}
+                </Marquee>
+              </div>
             </div>
           </section>
 
-          {/* CTA FINAL */}
+          {/* ══════════ CTA FINAL ══════════ */}
           <section className="py-20 px-6">
             <div className="mx-auto max-w-4xl">
               <motion.div initial={{ opacity: 0, y: 30, scale: 0.97 }} whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true }} transition={{ duration: 0.6, type: "spring" }}
-                className="relative rounded-2xl overflow-hidden bg-[hsl(var(--teal))] text-white">
+                className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[hsl(var(--teal))] via-[hsl(174,58%,32%)] to-[hsl(174,58%,25%)] text-white">
                 <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none" />
                 <div className="absolute bottom-0 -left-10 w-60 h-60 rounded-full bg-[hsl(var(--coral)/0.3)] blur-3xl pointer-events-none" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[hsl(var(--violet)/0.10)] blur-3xl pointer-events-none" />
                 <motion.div animate={{ x: ["-100%", "200%"] }}
                   transition={{ duration: 4, repeat: Infinity, repeatDelay: 5, ease: "easeInOut" }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent skew-x-12 pointer-events-none" />
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent skew-x-12 pointer-events-none" />
                 <div className="relative z-10 p-10 sm:p-16 text-center">
                   <h2 className={`${DISPLAY} text-3xl sm:text-4xl font-bold tracking-tight mb-4`}>
                     Prêt à ne plus jamais{" "}
@@ -601,7 +846,7 @@ export default function HomePage() {
           </section>
         </main>
 
-        {/* FOOTER */}
+        {/* ══════════ FOOTER ══════════ */}
         <footer className="border-t border-border py-10 px-6 bg-[hsl(var(--surface-2))]">
           <div className="mx-auto max-w-7xl">
             <div className="flex flex-col md:flex-row justify-between items-start gap-10 mb-8">
