@@ -29,6 +29,7 @@ import {
     FileText,
     ShieldCheck,
     Siren,
+    TrendingUp,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
