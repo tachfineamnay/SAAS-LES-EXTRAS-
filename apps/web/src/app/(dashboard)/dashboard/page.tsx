@@ -93,25 +93,25 @@ export default async function DashboardPage() {
                         label="Renforts actifs"
                         value={confirmedBookings.length}
                         icon={Briefcase}
-                        iconColor="text-secondary"
+                        iconColor="gray"
                     />
                     <KpiTile
                         label="En attente paiement"
                         value={awaitingPaymentBookings.length}
                         icon={DollarSign}
-                        iconColor="text-amber-600"
+                        iconColor="amber"
                     />
                     <KpiTile
                         label="Crédits disponibles"
                         value={availableCredits}
                         icon={TrendingUp}
-                        iconColor="text-emerald-600"
+                        iconColor="emerald"
                     />
                     <KpiTile
                         label="Propositions reçues"
                         value={pendingQuotes.length}
                         icon={FileText}
-                        iconColor="text-primary"
+                        iconColor="teal"
                     />
                 </div>
 
@@ -263,13 +263,13 @@ export default async function DashboardPage() {
                     label="Missions à venir"
                     value={confirmedBookings.length}
                     icon={Calendar}
-                    iconColor="text-secondary"
+                    iconColor="gray"
                 />
                 <KpiTile
                     label="Gains cumulés"
                     value="850 €"
                     icon={DollarSign}
-                    iconColor="text-emerald-600"
+                    iconColor="emerald"
                     trend="up"
                     trendLabel="+12% ce mois"
                 />
@@ -277,13 +277,13 @@ export default async function DashboardPage() {
                     label="Missions réalisées"
                     value={completedBookings.length}
                     icon={CheckCircle}
-                    iconColor="text-primary"
+                    iconColor="teal"
                 />
                 <KpiTile
                     label="Candidatures"
                     value={pendingBookings.length}
                     icon={Briefcase}
-                    iconColor="text-amber-600"
+                    iconColor="amber"
                 />
             </div>
 
