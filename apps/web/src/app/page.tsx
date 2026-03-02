@@ -94,7 +94,7 @@ function BentoCard({ icon: Icon, title, desc, accent = "teal", className }: {
   title: string; desc: string; accent?: "teal" | "coral" | "violet" | "sand" | "emerald";
   className?: string;
 }) {
-  const colors: Record<string, { bg: string; ring: string; orb: string }> = {
+  const colors: Record<"teal" | "coral" | "violet" | "sand" | "emerald", { bg: string; ring: string; orb: string }> = {
     teal:    { bg: "icon-teal",    ring: "ring-[hsl(var(--teal)/0.12)]",    orb: "from-[hsl(var(--teal)/0.15)]" },
     coral:   { bg: "icon-coral",   ring: "ring-[hsl(var(--coral)/0.12)]",   orb: "from-[hsl(var(--coral)/0.12)]" },
     violet:  { bg: "icon-violet",  ring: "ring-[hsl(var(--violet)/0.12)]",  orb: "from-[hsl(var(--violet)/0.12)]" },
