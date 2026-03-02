@@ -19,19 +19,19 @@ export function AdminStats({ data }: AdminStatsProps) {
         label="Volume d'Affaires (GMV)"
         value={currencyFormatter.format(data.gmv)}
         icon={Banknote}
-        iconColor="text-emerald-600"
+        iconColor="emerald"
       />
       <KpiTile
         label="Missions en cours"
         value={data.activeMissionsToday}
         icon={CircleGauge}
-        iconColor="text-secondary"
+        iconColor="gray"
       />
       <KpiTile
         label="Nouveaux Users (7j)"
         value={data.newUsersLast7Days}
         icon={UserPlus}
-        iconColor="text-primary"
+        iconColor="teal"
         trend="up"
         trendLabel={data.newUsersTrendLabel}
       />
@@ -39,7 +39,7 @@ export function AdminStats({ data }: AdminStatsProps) {
         label="Taux de Conversion"
         value={`${data.sosConversionRate}%`}
         icon={Percent}
-        iconColor="text-amber-600"
+        iconColor="amber"
       />
     </div>
   );
