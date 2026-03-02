@@ -6,7 +6,11 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { LucideIcon } from "lucide-react";
 
-export interface KpiTileProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onDragOver' | 'onDrop'> {
+export interface KpiTileProps extends Omit<
+    React.HTMLAttributes<HTMLDivElement>, 
+    'onDrag' | 'onDragStart' | 'onDragEnd' | 'onDragOver' | 'onDrop' | 
+    'onAnimationStart' | 'onAnimationEnd' | 'onAnimationIteration' | 'onTransitionEnd'
+> {
     label: string;
     value: string | number;
     icon: LucideIcon;
