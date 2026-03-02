@@ -34,7 +34,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           headerOpacity={headerOpacity}
           borderOpacity={borderOpacity}
         />
-        <main ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+        <main ref={scrollRef as React.RefCallback<HTMLElement>} className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
           {children}
         </main>
       </div>

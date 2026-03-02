@@ -30,9 +30,9 @@ function useHeaderStyle(
   // Type assertion is safe: useMotionTemplate returns MotionValue<string>,
   // which is assignable to MotionStyle properties
   return {
-    background: bg as unknown as string,
-    borderBottomColor: border as unknown as string,
-  };
+    background: bg,
+    borderBottomColor: border,
+  } as unknown as MotionStyle;
 }
 
 export function Header({ onOpenMobileSidebar, headerOpacity, borderOpacity }: HeaderProps) {

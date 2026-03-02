@@ -4,15 +4,18 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   motion, useScroll, useTransform, useMotionValue, useSpring, useInView,
+  AnimatePresence,
 } from "framer-motion";
 import { useRef, useState, useEffect, useCallback } from "react";
 import {
   ArrowRight, CheckCircle, ShieldCheck, Clock, Star, Zap,
   TrendingUp, Users, BadgeCheck, ArrowUpRight, CalendarDays,
   FileText, DollarSign, Heart, Briefcase,
-  Lock,
+  Lock, Sparkles, Quote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AnimatedNumber } from "@/components/ui/animated-number";
+import { EASE_PREMIUM, SPRING_BOUNCY } from "@/lib/motion";
 
 /* constants */
 const DISPLAY = "font-[family-name:var(--font-display)]";
@@ -24,7 +27,7 @@ const stagger = {
 };
 const rise = {
   hidden: { opacity: 0, y: 32 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.58, ease: [0.22, 1, 0.36, 1] as const } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.58, ease: EASE_PREMIUM } },
 };
 
 function useCounter(target: number, dur = 1400) {
@@ -84,8 +87,8 @@ function LiveDashboardMock() {
         style={{ background: "radial-gradient(ellipse at 40% 30%, hsl(174 58% 38% / 0.10), transparent 65%)" }} />
       <motion.div initial={{ opacity: 0, y: 45, rotate: 2 }} animate={{ opacity: 1, y: 0, rotate: 0.5 }}
         transition={{ delay: 0.4, duration: 0.9, type: "spring", stiffness: 70 }}>
-        <Tilt className="bg-card card-shadow-lg border border-border rounded-2xl overflow-hidden cursor-default">
-          <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-[hsl(var(--surface-2))]">
+        <Tilt className="glass-panel glass-highlight border border-white/25 shadow-glass-lg rounded-2xl overflow-hidden cursor-default">
+          <div className="px-5 py-4 border-b border-white/15 flex items-center justify-between glass-panel-dense">
             <div className="flex items-center gap-2.5">
               <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.8, repeat: Infinity }}
                 className="h-2 w-2 rounded-full bg-[hsl(var(--emerald))]" />
@@ -93,7 +96,7 @@ function LiveDashboardMock() {
             </div>
             <span className={`${MONO} text-[10px] font-bold text-[hsl(var(--teal))]`}>3 nouvelles</span>
           </div>
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-white/10">
             {missions.map((m, i) => (
               <motion.div key={i} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.8 + i * 0.18, duration: 0.5 }}
@@ -122,7 +125,7 @@ function LiveDashboardMock() {
               </motion.div>
             ))}
           </div>
-          <div className="px-5 py-3 border-t border-border bg-[hsl(var(--surface-2))] flex items-center justify-between">
+          <div className="px-5 py-3 border-t border-white/15 glass-panel-dense flex items-center justify-between">
             <span className={`${MONO} text-[10px] text-muted-foreground`}>Confirmé moyen :</span>
             <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.2 }}
               className={`${MONO} text-xs font-bold text-[hsl(var(--coral))]`}>47s ⚡</motion.span>
@@ -131,7 +134,7 @@ function LiveDashboardMock() {
       </motion.div>
       <motion.div initial={{ opacity: 0, scale: 0.5, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ delay: 2.6, type: "spring", stiffness: 260, damping: 16 }}
-        className="absolute -bottom-5 -left-5 flex items-center gap-2 bg-card card-shadow border border-border px-4 py-2.5 rounded-full">
+        className="absolute -bottom-5 -left-5 flex items-center gap-2 glass-panel shadow-glass border border-white/25 px-4 py-2.5 rounded-full">
         <motion.div animate={{ rotate: [0, 360] }} transition={{ delay: 2.8, duration: 0.45 }}>
           <CheckCircle className="h-4 w-4 text-[hsl(var(--emerald))]" />
         </motion.div>
@@ -147,19 +150,27 @@ function Feature({ icon: Icon, title, desc, accent = "teal", span, small }: {
   title: string; desc: string; accent?: "teal" | "coral"; span?: string; small?: boolean;
 }) {
   const isTeal = accent === "teal";
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+  }, []);
   return (
     <motion.div variants={rise} className={span}>
       <Tilt className={`group relative overflow-hidden rounded-2xl p-6 ${small ? "sm:p-6" : "sm:p-8"} h-full
-        bg-card card-shadow border border-border transition-all duration-300 hover:-translate-y-1 hover:card-shadow-md cursor-default`}>
-        <div className={`absolute -top-12 -right-12 h-36 w-36 rounded-full blur-2xl opacity-0
+        glass-panel glass-highlight card-spotlight border border-white/30 shadow-glass
+        transition-all duration-300 hover:-translate-y-1.5 hover:shadow-glass-lg hover:border-[hsl(var(--teal)/0.18)] cursor-default`}>
+        <div className={`absolute -top-16 -right-16 h-44 w-44 rounded-full blur-3xl opacity-0
           group-hover:opacity-100 transition-opacity duration-700
-          ${isTeal ? "bg-[hsl(var(--teal)/0.10)]" : "bg-[hsl(var(--coral)/0.10)]"}`} />
-        <div className="relative z-10 flex flex-col h-full">
-          <motion.div whileHover={{ rotate: [0, -8, 8, -4, 0], scale: 1.10 }} transition={{ duration: 0.40 }}
-            className={`h-11 w-11 rounded-xl flex items-center justify-center mb-4 ${isTeal ? "icon-teal" : "icon-coral"}`}>
+          ${isTeal ? "bg-[hsl(var(--teal)/0.12)]" : "bg-[hsl(var(--coral)/0.12)]"}`} />
+        <div className="relative z-10 flex flex-col h-full" onMouseMove={handleMouseMove}>
+          <motion.div whileHover={{ rotate: [0, -8, 8, -4, 0], scale: 1.15 }} transition={SPRING_BOUNCY}
+            className={`h-12 w-12 rounded-xl flex items-center justify-center mb-5 ring-1 ${isTeal
+              ? "icon-teal ring-[hsl(var(--teal)/0.15)]"
+              : "icon-coral ring-[hsl(var(--coral)/0.15)]"}`}>
             <Icon className="h-5 w-5" />
           </motion.div>
-          <h3 className={`${DISPLAY} font-bold text-foreground mb-2 text-base`}>{title}</h3>
+          <h3 className={`${DISPLAY} font-bold text-foreground mb-2.5 text-base`}>{title}</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
         </div>
       </Tilt>
@@ -168,11 +179,11 @@ function Feature({ icon: Icon, title, desc, accent = "teal", span, small }: {
 }
 
 function Stat({ value, label, suffix }: { value: number; label: string; suffix?: string }) {
-  const { val, ref } = useCounter(value);
   return (
-    <motion.div variants={rise} className="flex flex-col items-center gap-1.5 px-6 sm:px-12">
-      <span ref={ref} className={`${MONO} text-3xl sm:text-4xl font-semibold tabular-nums tracking-tight text-foreground`}>
-        {val.toLocaleString("fr-FR")}
+    <motion.div variants={rise}
+      className="flex flex-col items-center gap-2 px-6 sm:px-10 py-5 rounded-2xl glass-panel-subtle border border-white/20 shadow-glass-sm">
+      <span className={`${MONO} text-3xl sm:text-4xl font-bold tabular-nums tracking-tight text-foreground`}>
+        <AnimatedNumber value={value} />
         {suffix && <span className="text-[hsl(var(--teal))]">{suffix}</span>}
       </span>
       <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.18em]">{label}</span>
@@ -182,10 +193,13 @@ function Stat({ value, label, suffix }: { value: number; label: string; suffix?:
 
 function Step({ n, title, desc }: { n: string; title: string; desc: string }) {
   return (
-    <motion.div variants={rise} className="relative flex flex-col items-start gap-4">
+    <motion.div variants={rise}
+      className="relative flex flex-col items-start gap-4 glass-panel rounded-2xl p-6 sm:p-7 border border-white/25 shadow-glass
+        hover:shadow-glass-lg hover:-translate-y-1 transition-all duration-300">
       <div className="flex items-center gap-4 w-full">
-        <div className={`${MONO} h-9 w-9 rounded-xl icon-teal flex items-center justify-center text-sm font-bold shrink-0`}>{n}</div>
-        <div className="flex-1 h-px bg-gradient-to-r from-[hsl(var(--teal)/0.3)] to-transparent" />
+        <motion.div whileHover={{ scale: 1.15, rotate: 5 }} transition={SPRING_BOUNCY}
+          className={`${MONO} h-10 w-10 rounded-xl bg-gradient-to-br from-[hsl(var(--teal))] to-[hsl(var(--teal)/0.7)] text-white flex items-center justify-center text-sm font-bold shrink-0 shadow-md`}>{n}</motion.div>
+        <div className="flex-1 h-px bg-gradient-to-r from-[hsl(var(--teal)/0.35)] via-[hsl(var(--teal)/0.15)] to-transparent" />
       </div>
       <h3 className={`${DISPLAY} font-bold text-foreground text-lg`}>{title}</h3>
       <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
@@ -196,17 +210,21 @@ function Step({ n, title, desc }: { n: string; title: string; desc: string }) {
 function Testimonial({ quote, name, role, rating }: { quote: string; name: string; role: string; rating: number }) {
   return (
     <motion.div variants={rise}>
-      <Tilt className="bg-card card-shadow border border-border rounded-2xl p-7 flex flex-col gap-4 h-full hover:card-shadow-md transition-all duration-300 cursor-default">
-        <div className="flex gap-0.5">
-          {Array.from({ length: rating }).map((_, i) => (
-            <motion.div key={i} initial={{ opacity: 0, scale: 0 }} whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }} transition={{ delay: i * 0.06, type: "spring", stiffness: 280 }}>
-              <Star className="h-3.5 w-3.5 fill-[hsl(var(--amber))] text-[hsl(var(--amber))]" />
-            </motion.div>
-          ))}
+      <Tilt className="glass-panel glass-highlight border border-white/25 shadow-glass rounded-2xl p-7 flex flex-col gap-4 h-full
+        hover:shadow-glass-lg hover:-translate-y-1 transition-all duration-300 cursor-default">
+        <div className="flex items-center justify-between">
+          <div className="flex gap-0.5">
+            {Array.from({ length: rating }).map((_, i) => (
+              <motion.div key={i} initial={{ opacity: 0, scale: 0 }} whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.06, type: "spring", stiffness: 280 }}>
+                <Star className="h-4 w-4 fill-[hsl(var(--amber))] text-[hsl(var(--amber))]" />
+              </motion.div>
+            ))}
+          </div>
+          <Quote className="h-5 w-5 text-[hsl(var(--teal)/0.25)]" />
         </div>
-        <p className="text-sm text-foreground/80 leading-relaxed">&ldquo;{quote}&rdquo;</p>
-        <div className="mt-auto pt-4 border-t border-border">
+        <p className="text-sm text-foreground/80 leading-relaxed italic">&ldquo;{quote}&rdquo;</p>
+        <div className="mt-auto pt-4 border-t border-white/15">
           <p className="text-sm font-bold text-foreground">{name}</p>
           <p className="text-xs text-muted-foreground">{role}</p>
         </div>
@@ -236,7 +254,7 @@ export default function HomePage() {
         <motion.header initial={{ y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.05 }} className="fixed top-0 z-50 w-full">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-3">
-            <nav className="flex h-14 items-center justify-between rounded-2xl bg-white/80 backdrop-blur-md border border-border px-5 card-shadow">
+            <nav className="flex h-14 items-center justify-between rounded-2xl glass-panel glass-highlight border border-white/30 px-5 shadow-glass">
               <Link href="/">
                 <Image src="/logo-adepa.png" alt="ADEPA Les Extras" width={110} height={36}
                   className="h-8 w-auto object-contain" priority />
@@ -270,26 +288,27 @@ export default function HomePage() {
                 <div className="flex-1 max-w-[600px]">
                   <motion.div initial={{ opacity: 0, y: 12, scale: 0.92 }} animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.4, type: "spring" }}
-                    className="inline-flex items-center gap-2.5 rounded-full bg-[hsl(var(--teal-light))] border border-[hsl(var(--teal)/0.20)] px-4 py-1.5 mb-8">
+                    className="inline-flex items-center gap-2.5 rounded-full glass-panel border border-[hsl(var(--teal)/0.20)] px-4 py-1.5 mb-8 shadow-glass-sm animate-[glass-shimmer_3s_ease-in-out_infinite]">
                     <motion.div animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1.6, repeat: Infinity }}
                       className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--emerald))]" />
                     <span className={`${MONO} text-[11px] text-[hsl(var(--teal))]`}>
+                      <Sparkles className="inline h-3 w-3 mr-1 -mt-0.5" />
                       Plateforme <span className="font-bold">#1</span> du médico-social — France
                     </span>
                   </motion.div>
 
                   <motion.h1 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.65, delay: 0.1 }}
-                    className={`${DISPLAY} text-[clamp(2.4rem,5vw,4.4rem)] font-bold tracking-tight leading-[1.07]`}>
+                    className={`${DISPLAY} text-[clamp(2.4rem,5vw,4.4rem)] font-extrabold tracking-tight leading-[1.07]`}>
                     <span className="text-foreground">Un soignant absent ?</span>
                     <br />
                     <span className="relative inline-block mt-2">
-                      <span className="text-[hsl(var(--teal))]">Remplacé en 47</span>
+                      <span className="bg-gradient-to-r from-[hsl(var(--teal))] to-[hsl(var(--teal)/0.75)] bg-clip-text text-transparent">Remplacé en 47</span>
                       <br />
-                      <span className="text-[hsl(var(--coral))]">secondes.</span>
+                      <span className="bg-gradient-to-r from-[hsl(var(--coral))] to-[hsl(var(--coral)/0.7)] bg-clip-text text-transparent">secondes.</span>
                       <motion.span initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
                         transition={{ delay: 1.1, duration: 0.5, ease: "easeOut" }}
-                        className="absolute -bottom-2 left-0 right-0 h-[2px] rounded-full origin-left bg-gradient-to-r from-[hsl(var(--teal))] to-[hsl(var(--coral))]" />
+                        className="absolute -bottom-2 left-0 right-0 h-[3px] rounded-full origin-left bg-gradient-to-r from-[hsl(var(--teal))] via-[hsl(var(--coral)/0.7)] to-[hsl(var(--coral))]" />
                     </span>
                   </motion.h1>
 
@@ -307,15 +326,15 @@ export default function HomePage() {
                   <motion.div initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.38 }}
                     className="mt-9 flex flex-col sm:flex-row gap-3">
-                    <motion.div whileTap={{ scale: 0.97 }}>
+                    <motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }} transition={SPRING_BOUNCY}>
                       <Button asChild size="lg" variant="coral"
-                        className={`${DISPLAY} h-12 px-7 text-base font-semibold rounded-xl w-full sm:w-auto`}>
+                        className={`${DISPLAY} h-13 px-8 text-base font-semibold rounded-xl w-full sm:w-auto shadow-lg shadow-[hsl(var(--coral)/0.25)]`}>
                         <Link href="/register?role=CLIENT">Trouver un renfort <ArrowRight className="ml-2 h-4 w-4" /></Link>
                       </Button>
                     </motion.div>
-                    <motion.div whileTap={{ scale: 0.97 }}>
+                    <motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }} transition={SPRING_BOUNCY}>
                       <Button asChild size="lg" variant="teal-soft"
-                        className={`${DISPLAY} h-12 px-7 text-base font-semibold rounded-xl w-full sm:w-auto`}>
+                        className={`${DISPLAY} h-13 px-8 text-base font-semibold rounded-xl w-full sm:w-auto shadow-lg shadow-[hsl(var(--teal)/0.15)]`}>
                         <Link href="/register?role=TALENT">Je suis indépendant</Link>
                       </Button>
                     </motion.div>
@@ -348,10 +367,9 @@ export default function HomePage() {
           </section>
 
           {/* STATS */}
-          <section className="py-10 relative overflow-hidden">
-            <div className="absolute inset-0 bg-[hsl(var(--surface-2))] border-y border-border" />
+          <section className="py-14 relative overflow-hidden px-6">
             <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-30px" }}
-              className="relative z-10 mx-auto max-w-5xl flex flex-wrap justify-center gap-10 sm:gap-0 sm:divide-x sm:divide-border">
+              className="relative z-10 mx-auto max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-4">
               <Stat value={2847} label="Missions ce mois" />
               <Stat value={47} label="Secondes de match" suffix="s" />
               <Stat value={98} label="Taux de satisfaction" suffix="%" />
@@ -365,12 +383,13 @@ export default function HomePage() {
               <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ duration: 0.5 }} className="text-center mb-16">
                 <div className={`${MONO} inline-flex items-center gap-2 text-[11px] font-medium text-[hsl(var(--teal))] mb-5
-                  px-3 py-1.5 rounded-full border border-[hsl(var(--teal)/0.20)] bg-[hsl(var(--teal-light))]`}>
+                  px-3 py-1.5 rounded-full border border-[hsl(var(--teal)/0.20)] glass-panel-subtle shadow-glass-sm`}>
+                  <Sparkles className="h-3 w-3" />
                   Comment ça marche
                 </div>
-                <h2 className={`${DISPLAY} text-3xl sm:text-5xl font-bold tracking-tight text-foreground mb-5 leading-[1.10]`}>
+                <h2 className={`${DISPLAY} text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground mb-5 leading-[1.10]`}>
                   De l&apos;urgence à la solution.<br />
-                  <span className="text-[hsl(var(--teal))]">En quelques minutes.</span>
+                  <span className="bg-gradient-to-r from-[hsl(var(--teal))] to-[hsl(var(--teal)/0.7)] bg-clip-text text-transparent">En quelques minutes.</span>
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-lg mx-auto">
                   Tout ce dont un directeur a besoin, dans une seule interface.
@@ -399,8 +418,8 @@ export default function HomePage() {
             <div className="relative z-10 mx-auto max-w-5xl">
               <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} className="text-center mb-14">
-                <h2 className={`${DISPLAY} text-2xl sm:text-4xl font-bold text-foreground`}>
-                  3 étapes, <span className="text-[hsl(var(--coral))]">zéro friction.</span>
+                <h2 className={`${DISPLAY} text-2xl sm:text-4xl font-extrabold text-foreground`}>
+                  3 étapes, <span className="bg-gradient-to-r from-[hsl(var(--coral))] to-[hsl(var(--coral)/0.7)] bg-clip-text text-transparent">zéro friction.</span>
                 </h2>
               </motion.div>
               <motion.div variants={stagger} initial="hidden" whileInView="show"
@@ -420,8 +439,8 @@ export default function HomePage() {
             <div className="mx-auto max-w-7xl">
               <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ duration: 0.65 }}
-                className="relative rounded-2xl overflow-hidden border border-border card-shadow-md bg-card">
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[hsl(var(--teal))] via-[hsl(var(--teal-mid))] to-[hsl(var(--coral))]" />
+                className="relative rounded-2xl overflow-hidden glass-panel border border-white/25 shadow-glass-lg">
+                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[hsl(var(--teal))] via-[hsl(var(--teal-mid))] to-[hsl(var(--coral))] animate-[border-flow_4s_ease_infinite]" />
                 <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-gradient-to-bl from-[hsl(var(--teal)/0.05)] to-transparent rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-gradient-to-tr from-[hsl(var(--coral)/0.04)] to-transparent rounded-full blur-3xl pointer-events-none" />
                 <div className="relative z-10 p-8 sm:p-14">
@@ -430,12 +449,12 @@ export default function HomePage() {
                       viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 }}
                       className="flex-1 space-y-6 max-w-xl">
                       <div className={`${MONO} inline-flex items-center gap-2 text-[11px] font-medium text-[hsl(var(--teal))]
-                        px-3 py-1.5 rounded-full border border-[hsl(var(--teal)/0.20)] bg-[hsl(var(--teal-light))]`}>
+                        px-3 py-1.5 rounded-full border border-[hsl(var(--teal)/0.20)] glass-panel-subtle shadow-glass-sm`}>
                         Espace Indépendants
                       </div>
-                      <h2 className={`${DISPLAY} text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight`}>
+                      <h2 className={`${DISPLAY} text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-tight`}>
                         Votre talent mérite{" "}
-                        <span className="text-[hsl(var(--teal))]">mieux qu&apos;un planning vide.</span>
+                        <span className="bg-gradient-to-r from-[hsl(var(--teal))] to-[hsl(var(--teal)/0.7)] bg-clip-text text-transparent">mieux qu&apos;un planning vide.</span>
                       </h2>
                       <p className="text-lg text-muted-foreground leading-relaxed">
                         Rejoignez un réseau de soignants indépendants qui choisissent leurs missions et maximisent leurs revenus.
@@ -458,9 +477,9 @@ export default function HomePage() {
                         ))}
                       </div>
                       <div className="pt-2 flex items-center gap-4">
-                        <motion.div whileTap={{ scale: 0.97 }}>
+                        <motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }} transition={SPRING_BOUNCY}>
                           <Button asChild size="lg" variant="coral"
-                            className={`${DISPLAY} h-12 px-7 text-sm font-semibold rounded-xl`}>
+                            className={`${DISPLAY} h-12 px-7 text-sm font-semibold rounded-xl shadow-lg shadow-[hsl(var(--coral)/0.25)]`}>
                             <Link href="/register?role=TALENT">
                               Créer mon profil gratuit <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
@@ -475,7 +494,7 @@ export default function HomePage() {
                     <motion.div initial={{ opacity: 0, y: 35, rotate: 2 }} whileInView={{ opacity: 1, y: 0, rotate: 0.8 }}
                       viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.2, type: "spring", stiffness: 75 }}
                       className="flex-1 w-full hidden lg:block" aria-hidden="true">
-                      <Tilt className="bg-card card-shadow border border-border rounded-2xl p-6 cursor-default">
+                      <Tilt className="glass-panel glass-highlight border border-white/25 shadow-glass rounded-2xl p-6 cursor-default">
                         <div className="flex items-center justify-between mb-5 pb-4 border-b border-border">
                           <div className="flex items-center gap-2.5">
                             <div className="h-8 w-8 rounded-lg icon-teal flex items-center justify-center">
@@ -539,12 +558,13 @@ export default function HomePage() {
               <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} className="text-center mb-14">
                 <div className={`${MONO} inline-flex items-center gap-2 text-[11px] font-medium text-muted-foreground
-                  px-3 py-1.5 rounded-full border border-border bg-[hsl(var(--surface-2))] mb-5`}>
+                  px-3 py-1.5 rounded-full glass-panel-subtle border border-white/20 shadow-glass-sm mb-5`}>
+                  <Star className="h-3 w-3 fill-[hsl(var(--amber))] text-[hsl(var(--amber))]" />
                   Ce qu&apos;ils en disent
                 </div>
-                <h2 className={`${DISPLAY} text-3xl sm:text-5xl font-bold tracking-tight text-foreground leading-tight`}>
+                <h2 className={`${DISPLAY} text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground leading-tight`}>
                   Adopté par des centaines{" "}
-                  <span className="text-[hsl(var(--teal))]">d&apos;établissements.</span>
+                  <span className="bg-gradient-to-r from-[hsl(var(--teal))] to-[hsl(var(--teal)/0.7)] bg-clip-text text-transparent">d&apos;établissements.</span>
                 </h2>
               </motion.div>
               <motion.div variants={stagger} initial="hidden" whileInView="show"
@@ -564,30 +584,31 @@ export default function HomePage() {
             <div className="mx-auto max-w-4xl">
               <motion.div initial={{ opacity: 0, y: 30, scale: 0.97 }} whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true }} transition={{ duration: 0.6, type: "spring" }}
-                className="relative rounded-2xl overflow-hidden bg-[hsl(var(--teal))] text-white">
-                <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none" />
-                <div className="absolute bottom-0 -left-10 w-60 h-60 rounded-full bg-[hsl(var(--coral)/0.3)] blur-3xl pointer-events-none" />
+                className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[hsl(var(--teal))] via-[hsl(var(--teal)/0.95)] to-[hsl(var(--teal)/0.85)] text-white shadow-2xl">
+                <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 -left-10 w-72 h-72 rounded-full bg-[hsl(var(--coral)/0.3)] blur-3xl pointer-events-none" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-white/[0.04] blur-3xl pointer-events-none" />
                 <motion.div animate={{ x: ["-100%", "200%"] }}
                   transition={{ duration: 4, repeat: Infinity, repeatDelay: 5, ease: "easeInOut" }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent skew-x-12 pointer-events-none" />
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent skew-x-12 pointer-events-none" />
                 <div className="relative z-10 p-10 sm:p-16 text-center">
-                  <h2 className={`${DISPLAY} text-3xl sm:text-4xl font-bold tracking-tight mb-4`}>
+                  <h2 className={`${DISPLAY} text-3xl sm:text-4xl font-extrabold tracking-tight mb-4`}>
                     Prêt à ne plus jamais{" "}
-                    <span className="text-[hsl(var(--coral-mid))]">manquer de personnel ?</span>
+                    <span className="text-[hsl(var(--coral-mid))] drop-shadow-sm">manquer de personnel ?</span>
                   </h2>
                   <p className="text-lg text-white/75 max-w-lg mx-auto mb-9">
                     Rejoignez les établissements qui ont automatisé leur recrutement temporaire.
                   </p>
                   <div className="flex flex-col sm:flex-row justify-center gap-3">
-                    <motion.div whileTap={{ scale: 0.97 }}>
+                    <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.97 }} transition={SPRING_BOUNCY}>
                       <Button asChild size="lg" variant="coral"
-                        className={`${DISPLAY} h-12 px-8 text-base font-semibold rounded-xl w-full sm:w-auto shadow-xl shadow-[hsl(var(--coral)/0.35)]`}>
+                        className={`${DISPLAY} h-13 px-8 text-base font-semibold rounded-xl w-full sm:w-auto shadow-xl shadow-[hsl(var(--coral)/0.45)]`}>
                         <Link href="/register?role=CLIENT">Commencer gratuitement <ArrowRight className="ml-2 h-4 w-4" /></Link>
                       </Button>
                     </motion.div>
-                    <motion.div whileTap={{ scale: 0.97 }}>
+                    <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.97 }} transition={SPRING_BOUNCY}>
                       <Button asChild size="lg"
-                        className={`${DISPLAY} h-12 px-8 text-base font-semibold rounded-xl bg-white/15 text-white border border-white/25 hover:bg-white/25 w-full sm:w-auto`}>
+                        className={`${DISPLAY} h-13 px-8 text-base font-semibold rounded-xl bg-white/15 backdrop-blur-sm text-white border border-white/30 hover:bg-white/25 w-full sm:w-auto`}>
                         <Link href="/register?role=TALENT">Espace indépendant <ArrowUpRight className="ml-1.5 h-4 w-4" /></Link>
                       </Button>
                     </motion.div>
@@ -602,7 +623,7 @@ export default function HomePage() {
         </main>
 
         {/* FOOTER */}
-        <footer className="border-t border-border py-10 px-6 bg-[hsl(var(--surface-2))]">
+        <footer className="border-t border-white/15 py-10 px-6 glass-panel-dense">
           <div className="mx-auto max-w-7xl">
             <div className="flex flex-col md:flex-row justify-between items-start gap-10 mb-8">
               <div className="max-w-xs">
