@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { useUIStore } from "@/lib/stores/useUIStore";
+import { useScrollProgress } from "@/lib/hooks/useScrollProgress";
 
 export function RenfortModalWrapper() {
   const isOpen = useUIStore((state) => state.isRenfortModalOpen);
@@ -16,6 +17,7 @@ export function RenfortModalWrapper() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setMobileOpen] = useState(false);
+  const { scrollRef, headerOpacity, borderOpacity } = useScrollProgress();
 
   return (
     <div className="relative flex h-screen w-full flex-col bg-background font-sans text-foreground antialiased md:flex-row overflow-hidden">
@@ -27,8 +29,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <Sidebar isMobileOpen={isMobileOpen} onMobileOpenChange={setMobileOpen} />
       <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
-        <Header onOpenMobileSidebar={() => setMobileOpen(true)} />
-        <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+        <Header
+          onOpenMobileSidebar={() => setMobileOpen(true)}
+          headerOpacity={headerOpacity}
+          borderOpacity={borderOpacity}
+        />
+        <main ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
           {children}
         </main>
       </div>

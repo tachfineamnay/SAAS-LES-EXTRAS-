@@ -1,8 +1,10 @@
 "use client";
 
 import { CheckCircle2, Circle, Upload, User, FileText, GraduationCap, ShieldCheck } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SPRING_BOUNCY, EASE_PREMIUM, STAGGER_DEFAULT } from "@/lib/motion";
 
 type StepStatus = "COMPLETED" | "PENDING" | "MISSING";
 
@@ -51,17 +53,34 @@ export function TrustChecklistWidget() {
                     <span className="text-muted-foreground">Profil de confiance</span>
                     <span>{progress}%</span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                    <div
-                        className="h-full bg-primary transition-all duration-500"
-                        style={{ width: `${progress}%` }}
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
+                    <motion.div
+                        className="h-full rounded-full bg-gradient-to-r from-[hsl(var(--teal))] to-[hsl(var(--teal)/0.7)]"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        transition={SPRING_BOUNCY}
                     />
                 </div>
             </div>
 
-            <div className="space-y-3">
+            <motion.div
+                className="space-y-3"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                    hidden: { opacity: 0 },
+                    visible: { opacity: 1, transition: { staggerChildren: STAGGER_DEFAULT } },
+                }}
+            >
                 {STEPS.map((step) => (
-                    <div key={step.id} className="flex items-center justify-between group">
+                    <motion.div
+                        key={step.id}
+                        className="flex items-center justify-between group"
+                        variants={{
+                            hidden: { opacity: 0, x: -8 },
+                            visible: { opacity: 1, x: 0, transition: { duration: 0.25, ease: EASE_PREMIUM } },
+                        }}
+                    >
                         <div className="flex items-center gap-3">
                             <div
                                 className={cn(
@@ -91,9 +110,9 @@ export function TrustChecklistWidget() {
                                 {step.status === "PENDING" ? "En cours" : "Ajouter"}
                             </Button>
                         )}
-                    </div>
+                    </motion.div>
                 ))}
-            </div>
+            </motion.div>
 
             <div className="rounded-md bg-blue-50 p-3 text-xs text-blue-700">
                 <p>Un profil vérifié à 100% augmente vos chances d'être sélectionné par les établissements.</p>

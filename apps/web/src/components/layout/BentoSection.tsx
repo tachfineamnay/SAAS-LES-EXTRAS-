@@ -1,5 +1,9 @@
+"use client";
+
 import * as React from "react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { containerVariants, itemFadeUp } from "@/lib/motion";
 
 export interface BentoSectionProps extends React.HTMLAttributes<HTMLElement> {
     cols?: 2 | 3 | 4;
@@ -31,6 +35,8 @@ export function BentoSection({
     children,
     ...props
 }: BentoSectionProps) {
+    const childArray = React.Children.toArray(children);
+
     return (
         <section className={cn("space-y-4", className)} {...props}>
             {(heading || action) && (
@@ -48,15 +54,23 @@ export function BentoSection({
                     {action && <div className="shrink-0">{action}</div>}
                 </div>
             )}
-            <div
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-60px" }}
                 className={cn(
                     "grid grid-cols-1",
                     colsMap[cols],
                     gapMap[gap]
                 )}
             >
-                {children}
-            </div>
+                {childArray.map((child, i) => (
+                    <motion.div key={i} variants={itemFadeUp}>
+                        {child}
+                    </motion.div>
+                ))}
+            </motion.div>
         </section>
     );
 }

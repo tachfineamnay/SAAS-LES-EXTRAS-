@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/sheet";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { cn } from "@/lib/utils";
+import { EASE_SNAPPY, SPRING_STIFF, itemSlideLeft, containerVariants } from "@/lib/motion";
 
 const CLIENT_LINKS = [
   { href: "/dashboard",          label: "Tableau de bord", icon: LayoutDashboard },
@@ -68,9 +69,7 @@ function NavLink({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, x: -8 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      variants={itemSlideLeft}
     >
       <Link
         href={href}
@@ -80,17 +79,17 @@ function NavLink({
           "transition-all duration-200 group min-h-[44px]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--teal)/0.5)]",
           isActive
-            ? "bg-[hsl(var(--teal-light))] text-[hsl(var(--teal-dim))]"
+            ? "bg-[hsl(var(--teal-light))] text-[hsl(var(--teal-dim))] shadow-[0_0_12px_hsl(var(--teal)/0.15)]"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
         )}
         aria-current={isActive ? "page" : undefined}
       >
-        {/* Active indicator bar */}
+        {/* Active indicator bar with glow */}
         {isActive && (
           <motion.span
             layoutId="sidebar-active"
-            className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-[hsl(var(--teal))]"
-            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+            className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-[hsl(var(--teal))] shadow-[0_0_8px_hsl(var(--teal)/0.4)]"
+            transition={SPRING_STIFF}
           />
         )}
 
@@ -136,9 +135,9 @@ function SidebarContent({
     pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
   return (
-    <div className="flex h-full flex-col bg-white border-r border-border">
+    <div className="flex h-full flex-col glass-panel-dense border-r border-white/20">
       {/* Logo zone */}
-      <div className="px-4 py-5 border-b border-border/60">
+      <div className="px-4 py-5 border-b border-border/40">
         <div className="flex items-center gap-2.5">
           {/* Logo blocs inspiré du logo ADEPA */}
           <div className="relative h-8 w-8 shrink-0">
@@ -159,7 +158,13 @@ function SidebarContent({
       </div>
 
       {/* Navigation principale */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5" aria-label="Navigation principale">
+      <motion.nav
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5"
+        aria-label="Navigation principale"
+      >
         {links.map((link, i) => (
           <NavLink
             key={link.href}
@@ -169,7 +174,7 @@ function SidebarContent({
             onClick={onNavigate}
           />
         ))}
-      </nav>
+      </motion.nav>
 
       {/* Divider */}
       <div className="mx-3 border-t border-border/60" />

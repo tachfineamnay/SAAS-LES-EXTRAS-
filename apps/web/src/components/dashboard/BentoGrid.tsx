@@ -1,5 +1,7 @@
+"use client";
+
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
+import { ReactNode, useCallback } from "react";
 
 type BentoGridProps = {
     children: ReactNode;
@@ -35,11 +37,11 @@ export function BentoGrid({ children, className, compact }: BentoGridProps) {
 
 const variantClasses: Record<NonNullable<BentoCardProps["variant"]>, string> = {
     glass:
-        "bg-card/70 backdrop-blur-[12px] border border-border/40 shadow-sm",
+        "glass-panel glass-highlight border border-white/30 shadow-glass",
     solid:
         "bg-card border border-border shadow-sm",
     interactive:
-        "bg-card border border-border shadow-sm hover:-translate-y-0.5 hover:shadow-md cursor-pointer focus-within:ring-2 focus-within:ring-ring",
+        "glass-panel glass-highlight card-spotlight border border-white/30 shadow-glass hover:-translate-y-0.5 hover:shadow-glass-lg hover:border-[hsl(var(--teal)/0.2)] cursor-pointer focus-within:ring-2 focus-within:ring-ring",
 };
 
 export function BentoCard({
@@ -53,6 +55,16 @@ export function BentoCard({
     action,
     variant = "glass",
 }: BentoCardProps) {
+    const handleMouseMove = useCallback(
+        (e: React.MouseEvent<HTMLDivElement>) => {
+            if (variant !== "interactive") return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
+            e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+        },
+        [variant]
+    );
+
     return (
         <div
             className={cn(
@@ -63,8 +75,9 @@ export function BentoCard({
                 rowSpan === 2 && "md:row-span-2",
                 className
             )}
+            onMouseMove={handleMouseMove}
         >
-            <div className="flex flex-col h-full">
+            <div className="relative z-10 flex flex-col h-full">
                 {(title || icon) && (
                     <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-2.5">

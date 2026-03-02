@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LucideIcon } from "lucide-react";
 import Link from "next/link";
+import { EASE_PREMIUM, SPRING_SOFT } from "@/lib/motion";
 
 // Lottie loaded client-only to avoid SSR issues
 const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
@@ -55,7 +56,7 @@ export function EmptyState({
             )}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.4, ease: EASE_PREMIUM }}
             {...props}
         >
             {/* Illustration — Lottie takes priority over icon */}
@@ -71,7 +72,7 @@ export function EmptyState({
                 <motion.div
                     className="mb-4 rounded-2xl bg-[hsl(var(--surface-2))] p-5"
                     whileHover={{ scale: 1.05, rotate: -3 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 18 }}
+                    transition={SPRING_SOFT}
                 >
                     <Icon className="h-9 w-9 text-muted-foreground/50" aria-hidden="true" />
                 </motion.div>

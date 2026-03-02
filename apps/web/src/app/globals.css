@@ -180,7 +180,82 @@
     box-shadow: 0 4px 14px hsl(var(--coral) / 0.18);
   }
 
-  /* ─── Aliases legacy glass ─── */
+  /* ─── GLASSMORPHISM 2.0 — real backdrop-blur panels ─── */
+  .glass-panel {
+    background: hsla(0, 0%, 100%, 0.6);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid hsla(0, 0%, 100%, 0.22);
+    box-shadow:
+      inset 0 1px 0 0 hsla(0, 0%, 100%, 0.45),
+      0 1px 3px hsla(220, 40%, 10%, 0.06),
+      0 4px 12px hsla(220, 40%, 10%, 0.06);
+  }
+  .glass-panel-dense {
+    background: hsla(0, 0%, 100%, 0.82);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid hsla(0, 0%, 100%, 0.3);
+    box-shadow:
+      inset 0 1px 0 0 hsla(0, 0%, 100%, 0.5),
+      0 1px 3px hsla(220, 40%, 10%, 0.06);
+  }
+  .glass-panel-subtle {
+    background: hsla(0, 0%, 100%, 0.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.3);
+    backdrop-filter: blur(12px) saturate(1.3);
+    border: 1px solid hsla(0, 0%, 100%, 0.15);
+  }
+
+  /* ─── Glass inner highlight (reflet adaptatif) ─── */
+  .glass-highlight {
+    position: relative;
+  }
+  .glass-highlight::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      hsla(0, 0%, 100%, 0.25) 0%,
+      transparent 50%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ─── Spotlight card — radial gradient follows cursor via CSS vars ─── */
+  .card-spotlight {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-spotlight::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      500px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      hsl(var(--teal) / 0.06) 0%,
+      transparent 100%
+    );
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+  }
+  .card-spotlight:hover::before {
+    opacity: 1;
+  }
+
+  /* ─── Text balance for headings ─── */
+  .text-balance {
+    text-wrap: balance; /* stylelint-disable-line */
+  }
+
+  /* ─── Aliases legacy glass → upgraded ─── */
   .glass-dark         { @apply bg-card card-shadow border border-border; }
   .glass-dark-dense   { @apply bg-background border border-border; }
   .glass-surface      { @apply bg-card card-shadow border border-border; }
@@ -312,6 +387,27 @@
   100% { transform: translateX(100%); }
 }
 
+@keyframes glass-shimmer {
+  0%   { transform: translateX(-150%) rotate(12deg); }
+  100% { transform: translateX(150%) rotate(12deg); }
+}
+
+@keyframes spotlight-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.7; }
+}
+
+@keyframes border-flow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -352,6 +448,11 @@
   0%   { box-shadow: 0 0 0 0  hsl(var(--coral) / 0.4); }
   70%  { box-shadow: 0 0 0 8px hsl(var(--coral) / 0); }
   100% { box-shadow: 0 0 0 0  hsl(var(--coral) / 0); }
+}
+
+@keyframes ripple-expand {
+  0%   { transform: scale(0); opacity: 0.35; }
+  100% { transform: scale(4); opacity: 0; }
 }
 
 /* Legacy aliases */

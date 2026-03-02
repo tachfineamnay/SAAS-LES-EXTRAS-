@@ -1,12 +1,13 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Coins, Plus } from "lucide-react";
 import { useTransition } from "react";
 import { buyPack } from "@/actions/credits";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 
 import {
     Dialog,
@@ -71,16 +72,14 @@ export function CreditsWidget({ credits }: CreditsWidgetProps) {
 
     return (
         <div className="space-y-4">
-            <Card className={credits === 0 ? "border-red-500" : ""}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                        Crédits Recrutement
-                    </CardTitle>
-                    <Coins className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{credits}</div>
-                    <p className="text-xs text-muted-foreground">
+            <GlassCard variant={credits === 0 ? "glass" : "interactive"} className={credits === 0 ? "border-red-500" : ""}>
+                <div className="p-6">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Crédits Recrutement</span>
+                        <Coins className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <AnimatedNumber value={credits} className="text-2xl font-bold" />
+                    <p className="text-xs text-muted-foreground mt-1">
                         Mises en relation disponibles
                     </p>
 
@@ -102,10 +101,10 @@ export function CreditsWidget({ credits }: CreditsWidgetProps) {
                                 {PACKS.map((pack) => (
                                     <div
                                         key={pack.id}
-                                        className={`relative flex flex-col border rounded-lg p-4 hover:shadow-lg transition-shadow ${pack.popular ? 'border-primary shadow-md bg-primary/5' : 'border-border'}`}
+                                        className={`relative flex flex-col rounded-2xl p-4 transition-all duration-200 ${pack.popular ? 'glass-panel border border-[hsl(var(--teal)/0.3)] shadow-[0_0_20px_hsl(var(--teal)/0.12)]' : 'border border-border hover:shadow-md'}`}
                                     >
                                         {pack.popular && (
-                                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
+                                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full shadow-[0_0_12px_hsl(var(--teal)/0.3)]">
                                                 Populaire
                                             </div>
                                         )}
@@ -142,8 +141,8 @@ export function CreditsWidget({ credits }: CreditsWidgetProps) {
                             </div>
                         </DialogContent>
                     </Dialog>
-                </CardContent>
-            </Card>
+                </div>
+            </GlassCard>
 
             {credits === 0 && (
                 <Alert variant="destructive">

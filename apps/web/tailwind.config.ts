@@ -143,6 +143,10 @@ const config: Config = {
         /* Aliases */
         "warm-card":    "0 2px 12px hsla(222,47%,11%,0.08), 0 1px 3px hsla(222,47%,11%,0.05)",
         "warm-card-lg": "0 8px 32px hsla(222,47%,11%,0.12), 0 2px 8px hsla(222,47%,11%,0.07)",
+        /* Glass shadows */
+        "glass":    "0 8px 32px hsla(0,0%,0%,0.06), inset 0 1px 0 0 hsla(0,0%,100%,0.5)",
+        "glass-lg": "0 12px 48px hsla(0,0%,0%,0.08), inset 0 1px 0 0 hsla(0,0%,100%,0.6)",
+        "glass-sm": "0 4px 16px hsla(0,0%,0%,0.04), inset 0 1px 0 0 hsla(0,0%,100%,0.35)",
       },
       animation: {
         "fade-up":        "fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both",
@@ -154,6 +158,11 @@ const config: Config = {
         "pulse-ring-teal":  "pulse-ring-teal 2.2s ease infinite",
         "pulse-ring-coral": "pulse-ring-coral 2.2s ease infinite",
         "shimmer":        "shimmer 1.8s infinite",
+        "glass-shimmer":  "glass-shimmer 2.5s ease-in-out infinite",
+        "spotlight-pulse": "spotlight-pulse 3s ease-in-out infinite",
+        "border-flow":    "border-flow 4s ease infinite",
+        "count-up":       "count-up 0.4s cubic-bezier(0.22,1,0.36,1) both",
+        "ripple":         "ripple-expand 0.6s ease forwards",
       },
     },
   },

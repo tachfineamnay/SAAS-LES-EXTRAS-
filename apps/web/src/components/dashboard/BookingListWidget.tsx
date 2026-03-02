@@ -6,8 +6,28 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { BookingLine } from "@/app/actions/bookings";
 import { QuoteCreationModal } from "@/components/dashboard/QuoteCreationModal";
 import { Calendar, ChevronRight, MapPin, Download, RefreshCcw } from "lucide-react";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { EASE_PREMIUM, STAGGER_DEFAULT } from "@/lib/motion";
+import type { Variants } from "framer-motion";
+
+const listContainer: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: { staggerChildren: STAGGER_DEFAULT },
+    },
+};
+
+const listItem: Variants = {
+    hidden: { opacity: 0, y: 8 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.3, ease: EASE_PREMIUM },
+    },
+};
 
 type BookingListWidgetProps = {
     bookings: BookingLine[];
@@ -25,16 +45,22 @@ export function BookingListWidget({
     return (
         <div className={cn("flex flex-col h-full", className)}>
             <ScrollArea className="flex-1 -mx-6 px-6">
-                <div className="space-y-4 pb-4">
+                <motion.div
+                    className="space-y-4 pb-4"
+                    variants={listContainer}
+                    initial="hidden"
+                    animate="visible"
+                >
                     {bookings.length === 0 ? (
                         <div className="flex h-32 items-center justify-center rounded-lg border border-dashed bg-muted/50 text-sm text-muted-foreground">
                             {emptyMessage}
                         </div>
                     ) : (
                         bookings.map((booking) => (
-                            <div
+                            <motion.div
                                 key={booking.lineId}
-                                className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
+                                variants={listItem}
+                                className="flex items-center justify-between rounded-xl border border-white/30 glass-panel-subtle p-4 transition-colors hover:bg-white/60"
                             >
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">
@@ -90,10 +116,10 @@ export function BookingListWidget({
                                         </Link>
                                     </Button>
                                 </div>
-                            </div>
+                            </motion.div>
                         ))
                     )}
-                </div>
+                </motion.div>
             </ScrollArea>
             {bookings.length > 0 && (
                 <div className="mt-4 pt-4 border-t flex justify-end">

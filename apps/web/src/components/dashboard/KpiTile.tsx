@@ -4,7 +4,15 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import { LucideIcon } from "lucide-react";
+import {
+    EASE_PREMIUM,
+    STAGGER_DEFAULT,
+    iconHover,
+    SPRING_ICON,
+    hoverLift,
+} from "@/lib/motion";
 
 export interface KpiTileProps extends Omit<
     React.HTMLAttributes<HTMLDivElement>, 
@@ -47,6 +55,7 @@ export function KpiTile({
         trend === "up" ? "success" : trend === "down" ? "error" : "quiet";
 
     const iconClass = iconContainerMap[iconColor] ?? "icon-teal";
+    const staggerDelay = index * STAGGER_DEFAULT;
 
     return (
         <motion.div
@@ -54,43 +63,63 @@ export function KpiTile({
             animate={{ opacity: 1, y: 0 }}
             transition={{
                 duration: 0.4,
-                delay: index * 0.07,
-                ease: [0.22, 1, 0.36, 1],
+                delay: staggerDelay,
+                ease: EASE_PREMIUM,
             }}
-            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+            whileHover={hoverLift}
             className={cn(
-                "bg-card card-shadow border border-border rounded-2xl",
+                "glass-panel glass-highlight card-spotlight rounded-2xl",
                 "focus-within:ring-2 focus-within:ring-ring",
-                "p-6 cursor-default",
+                "p-6 cursor-default relative overflow-hidden",
                 className
             )}
+            onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
+                e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+            }}
             {...props}
         >
-            <div className="flex items-start justify-between mb-4">
+            <div className="relative z-10 flex items-start justify-between mb-4">
                 <p className="text-sm font-medium text-muted-foreground leading-tight">
                     {label}
                 </p>
                 <motion.div
                     className={cn("flex h-9 w-9 items-center justify-center rounded-xl", iconClass)}
-                    whileHover={{ scale: 1.1, rotate: 6 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                    whileHover={iconHover}
+                    transition={SPRING_ICON}
                 >
                     <Icon className="h-4 w-4" aria-hidden="true" />
                 </motion.div>
             </div>
 
-            <motion.p
-                className="text-3xl font-bold tracking-tight text-foreground font-display"
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.35, delay: index * 0.07 + 0.12, ease: "easeOut" }}
-            >
-                {value}
-            </motion.p>
+            <div className="relative z-10">
+                {typeof value === "number" ? (
+                    <AnimatedNumber
+                        value={value}
+                        className="text-3xl font-bold tracking-tight text-foreground font-display"
+                    />
+                ) : (
+                    <motion.p
+                        className="text-3xl font-bold tracking-tight text-foreground font-display"
+                        initial={{ opacity: 0, scale: 0.85 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.35, delay: staggerDelay + 0.12, ease: "easeOut" }}
+                    >
+                        {value}
+                    </motion.p>
+                )}
+            </div>
 
             {trend && trendLabel && (
-                <div className="mt-3">
-                    <Badge variant={trendVariant} className="text-xs gap-1">
+                <div className="mt-3 relative z-10">
+                    <Badge
+                        variant={trendVariant}
+                        className={cn(
+                            "text-xs gap-1",
+                            trend === "up" && "animate-pulse-ring-teal"
+                        )}
+                    >
                         {trend === "up" ? "↑" : trend === "down" ? "↓" : "–"}
                         {" "}{trendLabel}
                     </Badge>

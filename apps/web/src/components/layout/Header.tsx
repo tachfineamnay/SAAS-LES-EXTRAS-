@@ -1,26 +1,56 @@
 "use client";
 
 import { Menu, Siren, Bell, ChevronDown } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, type MotionValue, useMotionTemplate, type MotionStyle } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useUIStore, type UserRole } from "@/lib/stores/useUIStore";
 import { cn } from "@/lib/utils";
+import { SPRING_BOUNCY } from "@/lib/motion";
 
 type HeaderProps = {
   onOpenMobileSidebar: () => void;
+  /** Dynamic header opacity from scroll progress (0.5 → 0.92) */
+  headerOpacity?: MotionValue<number>;
+  /** Dynamic border opacity from scroll progress (0 → 1) */
+  borderOpacity?: MotionValue<number>;
 };
 
-export function Header({ onOpenMobileSidebar }: HeaderProps) {
+function useHeaderStyle(
+  headerOpacity?: MotionValue<number>,
+  borderOpacity?: MotionValue<number>
+): MotionStyle | undefined {
+  // Hooks must be called unconditionally — pass fallback values when not scroll-linked
+  const bg = useMotionTemplate`hsla(0, 0%, 100%, ${headerOpacity ?? 0.8})`;
+  const border = useMotionTemplate`hsla(36, 18%, 89%, ${borderOpacity ?? 0.7})`;
+
+  if (!headerOpacity) return undefined;
+  // Type assertion is safe: useMotionTemplate returns MotionValue<string>,
+  // which is assignable to MotionStyle properties
+  return {
+    background: bg as unknown as string,
+    borderBottomColor: border as unknown as string,
+  };
+}
+
+export function Header({ onOpenMobileSidebar, headerOpacity, borderOpacity }: HeaderProps) {
   const userRole = useUIStore((state) => state.userRole);
   const setUserRole = useUIStore((state) => state.setUserRole);
   const openRenfortModal = useUIStore((state) => state.openRenfortModal);
   const openPublishModal = useUIStore((state) => state.openPublishModal);
 
+  const dynamicStyle = useHeaderStyle(headerOpacity, borderOpacity);
+
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-border/70">
+    <motion.header
+      className={cn(
+        "sticky top-0 z-40 backdrop-blur-xl border-b",
+        !dynamicStyle && "bg-white/80 backdrop-blur-md border-border/70"
+      )}
+      style={dynamicStyle}
+    >
       <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6">
 
         {/* Left — mobile menu */}
@@ -113,7 +143,7 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
 
           {/* Primary CTA */}
           {userRole === "CLIENT" ? (
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={SPRING_BOUNCY}>
               <Button
                 onClick={openRenfortModal}
                 variant="coral"
@@ -125,7 +155,7 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
               </Button>
             </motion.div>
           ) : (
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={SPRING_BOUNCY}>
               <Button
                 variant="teal-soft"
                 onClick={openPublishModal}
@@ -138,7 +168,7 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
           )}
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }
 
