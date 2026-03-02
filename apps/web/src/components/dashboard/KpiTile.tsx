@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { LucideIcon } from "lucide-react";
 
-export interface KpiTileProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface KpiTileProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onDragOver' | 'onDrop'> {
     label: string;
     value: string | number;
     icon: LucideIcon;
@@ -60,7 +60,7 @@ export function KpiTile({
                 "p-6 cursor-default",
                 className
             )}
-            {...(props as React.HTMLAttributes<HTMLDivElement>)}
+            {...props}
         >
             <div className="flex items-start justify-between mb-4">
                 <p className="text-sm font-medium text-muted-foreground leading-tight">
