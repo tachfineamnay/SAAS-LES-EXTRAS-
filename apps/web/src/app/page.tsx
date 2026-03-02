@@ -94,13 +94,13 @@ function BentoCard({ icon: Icon, title, desc, accent = "teal", className }: {
   title: string; desc: string; accent?: "teal" | "coral" | "violet" | "sand" | "emerald";
   className?: string;
 }) {
-  const colors = {
+  const colors: Record<string, { bg: string; ring: string; orb: string }> = {
     teal:    { bg: "icon-teal",    ring: "ring-[hsl(var(--teal)/0.12)]",    orb: "from-[hsl(var(--teal)/0.15)]" },
     coral:   { bg: "icon-coral",   ring: "ring-[hsl(var(--coral)/0.12)]",   orb: "from-[hsl(var(--coral)/0.12)]" },
     violet:  { bg: "icon-violet",  ring: "ring-[hsl(var(--violet)/0.12)]",  orb: "from-[hsl(var(--violet)/0.12)]" },
     sand:    { bg: "icon-sand",    ring: "ring-[hsl(var(--sand)/0.12)]",    orb: "from-[hsl(var(--sand)/0.12)]" },
     emerald: { bg: "icon-emerald", ring: "ring-[hsl(var(--emerald)/0.12)]", orb: "from-[hsl(var(--emerald)/0.12)]" },
-  } as const;
+  };
   const c = colors[accent];
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();

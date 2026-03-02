@@ -463,56 +463,6 @@
   100% { box-shadow: 0 0 0 0   hsl(var(--teal) / 0); }
 }
 
-/* ─── MARQUEE ─── */
-@keyframes marquee {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(calc(-100% - 1.5rem)); }
-}
-
-/* ─── GRADIENT MESH (animated multi-stop radial bg) ─── */
-.mesh-gradient {
-  background:
-    radial-gradient(ellipse 80% 60% at 20% 30%, hsl(var(--teal) / 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 50% at 75% 70%, hsl(var(--coral) / 0.10) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 40% at 50% 50%, hsl(var(--violet) / 0.06) 0%, transparent 50%);
-}
-
-/* ─── THIN ANIMATED DIVIDER ─── */
-.line-glow {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, hsl(var(--teal) / 0.35), hsl(var(--coral) / 0.25), transparent);
-  background-size: 200% 100%;
-  animation: border-flow 4s ease infinite;
-}
-
-/* ─── NOISE GRAIN OVERLAY ─── */
-@keyframes grain {
-  0%, 100% { transform: translate(0, 0); }
-  10% { transform: translate(-5%, -10%); }
-  30% { transform: translate(3%, -15%); }
-  50% { transform: translate(12%, 9%); }
-  70% { transform: translate(9%, 4%); }
-  90% { transform: translate(-1%, 7%); }
-}
-.grain::before {
-  content: "";
-  position: absolute;
-  inset: -50%;
-  width: 200%;
-  height: 200%;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  animation: grain 8s steps(10) infinite;
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* ─── NUMBER OUTLINE (watermark) ─── */
-.text-outline {
-  -webkit-text-stroke: 1.5px hsl(var(--teal) / 0.12);
-  color: transparent;
-}
-
 /* ─── REDUCED MOTION ─── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
