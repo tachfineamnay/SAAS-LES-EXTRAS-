@@ -97,18 +97,19 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
           {userRole === "CLIENT" ? (
             <Button
               onClick={openRenfortModal}
+              variant="coral"
               size="sm"
-              className="shadow-sm min-h-[44px] gap-2"
+              className="min-h-[44px] gap-2"
             >
               <Siren className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden sm:inline">RENFORT</span>
+              <span className="hidden sm:inline font-semibold tracking-wide">RENFORT</span>
             </Button>
           ) : (
             <Button
-              variant="secondary"
+              variant="teal-soft"
               onClick={openPublishModal}
               size="sm"
-              className="shadow-sm min-h-[44px]"
+              className="min-h-[44px]"
             >
               <span className="hidden sm:inline">PUBLIER</span>
             </Button>

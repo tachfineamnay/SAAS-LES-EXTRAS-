@@ -75,7 +75,7 @@ function NavLink({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "min-h-[44px]",
         isActive
-          ? "bg-primary/10 text-primary border-l-2 border-primary rounded-l-none pl-[10px]"
+          ? "bg-teal-100 text-teal-500 border-l-2 border-[hsl(var(--teal))] rounded-l-none pl-[10px] font-semibold"
           : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
       )}
       aria-current={isActive ? "page" : undefined}

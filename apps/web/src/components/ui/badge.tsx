@@ -15,14 +15,23 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
+        /* Teal — confiance, validé, actif */
+        teal:
+          "bg-teal-100 text-teal-500 border-teal-200",
+        /* Coral — action, urgent, CTA badge */
+        coral:
+          "bg-coral-100 text-coral-500 border-coral-200",
+        /* Sand — chaleur, accueil, onboarding */
+        sand:
+          "bg-sand-100 text-sand-700 border-sand-100",
         success:
-          "bg-emerald-500/10 text-emerald-700 border-emerald-500/20",
+          "bg-[hsl(var(--emerald)/0.12)] text-[hsl(var(--emerald))] border-[hsl(var(--emerald)/0.20)]",
         warning:
-          "bg-amber-500/10 text-amber-700 border-amber-500/20",
+          "bg-[hsl(var(--amber)/0.12)] text-[hsl(var(--amber))] border-[hsl(var(--amber)/0.20)]",
         info:
-          "bg-secondary/10 text-secondary border-secondary/20",
+          "bg-teal-100 text-teal-500 border-teal-200",
         error:
-          "bg-destructive/10 text-destructive border-destructive/20",
+          "bg-coral-100 text-coral-500 border-coral-200",
         quiet:
           "bg-muted text-muted-foreground border-transparent",
       },

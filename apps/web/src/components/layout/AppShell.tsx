@@ -19,10 +19,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative flex h-screen w-full flex-col bg-background font-sans text-foreground antialiased md:flex-row overflow-hidden">
-      {/* Background halos */}
+      {/* Background halos — teal haut-droite + coral bas-gauche */}
       <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
+        <div className="absolute inset-0 aurora-dark" />
         <div className="absolute inset-0 halo-primary" />
         <div className="absolute inset-0 halo-secondary" />
+        <div className="absolute inset-0 dot-grid opacity-40" />
       </div>
 
       <Sidebar isMobileOpen={isMobileOpen} onMobileOpenChange={setMobileOpen} />

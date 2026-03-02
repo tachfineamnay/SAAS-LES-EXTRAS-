@@ -18,8 +18,17 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        /* Coral — Action forte (RENFORT, CTA urgent) */
+        coral:
+          "bg-[hsl(var(--coral))] text-white hover:bg-[hsl(var(--coral-dim))] shadow-glow-coral active:scale-95",
+        /* Teal soft — action secondaire */
+        "teal-soft":
+          "bg-teal-100 text-teal-500 border border-teal-200 hover:bg-teal-200 hover:text-[hsl(var(--teal-dim))]",
+        /* Coral soft — alerte douce */
+        "coral-soft":
+          "bg-coral-100 text-coral-500 border border-coral-200 hover:bg-coral-200",
         glass:
-          "bg-card/60 backdrop-blur-[10px] border border-border/50 text-foreground hover:bg-card/80 hover:shadow-sm",
+          "glass-dark border border-border/50 text-foreground hover:bg-card/80 hover:shadow-warm-card",
         "danger-soft":
           "bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20",
         quiet:

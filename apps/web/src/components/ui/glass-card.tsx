@@ -9,15 +9,25 @@ const glassCardVariants = cva(
     {
         variants: {
             variant: {
+                /* Surface glass — fond dark chaud avec teinture teal subtile */
                 glass:
-                    "bg-white/60 backdrop-blur-xl border border-white/80 shadow-[0_8px_30px_#0000000a]",
-                solid: "bg-card border border-border shadow-sm",
+                    "glass-dark border-0 shadow-warm-card",
+                /* Surface pleine — card standard */
+                solid:
+                    "bg-card border border-border shadow-warm-card",
+                /* Surface interactive — hover lift + glow teal */
                 interactive:
-                    "bg-white/60 backdrop-blur-xl border border-white/80 shadow-[0_8px_30px_#0000000a] hover:-translate-y-1 hover:shadow-[0_12px_40px_#00000014] focus-within:ring-2 focus-within:ring-ring cursor-pointer",
+                    "glass-dark border-0 shadow-warm-card hover:-translate-y-0.5 hover:shadow-warm-card-lg hover:border hover:border-teal-200 focus-within:ring-2 focus-within:ring-ring cursor-pointer",
+                /* Surface teal — widget primary, KPI actif */
+                teal:
+                    "glass-teal shadow-glow-teal",
+                /* Surface coral — widget action urgente */
+                coral:
+                    "glass-coral-accent shadow-glow-coral",
             },
         },
         defaultVariants: {
-            variant: "glass",
+            variant: "solid",
         },
     }
 );
