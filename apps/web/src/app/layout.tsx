@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Outfit, Inter } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const outfit = Outfit({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const inter = Inter({
@@ -15,11 +15,18 @@ const inter = Inter({
   display: "swap",
 });
 
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+  weight: ["400", "500", "600"],
+});
+
 export const metadata: Metadata = {
-  title: "ADEPA Les Extras — Plateforme de remplacement médico-social",
+  title: "ADEPA Les Extras — Remplacement médico-social en 47 secondes",
   description:
-    "Trouvez un soignant de remplacement en 47 secondes. Plateforme premium de mise en relation pour le médico-social avec profils vérifiés, contrats auto-générés et matching intelligent.",
-  keywords: ["remplacement", "médico-social", "infirmier", "EHPAD", "intérim", "soignant", "freelance"],
+    "Trouvez un soignant de remplacement en 47 secondes. Plateforme premium de mise en relation pour le médico-social : profils vérifiés, matching intelligent, contrats auto-générés.",
+  keywords: ["remplacement", "médico-social", "infirmier", "EHPAD", "soignant", "freelance", "interim"],
   openGraph: {
     title: "ADEPA Les Extras — Remplacement médico-social en 47 secondes",
     description: "Plateforme premium de mise en relation pour le médico-social.",
@@ -33,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${outfit.variable} ${inter.variable}`}>
+    <html lang="fr" className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="font-[family-name:var(--font-body)]">{children}</body>
     </html>
   );

@@ -3,71 +3,85 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════
-   WARM PULSE — Design System 2026
-   Serene · Human · Premium
+   OBSIDIAN TECH — Design System 2026
+   Dark · Precise · Premium
+   Inspired by Linear × Vercel × Raycast
    ═══════════════════════════════════════════════ */
 
 @layer base {
   :root {
     /* ── Page Foundation ── */
-    --background: 20 50% 97%;
-    /* Warm peach wash #FBF5F2 */
-    --foreground: 220 20% 14%;
-    /* Charcoal #1F2228 */
+    --background: 220 25% 6%;
+    /* Deep Obsidian #0B0D12 */
+    --foreground: 210 18% 96%;
+    /* Near-White #F3F5F8 */
 
-    /* ── Cards ── */
-    --card: 30 40% 98%;
-    /* Warm cream #FCF9F6 */
-    --card-foreground: 220 20% 14%;
+    /* ── Surfaces ── */
+    --card: 220 22% 10%;
+    /* Elevated surface #141720 */
+    --card-foreground: 210 18% 96%;
+    --surface-2: 220 18% 14%;
+    /* secondary surface #1C2030 */
 
     /* ── Popovers ── */
-    --popover: 30 40% 98%;
-    --popover-foreground: 220 20% 14%;
+    --popover: 220 22% 10%;
+    --popover-foreground: 210 18% 96%;
 
-    /* ── Primary — Logo Coral ── */
-    --primary: 4 78% 58%;
-    /* #E85B50 */
+    /* ── Primary — Indigo Electric ── */
+    --primary: 240 75% 65%;
+    /* Electric Indigo #6A7AEE */
     --primary-foreground: 0 0% 100%;
 
-    /* ── Secondary — Trust Azure ── */
-    --secondary: 218 72% 50%;
-    /* #2563EB */
+    /* ── Secondary — Purple depth ── */
+    --secondary: 270 65% 62%;
+    /* Purple #9B5EDE */
     --secondary-foreground: 0 0% 100%;
 
-    /* ── Muted — Warm Sand ── */
-    --muted: 22 25% 91%;
-    --muted-foreground: 220 12% 44%;
+    /* ── Accent — Coral (accent only!) ── */
+    --accent: 4 78% 58%;
+    /* Coral #E85B50 — CTA & URGENT only */
+    --accent-foreground: 0 0% 100%;
 
-    /* ── Accent — Peach Glow ── */
-    --accent: 14 60% 94%;
-    --accent-foreground: 4 78% 48%;
+    /* ── Muted ── */
+    --muted: 220 18% 14%;
+    --muted-foreground: 220 12% 55%;
+    /* Slate-grey text #7E8799 */
 
     /* ── Destructive ── */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    /* ── Borders ── */
-    --border: 22 20% 88%;
-    --input: 22 20% 88%;
-    --ring: 4 78% 58%;
+    /* ── Borders & Inputs ── */
+    --border: 220 15% 18%;
+    /* Dark border #252A38 */
+    --input: 220 15% 18%;
+    --ring: 240 75% 65%;
 
-    --radius: 1rem;
+    --radius: 0.875rem;
 
-    /* ── Extended Coral Scale ── */
-    --coral-50: 14 80% 97%;
-    --coral-100: 14 60% 94%;
-    --coral-200: 12 70% 86%;
-    --coral-300: 10 80% 78%;
-    --coral-400: 8 85% 65%;
-    --coral-500: 4 78% 58%;
-    --coral-600: 2 72% 48%;
+    /* ── Coral Scale (accent only) ── */
+    --coral: 4 78% 58%;
+    /* #E85B50 */
+    --coral-dim: 4 65% 45%;
+    /* #BE3E35 */
+    --coral-glow: 4 78% 58%;
+    /* used for glow shadows */
 
-    /* ── Extended Azure Scale ── */
-    --azure-300: 218 60% 72%;
-    --azure-500: 218 72% 50%;
+    /* ── Indigo Scale ── */
+    --indigo: 240 75% 65%;
+    /* #6A7AEE */
+    --indigo-dim: 240 60% 45%;
+    /* #3A4DB5 */
+    --indigo-muted: 240 40% 30%;
+    /* #2D3580 */
 
     /* ── Emerald ── */
-    --emerald-500: 150 60% 45%;
+    --emerald: 158 64% 48%;
+    /* #25C58A */
+
+    /* ── Amber ── */
+    --amber: 38 95% 52%;
+    /* #FAAA15 */
   }
 
   * {
@@ -83,13 +97,13 @@
   }
 
   ::selection {
-    background-color: hsl(var(--primary) / 0.15);
+    background-color: hsl(var(--indigo) / 0.25);
     color: hsl(var(--foreground));
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
   }
 
   ::-webkit-scrollbar-track {
@@ -97,217 +111,256 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary) / 0.18);
+    background: hsl(var(--indigo) / 0.22);
     border-radius: 99px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary) / 0.32);
+    background: hsl(var(--indigo) / 0.40);
   }
 }
 
 @layer utilities {
 
-  /* ═══ WARM GLASS SURFACES ═══ */
-  .glass-warm {
-    background: hsla(30, 40%, 98%, 0.65);
-    backdrop-filter: blur(24px) saturate(1.4);
-    -webkit-backdrop-filter: blur(24px) saturate(1.4);
-    border: 1px solid hsla(22, 20%, 88%, 0.5);
+  /* ═══ DARK GLASS SURFACES ═══ */
+  .glass-dark {
+    background: hsla(220, 22%, 10%, 0.70);
+    backdrop-filter: blur(20px) saturate(1.6);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    border: 1px solid hsla(220, 15%, 100%, 0.06);
     box-shadow:
-      0 8px 32px hsla(4, 78%, 58%, 0.05),
-      0 1px 4px hsla(0, 0%, 0%, 0.03),
-      inset 0 1px 0 hsla(0, 0%, 100%, 0.7);
+      0 8px 32px hsla(220, 25%, 0%, 0.35),
+      0 1px 4px hsla(220, 25%, 0%, 0.20),
+      inset 0 1px 0 hsla(0, 0%, 100%, 0.04);
   }
 
-  .glass-warm-dense {
-    background: hsla(30, 40%, 98%, 0.82);
-    backdrop-filter: blur(20px) saturate(1.35);
-    -webkit-backdrop-filter: blur(20px) saturate(1.35);
-    border: 1px solid hsla(22, 20%, 88%, 0.55);
+  .glass-dark-dense {
+    background: hsla(220, 22%, 8%, 0.85);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    border: 1px solid hsla(220, 15%, 100%, 0.07);
     box-shadow:
-      0 4px 16px hsla(4, 78%, 58%, 0.04),
-      0 1px 3px hsla(0, 0%, 0%, 0.03);
+      0 4px 16px hsla(220, 25%, 0%, 0.40),
+      0 1px 3px hsla(220, 25%, 0%, 0.25);
   }
 
-  /* ═══ CORAL GLASS — Tinted warm glass ═══ */
-  .glass-coral {
+  /* ═══ INDIGO GLASS — Dominant accent glass ═══ */
+  .glass-indigo {
     background:
       linear-gradient(135deg,
-        hsla(4, 78%, 58%, 0.08),
-        hsla(14, 85%, 65%, 0.05),
-        hsla(24, 90%, 72%, 0.03));
-    backdrop-filter: blur(28px) saturate(1.5);
-    -webkit-backdrop-filter: blur(28px) saturate(1.5);
-    border: 1px solid hsla(4, 78%, 58%, 0.14);
+        hsla(240, 75%, 65%, 0.10),
+        hsla(270, 65%, 62%, 0.06),
+        hsla(220, 22%, 10%, 0.80));
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    border: 1px solid hsla(240, 75%, 65%, 0.18);
     box-shadow:
-      0 8px 32px hsla(4, 78%, 58%, 0.06),
+      0 8px 32px hsla(240, 75%, 65%, 0.08),
+      0 2px 8px hsla(240, 75%, 65%, 0.05),
+      inset 0 1px 0 hsla(0, 0%, 100%, 0.05);
+  }
+
+  /* ═══ CORAL GLASS — Accent only, use sparingly ═══ */
+  .glass-coral-accent {
+    background:
+      linear-gradient(135deg,
+        hsla(4, 78%, 58%, 0.10),
+        hsla(4, 78%, 58%, 0.04),
+        hsla(220, 22%, 10%, 0.80));
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid hsla(4, 78%, 58%, 0.16);
+    box-shadow:
+      0 8px 32px hsla(4, 78%, 58%, 0.07),
       0 2px 6px hsla(4, 78%, 58%, 0.04),
-      inset 0 1px 0 hsla(0, 0%, 100%, 0.65);
+      inset 0 1px 0 hsla(0, 0%, 100%, 0.04);
   }
 
-  /* ═══ AZURE GLASS — Cool trust accent glass ═══ */
-  .glass-azure {
-    background:
-      linear-gradient(135deg,
-        hsla(218, 72%, 50%, 0.07),
-        hsla(228, 65%, 58%, 0.04));
-    backdrop-filter: blur(28px) saturate(1.5);
-    -webkit-backdrop-filter: blur(28px) saturate(1.5);
-    border: 1px solid hsla(218, 72%, 50%, 0.12);
-    box-shadow:
-      0 8px 32px hsla(218, 72%, 50%, 0.05),
-      0 2px 6px hsla(218, 72%, 50%, 0.03),
-      inset 0 1px 0 hsla(0, 0%, 100%, 0.55);
+  /* ═══ DOT GRID — Subtle background pattern ═══ */
+  .dot-grid {
+    background-image: radial-gradient(hsla(220, 15%, 100%, 0.08) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 
-  /* ═══ AURORA MESH — Living warm background ═══ */
-  .aurora-mesh {
+  /* ═══ DARK AURORA MESH ═══ */
+  .aurora-dark {
     background:
-      radial-gradient(ellipse at 15% 5%, hsla(4, 78%, 58%, 0.12) 0%, transparent 55%),
-      radial-gradient(ellipse at 85% 10%, hsla(14, 85%, 65%, 0.10) 0%, transparent 50%),
-      radial-gradient(ellipse at 65% 70%, hsla(218, 72%, 50%, 0.07) 0%, transparent 50%),
-      radial-gradient(ellipse at 5% 80%, hsla(24, 90%, 72%, 0.10) 0%, transparent 50%),
-      radial-gradient(ellipse at 45% 35%, hsla(350, 75%, 68%, 0.05) 0%, transparent 45%),
+      radial-gradient(ellipse at 15% 5%, hsla(240, 75%, 65%, 0.10) 0%, transparent 50%),
+      radial-gradient(ellipse at 85% 12%, hsla(270, 65%, 62%, 0.08) 0%, transparent 45%),
+      radial-gradient(ellipse at 55% 60%, hsla(240, 60%, 45%, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 5% 85%, hsla(4, 78%, 58%, 0.05) 0%, transparent 40%),
       hsl(var(--background));
   }
 
-  /* ═══ SOFT GLOW SHADOWS ═══ */
-  .glow-coral-soft {
+  /* ═══ GLOW SHADOWS ═══ */
+  .glow-indigo {
     box-shadow:
-      0 0 24px hsla(4, 78%, 58%, 0.14),
-      0 0 60px hsla(4, 78%, 58%, 0.05),
-      0 4px 16px hsla(4, 78%, 58%, 0.07);
+      0 0 28px hsla(240, 75%, 65%, 0.20),
+      0 0 80px hsla(240, 75%, 65%, 0.07),
+      0 4px 20px hsla(240, 75%, 65%, 0.10);
   }
 
-  .glow-azure-soft {
+  .glow-indigo-sm {
     box-shadow:
-      0 0 24px hsla(218, 72%, 50%, 0.12),
-      0 0 60px hsla(218, 72%, 50%, 0.04),
-      0 4px 16px hsla(218, 72%, 50%, 0.06);
+      0 0 16px hsla(240, 75%, 65%, 0.18),
+      0 4px 12px hsla(240, 75%, 65%, 0.08);
+  }
+
+  .glow-coral-xs {
+    box-shadow:
+      0 0 20px hsla(4, 78%, 58%, 0.18),
+      0 4px 14px hsla(4, 78%, 58%, 0.10);
+  }
+
+  /* ═══ GRADIENT TEXT ═══ */
+  .text-gradient-indigo {
+    background: linear-gradient(135deg,
+        hsl(var(--indigo)) 0%,
+        hsl(var(--secondary)) 50%,
+        hsl(var(--coral)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .text-gradient-pure {
+    background: linear-gradient(135deg,
+        hsl(var(--indigo)) 0%,
+        hsl(var(--secondary)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* ═══ BORDER GLOW ═══ */
+  .border-glow-indigo {
+    border-color: hsla(240, 75%, 65%, 0.30);
+  }
+
+  .border-glow-coral {
+    border-color: hsla(4, 78%, 58%, 0.30);
   }
 
   /* ═══ HALOS ═══ */
-  .halo-primary {
-    background: radial-gradient(700px circle at top right,
-        hsl(var(--primary) / 0.10), transparent 70%);
+  .halo-indigo {
+    background: radial-gradient(800px circle at top right,
+        hsl(var(--indigo) / 0.12), transparent 70%);
   }
 
-  .halo-secondary {
-    background: radial-gradient(600px circle at bottom left,
-        hsl(var(--secondary) / 0.07), transparent 70%);
+  .halo-purple {
+    background: radial-gradient(600px circle at center,
+        hsl(var(--secondary) / 0.08), transparent 70%);
   }
 
+  .halo-coral {
+    background: radial-gradient(500px circle at bottom left,
+        hsl(var(--coral) / 0.06), transparent 70%);
+  }
+
+  /* ═══ AUTH HALOS ═══ */
   .auth-brand-halo-primary {
     background: radial-gradient(600px circle at top right,
-        hsl(var(--primary) / 0.18), transparent 70%);
+        hsl(var(--indigo) / 0.18), transparent 70%);
   }
 
   .auth-brand-halo-secondary {
-    background: radial-gradient(600px circle at bottom left,
-        hsl(var(--secondary) / 0.18), transparent 70%);
+    background: radial-gradient(500px circle at bottom left,
+        hsl(var(--secondary) / 0.14), transparent 70%);
+  }
+
+  /* ═══ GLASS WARM (legacy — kept for dashboard) ═══ */
+  .glass-warm {
+    background: hsla(220, 22%, 10%, 0.70);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid hsla(220, 15%, 100%, 0.06);
+    box-shadow:
+      0 8px 32px hsla(220, 25%, 0%, 0.30),
+      inset 0 1px 0 hsla(0, 0%, 100%, 0.04);
+  }
+
+  .glass-warm-dense {
+    background: hsla(220, 22%, 8%, 0.88);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid hsla(220, 15%, 100%, 0.07);
+    box-shadow: 0 4px 16px hsla(220, 25%, 0%, 0.40);
   }
 
   /* ═══ SKELETON ═══ */
   .skeleton {
-    @apply bg-muted/70 animate-pulse rounded-md;
+    @apply bg-[hsl(var(--surface-2))] animate-pulse rounded-md;
   }
 
   .skeleton-shimmer {
-    @apply relative overflow-hidden bg-muted/70 rounded-md;
+    @apply relative overflow-hidden bg-[hsl(var(--surface-2))] rounded-md;
   }
 
   .skeleton-shimmer::after {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent, hsl(var(--card) / 0.6), transparent);
-    animation: shimmer 1.6s infinite;
+    background: linear-gradient(90deg, transparent, hsl(var(--indigo) / 0.08), transparent);
+    animation: shimmer-dark 1.8s infinite;
   }
 }
 
 /* ═══ KEYFRAMES ═══ */
 
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  100% {
-    transform: translateX(100%);
-  }
+@keyframes shimmer-dark {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 @keyframes shimmer-sweep {
-  0% {
-    transform: translateX(-100%) skewX(-12deg);
-  }
-
-  100% {
-    transform: translateX(200%) skewX(-12deg);
-  }
+  0% { transform: translateX(-100%) skewX(-12deg); }
+  100% { transform: translateX(200%) skewX(-12deg); }
 }
 
 @keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-
-  33% {
-    transform: translateY(-12px) rotate(1deg);
-  }
-
-  66% {
-    transform: translateY(6px) rotate(-0.5deg);
-  }
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(0.8deg); }
+  66% { transform: translateY(5px) rotate(-0.4deg); }
 }
 
-@keyframes pulse-ring {
-  0% {
-    box-shadow: 0 0 0 0 hsla(4, 78%, 58%, 0.25);
-  }
-
-  50% {
-    box-shadow: 0 0 0 10px hsla(4, 78%, 58%, 0);
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 hsla(4, 78%, 58%, 0);
-  }
+@keyframes float-reverse {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(8px) rotate(-0.6deg); }
+  66% { transform: translateY(-12px) rotate(0.5deg); }
 }
 
-@keyframes aurora-shift {
+@keyframes pulse-ring-indigo {
+  0% { box-shadow: 0 0 0 0 hsla(240, 75%, 65%, 0.30); }
+  50% { box-shadow: 0 0 0 10px hsla(240, 75%, 65%, 0); }
+  100% { box-shadow: 0 0 0 0 hsla(240, 75%, 65%, 0); }
+}
 
-  0%,
-  100% {
-    opacity: 0.6;
-    transform: translate(0, 0) scale(1);
-  }
+@keyframes pulse-ring-coral {
+  0% { box-shadow: 0 0 0 0 hsla(4, 78%, 58%, 0.30); }
+  50% { box-shadow: 0 0 0 8px hsla(4, 78%, 58%, 0); }
+  100% { box-shadow: 0 0 0 0 hsla(4, 78%, 58%, 0); }
+}
 
-  25% {
-    opacity: 0.8;
-    transform: translate(20px, -15px) scale(1.05);
-  }
+@keyframes aurora-dark {
+  0%, 100% { opacity: 0.7; transform: translate(0, 0) scale(1); }
+  25% { opacity: 0.9; transform: translate(18px, -12px) scale(1.04); }
+  50% { opacity: 0.5; transform: translate(-12px, 8px) scale(0.97); }
+  75% { opacity: 0.8; transform: translate(8px, 18px) scale(1.02); }
+}
 
-  50% {
-    opacity: 0.5;
-    transform: translate(-15px, 10px) scale(0.97);
-  }
+@keyframes border-glow-pulse {
+  0%, 100% { border-color: hsla(240, 75%, 65%, 0.18); }
+  50% { border-color: hsla(240, 75%, 65%, 0.35); }
+}
 
-  75% {
-    opacity: 0.75;
-    transform: translate(10px, 20px) scale(1.03);
-  }
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 /* ═══ REDUCED MOTION ═══ */
 @media (prefers-reduced-motion: reduce) {
-
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
