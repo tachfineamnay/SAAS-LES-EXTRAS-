@@ -18,7 +18,11 @@ export interface EmptyStateAction {
     variant?: "default" | "coral" | "teal-soft" | "outline" | "ghost";
 }
 
-export interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface EmptyStateProps extends Omit<
+    React.HTMLAttributes<HTMLDivElement>,
+    'onDrag' | 'onDragStart' | 'onDragEnd' | 'onDragOver' | 'onDrop' |
+    'onAnimationStart' | 'onAnimationEnd' | 'onAnimationIteration' | 'onTransitionEnd'
+> {
     icon?: LucideIcon;
     /** Lottie animation JSON — when provided, renders instead of the icon */
     lottieAnimation?: object;
@@ -52,7 +56,7 @@ export function EmptyState({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            {...(props as React.HTMLAttributes<HTMLDivElement>)}
+            {...props}
         >
             {/* Illustration — Lottie takes priority over icon */}
             {lottieAnimation ? (
