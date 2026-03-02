@@ -1,3 +1,5 @@
+"use client";
+
 import { Banknote, CircleGauge, Percent, UserPlus } from "lucide-react";
 import { KpiTile } from "@/components/dashboard/KpiTile";
 import type { AdminStatsData } from "@/lib/admin/desk-mocks";

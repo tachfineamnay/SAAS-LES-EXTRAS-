@@ -6,7 +6,8 @@ import { getQuotes } from "@/actions/quotes";
 import { getInvoices } from "@/actions/finance";
 import { getCredits } from "@/actions/credits";
 import { BentoSection } from "@/components/layout/BentoSection";
-import { KpiTile } from "@/components/dashboard/KpiTile";
+import { ClientKpiGrid } from "@/components/dashboard/ClientKpiGrid";
+import { TalentKpiGrid } from "@/components/dashboard/TalentKpiGrid";
 import { BookingListWidget } from "@/components/dashboard/BookingListWidget";
 import { CreditsWidget } from "@/components/dashboard/CreditsWidget";
 import { TrustChecklistWidget } from "@/components/dashboard/TrustChecklistWidget";
@@ -26,10 +27,8 @@ import {
     Users,
     Briefcase,
     FileText,
-    CheckCircle,
     ShieldCheck,
     Siren,
-    TrendingUp,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -88,32 +87,12 @@ export default async function DashboardPage() {
                 <MissionsToValidateWidget bookings={missionsToValidate} />
 
                 {/* KPI row */}
-                <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-                    <KpiTile
-                        label="Renforts actifs"
-                        value={confirmedBookings.length}
-                        icon={Briefcase}
-                        iconColor="gray"
-                    />
-                    <KpiTile
-                        label="En attente paiement"
-                        value={awaitingPaymentBookings.length}
-                        icon={DollarSign}
-                        iconColor="amber"
-                    />
-                    <KpiTile
-                        label="Crédits disponibles"
-                        value={availableCredits}
-                        icon={TrendingUp}
-                        iconColor="emerald"
-                    />
-                    <KpiTile
-                        label="Propositions reçues"
-                        value={pendingQuotes.length}
-                        icon={FileText}
-                        iconColor="teal"
-                    />
-                </div>
+                <ClientKpiGrid
+                    confirmedCount={confirmedBookings.length}
+                    awaitingPaymentCount={awaitingPaymentBookings.length}
+                    availableCredits={availableCredits}
+                    pendingQuotesCount={pendingQuotes.length}
+                />
 
                 {/* Main bento */}
                 <BentoSection cols={3} gap="md">
@@ -258,34 +237,11 @@ export default async function DashboardPage() {
             </header>
 
             {/* KPI row */}
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-                <KpiTile
-                    label="Missions à venir"
-                    value={confirmedBookings.length}
-                    icon={Calendar}
-                    iconColor="gray"
-                />
-                <KpiTile
-                    label="Gains cumulés"
-                    value="850 €"
-                    icon={DollarSign}
-                    iconColor="emerald"
-                    trend="up"
-                    trendLabel="+12% ce mois"
-                />
-                <KpiTile
-                    label="Missions réalisées"
-                    value={completedBookings.length}
-                    icon={CheckCircle}
-                    iconColor="teal"
-                />
-                <KpiTile
-                    label="Candidatures"
-                    value={pendingBookings.length}
-                    icon={Briefcase}
-                    iconColor="amber"
-                />
-            </div>
+            <TalentKpiGrid
+                confirmedCount={confirmedBookings.length}
+                completedCount={completedBookings.length}
+                pendingCount={pendingBookings.length}
+            />
 
             {/* Main bento */}
             <BentoSection cols={3} gap="md">
