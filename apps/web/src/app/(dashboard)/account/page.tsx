@@ -10,9 +10,14 @@ export default async function AccountPage() {
     redirect("/login");
   }
 
-  const profile = await prisma.profile.findUnique({
-    where: { userId: session.user.id },
-  });
+  let profile = null;
+  try {
+    profile = await prisma.profile.findUnique({
+      where: { userId: session.user.id },
+    });
+  } catch (error) {
+    console.error("Failed to load profile:", error);
+  }
 
   const initialData = {
     firstName: profile?.firstName || "",

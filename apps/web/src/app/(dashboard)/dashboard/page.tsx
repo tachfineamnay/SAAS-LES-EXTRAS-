@@ -43,19 +43,32 @@ export default async function DashboardPage() {
 
     let availableCredits = 0;
     if (userRole === "CLIENT") {
-        availableCredits = await getCredits();
+        try { availableCredits = await getCredits(); } catch { /* swallow */ }
     }
 
-    const bookingsData = await getBookingsPageData(token);
-    const quotes = userRole === "CLIENT" ? await getQuotes(token) : [];
-    const invoices = await getInvoices();
+    let bookingsData: { lines: any[] } = { lines: [] };
+    try {
+        bookingsData = await getBookingsPageData(token);
+    } catch { /* API might be down */ }
 
-    const pendingBookings = bookingsData.lines.filter((b) => b.status === "PENDING");
-    const confirmedBookings = bookingsData.lines.filter(
-        (b) => b.status === "CONFIRMED" || b.status === "ASSIGNED"
+    let quotes: any[] = [];
+    if (userRole === "CLIENT") {
+        try { quotes = await getQuotes(token); } catch { /* swallow */ }
+    }
+    if (!Array.isArray(quotes)) quotes = [];
+
+    let invoices: any[] = [];
+    try {
+        const inv = await getInvoices();
+        invoices = Array.isArray(inv) ? inv : [];
+    } catch { /* swallow */ }
+
+    const pendingBookings = (bookingsData?.lines ?? []).filter((b: any) => b.status === "PENDING");
+    const confirmedBookings = (bookingsData?.lines ?? []).filter(
+        (b: any) => b.status === "CONFIRMED" || b.status === "ASSIGNED"
     );
-    const completedBookings = bookingsData.lines.filter(
-        (b) => b.status === "COMPLETED" || b.status === "PAID"
+    const completedBookings = (bookingsData?.lines ?? []).filter(
+        (b: any) => b.status === "COMPLETED" || b.status === "PAID"
     );
 
     // ─────────────────────────────────────────────────────────────────
@@ -63,8 +76,8 @@ export default async function DashboardPage() {
     // ─────────────────────────────────────────────────────────────────
     if (userRole === "CLIENT") {
         const pendingQuotes = quotes.filter((q: any) => q.status === "PENDING");
-        const awaitingPaymentBookings = bookingsData.lines.filter(
-            (b) => b.status === "COMPLETED_AWAITING_PAYMENT"
+        const awaitingPaymentBookings = (bookingsData?.lines ?? []).filter(
+            (b: any) => b.status === "COMPLETED_AWAITING_PAYMENT"
         );
         const missionsToValidate: any[] = [];
         const upcomingMissions = confirmedBookings;

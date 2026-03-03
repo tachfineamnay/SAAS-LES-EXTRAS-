@@ -1,10 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getSession } from "@/lib/session";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export async function createQuote(formData: FormData) {
+    const session = await getSession();
+    if (!session) return { error: "Non connecté" };
+
     const amount = parseFloat(formData.get("amount") as string);
     const description = formData.get("description") as string;
     const startDate = formData.get("startDate") as string;
@@ -22,13 +26,7 @@ export async function createQuote(formData: FormData) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                // In a real app, we'd need to pass the auth token here.
-                // Assuming the backend might be lax or we have a way to proxy auth?
-                // Actually, the backend requires JwtAuthGuard. 
-                // We usually pass the cookies or token.
-                // For simplicity in this server action demo if we don't have the token handy from headers:
-                // We might fail. 
-                // Let's assume we can get the token from cookies() in Next.js
+                Authorization: `Bearer ${session.token}`,
             },
             body: JSON.stringify({
                 amount,

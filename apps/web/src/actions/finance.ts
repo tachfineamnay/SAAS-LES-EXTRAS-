@@ -6,7 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export async function getInvoices() {
     const session = await getSession();
-    if (!session) return { error: "Non autorisé" };
+    if (!session) return [];
 
     try {
         const res = await fetch(`${API_URL}/invoices`, {

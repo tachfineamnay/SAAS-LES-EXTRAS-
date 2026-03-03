@@ -10,20 +10,32 @@ export default async function EstablishmentPage() {
     redirect("/login");
   }
 
-  const profile = await prisma.profile.findUnique({
-    where: { userId: session.user.id },
-  });
+  let profile = null;
+  try {
+    profile = await prisma.profile.findUnique({
+      where: { userId: session.user.id },
+    });
+  } catch (error) {
+    console.error("Failed to load establishment profile:", error);
+  }
 
-  // Count missions & bookings for stats
-  const [totalMissions, activeBookings] = await Promise.all([
-    prisma.reliefMission.count({ where: { clientId: session.user.id } }),
-    prisma.booking.count({
-      where: {
-        clientId: session.user.id,
-        status: { in: ["PENDING", "CONFIRMED"] },
-      },
-    }),
-  ]);
+  let totalMissions = 0;
+  let activeBookings = 0;
+  try {
+    const results = await Promise.all([
+      prisma.reliefMission.count({ where: { clientId: session.user.id } }),
+      prisma.booking.count({
+        where: {
+          clientId: session.user.id,
+          status: { in: ["PENDING", "CONFIRMED"] },
+        },
+      }),
+    ]);
+    totalMissions = results[0];
+    activeBookings = results[1];
+  } catch (error) {
+    console.error("Failed to load establishment stats:", error);
+  }
 
   const initialData = {
     companyName: profile?.companyName || "",
