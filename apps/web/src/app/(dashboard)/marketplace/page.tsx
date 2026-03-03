@@ -16,7 +16,15 @@ export default async function MarketplacePage() {
   }
 
   if (session.user.role === "CLIENT") {
-    const { services, talents } = await getMarketplaceCatalogue(session.token);
+    let services: Awaited<ReturnType<typeof getMarketplaceCatalogue>>["services"] = [];
+    let talents: Awaited<ReturnType<typeof getMarketplaceCatalogue>>["talents"] = [];
+    try {
+      const data = await getMarketplaceCatalogue(session.token);
+      services = data.services;
+      talents = data.talents;
+    } catch (err) {
+      console.error("MarketplacePage catalogue error", err);
+    }
     return <ClientCatalogue services={services} talents={talents} />;
   }
 

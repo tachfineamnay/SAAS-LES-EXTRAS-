@@ -141,7 +141,10 @@ export async function getMarketplaceCatalogue(token?: string) {
   if (!activeToken) return { services: [], talents: [] };
 
   const [services, talents] = await Promise.all([
-    apiRequest<SerializedService[]>("/services", { method: "GET", token: activeToken }),
+    apiRequest<SerializedService[]>("/services", { method: "GET", token: activeToken }).catch((err) => {
+      console.error("getMarketplaceCatalogue /services error", err);
+      return [] as SerializedService[];
+    }),
     getTalents(activeToken)
   ]);
 
@@ -188,8 +191,13 @@ export async function createMissionFromRenfort(input: CreateMissionInput): Promi
     body: input,
   });
 
-  revalidatePath("/marketplace");
-  revalidatePath("/bookings");
+  try {
+    revalidatePath("/marketplace");
+    revalidatePath("/bookings");
+    revalidatePath("/dashboard/renforts");
+  } catch {
+    // Revalidation errors should not fail the action
+  }
   return { ok: true };
 }
 

@@ -83,6 +83,10 @@ CREATE TABLE IF NOT EXISTS "Invoice" (
     CONSTRAINT "Invoice_pkey" PRIMARY KEY ("id")
 );
 
+-- ─── Ensure Invoice has all required columns (table may pre-exist) ───────
+ALTER TABLE "Invoice" ADD COLUMN IF NOT EXISTS "invoiceNumber" TEXT;
+ALTER TABLE "Invoice" ADD COLUMN IF NOT EXISTS "commissionAmount" DOUBLE PRECISION NOT NULL DEFAULT 0;
+
 -- ─── Add missing columns to Profile ─────────────────────────────────────
 ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "country" TEXT;
 ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "companyName" TEXT;
