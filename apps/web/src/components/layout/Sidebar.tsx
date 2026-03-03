@@ -12,6 +12,7 @@ import {
   Settings,
   CalendarDays,
   Mail,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +44,12 @@ const TALENT_LINKS = [
 const BOTTOM_LINKS = [
   { href: "/account",  label: "Mon Profil",   icon: UserRound },
   { href: "/settings", label: "Paramètres",   icon: Settings },
+];
+
+const CLIENT_BOTTOM_LINKS = [
+  { href: "/account",                label: "Mon Profil",          icon: UserRound },
+  { href: "/account/establishment",  label: "Mon Établissement",   icon: Building2 },
+  { href: "/settings",               label: "Paramètres",          icon: Settings },
 ];
 
 type SidebarProps = {
@@ -126,13 +133,17 @@ function SidebarContent({
   links,
   pathname,
   onNavigate,
+  userRole,
 }: {
   links: typeof CLIENT_LINKS;
   pathname: string;
   onNavigate?: () => void;
+  userRole?: "CLIENT" | "TALENT" | null;
 }) {
   const isLinkActive = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+
+  const bottomLinks = userRole === "CLIENT" ? CLIENT_BOTTOM_LINKS : BOTTOM_LINKS;
 
   return (
     <div className="flex h-full flex-col glass-panel-dense border-r border-white/20">
@@ -181,7 +192,7 @@ function SidebarContent({
 
       {/* Liens du bas */}
       <div className="px-3 py-4 space-y-0.5">
-        {BOTTOM_LINKS.map((link, i) => (
+        {bottomLinks.map((link, i) => (
           <NavLink
             key={link.href}
             {...link}
@@ -209,7 +220,7 @@ export function Sidebar({ isMobileOpen, onMobileOpenChange }: SidebarProps) {
     <>
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:w-60 md:flex-col md:shrink-0 z-20">
-        <SidebarContent links={links} pathname={pathname} />
+        <SidebarContent links={links} pathname={pathname} userRole={userRole} />
       </aside>
 
       {/* Mobile sheet */}
@@ -222,6 +233,7 @@ export function Sidebar({ isMobileOpen, onMobileOpenChange }: SidebarProps) {
           <SidebarContent
             links={links}
             pathname={pathname}
+            userRole={userRole}
             onNavigate={() => onMobileOpenChange(false)}
           />
         </SheetContent>

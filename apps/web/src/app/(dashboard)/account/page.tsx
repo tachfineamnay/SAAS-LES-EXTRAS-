@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { ProfileForm } from "@/components/profile/ProfileForm";
+import { UserProfileClient } from "@/components/profile/UserProfileClient";
 
 export default async function AccountPage() {
   const session = await getSession();
@@ -10,36 +10,32 @@ export default async function AccountPage() {
     redirect("/login");
   }
 
-  // Get profile data
   const profile = await prisma.profile.findUnique({
     where: { userId: session.user.id },
   });
 
-  // If no profile (should happen in onboarding, but safety fallback), use session data for defaults
-  const defaultValues = {
+  const initialData = {
     firstName: profile?.firstName || "",
     lastName: profile?.lastName || "",
     jobTitle: profile?.jobTitle || "",
     bio: profile?.bio || "",
     avatar: profile?.avatar || undefined,
+    phone: profile?.phone || "",
+    address: profile?.address || "",
     city: profile?.city || "",
     zipCode: profile?.zipCode || "",
     siret: profile?.siret || "",
     tvaNumber: profile?.tvaNumber || "",
+    skills: profile?.skills || [],
+    availableCredits: profile?.availableCredits || 0,
+    createdAt: profile?.createdAt?.toISOString() || new Date().toISOString(),
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Mon Profil</h1>
-        <p className="text-muted-foreground">
-          Gérez vos informations personnelles, votre expertise et vos coordonnées.
-        </p>
-      </div>
-
-      <div className="max-w-4xl mx-auto pb-10">
-        <ProfileForm initialData={defaultValues} />
-      </div>
-    </div>
+    <UserProfileClient
+      initialData={initialData}
+      userRole={session.user.role as "CLIENT" | "TALENT" | "ADMIN"}
+      userEmail={session.user.email}
+    />
   );
 }
