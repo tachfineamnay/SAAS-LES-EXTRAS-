@@ -41,6 +41,7 @@ type CreateMissionInput = {
   dateEnd: string;
   hourlyRate: number;
   address: string;
+  isRenfort?: boolean;
 };
 
 type CreateServiceInput = {

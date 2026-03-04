@@ -64,6 +64,7 @@ export function RenfortModal() {
           dateEnd: dateEnd.toISOString(),
           address: form.location,
           hourlyRate,
+          isRenfort: true,
         });
 
         toast.success("Demande de renfort diffusée !");

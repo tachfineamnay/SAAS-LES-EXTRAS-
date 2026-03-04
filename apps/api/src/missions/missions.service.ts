@@ -32,6 +32,7 @@ export class MissionsService {
         dateEnd,
         hourlyRate: dto.hourlyRate,
         address: dto.address,
+        isRenfort: dto.isRenfort ?? false,
         clientId,
         status: ReliefMissionStatus.OPEN,
       },
