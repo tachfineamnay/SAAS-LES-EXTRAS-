@@ -4,7 +4,15 @@ import { revalidatePath } from "next/cache";
 import { apiRequest } from "@/lib/api";
 import { getSession } from "@/lib/session";
 
-export async function applyToMission(missionId: string): Promise<{ ok: true; error?: string }> {
+type ApplyInput = {
+    motivation?: string;
+    proposedRate?: number;
+};
+
+export async function applyToMission(
+    missionId: string,
+    input?: ApplyInput,
+): Promise<{ ok: true; error?: string }> {
     try {
         const session = await getSession();
         if (!session) return { ok: true, error: "Non connecté" };
@@ -12,6 +20,7 @@ export async function applyToMission(missionId: string): Promise<{ ok: true; err
         await apiRequest(`/missions/${missionId}/apply`, {
             method: "POST",
             token: session.token,
+            body: input ?? {},
         });
 
         revalidatePath("/marketplace");
