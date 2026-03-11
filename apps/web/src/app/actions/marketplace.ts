@@ -35,6 +35,12 @@ export type MarketplaceData = {
   degradedReason?: string;
 };
 
+type MissionSlot = {
+  date: string;
+  heureDebut: string;
+  heureFin: string;
+};
+
 type CreateMissionInput = {
   title: string;
   dateStart: string;
@@ -42,6 +48,12 @@ type CreateMissionInput = {
   hourlyRate: number;
   address: string;
   isRenfort?: boolean;
+  // Extended SOS Renfort fields
+  metier?: string;
+  shift?: "JOUR" | "NUIT";
+  city?: string;
+  zipCode?: string;
+  slots?: MissionSlot[];
 };
 
 type CreateServiceInput = {
@@ -73,7 +85,13 @@ export type SerializedMission = {
   hourlyRate: number;
   status: MissionStatus;
   isRenfort: boolean;
-  // Enhanced fields
+  // Extended SOS Renfort fields
+  metier?: string | null;
+  shift?: string | null;
+  city?: string | null;
+  zipCode?: string | null;
+  slots?: MissionSlot[] | null;
+  // Enhanced display fields
   isUrgent?: boolean;
   isNetworkMatch?: boolean;
   establishmentName?: string;
