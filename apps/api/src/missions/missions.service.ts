@@ -35,6 +35,12 @@ export class MissionsService {
         isRenfort: dto.isRenfort ?? false,
         clientId,
         status: ReliefMissionStatus.OPEN,
+        // Extended SOS Renfort fields
+        metier: dto.metier,
+        shift: dto.shift,
+        city: dto.city,
+        zipCode: dto.zipCode,
+        slots: dto.slots ? (dto.slots as unknown as Prisma.InputJsonValue) : undefined,
       },
     });
   }

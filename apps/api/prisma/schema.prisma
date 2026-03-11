@@ -112,20 +112,26 @@ model PackPurchase {
 }
 
 model ReliefMission {
-  id        String             @id @default(cuid())
-  title     String
-  dateStart DateTime
-  dateEnd   DateTime
-  hourlyRate  Float
-  status    ReliefMissionStatus @default(OPEN)
-  isRenfort Boolean            @default(false)
-  address   String
-  clientId  String
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  client    User               @relation("ClientMissions", fields: [clientId], references: [id], onDelete: Restrict)
-  bookings  Booking[]
-  quotes    Quote[]
+  id         String              @id @default(cuid())
+  title      String
+  dateStart  DateTime
+  dateEnd    DateTime
+  hourlyRate Float
+  status     ReliefMissionStatus @default(OPEN)
+  isRenfort  Boolean             @default(false)
+  address    String
+  // Extended SOS Renfort fields
+  metier     String?
+  shift      String?             // "JOUR" | "NUIT"
+  city       String?
+  zipCode    String?
+  slots      Json?               // [{ date, heureDebut, heureFin }]
+  clientId   String
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  client     User                @relation("ClientMissions", fields: [clientId], references: [id], onDelete: Restrict)
+  bookings   Booking[]
+  quotes     Quote[]
 
   @@index([clientId])
 }
