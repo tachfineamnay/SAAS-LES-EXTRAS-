@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ApplyMissionModal } from "@/components/modals/ApplyMissionModal";
 import { PublishModal } from "@/components/modals/PublishModal";
 import { RenfortModal } from "@/components/modals/RenfortModal";
 import { Toaster } from "@/components/ui/sonner";
@@ -40,6 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       <RenfortModalWrapper />
       <PublishModal />
+      <ApplyMissionModal />
       <Toaster
         richColors
         position="bottom-right"
