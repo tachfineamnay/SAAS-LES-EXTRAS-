@@ -11,6 +11,10 @@ export interface UIState {
   onboardingStep: number;
   isMobileOpen: boolean;
 
+  // SOS Renfort multi-step state
+  renfortStep: number;
+  renfortStepDir: number;
+
   openRenfortModal: () => void;
   closeRenfortModal: () => void;
   openPublishModal: () => void;
@@ -19,6 +23,8 @@ export interface UIState {
   setMobileOpen: (open: boolean) => void;
   setUserRole: (role: "CLIENT" | "TALENT" | null) => void;
   setOnboardingStep: (step: number) => void;
+  setRenfortStep: (step: number) => void;
+  setRenfortStepDir: (dir: number) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -27,12 +33,17 @@ export const useUIStore = create<UIState>((set) => ({
   isMobileOpen: false,
   userRole: "CLIENT",
   onboardingStep: 0,
-  openRenfortModal: () => set({ isRenfortModalOpen: true }),
-  closeRenfortModal: () => set({ isRenfortModalOpen: false }),
+  renfortStep: 0,
+  renfortStepDir: 1,
+
+  openRenfortModal: () => set({ isRenfortModalOpen: true, renfortStep: 0, renfortStepDir: 1 }),
+  closeRenfortModal: () => set({ isRenfortModalOpen: false, renfortStep: 0 }),
   openPublishModal: () => set({ isPublishModalOpen: true }),
   closePublishModal: () => set({ isPublishModalOpen: false }),
   toggleMobile: () => set((state) => ({ isMobileOpen: !state.isMobileOpen })),
   setMobileOpen: (open) => set({ isMobileOpen: open }),
   setUserRole: (role) => set({ userRole: role }),
   setOnboardingStep: (step) => set({ onboardingStep: step }),
+  setRenfortStep: (step) => set({ renfortStep: step }),
+  setRenfortStepDir: (dir) => set({ renfortStepDir: dir }),
 }));
