@@ -195,6 +195,9 @@ model Booking {
   status          BookingStatus @default(PENDING)
   message         String?
   scheduledAt     DateTime      @default(now())
+  // Candidature fields (SOS Renfort)
+  motivation      String?
+  proposedRate    Float?
   clientId        String
   talentId        String?
   reliefMissionId String?
