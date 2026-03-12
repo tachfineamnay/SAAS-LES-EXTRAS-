@@ -39,8 +39,8 @@ export function QuoteEditorModal() {
           setQuote(q);
           setAmount(q.amount > 0 ? String(q.amount) : "");
           setDescription(q.description ?? "");
-          setStartDate(q.startDate ? q.startDate.split("T")[0] : "");
-          setEndDate(q.endDate ? q.endDate.split("T")[0] : "");
+          setStartDate(q.startDate ? (q.startDate.split("T")[0] ?? "") : "");
+          setEndDate(q.endDate ? (q.endDate.split("T")[0] ?? "") : "");
         }
       });
     }
