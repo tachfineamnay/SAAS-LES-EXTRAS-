@@ -125,6 +125,7 @@ export function RenfortModal() {
     try {
       // Build first slot dates for the current API signature
       const first = data.slots[0];
+      if (!first) throw new Error("Au moins un créneau est requis");
       const dateStart = new Date(`${first.date}T${first.heureDebut}`);
       const dateEnd = new Date(`${first.date}T${first.heureFin}`);
 
