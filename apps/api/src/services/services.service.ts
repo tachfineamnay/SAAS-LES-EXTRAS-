@@ -5,7 +5,7 @@ import { CreateServiceDto } from "./dto/create-service.dto";
 
 @Injectable()
 export class ServicesService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
     return this.prisma.service.findMany({
@@ -52,17 +52,34 @@ export class ServicesService {
         price: dto.price,
         type: dto.type,
         capacity: dto.capacity,
+        pricingType: dto.pricingType ?? "SESSION",
+        pricePerParticipant: dto.pricePerParticipant,
+        durationMinutes: dto.durationMinutes ?? 120,
+        category: dto.category,
+        publicCible: dto.publicCible ?? [],
+        materials: dto.materials,
+        objectives: dto.objectives,
+        methodology: dto.methodology,
+        evaluation: dto.evaluation,
+        slots: dto.slots ?? [],
         ownerId,
       },
     });
   }
 
-  async bookService(serviceId: string, clientId: string, date: Date, message?: string) {
+  async bookService(
+    serviceId: string,
+    clientId: string,
+    date: Date,
+    message?: string,
+    nbParticipants?: number,
+  ) {
     const service = await this.prisma.service.findUnique({
       where: { id: serviceId },
       select: {
         id: true,
         ownerId: true,
+        pricingType: true,
       },
     });
 
@@ -84,6 +101,36 @@ export class ServicesService {
       throw new ConflictException("Une demande est déjà en cours pour ce service");
     }
 
+    // For QUOTE services: create Booking + a draft Quote atomically
+    if (service.pricingType === "QUOTE") {
+      return this.prisma.$transaction(async (tx) => {
+        const booking = await tx.booking.create({
+          data: {
+            status: BookingStatus.PENDING,
+            clientId,
+            talentId: service.ownerId,
+            serviceId: service.id,
+            scheduledAt: date,
+            message,
+            nbParticipants,
+          },
+        });
+
+        const quote = await tx.quote.create({
+          data: {
+            amount: 0,
+            description: "",
+            freelanceId: service.ownerId,
+            establishmentId: clientId,
+            serviceId: service.id,
+            booking: { connect: { id: booking.id } },
+          },
+        });
+
+        return { booking, quote };
+      });
+    }
+
     return this.prisma.booking.create({
       data: {
         status: BookingStatus.PENDING,
@@ -92,6 +139,7 @@ export class ServicesService {
         serviceId: service.id,
         scheduledAt: date,
         message,
+        nbParticipants,
       },
     });
   }

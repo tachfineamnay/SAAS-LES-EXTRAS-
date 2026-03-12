@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { apiRequest } from "@/lib/api";
 import { getSession } from "@/lib/session";
+import type { ServiceSlot } from "@/lib/atelier-config";
 
 export type MissionStatus = "OPEN" | "ASSIGNED" | "COMPLETED" | "CANCELLED";
-
-// Define ServiceType to match Prisma schema
 export type ServiceType = "WORKSHOP" | "TRAINING";
+export type PricingType = "SESSION" | "PER_PARTICIPANT" | "QUOTE";
 
 export type SerializedService = {
   id: string;
@@ -16,6 +16,17 @@ export type SerializedService = {
   price: number;
   type: ServiceType;
   capacity: number;
+  // Extended atelier fields
+  pricingType: PricingType;
+  pricePerParticipant: number | null;
+  durationMinutes: number;
+  category: string | null;
+  publicCible: string[] | null;
+  materials: string | null;
+  objectives: string | null;
+  methodology: string | null;
+  evaluation: string | null;
+  slots: ServiceSlot[] | null;
   owner?: {
     id: string;
     profile?: {
@@ -48,7 +59,6 @@ type CreateMissionInput = {
   hourlyRate: number;
   address: string;
   isRenfort?: boolean;
-  // Extended SOS Renfort fields
   metier?: string;
   shift?: "JOUR" | "NUIT";
   city?: string;
@@ -62,19 +72,17 @@ type CreateServiceInput = {
   price: number;
   type: ServiceType;
   capacity: number;
-  owner?: {
-    id: string;
-    profile?: {
-      firstName: string;
-      lastName: string;
-      avatar: string | null;
-      jobTitle: string | null;
-      bio: string | null;
-    } | null;
-  };
+  pricingType?: PricingType;
+  pricePerParticipant?: number;
+  durationMinutes?: number;
+  category?: string;
+  publicCible?: string[];
+  materials?: string;
+  objectives?: string;
+  methodology?: string;
+  evaluation?: string;
+  slots?: ServiceSlot[];
 };
-
-// ... 
 
 export type SerializedMission = {
   id: string;
@@ -85,13 +93,11 @@ export type SerializedMission = {
   hourlyRate: number;
   status: MissionStatus;
   isRenfort: boolean;
-  // Extended SOS Renfort fields
   metier?: string | null;
   shift?: string | null;
   city?: string | null;
   zipCode?: string | null;
   slots?: MissionSlot[] | null;
-  // Enhanced display fields
   isUrgent?: boolean;
   isNetworkMatch?: boolean;
   establishmentName?: string;
@@ -105,10 +111,6 @@ export type SerializedMission = {
   };
 };
 
-// ...
-
-// ... types ...
-
 export type SerializedTalent = {
   id: string;
   email: string;
@@ -118,7 +120,6 @@ export type SerializedTalent = {
     avatar: string | null;
     jobTitle: string | null;
     city: string | null;
-    // Add other fields as needed
   } | null;
 };
 
@@ -131,8 +132,6 @@ export async function getAvailableMissions(token?: string): Promise<SerializedMi
       method: "GET",
       token: activeToken,
     });
-
-    // Sort logic (can be moved here or kept in component)
     return missions.sort((a, b) => new Date(a.dateStart).getTime() - new Date(b.dateStart).getTime());
   } catch (error) {
     console.error("getAvailableMissions error", error);
@@ -164,21 +163,14 @@ export async function getMarketplaceCatalogue(token?: string) {
       console.error("getMarketplaceCatalogue /services error", err);
       return [] as SerializedService[];
     }),
-    getTalents(activeToken)
+    getTalents(activeToken),
   ]);
 
   return { services, talents };
 }
 
-// Keep legacy for now or refactor page to use new ones
 export async function getMarketplaceData(token?: string): Promise<MarketplaceData> {
-  // ... existing implementation or redirect to new logic ...
-  // For safety, let's leave it as is for now, but the page will use specific functions.
-  return {
-    missions: [],
-    services: [],
-    isDegraded: false
-  }
+  return { missions: [], services: [], isDegraded: false };
 }
 
 export async function getService(id: string, token?: string): Promise<SerializedService | null> {
@@ -236,9 +228,7 @@ export async function createServiceFromPublish(input: CreateServiceInput): Promi
 }
 
 export async function applyToMission(missionId: string): Promise<{ ok: true }> {
-  if (!missionId) {
-    throw new Error("Mission manquante.");
-  }
+  if (!missionId) throw new Error("Mission manquante.");
 
   const session = await getSession();
   if (!session) throw new Error("Non connecté");
@@ -256,11 +246,10 @@ export async function applyToMission(missionId: string): Promise<{ ok: true }> {
 export async function bookService(
   serviceId: string,
   date: Date,
-  message?: string
+  message?: string,
+  nbParticipants?: number,
 ): Promise<{ ok: true } | { error: string }> {
-  if (!serviceId) {
-    return { error: "Service manquant." };
-  }
+  if (!serviceId) return { error: "Service manquant." };
 
   const session = await getSession();
   if (!session) return { error: "Non connecté" };
@@ -272,6 +261,7 @@ export async function bookService(
       body: {
         date: date.toISOString(),
         message,
+        nbParticipants,
       },
     });
 
@@ -280,7 +270,7 @@ export async function bookService(
     return { ok: true };
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : "Erreur lors de la réservation"
+      error: error instanceof Error ? error.message : "Erreur lors de la réservation",
     };
   }
 }

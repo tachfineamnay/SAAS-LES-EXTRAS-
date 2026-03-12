@@ -4,6 +4,9 @@ import { useState } from "react";
 import { ApplyMissionModal } from "@/components/modals/ApplyMissionModal";
 import { PublishModal } from "@/components/modals/PublishModal";
 import { RenfortModal } from "@/components/modals/RenfortModal";
+import { BookServiceModal } from "@/components/modals/BookServiceModal";
+import { QuoteRequestModal } from "@/components/modals/QuoteRequestModal";
+import { QuoteEditorModal } from "@/components/modals/QuoteEditorModal";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
@@ -42,6 +45,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <RenfortModalWrapper />
       <PublishModal />
       <ApplyMissionModal />
+      <BookServiceModal />
+      <QuoteRequestModal />
+      <QuoteEditorModal />
       <Toaster
         richColors
         position="bottom-right"

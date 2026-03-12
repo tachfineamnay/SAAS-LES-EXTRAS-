@@ -1,196 +1,282 @@
-
 import { notFound } from "next/navigation";
 import { getService } from "@/app/actions/marketplace";
-import { BookingModal } from "@/components/marketplace/BookingModal";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, MapPin, Clock3, Users, Euro, ShieldCheck } from "lucide-react";
-import Image from "next/image";
+import { CheckCircle2, Clock3, Users, CalendarDays, ShieldCheck, Target, BookOpen, ClipboardList } from "lucide-react";
+import { ServiceDetailActions } from "@/components/marketplace/ServiceDetailActions";
+import { getCategoryLabel, getPublicCibleLabels, formatDuration } from "@/lib/atelier-config";
+import type { ServiceSlot } from "@/lib/atelier-config";
 
 type PageProps = {
-    params: {
-        id: string;
-    };
+  params: { id: string };
 };
 
 function getAvatarFallback(name: string): string {
-    return name
-        .split(" ")
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase() ?? "")
-        .join("");
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
 export default async function ServiceDetailPage({ params }: PageProps) {
-    const service = await getService(params.id);
+  const service = await getService(params.id);
 
-    if (!service) {
-        notFound();
-    }
+  if (!service) {
+    notFound();
+  }
 
-    const ownerName = service.owner?.profile
-        ? `${service.owner.profile.firstName} ${service.owner.profile.lastName}`
-        : "Freelance";
+  const ownerName = service.owner?.profile
+    ? `${service.owner.profile.firstName} ${service.owner.profile.lastName}`
+    : "Freelance";
 
-    const ownerJob = service.owner?.profile?.jobTitle || "Expert";
-    const ownerBio = service.owner?.profile?.bio || "Aucune biographie disponible.";
+  const ownerJob = service.owner?.profile?.jobTitle ?? "Expert";
+  const ownerBio = service.owner?.profile?.bio ?? "Aucune biographie disponible.";
+  const slots = Array.isArray(service.slots) ? (service.slots as ServiceSlot[]) : [];
+  const publicLabels = getPublicCibleLabels(service.publicCible ?? []);
 
-    return (
-        <div className="container max-w-6xl py-8 space-y-8">
-            {/* Breadcrumb / Back link */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <a href="/marketplace" className="hover:text-foreground">Marketplace</a>
-                <span>/</span>
-                <span className="text-foreground">{service.title}</span>
+  return (
+    <div className="container max-w-6xl py-8 space-y-8">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <a href="/marketplace" className="hover:text-foreground">Marketplace</a>
+        <span>/</span>
+        <span className="text-foreground">{service.title}</span>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* LEFT COLUMN */}
+        <div className="lg:col-span-2 space-y-8">
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="text-primary border-primary">
+                {service.type === "WORKSHOP" ? "ATELIER" : "FORMATION"}
+              </Badge>
+              {service.category && (
+                <Badge variant="secondary">{getCategoryLabel(service.category)}</Badge>
+              )}
+              {service.durationMinutes > 0 && (
+                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Clock3 className="h-4 w-4" /> {formatDuration(service.durationMinutes)}
+                </span>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">{service.title}</h1>
 
-                {/* LEFT COLUMN: MAIN CONTENT */}
-                <div className="lg:col-span-2 space-y-8">
+            {/* Public cible */}
+            {publicLabels.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {publicLabels.map((label) => (
+                  <span
+                    key={label}
+                    className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+            )}
 
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <Badge variant="outline" className="text-primary border-primary">
-                                {service.type === "WORKSHOP" ? "ATELIER" : "FORMATION"}
-                            </Badge>
-                            <span className="text-sm text-muted-foreground flex items-center gap-1">
-                                <Clock3 className="h-4 w-4" /> {service.type === "WORKSHOP" ? "2h" : "4h"}
-                            </span>
-                        </div>
-
-                        <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
-                            {service.title}
-                        </h1>
-
-                        {/* Owner Mini-Profile */}
-                        <div className="flex items-center gap-3 pt-2">
-                            <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
-                                <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                                    {getAvatarFallback(ownerName)}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="text-sm text-muted-foreground">Proposé par</p>
-                                <p className="font-medium text-foreground">{ownerName}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Description */}
-                    <div className="prose prose-slate max-w-none dark:prose-invert">
-                        <h3 className="text-xl font-bold text-foreground mb-4">À propos de ce service</h3>
-                        <p className="whitespace-pre-wrap leading-relaxed">
-                            {service.description || "Le freelance n'a pas fourni de description détaillée pour ce service."}
-                        </p>
-                    </div>
-
-                    <Separator />
-
-                    {/* Instructor Bio */}
-                    <div className="bg-muted/30 p-6 rounded-xl border">
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                            <ShieldCheck className="h-5 w-5 text-primary" />
-                            L'Intervenant
-                        </h3>
-                        <div className="flex flex-col md:flex-row gap-6">
-                            <div className="flex-shrink-0">
-                                <Avatar className="h-20 w-20">
-                                    <AvatarFallback className="text-xl">{getAvatarFallback(ownerName)}</AvatarFallback>
-                                </Avatar>
-                            </div>
-                            <div className="space-y-2">
-                                <div>
-                                    <h4 className="font-semibold text-lg">{ownerName}</h4>
-                                    <p className="text-sm text-primary font-medium">{ownerJob}</p>
-                                </div>
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {ownerBio}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* RIGHT COLUMN: STICKY BUY BOX */}
-                <div className="relative">
-                    <div className="sticky top-24">
-                        <Card className="border-2 border-primary/20 shadow-lg overflow-hidden">
-                            <div className="bg-primary/5 p-4 border-b border-primary/10">
-                                <h3 className="font-semibold text-primary text-center">Récapitulatif</h3>
-                            </div>
-                            <CardContent className="p-6 space-y-6">
-
-                                <div className="flex items-end justify-between">
-                                    <span className="text-muted-foreground font-medium">Prix total</span>
-                                    <div className="text-right">
-                                        <span className="text-3xl font-bold text-foreground">{service.price} €</span>
-                                        <span className="text-xs text-muted-foreground block font-medium">Hors Taxes</span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3 pt-2">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="flex items-center gap-2 text-muted-foreground">
-                                            <Users className="h-4 w-4" /> Capacité
-                                        </span>
-                                        <span className="font-medium">{service.capacity} personnes</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="flex items-center gap-2 text-muted-foreground">
-                                            <MapPin className="h-4 w-4" /> Lieu
-                                        </span>
-                                        <span className="font-medium">Sur site</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="flex items-center gap-2 text-muted-foreground">
-                                            <CheckCircle2 className="h-4 w-4" /> Matériel
-                                        </span>
-                                        <span className="font-medium text-green-600">Inclus</span>
-                                    </div>
-                                </div>
-
-                                <Separator />
-
-                                <div className="space-y-3">
-                                    <BookingModal
-                                        serviceId={service.id}
-                                        serviceTitle={service.title}
-                                        trigger={
-                                            <Button size="lg" className="w-full text-md h-12 shadow-md hover:shadow-lg transition-all">
-                                                Demander une réservation
-                                            </Button>
-                                        }
-                                    />
-                                    <p className="text-xs text-center text-muted-foreground px-4">
-                                        Vous ne serez débité qu'une fois la mission validée par le freelance.
-                                    </p>
-                                </div>
-
-                            </CardContent>
-                        </Card>
-
-                        {/* Trust signals */}
-                        <div className="mt-6 space-y-3 px-4">
-                            <div className="flex items-start gap-3">
-                                <ShieldCheck className="h-5 w-5 text-green-600 mt-0.5" />
-                                <div className="text-sm">
-                                    <p className="font-medium">Profil Vérifié</p>
-                                    <p className="text-muted-foreground text-xs">L'identité et les diplômes de ce freelance ont été contrôlés.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
+            {/* Owner mini-profile */}
+            <div className="flex items-center gap-3 pt-2">
+              <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
+                <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                  {getAvatarFallback(ownerName)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm text-muted-foreground">Proposé par</p>
+                <p className="font-medium text-foreground">{ownerName}</p>
+                <p className="text-xs text-muted-foreground">{ownerJob}</p>
+              </div>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Description */}
+          {service.description && (
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold">À propos de ce service</h3>
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{service.description}</p>
+            </div>
+          )}
+
+          {/* Pedagogical sections */}
+          {(service.objectives || service.methodology || service.evaluation) && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {service.objectives && (
+                <div className="bg-green-50 border border-green-100 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2 font-semibold text-green-800">
+                    <Target className="w-4 h-4" /> Objectifs
+                  </div>
+                  <p className="text-sm text-green-700 leading-relaxed">{service.objectives}</p>
+                </div>
+              )}
+              {service.methodology && (
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2 font-semibold text-blue-800">
+                    <BookOpen className="w-4 h-4" /> Méthodologie
+                  </div>
+                  <p className="text-sm text-blue-700 leading-relaxed">{service.methodology}</p>
+                </div>
+              )}
+              {service.evaluation && (
+                <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2 font-semibold text-purple-800">
+                    <ClipboardList className="w-4 h-4" /> Évaluation
+                  </div>
+                  <p className="text-sm text-purple-700 leading-relaxed">{service.evaluation}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Materials */}
+          {service.materials && (
+            <div className="flex items-start gap-3 bg-muted/30 rounded-xl p-4 border">
+              <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-medium text-sm">Matériel fourni</p>
+                <p className="text-sm text-muted-foreground">{service.materials}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Available slots */}
+          {slots.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-primary" />
+                Créneaux disponibles
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {slots.map((slot, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20 text-sm">
+                    <span className="font-medium capitalize">
+                      {new Date(slot.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {slot.heureDebut} – {slot.heureFin}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <Separator />
+
+          {/* Instructor bio */}
+          <div className="bg-muted/30 p-6 rounded-xl border">
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              L&apos;Intervenant
+            </h3>
+            <div className="flex flex-col md:flex-row gap-6">
+              <Avatar className="h-20 w-20 shrink-0">
+                <AvatarFallback className="text-xl">{getAvatarFallback(ownerName)}</AvatarFallback>
+              </Avatar>
+              <div className="space-y-2">
+                <div>
+                  <h4 className="font-semibold text-lg">{ownerName}</h4>
+                  <p className="text-sm text-primary font-medium">{ownerJob}</p>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed">{ownerBio}</p>
+              </div>
+            </div>
+          </div>
         </div>
-    );
+
+        {/* RIGHT COLUMN: STICKY BUY BOX */}
+        <div className="relative">
+          <div className="sticky top-24">
+            <Card className="border-2 border-primary/20 shadow-lg overflow-hidden">
+              <div className="bg-primary/5 p-4 border-b border-primary/10">
+                <h3 className="font-semibold text-primary text-center">Récapitulatif</h3>
+              </div>
+              <CardContent className="p-6 space-y-5">
+                {/* Price display */}
+                <div>
+                  {service.pricingType === "QUOTE" ? (
+                    <div className="text-center py-2">
+                      <p className="text-2xl font-bold text-amber-700">Sur devis</p>
+                      <p className="text-xs text-muted-foreground mt-1">Le tarif est défini après échange</p>
+                    </div>
+                  ) : service.pricingType === "PER_PARTICIPANT" && service.pricePerParticipant ? (
+                    <div className="flex items-end justify-between">
+                      <span className="text-muted-foreground font-medium">Par participant</span>
+                      <div className="text-right">
+                        <span className="text-3xl font-bold">{service.pricePerParticipant} €</span>
+                        <span className="text-xs text-muted-foreground block">/ pers. HT</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-end justify-between">
+                      <span className="text-muted-foreground font-medium">Prix forfaitaire</span>
+                      <div className="text-right">
+                        <span className="text-3xl font-bold">{service.price} €</span>
+                        <span className="text-xs text-muted-foreground block">HT</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2.5 pt-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <Users className="h-4 w-4" /> Capacité
+                    </span>
+                    <span className="font-medium">{service.capacity} pers. max</span>
+                  </div>
+                  {service.durationMinutes > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        <Clock3 className="h-4 w-4" /> Durée
+                      </span>
+                      <span className="font-medium">{formatDuration(service.durationMinutes)}</span>
+                    </div>
+                  )}
+                  {slots.length > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        <CalendarDays className="h-4 w-4" /> Créneaux
+                      </span>
+                      <span className="font-medium">{slots.length} disponible{slots.length > 1 ? "s" : ""}</span>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* CTA — client-side component */}
+                <ServiceDetailActions
+                  serviceId={service.id}
+                  pricingType={service.pricingType}
+                />
+
+                <p className="text-xs text-center text-muted-foreground px-2">
+                  Vous ne serez débité qu&apos;une fois la mission validée.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Trust signals */}
+            <div className="mt-6 space-y-3 px-2">
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="h-5 w-5 text-green-600 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium">Profil Vérifié</p>
+                  <p className="text-muted-foreground text-xs">L&apos;identité et les diplômes de ce freelance ont été contrôlés.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

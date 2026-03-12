@@ -45,7 +45,7 @@ model User {
   updatedAt      DateTime        @updatedAt
   profile        Profile?
   clientMissions ReliefMission[] @relation("ClientMissions")
-  ownerServices  Service[]       @relation("OwnerServices")
+  ownerServices   Service[]       @relation("OwnerServices")
   clientBookings Booking[]       @relation("ClientBookings")
   talentBookings Booking[]       @relation("TalentBookings")
   freelanceQuotes Quote[]         @relation("FreelanceQuotes")
@@ -137,19 +137,31 @@ model ReliefMission {
 }
 
 model Service {
-  id          String      @id @default(cuid())
-  title       String
-  description String?
-  price       Float
-  type        ServiceType
-  capacity    Int
-  isFeatured  Boolean     @default(false)
-  isHidden    Boolean     @default(false)
-  ownerId     String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  owner       User        @relation("OwnerServices", fields: [ownerId], references: [id], onDelete: Restrict)
-  bookings    Booking[]
+  id                 String      @id @default(cuid())
+  title              String
+  description        String?
+  price              Float       @default(0)
+  type               ServiceType
+  capacity           Int         @default(10)
+  isFeatured         Boolean     @default(false)
+  isHidden           Boolean     @default(false)
+  // Extended atelier fields
+  pricingType        String      @default("SESSION") // "SESSION" | "PER_PARTICIPANT" | "QUOTE"
+  pricePerParticipant Float?
+  durationMinutes    Int         @default(120)
+  category           String?
+  publicCible        Json?       // string[]
+  materials          String?
+  objectives         String?
+  methodology        String?
+  evaluation         String?
+  slots              Json?       // [{ date, heureDebut, heureFin }]
+  ownerId            String
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  owner              User        @relation("OwnerServices", fields: [ownerId], references: [id], onDelete: Restrict)
+  bookings           Booking[]
+  quotes             Quote[]
 
   @@index([ownerId])
 }
@@ -162,20 +174,22 @@ enum QuoteStatus {
 
 model Quote {
   id              String         @id @default(cuid())
-  amount          Float
-  description     String
-  startDate       DateTime
-  endDate         DateTime
+  amount          Float          @default(0)
+  description     String         @default("")
+  startDate       DateTime?
+  endDate         DateTime?
   status          QuoteStatus    @default(PENDING)
   freelanceId     String
   establishmentId String
   reliefMissionId String?
+  serviceId       String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
   freelance       User           @relation("FreelanceQuotes", fields: [freelanceId], references: [id])
   establishment   User           @relation("EstablishmentQuotes", fields: [establishmentId], references: [id])
   reliefMission   ReliefMission? @relation(fields: [reliefMissionId], references: [id])
+  service         Service?       @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   booking         Booking?
 }
 
@@ -198,6 +212,7 @@ model Booking {
   // Candidature fields (SOS Renfort)
   motivation      String?
   proposedRate    Float?
+  nbParticipants  Int?
   clientId        String
   talentId        String?
   reliefMissionId String?
