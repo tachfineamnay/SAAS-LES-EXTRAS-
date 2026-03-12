@@ -28,7 +28,6 @@ import {
     Briefcase,
     FileText,
     ShieldCheck,
-    Siren,
     TrendingUp,
 } from "lucide-react";
 
@@ -85,16 +84,10 @@ export default async function DashboardPage() {
         return (
             <div className="space-y-8">
                 {/* Page header */}
-                <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-                    <div className="space-y-1">
-                        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Espace Établissement</p>
-                        <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
-                        <p className="text-sm text-muted-foreground">Vue d'ensemble de vos renforts et opérations.</p>
-                    </div>
-                    <Button size="sm" className="shadow-sm self-start sm:self-auto gap-2 min-h-[44px]">
-                        <Siren className="h-4 w-4" aria-hidden="true" />
-                        Demander un renfort
-                    </Button>
+                <header className="space-y-1">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Espace Établissement</p>
+                    <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
+                    <p className="text-sm text-muted-foreground">Vue d'ensemble de vos renforts et opérations.</p>
                 </header>
 
                 {/* Alert zone */}
@@ -234,20 +227,10 @@ export default async function DashboardPage() {
     return (
         <div className="space-y-8">
             {/* Page header */}
-            <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-                <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Espace Freelance</p>
-                    <h1 className="text-3xl font-bold tracking-tight">Mon Tableau de bord</h1>
-                    <p className="text-sm text-muted-foreground">Suivez vos missions, candidatures et revenus.</p>
-                </div>
-                <div className="flex gap-2 self-start sm:self-auto">
-                    <QuoteCreationModal />
-                    <Button variant="glass" size="sm" className="min-h-[44px]" asChild>
-                        <Link href="/marketplace">
-                            Trouver une mission
-                        </Link>
-                    </Button>
-                </div>
+            <header className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Espace Freelance</p>
+                <h1 className="text-3xl font-bold tracking-tight">Mon Tableau de bord</h1>
+                <p className="text-sm text-muted-foreground">Suivez vos missions, candidatures et revenus.</p>
             </header>
 
             {/* KPI row */}
@@ -315,6 +298,21 @@ export default async function DashboardPage() {
                             emptyMessage="Aucune candidature en cours."
                             viewAllLink="/bookings"
                         />
+                    </GlassCardContent>
+                </GlassCard>
+
+                {/* Propositions */}
+                <GlassCard>
+                    <GlassCardHeader>
+                        <div className="flex items-center gap-2.5">
+                            <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                                <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
+                            </div>
+                            <h2 className="text-base font-semibold tracking-tight">Propositions</h2>
+                        </div>
+                    </GlassCardHeader>
+                    <GlassCardContent>
+                        <QuoteCreationModal />
                     </GlassCardContent>
                 </GlassCard>
 
