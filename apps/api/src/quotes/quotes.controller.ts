@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, ParseIntPipe, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request } from '@nestjs/common';
 import { QuotesService } from './quotes.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
@@ -7,7 +7,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 @Controller('quotes')
 @UseGuards(JwtAuthGuard)
 export class QuotesController {
-  constructor(private readonly quotesService: QuotesService) { }
+  constructor(private readonly quotesService: QuotesService) {}
 
   @Post()
   create(@Body() createQuoteDto: CreateQuoteDto) {
@@ -35,13 +35,7 @@ export class QuotesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateQuoteDto: UpdateQuoteDto) {
-    // Basic update not implemented fully yet as per plan, focus on workflow
-    return this.quotesService.update(+id, updateQuoteDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.quotesService.remove(+id);
+  update(@Param('id') id: string, @Body() updateQuoteDto: UpdateQuoteDto, @Request() req: any) {
+    return this.quotesService.update(id, updateQuoteDto, req.user.id);
   }
 }

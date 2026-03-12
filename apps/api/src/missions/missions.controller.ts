@@ -5,6 +5,7 @@ import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
+import { ApplyMissionDto } from "./dto/apply-mission.dto";
 import { CreateMissionDto } from "./dto/create-mission.dto";
 import { FindMissionsQueryDto } from "./dto/find-missions-query.dto";
 import { MissionsService } from "./missions.service";
@@ -40,7 +41,11 @@ export class MissionsController {
   @Post(":missionId/apply")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.TALENT)
-  apply(@Param("missionId") missionId: string, @CurrentUser() user: AuthenticatedUser) {
-    return this.missionsService.apply(missionId, user.id);
+  apply(
+    @Param("missionId") missionId: string,
+    @Body() dto: ApplyMissionDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.missionsService.apply(missionId, user.id, dto);
   }
 }

@@ -10,6 +10,7 @@ import {
   ReliefMissionStatus,
 } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { ApplyMissionDto } from "./dto/apply-mission.dto";
 import { CreateMissionDto } from "./dto/create-mission.dto";
 import { FindMissionsQueryDto } from "./dto/find-missions-query.dto";
 
@@ -35,6 +36,12 @@ export class MissionsService {
         isRenfort: dto.isRenfort ?? false,
         clientId,
         status: ReliefMissionStatus.OPEN,
+        // Extended SOS Renfort fields
+        metier: dto.metier,
+        shift: dto.shift,
+        city: dto.city,
+        zipCode: dto.zipCode,
+        slots: dto.slots ? (dto.slots as unknown as Prisma.InputJsonValue) : undefined,
       },
     });
   }
@@ -77,7 +84,7 @@ export class MissionsService {
     });
   }
 
-  async apply(missionId: string, talentId: string) {
+  async apply(missionId: string, talentId: string, dto: ApplyMissionDto = {}) {
     const mission = await this.prisma.reliefMission.findUnique({
       where: { id: missionId },
       select: {
@@ -115,6 +122,8 @@ export class MissionsService {
         talentId,
         reliefMissionId: mission.id,
         scheduledAt: mission.dateStart,
+        motivation: dto.motivation,
+        proposedRate: dto.proposedRate,
       },
     });
   }

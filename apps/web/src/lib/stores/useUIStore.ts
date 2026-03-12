@@ -7,32 +7,91 @@ export type UserRole = "CLIENT" | "TALENT";
 export interface UIState {
   isRenfortModalOpen: boolean;
   isPublishModalOpen: boolean;
+  isApplyModalOpen: boolean;
+  applyMissionId: string | null;
   userRole: "CLIENT" | "TALENT" | null;
   onboardingStep: number;
   isMobileOpen: boolean;
+
+  // SOS Renfort multi-step state
+  renfortStep: number;
+  renfortStepDir: number;
+
+  // Service modals
+  isServiceModalOpen: boolean;
+  serviceModalId: string | null;
+  isBookServiceModalOpen: boolean;
+  bookServiceModalId: string | null;
+  isQuoteRequestModalOpen: boolean;
+  quoteRequestServiceId: string | null;
+  isQuoteEditorModalOpen: boolean;
+  quoteEditorQuoteId: string | null;
 
   openRenfortModal: () => void;
   closeRenfortModal: () => void;
   openPublishModal: () => void;
   closePublishModal: () => void;
+  openApplyModal: (missionId: string) => void;
+  closeApplyModal: () => void;
   toggleMobile: () => void;
   setMobileOpen: (open: boolean) => void;
   setUserRole: (role: "CLIENT" | "TALENT" | null) => void;
   setOnboardingStep: (step: number) => void;
+  setRenfortStep: (step: number) => void;
+  setRenfortStepDir: (dir: number) => void;
+
+  // Service modal actions
+  openServiceModal: (serviceId: string) => void;
+  closeServiceModal: () => void;
+  openBookServiceModal: (serviceId: string) => void;
+  closeBookServiceModal: () => void;
+  openQuoteRequestModal: (serviceId: string) => void;
+  closeQuoteRequestModal: () => void;
+  openQuoteEditorModal: (quoteId: string) => void;
+  closeQuoteEditorModal: () => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
   isRenfortModalOpen: false,
   isPublishModalOpen: false,
+  isApplyModalOpen: false,
+  applyMissionId: null,
   isMobileOpen: false,
   userRole: "CLIENT",
   onboardingStep: 0,
-  openRenfortModal: () => set({ isRenfortModalOpen: true }),
-  closeRenfortModal: () => set({ isRenfortModalOpen: false }),
+  renfortStep: 0,
+  renfortStepDir: 1,
+
+  // Service modals initial state
+  isServiceModalOpen: false,
+  serviceModalId: null,
+  isBookServiceModalOpen: false,
+  bookServiceModalId: null,
+  isQuoteRequestModalOpen: false,
+  quoteRequestServiceId: null,
+  isQuoteEditorModalOpen: false,
+  quoteEditorQuoteId: null,
+
+  openRenfortModal: () => set({ isRenfortModalOpen: true, renfortStep: 0, renfortStepDir: 1 }),
+  closeRenfortModal: () => set({ isRenfortModalOpen: false, renfortStep: 0 }),
   openPublishModal: () => set({ isPublishModalOpen: true }),
   closePublishModal: () => set({ isPublishModalOpen: false }),
+  openApplyModal: (missionId) => set({ isApplyModalOpen: true, applyMissionId: missionId }),
+  closeApplyModal: () => set({ isApplyModalOpen: false, applyMissionId: null }),
   toggleMobile: () => set((state) => ({ isMobileOpen: !state.isMobileOpen })),
   setMobileOpen: (open) => set({ isMobileOpen: open }),
   setUserRole: (role) => set({ userRole: role }),
   setOnboardingStep: (step) => set({ onboardingStep: step }),
+  setRenfortStep: (step) => set({ renfortStep: step }),
+  setRenfortStepDir: (dir) => set({ renfortStepDir: dir }),
+
+  // Service modal actions
+  openServiceModal: (serviceId) => set({ isServiceModalOpen: true, serviceModalId: serviceId }),
+  closeServiceModal: () => set({ isServiceModalOpen: false, serviceModalId: null }),
+  openBookServiceModal: (serviceId) => set({ isBookServiceModalOpen: true, bookServiceModalId: serviceId }),
+  closeBookServiceModal: () => set({ isBookServiceModalOpen: false, bookServiceModalId: null }),
+  openQuoteRequestModal: (serviceId) => set({ isQuoteRequestModalOpen: true, quoteRequestServiceId: serviceId }),
+  closeQuoteRequestModal: () => set({ isQuoteRequestModalOpen: false, quoteRequestServiceId: null }),
+  openQuoteEditorModal: (quoteId) => set({ isQuoteEditorModalOpen: true, quoteEditorQuoteId: quoteId }),
+  closeQuoteEditorModal: () => set({ isQuoteEditorModalOpen: false, quoteEditorQuoteId: null }),
 }));
