@@ -62,8 +62,8 @@ const slotSchema = z
 const renfortSchema = z.object({
   // Step 0 — Profil
   metier: z.string().min(1, "Veuillez sélectionner un métier"),
-  diplomaRequired: z.boolean().default(true),
-  requiredSkills: z.array(z.string()).default([]),
+  diplomaRequired: z.boolean(),
+  requiredSkills: z.array(z.string()),
   // Step 1 — Contexte
   establishmentType: z.string().min(1, "Type d'établissement requis"),
   targetPublic: z.array(z.string()).min(1, "Sélectionnez au moins un public"),
@@ -71,12 +71,12 @@ const renfortSchema = z.object({
   description: z.string().optional(),
   // Step 2 — Planification
   slots: z.array(slotSchema).min(1, "Ajoutez au moins un créneau").max(MAX_SLOTS),
-  hasTransmissions: z.boolean().default(false),
+  hasTransmissions: z.boolean(),
   transmissionTime: z.string().optional(),
   // Step 3 — Rémunération
   shift: z.enum(["JOUR", "NUIT"]),
   hourlyRate: z.number().min(HOURLY_RATE_MIN).max(HOURLY_RATE_MAX),
-  perks: z.array(z.string()).default([]),
+  perks: z.array(z.string()),
   // Step 4 — Localisation
   exactAddress: z.string().min(5, "Adresse complète requise"),
   zipCode: z.string().min(5, "Code postal requis"),
