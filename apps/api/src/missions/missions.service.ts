@@ -51,6 +51,7 @@ export class MissionsService {
         diplomaRequired: dto.diplomaRequired ?? true,
         // SOS Renfort v2 — logistique
         hasTransmissions: dto.hasTransmissions ?? false,
+        transmissionTime: dto.transmissionTime,
         perks: dto.perks ?? [],
         exactAddress: dto.exactAddress,
         accessInstructions: dto.accessInstructions,

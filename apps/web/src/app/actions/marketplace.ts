@@ -72,6 +72,7 @@ type CreateMissionInput = {
   requiredSkills?: string[];
   diplomaRequired?: boolean;
   hasTransmissions?: boolean;
+  transmissionTime?: string;
   perks?: string[];
   exactAddress?: string;
   accessInstructions?: string;
@@ -117,6 +118,7 @@ export type SerializedMission = {
   requiredSkills?: string[] | null;
   diplomaRequired?: boolean | null;
   hasTransmissions?: boolean | null;
+  transmissionTime?: string | null;
   perks?: string[] | null;
   exactAddress?: string | null;
   accessInstructions?: string | null;

@@ -190,6 +190,7 @@ export function RenfortModal() {
         requiredSkills: data.requiredSkills,
         diplomaRequired: data.diplomaRequired,
         hasTransmissions: data.hasTransmissions,
+        transmissionTime: data.transmissionTime || undefined,
         perks: data.perks,
         exactAddress: data.exactAddress,
         accessInstructions: data.accessInstructions || undefined,

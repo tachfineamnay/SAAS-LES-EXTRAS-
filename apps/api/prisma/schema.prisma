@@ -135,6 +135,7 @@ model ReliefMission {
   diplomaRequired     Boolean   @default(true)
   // SOS Renfort v2 — logistique
   hasTransmissions    Boolean   @default(false)
+  transmissionTime    String?
   perks               String[]
   exactAddress        String?
   accessInstructions  String?   @db.Text

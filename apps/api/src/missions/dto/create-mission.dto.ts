@@ -108,6 +108,10 @@ export class CreateMissionDto {
   hasTransmissions?: boolean;
 
   @IsOptional()
+  @IsString()
+  transmissionTime?: string;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   perks?: string[];
