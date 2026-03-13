@@ -72,4 +72,51 @@ export class CreateMissionDto {
   @ValidateNested({ each: true })
   @Type(() => MissionSlotDto)
   slots?: MissionSlotDto[];
+
+  // SOS Renfort v2 — contexte clinique
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  establishmentType?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  targetPublic?: string[];
+
+  @IsOptional()
+  @IsString()
+  unitSize?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  requiredSkills?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === true || value === "true")
+  diplomaRequired?: boolean;
+
+  // SOS Renfort v2 — logistique
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === true || value === "true")
+  hasTransmissions?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  perks?: string[];
+
+  @IsOptional()
+  @IsString()
+  exactAddress?: string;
+
+  @IsOptional()
+  @IsString()
+  accessInstructions?: string;
 }

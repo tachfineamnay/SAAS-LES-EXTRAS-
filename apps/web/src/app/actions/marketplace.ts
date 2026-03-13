@@ -64,6 +64,17 @@ type CreateMissionInput = {
   city?: string;
   zipCode?: string;
   slots?: MissionSlot[];
+  // SOS Renfort v2
+  description?: string;
+  establishmentType?: string;
+  targetPublic?: string[];
+  unitSize?: string;
+  requiredSkills?: string[];
+  diplomaRequired?: boolean;
+  hasTransmissions?: boolean;
+  perks?: string[];
+  exactAddress?: string;
+  accessInstructions?: string;
 };
 
 type CreateServiceInput = {
@@ -98,6 +109,17 @@ export type SerializedMission = {
   city?: string | null;
   zipCode?: string | null;
   slots?: MissionSlot[] | null;
+  // SOS Renfort v2
+  description?: string | null;
+  establishmentType?: string | null;
+  targetPublic?: string[] | null;
+  unitSize?: string | null;
+  requiredSkills?: string[] | null;
+  diplomaRequired?: boolean | null;
+  hasTransmissions?: boolean | null;
+  perks?: string[] | null;
+  exactAddress?: string | null;
+  accessInstructions?: string | null;
   isUrgent?: boolean;
   isNetworkMatch?: boolean;
   establishmentName?: string;

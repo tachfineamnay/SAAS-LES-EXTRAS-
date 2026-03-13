@@ -126,6 +126,18 @@ model ReliefMission {
   city       String?
   zipCode    String?
   slots      Json?               // [{ date, heureDebut, heureFin }]
+  // SOS Renfort v2 — contexte clinique
+  description         String?   @db.Text
+  establishmentType   String?
+  targetPublic        String[]
+  unitSize            String?
+  requiredSkills      String[]
+  diplomaRequired     Boolean   @default(true)
+  // SOS Renfort v2 — logistique
+  hasTransmissions    Boolean   @default(false)
+  perks               String[]
+  exactAddress        String?
+  accessInstructions  String?   @db.Text
   clientId   String
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt

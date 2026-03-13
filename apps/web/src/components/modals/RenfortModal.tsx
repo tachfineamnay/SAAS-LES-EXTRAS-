@@ -18,18 +18,33 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import {
-  METIERS,
   METIERS_BY_CATEGORY,
   CATEGORY_LABELS,
   HOURLY_RATE_MIN,
   HOURLY_RATE_MAX,
   HOURLY_RATE_DEFAULT,
   MAX_SLOTS,
+  TYPES_ETABLISSEMENTS,
+  PUBLIC_CIBLE_OPTIONS,
+  PERKS_OPTIONS,
+  SKILLS_OPTIONS,
+  TRANSMISSION_TIMES,
   getMetierLabel,
   type MetierCategory,
 } from "@/lib/sos-config";
+import { cn } from "@/lib/utils";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
@@ -45,25 +60,41 @@ const slotSchema = z
   });
 
 const renfortSchema = z.object({
+  // Step 0 — Profil
   metier: z.string().min(1, "Veuillez sélectionner un métier"),
+  diplomaRequired: z.boolean().default(true),
+  requiredSkills: z.array(z.string()).default([]),
+  // Step 1 — Contexte
+  establishmentType: z.string().min(1, "Type d'établissement requis"),
+  targetPublic: z.array(z.string()).min(1, "Sélectionnez au moins un public"),
+  unitSize: z.string().optional(),
+  description: z.string().optional(),
+  // Step 2 — Planification
   slots: z.array(slotSchema).min(1, "Ajoutez au moins un créneau").max(MAX_SLOTS),
+  hasTransmissions: z.boolean().default(false),
+  transmissionTime: z.string().optional(),
+  // Step 3 — Rémunération
   shift: z.enum(["JOUR", "NUIT"]),
   hourlyRate: z.number().min(HOURLY_RATE_MIN).max(HOURLY_RATE_MAX),
-  city: z.string().min(2, "Ville requise"),
+  perks: z.array(z.string()).default([]),
+  // Step 4 — Localisation
+  exactAddress: z.string().min(5, "Adresse complète requise"),
   zipCode: z.string().min(5, "Code postal requis"),
+  city: z.string().min(2, "Ville requise"),
+  accessInstructions: z.string().optional(),
 });
 
 type RenfortForm = z.infer<typeof renfortSchema>;
 
-const STEPS = ["Métier", "Créneaux", "Conditions", "Localisation", "Récap"] as const;
-type Step = 0 | 1 | 2 | 3 | 4;
+const STEPS = ["Profil", "Contexte", "Planification", "Rémunération", "Localisation", "Récap"] as const;
 
-const STEP_FIELDS: Record<Step, (keyof RenfortForm)[]> = {
+const STEP_FIELDS: Record<number, (keyof RenfortForm)[]> = {
   0: ["metier"],
-  1: ["slots"],
-  2: ["shift", "hourlyRate"],
-  3: ["city", "zipCode"],
-  4: [],
+  1: ["establishmentType", "targetPublic"],
+  2: ["slots"],
+  3: ["shift", "hourlyRate"],
+  4: ["exactAddress", "zipCode", "city"],
+  5: [],
 };
 
 // ─── Animations ───────────────────────────────────────────────────────────────
@@ -85,11 +116,22 @@ export function RenfortModal() {
     resolver: zodResolver(renfortSchema),
     defaultValues: {
       metier: "",
+      diplomaRequired: true,
+      requiredSkills: [],
+      establishmentType: "",
+      targetPublic: [],
+      unitSize: "",
+      description: "",
       slots: [{ date: "", heureDebut: "", heureFin: "" }],
+      hasTransmissions: false,
+      transmissionTime: "",
       shift: "JOUR",
       hourlyRate: HOURLY_RATE_DEFAULT,
-      city: "",
+      perks: [],
+      exactAddress: "",
       zipCode: "",
+      city: "",
+      accessInstructions: "",
     },
   });
 
@@ -98,21 +140,22 @@ export function RenfortModal() {
     name: "slots",
   });
 
-  const step = (useUIStore((state) => state.renfortStep) ?? 0) as Step;
+  const step = useUIStore((state) => state.renfortStep) ?? 0;
   const setStep = useUIStore((state) => state.setRenfortStep);
   const dir = useUIStore((state) => state.renfortStepDir) ?? 1;
   const setDir = useUIStore((state) => state.setRenfortStepDir);
 
   const goNext = useCallback(async () => {
-    const valid = await form.trigger(STEP_FIELDS[step]);
+    const stepFields = STEP_FIELDS[step];
+    const valid = await form.trigger(stepFields as (keyof RenfortForm)[]);
     if (!valid) return;
     setDir(1);
-    setStep((step + 1) as Step);
+    setStep(step + 1);
   }, [form, step, setDir, setStep]);
 
   const goPrev = useCallback(() => {
     setDir(-1);
-    setStep((step - 1) as Step);
+    setStep(step - 1);
   }, [step, setDir, setStep]);
 
   const handleClose = useCallback(() => {
@@ -123,7 +166,6 @@ export function RenfortModal() {
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      // Build first slot dates for the current API signature
       const first = data.slots[0];
       if (!first) throw new Error("Au moins un créneau est requis");
       const dateStart = new Date(`${first.date}T${first.heureDebut}`);
@@ -133,23 +175,30 @@ export function RenfortModal() {
         title: getMetierLabel(data.metier),
         dateStart: dateStart.toISOString(),
         dateEnd: dateEnd.toISOString(),
-        address: `${data.city} ${data.zipCode}`,
+        address: `${data.exactAddress}, ${data.zipCode} ${data.city}`,
         hourlyRate: data.hourlyRate,
         isRenfort: true,
-        // Extended fields passed through (picked up after tâche 3/4 backend update)
-        // @ts-ignore — will be typed after backend update
         metier: data.metier,
         slots: data.slots,
         shift: data.shift,
         city: data.city,
         zipCode: data.zipCode,
+        description: data.description || undefined,
+        establishmentType: data.establishmentType,
+        targetPublic: data.targetPublic,
+        unitSize: data.unitSize || undefined,
+        requiredSkills: data.requiredSkills,
+        diplomaRequired: data.diplomaRequired,
+        hasTransmissions: data.hasTransmissions,
+        perks: data.perks,
+        exactAddress: data.exactAddress,
+        accessInstructions: data.accessInstructions || undefined,
       });
 
       toast.success("SOS Renfort diffusé !", {
         description: `${getMetierLabel(data.metier)} · ${data.slots.length} créneau(x)`,
       });
 
-      // Auto-close after 2.5s
       setTimeout(() => handleClose(), 2500);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Impossible de créer la demande.");
@@ -177,19 +226,19 @@ export function RenfortModal() {
           <DialogDescription>{STEPS[step]}</DialogDescription>
         </DialogHeader>
 
-        {/* Stepper */}
+        {/* Barre de progression */}
         <div className="flex gap-1 mb-4">
           {STEPS.map((label, i) => (
             <div
               key={label}
-              className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+              className={cn(
+                "h-1 flex-1 rounded-full transition-colors duration-300",
                 i <= step ? "bg-primary" : "bg-muted"
-              }`}
+              )}
             />
           ))}
         </div>
 
-        {/* Animated steps */}
         <form onSubmit={onSubmit}>
           <AnimatePresence mode="wait" custom={dir}>
             <motion.div
@@ -200,49 +249,81 @@ export function RenfortModal() {
               animate="center"
               exit="exit"
               transition={{ duration: 0.25, ease: "easeInOut" }}
-              className="min-h-[260px]"
+              className="min-h-[300px] max-h-[60vh] overflow-y-auto pr-1"
             >
               {step === 0 && (
-                <StepMetier
-                  value={values.metier}
-                  onChange={(id) => form.setValue("metier", id, { shouldValidate: true })}
-                  error={form.formState.errors.metier?.message}
+                <StepProfil
+                  metier={values.metier}
+                  onMetierChange={(id) => form.setValue("metier", id, { shouldValidate: true })}
+                  diplomaRequired={values.diplomaRequired}
+                  onDiplomaChange={(v) => form.setValue("diplomaRequired", v)}
+                  requiredSkills={values.requiredSkills}
+                  onSkillsChange={(v) => form.setValue("requiredSkills", v)}
+                  errors={{ metier: form.formState.errors.metier?.message }}
                 />
               )}
 
               {step === 1 && (
-                <StepSlots
+                <StepContext
+                  establishmentType={values.establishmentType}
+                  onTypeChange={(v) => form.setValue("establishmentType", v, { shouldValidate: true })}
+                  targetPublic={values.targetPublic}
+                  onPublicChange={(v) => form.setValue("targetPublic", v, { shouldValidate: true })}
+                  unitSize={values.unitSize ?? ""}
+                  onUnitSizeChange={(v) => form.setValue("unitSize", v)}
+                  description={values.description ?? ""}
+                  onDescriptionChange={(v) => form.setValue("description", v)}
+                  errors={{
+                    establishmentType: form.formState.errors.establishmentType?.message,
+                    targetPublic: form.formState.errors.targetPublic?.message,
+                  }}
+                />
+              )}
+
+              {step === 2 && (
+                <StepPlanification
                   fields={fields}
                   errors={form.formState.errors.slots}
                   register={form.register}
                   onAdd={() => append({ date: "", heureDebut: "", heureFin: "" })}
                   onRemove={remove}
-                />
-              )}
-
-              {step === 2 && (
-                <StepConditions
-                  shift={values.shift}
-                  onShiftChange={(v) => form.setValue("shift", v)}
-                  hourlyRate={values.hourlyRate}
-                  onRateChange={(v) => form.setValue("hourlyRate", v)}
+                  hasTransmissions={values.hasTransmissions}
+                  onTransmissionsChange={(v) => form.setValue("hasTransmissions", v)}
+                  transmissionTime={values.transmissionTime ?? ""}
+                  onTransmissionTimeChange={(v) => form.setValue("transmissionTime", v)}
                 />
               )}
 
               {step === 3 && (
+                <StepRemuneration
+                  shift={values.shift}
+                  onShiftChange={(v) => form.setValue("shift", v)}
+                  hourlyRate={values.hourlyRate}
+                  onRateChange={(v) => form.setValue("hourlyRate", v)}
+                  perks={values.perks}
+                  onPerksChange={(v) => form.setValue("perks", v)}
+                />
+              )}
+
+              {step === 4 && (
                 <StepLocalisation
-                  city={values.city}
+                  exactAddress={values.exactAddress}
                   zipCode={values.zipCode}
-                  onCityChange={(v) => form.setValue("city", v, { shouldValidate: true })}
+                  city={values.city}
+                  accessInstructions={values.accessInstructions ?? ""}
+                  onAddressChange={(v) => form.setValue("exactAddress", v, { shouldValidate: true })}
                   onZipChange={(v) => form.setValue("zipCode", v, { shouldValidate: true })}
+                  onCityChange={(v) => form.setValue("city", v, { shouldValidate: true })}
+                  onInstructionsChange={(v) => form.setValue("accessInstructions", v)}
                   errors={{
-                    city: form.formState.errors.city?.message,
+                    exactAddress: form.formState.errors.exactAddress?.message,
                     zipCode: form.formState.errors.zipCode?.message,
+                    city: form.formState.errors.city?.message,
                   }}
                 />
               )}
 
-              {step === 4 && <StepRecap values={values} />}
+              {step === 5 && <StepRecap values={values} />}
             </motion.div>
           </AnimatePresence>
 
@@ -284,149 +365,364 @@ export function RenfortModal() {
   );
 }
 
-// ─── Step 1 — Métier ─────────────────────────────────────────────────────────
+// ─── Step 0 — Profil Recherché ────────────────────────────────────────────────
 
-function StepMetier({
-  value,
-  onChange,
-  error,
+function StepProfil({
+  metier, onMetierChange,
+  diplomaRequired, onDiplomaChange,
+  requiredSkills, onSkillsChange,
+  errors,
 }: {
-  value: string;
-  onChange: (id: string) => void;
-  error?: string;
+  metier: string;
+  onMetierChange: (id: string) => void;
+  diplomaRequired: boolean;
+  onDiplomaChange: (v: boolean) => void;
+  requiredSkills: string[];
+  onSkillsChange: (v: string[]) => void;
+  errors: { metier?: string };
 }) {
+  const toggleSkill = (skill: string) => {
+    const next = requiredSkills.includes(skill)
+      ? requiredSkills.filter((s) => s !== skill)
+      : [...requiredSkills, skill];
+    onSkillsChange(next);
+  };
+
   return (
-    <div className="space-y-4">
-      {(Object.keys(METIERS_BY_CATEGORY) as MetierCategory[]).map((cat) => (
-        <div key={cat}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-            {CATEGORY_LABELS[cat]}
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {METIERS_BY_CATEGORY[cat].map((m) => {
-              const Icon = m.icon;
-              const selected = value === m.id;
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => onChange(m.id)}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm text-left transition-colors ${
-                    selected
-                      ? "border-primary bg-primary/10 text-primary font-medium"
-                      : "border-border hover:border-primary/50 hover:bg-muted"
-                  }`}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="leading-tight">{m.label}</span>
-                </button>
-              );
-            })}
+    <div className="space-y-5">
+      {/* Métier */}
+      <div className="space-y-3">
+        <Label className="text-sm font-semibold">Métier recherché *</Label>
+        {(Object.keys(METIERS_BY_CATEGORY) as MetierCategory[]).map((cat) => (
+          <div key={cat}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+              {CATEGORY_LABELS[cat]}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {METIERS_BY_CATEGORY[cat].map((m) => {
+                const Icon = m.icon;
+                const selected = metier === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => onMetierChange(m.id)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm text-left transition-colors",
+                      selected
+                        ? "border-primary bg-primary/10 text-primary font-medium"
+                        : "border-border hover:border-primary/50 hover:bg-muted"
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="leading-tight">{m.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
+        ))}
+        {errors.metier && <p className="text-sm text-destructive">{errors.metier}</p>}
+      </div>
+
+      {/* Diplôme */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">Diplôme exigé</Label>
+        <div className="flex gap-2">
+          {[
+            { label: "Exigé", value: true },
+            { label: "Non requis", value: false },
+          ].map((opt) => (
+            <button
+              key={opt.label}
+              type="button"
+              onClick={() => onDiplomaChange(opt.value)}
+              className={cn(
+                "flex-1 rounded-lg border py-2 text-sm font-medium transition-colors",
+                diplomaRequired === opt.value
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border hover:border-primary/50"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
-      ))}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      </div>
+
+      {/* Compétences spécifiques */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">
+          Compétences spécifiques{" "}
+          <span className="text-muted-foreground font-normal">(optionnel)</span>
+        </Label>
+        <div className="flex flex-wrap gap-2">
+          {SKILLS_OPTIONS.map((skill) => {
+            const active = requiredSkills.includes(skill);
+            return (
+              <button
+                key={skill}
+                type="button"
+                onClick={() => toggleSkill(skill)}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                  active
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border hover:border-primary/50 hover:bg-muted"
+                )}
+              >
+                {skill}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
 
-// ─── Step 2 — Créneaux ───────────────────────────────────────────────────────
+// ─── Step 1 — Contexte Mission ────────────────────────────────────────────────
 
-function StepSlots({
-  fields,
+function StepContext({
+  establishmentType, onTypeChange,
+  targetPublic, onPublicChange,
+  unitSize, onUnitSizeChange,
+  description, onDescriptionChange,
   errors,
-  register,
-  onAdd,
-  onRemove,
+}: {
+  establishmentType: string;
+  onTypeChange: (v: string) => void;
+  targetPublic: string[];
+  onPublicChange: (v: string[]) => void;
+  unitSize: string;
+  onUnitSizeChange: (v: string) => void;
+  description: string;
+  onDescriptionChange: (v: string) => void;
+  errors: { establishmentType?: string; targetPublic?: string };
+}) {
+  const togglePublic = (val: string) => {
+    const next = targetPublic.includes(val)
+      ? targetPublic.filter((p) => p !== val)
+      : [...targetPublic, val];
+    onPublicChange(next);
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Type d'établissement */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">Type d'établissement / Service *</Label>
+        <Select value={establishmentType} onValueChange={onTypeChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Sélectionnez un type..." />
+          </SelectTrigger>
+          <SelectContent>
+            {TYPES_ETABLISSEMENTS.map((t) => (
+              <SelectItem key={t} value={t}>{t}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.establishmentType && (
+          <p className="text-xs text-destructive">{errors.establishmentType}</p>
+        )}
+      </div>
+
+      {/* Public accompagné */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">Public accompagné *</Label>
+        <div className="flex flex-wrap gap-2">
+          {PUBLIC_CIBLE_OPTIONS.map((pub) => {
+            const active = targetPublic.includes(pub);
+            return (
+              <button
+                key={pub}
+                type="button"
+                onClick={() => togglePublic(pub)}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                  active
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border hover:border-primary/50 hover:bg-muted"
+                )}
+              >
+                {pub}
+              </button>
+            );
+          })}
+        </div>
+        {errors.targetPublic && (
+          <p className="text-xs text-destructive">{errors.targetPublic}</p>
+        )}
+      </div>
+
+      {/* Taille unité */}
+      <div className="space-y-2">
+        <Label htmlFor="unitSize" className="text-sm font-semibold">
+          Taille de l'unité{" "}
+          <span className="text-muted-foreground font-normal">(optionnel)</span>
+        </Label>
+        <Input
+          id="unitSize"
+          value={unitSize}
+          placeholder="Ex: Unité Alzheimer de 14 résidents"
+          onChange={(e) => onUnitSizeChange(e.target.value)}
+        />
+      </div>
+
+      {/* Description */}
+      <div className="space-y-2">
+        <Label htmlFor="description" className="text-sm font-semibold">
+          Description / Tâches principales{" "}
+          <span className="text-muted-foreground font-normal">(optionnel)</span>
+        </Label>
+        <Textarea
+          id="description"
+          value={description}
+          placeholder="Décrivez la journée type, le motif du remplacement..."
+          rows={3}
+          onChange={(e) => onDescriptionChange(e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Step 2 — Planification ──────────────────────────────────────────────────
+
+function StepPlanification({
+  fields, errors, register, onAdd, onRemove,
+  hasTransmissions, onTransmissionsChange,
+  transmissionTime, onTransmissionTimeChange,
 }: {
   fields: { id: string }[];
   errors: any;
   register: any;
   onAdd: () => void;
   onRemove: (i: number) => void;
+  hasTransmissions: boolean;
+  onTransmissionsChange: (v: boolean) => void;
+  transmissionTime: string;
+  onTransmissionTimeChange: (v: string) => void;
 }) {
   return (
-    <div className="space-y-3">
-      {fields.map((field, i) => (
-        <div key={field.id} className="rounded-lg border p-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">Créneau {i + 1}</span>
-            {fields.length > 1 && (
-              <button
-                type="button"
-                onClick={() => onRemove(i)}
-                className="text-destructive hover:opacity-75 transition-opacity"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="col-span-3 space-y-1">
-              <Label className="text-xs">Date</Label>
-              <Input type="date" {...register(`slots.${i}.date`)} />
-              {errors?.[i]?.date && (
-                <p className="text-xs text-destructive">{errors[i].date.message}</p>
+    <div className="space-y-4">
+      {/* Créneaux */}
+      <div className="space-y-3">
+        {fields.map((field, i) => (
+          <div key={field.id} className="rounded-lg border p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-muted-foreground">Créneau {i + 1}</span>
+              {fields.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => onRemove(i)}
+                  className="text-destructive hover:opacity-75 transition-opacity"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               )}
             </div>
-            <div className="col-span-3 grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs">Début</Label>
-                <Input type="time" {...register(`slots.${i}.heureDebut`)} />
-                {errors?.[i]?.heureDebut && (
-                  <p className="text-xs text-destructive">{errors[i].heureDebut.message}</p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-3 space-y-1">
+                <Label className="text-xs">Date</Label>
+                <Input type="date" {...register(`slots.${i}.date`)} />
+                {errors?.[i]?.date && (
+                  <p className="text-xs text-destructive">{errors[i].date.message}</p>
                 )}
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Fin</Label>
-                <Input type="time" {...register(`slots.${i}.heureFin`)} />
-                {errors?.[i]?.heureFin && (
-                  <p className="text-xs text-destructive">{errors[i].heureFin.message}</p>
-                )}
+              <div className="col-span-3 grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Début</Label>
+                  <Input type="time" {...register(`slots.${i}.heureDebut`)} />
+                  {errors?.[i]?.heureDebut && (
+                    <p className="text-xs text-destructive">{errors[i].heureDebut.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Fin</Label>
+                  <Input type="time" {...register(`slots.${i}.heureFin`)} />
+                  {errors?.[i]?.heureFin && (
+                    <p className="text-xs text-destructive">{errors[i].heureFin.message}</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
 
-      {fields.length < MAX_SLOTS && (
-        <Button type="button" variant="outline" size="sm" onClick={onAdd} className="w-full gap-2">
-          <Plus className="h-4 w-4" /> Ajouter un créneau
-        </Button>
-      )}
+        {fields.length < MAX_SLOTS && (
+          <Button type="button" variant="outline" size="sm" onClick={onAdd} className="w-full gap-2">
+            <Plus className="h-4 w-4" /> Ajouter un créneau
+          </Button>
+        )}
+      </div>
+
+      {/* Transmissions */}
+      <div className="rounded-lg border p-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold">Temps de transmissions (relève)</p>
+            <p className="text-xs text-muted-foreground">Inclure un temps de relève avant le début</p>
+          </div>
+          <Switch checked={hasTransmissions} onCheckedChange={onTransmissionsChange} />
+        </div>
+
+        {hasTransmissions && (
+          <div className="space-y-1">
+            <Label className="text-xs">Durée de la relève</Label>
+            <Select value={transmissionTime} onValueChange={onTransmissionTimeChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionnez..." />
+              </SelectTrigger>
+              <SelectContent>
+                {TRANSMISSION_TIMES.map((t) => (
+                  <SelectItem key={t} value={t}>{t} avant le shift</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-// ─── Step 3 — Conditions ─────────────────────────────────────────────────────
+// ─── Step 3 — Rémunération & Avantages ───────────────────────────────────────
 
-function StepConditions({
-  shift,
-  onShiftChange,
-  hourlyRate,
-  onRateChange,
+function StepRemuneration({
+  shift, onShiftChange,
+  hourlyRate, onRateChange,
+  perks, onPerksChange,
 }: {
   shift: "JOUR" | "NUIT";
   onShiftChange: (v: "JOUR" | "NUIT") => void;
   hourlyRate: number;
   onRateChange: (v: number) => void;
+  perks: string[];
+  onPerksChange: (v: string[]) => void;
 }) {
+  const togglePerk = (id: string) => {
+    const next = perks.includes(id) ? perks.filter((p) => p !== id) : [...perks, id];
+    onPerksChange(next);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Shift toggle */}
+      {/* Shift */}
       <div className="space-y-2">
-        <Label>Type de poste</Label>
+        <Label className="text-sm font-semibold">Type de poste</Label>
         <div className="flex gap-3">
           {(["JOUR", "NUIT"] as const).map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => onShiftChange(s)}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-lg border py-3 text-sm font-medium transition-colors ${
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 rounded-lg border py-3 text-sm font-medium transition-colors",
                 shift === s
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border hover:border-primary/50"
-              }`}
+              )}
             >
               {s === "JOUR" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               {s === "JOUR" ? "Jour" : "Nuit"}
@@ -435,10 +731,10 @@ function StepConditions({
         </div>
       </div>
 
-      {/* Hourly rate slider */}
+      {/* Taux horaire */}
       <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <Label>Taux horaire brut</Label>
+          <Label className="text-sm font-semibold">Taux horaire brut</Label>
           <span className="text-lg font-bold text-primary">{hourlyRate} €/h</span>
         </div>
         <input
@@ -455,79 +751,189 @@ function StepConditions({
           <span>{HOURLY_RATE_MAX} €</span>
         </div>
       </div>
+
+      {/* Avantages pratiques */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">
+          Avantages pratiques{" "}
+          <span className="text-muted-foreground font-normal">(optionnel)</span>
+        </Label>
+        <div className="grid grid-cols-1 gap-2">
+          {PERKS_OPTIONS.map((perk) => {
+            const active = perks.includes(perk.id);
+            return (
+              <button
+                key={perk.id}
+                type="button"
+                onClick={() => togglePerk(perk.id)}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg border px-3 py-2 text-sm text-left transition-colors",
+                  active
+                    ? "border-primary bg-primary/10 text-primary font-medium"
+                    : "border-border hover:border-primary/50 hover:bg-muted"
+                )}
+              >
+                <span
+                  className={cn(
+                    "h-4 w-4 rounded-sm border shrink-0 flex items-center justify-center",
+                    active ? "border-primary bg-primary text-primary-foreground" : "border-border"
+                  )}
+                >
+                  {active && <Check className="h-3 w-3" />}
+                </span>
+                {perk.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
 
-// ─── Step 4 — Localisation ───────────────────────────────────────────────────
+// ─── Step 4 — Localisation & Accès ───────────────────────────────────────────
 
 function StepLocalisation({
-  city,
-  zipCode,
-  onCityChange,
-  onZipChange,
+  exactAddress, zipCode, city, accessInstructions,
+  onAddressChange, onZipChange, onCityChange, onInstructionsChange,
   errors,
 }: {
-  city: string;
+  exactAddress: string;
   zipCode: string;
-  onCityChange: (v: string) => void;
+  city: string;
+  accessInstructions: string;
+  onAddressChange: (v: string) => void;
   onZipChange: (v: string) => void;
-  errors: { city?: string; zipCode?: string };
+  onCityChange: (v: string) => void;
+  onInstructionsChange: (v: string) => void;
+  errors: { exactAddress?: string; zipCode?: string; city?: string };
 }) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Indiquez la localisation de votre établissement pour ce renfort.
+        Indiquez l'adresse précise pour que le talent sache exactement où se rendre.
       </p>
+
       <div className="space-y-2">
-        <Label htmlFor="renfort-city">Ville</Label>
+        <Label htmlFor="exactAddress">Adresse complète *</Label>
         <Input
-          id="renfort-city"
-          value={city}
-          placeholder="Ex: Lyon"
-          onChange={(e) => onCityChange(e.target.value)}
+          id="exactAddress"
+          value={exactAddress}
+          placeholder="Ex: 12 rue des Lilas"
+          onChange={(e) => onAddressChange(e.target.value)}
         />
-        {errors.city && <p className="text-xs text-destructive">{errors.city}</p>}
+        {errors.exactAddress && <p className="text-xs text-destructive">{errors.exactAddress}</p>}
       </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="renfort-zip">Code postal *</Label>
+          <Input
+            id="renfort-zip"
+            value={zipCode}
+            placeholder="69003"
+            maxLength={5}
+            onChange={(e) => onZipChange(e.target.value)}
+          />
+          {errors.zipCode && <p className="text-xs text-destructive">{errors.zipCode}</p>}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="renfort-city">Ville *</Label>
+          <Input
+            id="renfort-city"
+            value={city}
+            placeholder="Lyon"
+            onChange={(e) => onCityChange(e.target.value)}
+          />
+          {errors.city && <p className="text-xs text-destructive">{errors.city}</p>}
+        </div>
+      </div>
+
       <div className="space-y-2">
-        <Label htmlFor="renfort-zip">Code postal</Label>
-        <Input
-          id="renfort-zip"
-          value={zipCode}
-          placeholder="Ex: 69003"
-          maxLength={5}
-          onChange={(e) => onZipChange(e.target.value)}
+        <Label htmlFor="accessInstructions">
+          Instructions d'accès{" "}
+          <span className="text-muted-foreground font-normal">(optionnel)</span>
+        </Label>
+        <Textarea
+          id="accessInstructions"
+          value={accessInstructions}
+          placeholder="Ex: Code portail 1234, sonner à l'interphone infirmier, se garer sur les places visiteurs"
+          rows={3}
+          onChange={(e) => onInstructionsChange(e.target.value)}
         />
-        {errors.zipCode && <p className="text-xs text-destructive">{errors.zipCode}</p>}
       </div>
     </div>
   );
 }
 
-// ─── Step 5 — Récap ──────────────────────────────────────────────────────────
+// ─── Step 5 — Récapitulatif ──────────────────────────────────────────────────
 
 function StepRecap({ values }: { values: RenfortForm }) {
   const metierLabel = getMetierLabel(values.metier);
+  const perksMap = Object.fromEntries(PERKS_OPTIONS.map((p) => [p.id, p.label]));
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">Vérifiez les informations avant de publier.</p>
       <div className="rounded-lg border divide-y text-sm">
+        {/* Profil */}
+        <SectionHeader label="Profil" />
         <Row label="Métier" value={metierLabel} />
-        <Row
-          label="Créneaux"
-          value={`${values.slots.length} créneau(x)`}
-        />
+        <Row label="Diplôme" value={values.diplomaRequired ? "Exigé" : "Non requis"} />
+        {values.requiredSkills.length > 0 && (
+          <RowTags label="Compétences" tags={values.requiredSkills} />
+        )}
+
+        {/* Contexte */}
+        <SectionHeader label="Contexte" />
+        <Row label="Établissement" value={values.establishmentType} />
+        <RowTags label="Public" tags={values.targetPublic} />
+        {values.unitSize && <Row label="Unité" value={values.unitSize} />}
+
+        {/* Planification */}
+        <SectionHeader label="Planification" />
         {values.slots.map((s, i) => (
           <Row
             key={i}
-            label={`  Créneau ${i + 1}`}
+            label={`Créneau ${i + 1}`}
             value={`${s.date} · ${s.heureDebut} → ${s.heureFin}`}
           />
         ))}
-        <Row label="Poste" value={values.shift === "JOUR" ? "☀️ Jour" : "🌙 Nuit"} />
+        {values.hasTransmissions && (
+          <Row
+            label="Relève"
+            value={values.transmissionTime ? `${values.transmissionTime} avant` : "Oui"}
+          />
+        )}
+
+        {/* Rémunération */}
+        <SectionHeader label="Rémunération" />
+        <Row label="Poste" value={values.shift === "JOUR" ? "Jour" : "Nuit"} />
         <Row label="Taux horaire" value={`${values.hourlyRate} €/h`} />
-        <Row label="Localisation" value={`${values.city} ${values.zipCode}`} />
+        {values.perks.length > 0 && (
+          <RowTags label="Avantages" tags={values.perks.map((id) => perksMap[id] ?? id)} />
+        )}
+
+        {/* Localisation */}
+        <SectionHeader label="Localisation" />
+        <Row
+          label="Adresse"
+          value={`${values.exactAddress}, ${values.zipCode} ${values.city}`}
+        />
+        {values.accessInstructions && (
+          <Row label="Accès" value={values.accessInstructions} />
+        )}
       </div>
+    </div>
+  );
+}
+
+function SectionHeader({ label }: { label: string }) {
+  return (
+    <div className="px-3 py-1.5 bg-muted/50">
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
     </div>
   );
 }
@@ -535,8 +941,23 @@ function StepRecap({ values }: { values: RenfortForm }) {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between px-3 py-2 gap-2">
-      <span className="text-muted-foreground">{label}</span>
+      <span className="text-muted-foreground shrink-0">{label}</span>
       <span className="font-medium text-right">{value}</span>
+    </div>
+  );
+}
+
+function RowTags({ label, tags }: { label: string; tags: string[] }) {
+  return (
+    <div className="flex items-start justify-between px-3 py-2 gap-2">
+      <span className="text-muted-foreground shrink-0">{label}</span>
+      <div className="flex flex-wrap gap-1 justify-end">
+        {tags.map((t) => (
+          <Badge key={t} variant="secondary" className="text-xs">
+            {t}
+          </Badge>
+        ))}
+      </div>
     </div>
   );
 }

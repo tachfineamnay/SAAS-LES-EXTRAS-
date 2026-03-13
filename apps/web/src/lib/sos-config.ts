@@ -123,3 +123,55 @@ export function getMetierById(id: string): Metier | undefined {
 export function getMetierLabel(id: string): string {
   return getMetierById(id)?.label ?? id;
 }
+
+// ─── SOS Renfort v2 — Dictionnaires ──────────────────────────────────────────
+
+export const TYPES_ETABLISSEMENTS = [
+  "EHPAD",
+  "MAS",
+  "FAM",
+  "MECS",
+  "IME",
+  "Domicile",
+  "SSIAD",
+  "Foyer de vie",
+  "Clinique",
+  "Autre",
+] as const;
+
+export const PUBLIC_CIBLE_OPTIONS = [
+  "Personnes âgées",
+  "Polyhandicap",
+  "Autisme (TSA)",
+  "Santé mentale",
+  "Protection de l'enfance",
+  "Handicap moteur",
+] as const;
+
+export const PERKS_OPTIONS = [
+  { id: "MEALS_PROVIDED", label: "Repas fourni sur place" },
+  { id: "FREE_PARKING", label: "Parking gratuit" },
+  { id: "KM_REIMBURSEMENT", label: "Remboursement frais kilométriques" },
+  { id: "ACCOMMODATION", label: "Logement / Chambre de garde" },
+  { id: "TRANSPORT_REIMBURSEMENT", label: "Remboursement transport en commun" },
+] as const;
+
+export const SKILLS_OPTIONS = [
+  "Aspiration endo-trachéale",
+  "Lève-personne",
+  "Nursing lourd",
+  "Méthode ABA",
+  "Logiciel NetSoins",
+  "Contention",
+  "Prise en charge douleur",
+  "Soins palliatifs",
+  "PEC démences",
+] as const;
+
+export const TRANSMISSION_TIMES = [
+  "5 min",
+  "10 min",
+  "15 min",
+  "20 min",
+  "30 min",
+] as const;

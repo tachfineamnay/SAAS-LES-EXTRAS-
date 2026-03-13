@@ -42,6 +42,18 @@ export class MissionsService {
         city: dto.city,
         zipCode: dto.zipCode,
         slots: dto.slots ? (dto.slots as unknown as Prisma.InputJsonValue) : undefined,
+        // SOS Renfort v2 — contexte clinique
+        description: dto.description,
+        establishmentType: dto.establishmentType,
+        targetPublic: dto.targetPublic ?? [],
+        unitSize: dto.unitSize,
+        requiredSkills: dto.requiredSkills ?? [],
+        diplomaRequired: dto.diplomaRequired ?? true,
+        // SOS Renfort v2 — logistique
+        hasTransmissions: dto.hasTransmissions ?? false,
+        perks: dto.perks ?? [],
+        exactAddress: dto.exactAddress,
+        accessInstructions: dto.accessInstructions,
       },
     });
   }
