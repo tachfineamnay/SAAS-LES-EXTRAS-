@@ -10,12 +10,12 @@ export default async function MarketplacePage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  if (session.user.role === "TALENT") {
+  if (session.user.role === "FREELANCE") {
     const missions = await getAvailableMissions(session.token);
     return <FreelanceJobBoard missions={missions} />;
   }
 
-  if (session.user.role === "CLIENT") {
+  if (session.user.role === "ESTABLISHMENT") {
     let services: Awaited<ReturnType<typeof getMarketplaceCatalogue>>["services"] = [];
     let talents: Awaited<ReturnType<typeof getMarketplaceCatalogue>>["talents"] = [];
     try {

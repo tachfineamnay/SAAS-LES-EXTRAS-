@@ -9,8 +9,8 @@ export type AdminMissionRow = {
   dateStart: string;
   dateEnd: string;
   hourlyRate: number;
-  clientName: string;
-  clientEmail: string;
+  establishmentName: string;
+  establishmentEmail: string;
   candidatesCount: number;
 };
 
@@ -23,6 +23,6 @@ export type AdminServiceRow = {
   isFeatured: boolean;
   isHidden: boolean;
   createdAt: string;
-  talentName: string;
-  talentEmail: string;
+  freelanceName: string;
+  freelanceEmail: string;
 };

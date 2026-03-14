@@ -35,7 +35,7 @@ export class AdminOffersService {
         dateStart: true,
         dateEnd: true,
         hourlyRate: true,
-        client: {
+        establishment: {
           select: {
             email: true,
             profile: {
@@ -68,12 +68,12 @@ export class AdminOffersService {
       dateStart: mission.dateStart.toISOString(),
       dateEnd: mission.dateEnd.toISOString(),
       hourlyRate: mission.hourlyRate,
-      clientName: getDisplayName(
-        mission.client.profile?.firstName,
-        mission.client.profile?.lastName,
-        mission.client.email,
+      establishmentName: getDisplayName(
+        mission.establishment.profile?.firstName,
+        mission.establishment.profile?.lastName,
+        mission.establishment.email,
       ),
-      clientEmail: mission.client.email,
+      establishmentEmail: mission.establishment.email,
       candidatesCount: mission.bookings.length,
     }));
   }
@@ -152,12 +152,12 @@ export class AdminOffersService {
       isFeatured: service.isFeatured,
       isHidden: service.isHidden,
       createdAt: service.createdAt.toISOString(),
-      talentName: getDisplayName(
+      freelanceName: getDisplayName(
         service.owner.profile?.firstName,
         service.owner.profile?.lastName,
         service.owner.email,
       ),
-      talentEmail: service.owner.email,
+      freelanceEmail: service.owner.email,
     }));
   }
 

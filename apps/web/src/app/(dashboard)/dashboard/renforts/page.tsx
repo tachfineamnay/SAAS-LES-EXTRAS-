@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function SosDashboardPage() {
   const session = await getSession();
-  if (!session || session.user.role !== "CLIENT") {
+  if (!session || session.user.role !== "ESTABLISHMENT") {
     redirect("/login");
   }
 

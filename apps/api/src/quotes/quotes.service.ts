@@ -24,8 +24,8 @@ export class QuotesService {
     });
   }
 
-  async findAll(role: 'CLIENT' | 'TALENT', userId: string) {
-    const where = role === 'CLIENT'
+  async findAll(role: 'ESTABLISHMENT' | 'FREELANCE', userId: string) {
+    const where = role === 'ESTABLISHMENT'
       ? { establishmentId: userId }
       : { freelanceId: userId };
 

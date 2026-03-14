@@ -69,7 +69,7 @@ export class ServicesService {
 
   async bookService(
     serviceId: string,
-    clientId: string,
+    establishmentId: string,
     date: Date,
     message?: string,
     nbParticipants?: number,
@@ -91,7 +91,7 @@ export class ServicesService {
     const existingBooking = await this.prisma.booking.findFirst({
       where: {
         serviceId,
-        clientId,
+        establishmentId,
         status: BookingStatus.PENDING,
       },
       select: { id: true },
@@ -107,8 +107,8 @@ export class ServicesService {
         const booking = await tx.booking.create({
           data: {
             status: BookingStatus.PENDING,
-            clientId,
-            talentId: service.ownerId,
+            establishmentId,
+            freelanceId: service.ownerId,
             serviceId: service.id,
             scheduledAt: date,
             message,
@@ -121,7 +121,7 @@ export class ServicesService {
             amount: 0,
             description: "",
             freelanceId: service.ownerId,
-            establishmentId: clientId,
+            establishmentId,
             serviceId: service.id,
             booking: { connect: { id: booking.id } },
           },
@@ -134,8 +134,8 @@ export class ServicesService {
     return this.prisma.booking.create({
       data: {
         status: BookingStatus.PENDING,
-        clientId,
-        talentId: service.ownerId,
+        establishmentId,
+        freelanceId: service.ownerId,
         serviceId: service.id,
         scheduledAt: date,
         message,

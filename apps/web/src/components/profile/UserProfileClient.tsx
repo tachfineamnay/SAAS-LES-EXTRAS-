@@ -79,7 +79,7 @@ interface UserProfileClientProps {
     availableCredits: number;
     createdAt: string;
   };
-  userRole: "CLIENT" | "TALENT" | "ADMIN";
+  userRole: "ESTABLISHMENT" | "FREELANCE" | "ADMIN";
   userEmail: string;
 }
 
@@ -242,15 +242,15 @@ export function UserProfileClient({ initialData, userRole, userEmail }: UserProf
                 {initialData.jobTitle && (
                   <Badge variant="teal">{initialData.jobTitle}</Badge>
                 )}
-                <Badge variant={userRole === "TALENT" ? "info" : "sand"}>
-                  {userRole === "TALENT" ? "Indépendant" : "Établissement"}
+                <Badge variant={userRole === "FREELANCE" ? "info" : "sand"}>
+                  {userRole === "FREELANCE" ? "Indépendant" : "Établissement"}
                 </Badge>
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex items-center gap-2">
-              {userRole === "CLIENT" && (
+              {userRole === "ESTABLISHMENT" && (
                 <Button variant="outline" size="sm" asChild>
                   <a href="/account/establishment">
                     <Building2 className="h-4 w-4 mr-1.5" />
@@ -648,7 +648,7 @@ export function UserProfileClient({ initialData, userRole, userEmail }: UserProf
                 <h3 className="text-sm font-semibold">Actions rapides</h3>
               </GlassCardHeader>
               <GlassCardContent className="space-y-2">
-                {userRole === "CLIENT" && (
+                {userRole === "ESTABLISHMENT" && (
                   <Button variant="outline" size="sm" className="w-full justify-start" asChild>
                     <a href="/account/establishment">
                       <Building2 className="h-4 w-4 mr-2 text-[hsl(var(--coral))]" />

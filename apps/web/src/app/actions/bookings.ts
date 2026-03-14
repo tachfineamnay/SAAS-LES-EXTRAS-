@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { apiRequest } from "@/lib/api";
 import { getSession } from "@/lib/session";
 
-export type DashboardRole = "CLIENT" | "TALENT";
+export type DashboardRole = "ESTABLISHMENT" | "FREELANCE";
 export type BookingLineType = "MISSION" | "SERVICE_BOOKING";
 export type BookingLineStatus =
   | "PENDING"

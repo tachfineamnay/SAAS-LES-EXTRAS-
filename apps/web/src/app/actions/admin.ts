@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getAdminSessionToken } from "@/app/actions/_shared/admin-session";
 import { apiRequest } from "@/lib/api";
 
-export type AdminUserRole = "CLIENT" | "TALENT" | "ADMIN";
+export type AdminUserRole = "ESTABLISHMENT" | "FREELANCE" | "ADMIN";
 export type AdminUserStatus = "PENDING" | "VERIFIED" | "BANNED";
 
 export type AdminUserRow = {

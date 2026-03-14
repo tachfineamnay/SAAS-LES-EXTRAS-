@@ -138,12 +138,12 @@ function SidebarContent({
   links: typeof CLIENT_LINKS;
   pathname: string;
   onNavigate?: () => void;
-  userRole?: "CLIENT" | "TALENT" | null;
+  userRole?: "ESTABLISHMENT" | "FREELANCE" | null;
 }) {
   const isLinkActive = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
-  const bottomLinks = userRole === "CLIENT" ? CLIENT_BOTTOM_LINKS : BOTTOM_LINKS;
+  const bottomLinks = userRole === "ESTABLISHMENT" ? CLIENT_BOTTOM_LINKS : BOTTOM_LINKS;
 
   return (
     <div className="flex h-full flex-col bg-background border-r border-border">
@@ -214,7 +214,7 @@ function SidebarContent({
 export function Sidebar({ isMobileOpen, onMobileOpenChange }: SidebarProps) {
   const pathname = usePathname();
   const userRole = useUIStore((state) => state.userRole);
-  const links = userRole === "CLIENT" ? CLIENT_LINKS : TALENT_LINKS;
+  const links = userRole === "ESTABLISHMENT" ? CLIENT_LINKS : TALENT_LINKS;
 
   return (
     <>

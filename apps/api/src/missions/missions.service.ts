@@ -18,7 +18,7 @@ import { FindMissionsQueryDto } from "./dto/find-missions-query.dto";
 export class MissionsService {
   constructor(private readonly prisma: PrismaService) { }
 
-  async createMission(dto: CreateMissionDto, clientId: string) {
+  async createMission(dto: CreateMissionDto, establishmentId: string) {
     const dateStart = new Date(dto.dateStart);
     const dateEnd = new Date(dto.dateEnd);
 
@@ -34,7 +34,7 @@ export class MissionsService {
         hourlyRate: dto.hourlyRate,
         address: dto.address,
         isRenfort: dto.isRenfort ?? false,
-        clientId,
+        establishmentId,
         status: ReliefMissionStatus.OPEN,
         // Extended SOS Renfort fields
         metier: dto.metier,
@@ -88,7 +88,7 @@ export class MissionsService {
         dateStart: "asc",
       },
       include: {
-        client: {
+        establishment: {
           include: {
             profile: true,
           },
@@ -97,12 +97,12 @@ export class MissionsService {
     });
   }
 
-  async apply(missionId: string, talentId: string, dto: ApplyMissionDto = {}) {
+  async apply(missionId: string, freelanceId: string, dto: ApplyMissionDto = {}) {
     const mission = await this.prisma.reliefMission.findUnique({
       where: { id: missionId },
       select: {
         id: true,
-        clientId: true,
+        establishmentId: true,
         dateStart: true,
         status: true,
       },
@@ -119,7 +119,7 @@ export class MissionsService {
     const existingBooking = await this.prisma.booking.findFirst({
       where: {
         reliefMissionId: missionId,
-        talentId,
+        freelanceId,
       },
       select: { id: true },
     });
@@ -131,8 +131,8 @@ export class MissionsService {
     return this.prisma.booking.create({
       data: {
         status: BookingStatus.PENDING,
-        clientId: mission.clientId,
-        talentId,
+        establishmentId: mission.establishmentId,
+        freelanceId,
         reliefMissionId: mission.id,
         scheduledAt: mission.dateStart,
         motivation: dto.motivation,
@@ -141,10 +141,10 @@ export class MissionsService {
     });
   }
 
-  async getManagedMissions(clientId: string) {
+  async getManagedMissions(establishmentId: string) {
     return this.prisma.reliefMission.findMany({
       where: {
-        clientId,
+        establishmentId,
         status: { in: [ReliefMissionStatus.OPEN, ReliefMissionStatus.ASSIGNED] },
       },
       orderBy: { dateStart: 'asc' },
@@ -152,7 +152,7 @@ export class MissionsService {
         bookings: {
           orderBy: { createdAt: 'desc' },
           include: {
-            talent: {
+            freelance: {
               include: {
                 profile: true
               }

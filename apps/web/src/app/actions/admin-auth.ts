@@ -13,7 +13,7 @@ type AdminAuthResponse = {
   user: {
     id: string;
     email: string;
-    role: "CLIENT" | "TALENT" | "ADMIN";
+    role: "ESTABLISHMENT" | "FREELANCE" | "ADMIN";
   };
 };
 

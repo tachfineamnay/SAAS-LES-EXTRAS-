@@ -18,7 +18,7 @@ export function OnboardingGuard({ children, userRole, onboardingStep }: Onboardi
 
     useEffect(() => {
         setMounted(true);
-        if (userRole === "CLIENT" || userRole === "TALENT") {
+        if (userRole === "ESTABLISHMENT" || userRole === "FREELANCE") {
             setUserRole(userRole);
         }
         setOnboardingStep(onboardingStep);
@@ -28,17 +28,17 @@ export function OnboardingGuard({ children, userRole, onboardingStep }: Onboardi
         return <>{children}</>;
     }
 
-    // CLIENT flow has 3 steps, TALENT flow has 4 steps
-    const maxSteps = userRole === "TALENT" ? 4 : 3;
+    // ESTABLISHMENT flow has 3 steps, FREELANCE flow has 4 steps
+    const maxSteps = userRole === "FREELANCE" ? 4 : 3;
     const isComplete = onboardingStep >= maxSteps;
 
     if (!isComplete) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm p-4">
                 <div className="w-full max-w-2xl">
-                    {userRole === "TALENT" ? (
+                    {userRole === "FREELANCE" ? (
                         <FreelanceFlow currentStep={onboardingStep} />
-                    ) : userRole === "CLIENT" ? (
+                    ) : userRole === "ESTABLISHMENT" ? (
                         <ClientFlow currentStep={onboardingStep} />
                     ) : (
                         <>{children}</>

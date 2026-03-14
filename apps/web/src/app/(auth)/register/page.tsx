@@ -15,14 +15,14 @@ const initialState: RegisterState = { message: "", errors: {} };
 
 const ROLES = [
     {
-        value: "TALENT" as const,
+        value: "FREELANCE" as const,
         label: "Je cherche des missions",
         sub: "Infirmier, Aide-soignant, Éducateur…",
         icon: Briefcase,
         color: "teal" as const,
     },
     {
-        value: "CLIENT" as const,
+        value: "ESTABLISHMENT" as const,
         label: "Je recrute des renforts",
         sub: "Établissement, Hôpital, EHPAD…",
         icon: Building2,
@@ -59,8 +59,8 @@ function SubmitButton() {
 }
 
 export default function RegisterPage({ searchParams }: { searchParams: { role?: string } }) {
-    const defaultRole = searchParams.role === "CLIENT" ? "CLIENT" : "TALENT";
-    const [role, setRole] = useState<"CLIENT" | "TALENT">(defaultRole);
+    const defaultRole = searchParams.role === "ESTABLISHMENT" ? "ESTABLISHMENT" : "FREELANCE";
+    const [role, setRole] = useState<"ESTABLISHMENT" | "FREELANCE">(defaultRole);
     const [state, formAction] = useFormState(register, initialState);
 
     return (

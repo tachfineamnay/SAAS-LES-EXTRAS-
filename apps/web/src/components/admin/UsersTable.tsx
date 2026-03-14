@@ -56,16 +56,16 @@ const ROLE_FILTERS: FilterDefinition[] = [
     key: "role",
     label: "Tous les rôles",
     options: [
-      { label: "Client", value: "CLIENT" },
-      { label: "Talent", value: "TALENT" },
+      { label: "Établissement", value: "ESTABLISHMENT" },
+      { label: "Freelance", value: "FREELANCE" },
       { label: "Admin", value: "ADMIN" },
     ],
   },
 ];
 
 function getRoleBadgeVariant(role: AdminUserRole): "info" | "default" | "quiet" {
-  if (role === "CLIENT") return "info";
-  if (role === "TALENT") return "default";
+  if (role === "ESTABLISHMENT") return "info";
+  if (role === "FREELANCE") return "default";
   return "quiet";
 }
 

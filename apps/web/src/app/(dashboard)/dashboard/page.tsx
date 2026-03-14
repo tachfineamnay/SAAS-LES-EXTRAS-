@@ -41,7 +41,7 @@ export default async function DashboardPage() {
     const { token } = session;
 
     let availableCredits = 0;
-    if (userRole === "CLIENT") {
+    if (userRole === "ESTABLISHMENT") {
         try { availableCredits = await getCredits(); } catch { /* swallow */ }
     }
 
@@ -51,7 +51,7 @@ export default async function DashboardPage() {
     } catch { /* API might be down */ }
 
     let quotes: any[] = [];
-    if (userRole === "CLIENT") {
+    if (userRole === "ESTABLISHMENT") {
         try { quotes = await getQuotes(token); } catch { /* swallow */ }
     }
     if (!Array.isArray(quotes)) quotes = [];
@@ -71,9 +71,9 @@ export default async function DashboardPage() {
     );
 
     // ─────────────────────────────────────────────────────────────────
-    // CLIENT VIEW
+    // ESTABLISHMENT VIEW
     // ─────────────────────────────────────────────────────────────────
-    if (userRole === "CLIENT") {
+    if (userRole === "ESTABLISHMENT") {
         const pendingQuotes = quotes.filter((q: any) => q.status === "PENDING");
         const awaitingPaymentBookings = (bookingsData?.lines ?? []).filter(
             (b: any) => b.status === "COMPLETED_AWAITING_PAYMENT"

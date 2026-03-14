@@ -67,7 +67,7 @@ function canCancel(status: BookingLineStatus): boolean {
 export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
   const userRole = useUIStore((state) => state.userRole);
   const [data, setData] = useState<BookingsPageData>(initialData);
-  const [loadedRole, setLoadedRole] = useState<DashboardRole>("CLIENT");
+  const [loadedRole, setLoadedRole] = useState<DashboardRole>("ESTABLISHMENT");
   const [isRoleLoading, startRoleLoading] = useTransition();
   const [isActionLoading, startActionLoading] = useTransition();
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -253,7 +253,7 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
                       Annuler
                     </Button>
 
-                    {userRole === "CLIENT" && line.status === "PENDING" && (
+                    {userRole === "ESTABLISHMENT" && line.status === "PENDING" && (
                       <Button
                         variant="default"
                         size="sm"
@@ -266,7 +266,7 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
                       </Button>
                     )}
 
-                    {userRole === "CLIENT" && line.status === "CONFIRMED" && (
+                    {userRole === "ESTABLISHMENT" && line.status === "CONFIRMED" && (
                       <Button
                         variant="default"
                         size="sm"

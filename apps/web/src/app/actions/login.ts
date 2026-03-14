@@ -25,7 +25,7 @@ type AuthResponse = {
     user: {
         id: string;
         email: string;
-        role: "CLIENT" | "TALENT" | "ADMIN";
+        role: "ESTABLISHMENT" | "FREELANCE" | "ADMIN";
         onboardingStep: number;
     };
 };

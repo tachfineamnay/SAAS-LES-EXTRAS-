@@ -2,8 +2,8 @@ import { UserRole } from "@prisma/client";
 import { IsIn, IsOptional, IsString } from "class-validator";
 
 const ROLE_FILTER_VALUES = [
-  UserRole.CLIENT,
-  UserRole.TALENT,
+  UserRole.ESTABLISHMENT,
+  UserRole.FREELANCE,
   UserRole.ADMIN,
   "ALL",
 ] as const;
