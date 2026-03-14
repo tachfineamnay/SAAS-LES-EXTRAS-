@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { SentryModule } from "@sentry/nestjs/setup";
 import { AdminOffersModule } from "./admin-offers/admin-offers.module";
 import { AdminUsersModule } from "./admin-users/admin-users.module";
 import { AuthModule } from "./auth/auth.module";
@@ -17,6 +18,7 @@ import { QuotesModule } from './quotes/quotes.module';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
