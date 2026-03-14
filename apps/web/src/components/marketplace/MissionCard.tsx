@@ -42,17 +42,19 @@ export function MissionCard({ mission, onApply }: MissionCardProps) {
         ];
 
   return (
-    <Card className="flex flex-col h-full hover:shadow-md transition-shadow">
+    <Card className={`flex flex-col h-full hover:shadow-md transition-shadow border-l-[3px] ${
+      mission.isUrgent ? "border-l-[hsl(var(--color-coral-500))]" : "border-l-[hsl(var(--color-teal-500))]"
+    }`}>
       <CardHeader className="p-4 pb-2 space-y-2">
         {/* Badges row */}
         <div className="flex flex-wrap gap-2 items-center">
           {mission.isUrgent && (
-            <Badge variant="destructive" className="text-xs">
+            <Badge variant="coral" className="text-xs">
               URGENT
             </Badge>
           )}
           {mission.isRenfort && !mission.isUrgent && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="teal" className="text-xs">
               Renfort
             </Badge>
           )}
@@ -61,8 +63,8 @@ export function MissionCard({ mission, onApply }: MissionCardProps) {
               variant="outline"
               className={`text-xs gap-1 ${
                 mission.shift === "NUIT"
-                  ? "border-indigo-400 text-indigo-600"
-                  : "border-amber-400 text-amber-600"
+                  ? "border-[hsl(var(--color-violet-400))] text-[hsl(var(--color-violet-700))]"
+                  : "border-[hsl(var(--color-sand-400))] text-[hsl(var(--color-sand-700))]"
               }`}
             >
               {mission.shift === "NUIT" ? (
@@ -129,6 +131,7 @@ export function MissionCard({ mission, onApply }: MissionCardProps) {
 
       <CardFooter className="p-4 pt-0">
         <Button
+          variant="action"
           className="w-full font-bold gap-2"
           onClick={() => onApply?.(mission)}
         >

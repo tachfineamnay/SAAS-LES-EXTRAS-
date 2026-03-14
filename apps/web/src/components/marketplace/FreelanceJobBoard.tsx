@@ -69,7 +69,7 @@ export function FreelanceJobBoard({ missions }: FreelanceJobBoardProps) {
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Marketplace
         </p>
-        <h1 className="text-3xl font-bold tracking-tight">Missions de renfort</h1>
+        <h1 className="font-display text-heading-xl tracking-tight">Missions de renfort</h1>
         <p className="text-sm text-muted-foreground">
           {missions.length} mission{missions.length !== 1 ? "s" : ""} disponible
           {missions.length !== 1 ? "s" : ""}.
@@ -134,7 +134,7 @@ export function FreelanceJobBoard({ missions }: FreelanceJobBoardProps) {
             <button
               type="button"
               onClick={clearFilters}
-              className="flex items-center gap-1 rounded-full border border-destructive/40 px-3 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+              className="flex items-center gap-1 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:bg-muted transition-colors"
             >
               <X className="h-3 w-3" /> Effacer
             </button>
