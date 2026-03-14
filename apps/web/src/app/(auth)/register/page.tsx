@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useFormState, useFormStatus } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Briefcase, Building2, Loader2, ArrowRight, Mail, Lock, CheckCircle2 } from "lucide-react";
@@ -58,8 +59,9 @@ function SubmitButton() {
     );
 }
 
-export default function RegisterPage({ searchParams }: { searchParams: { role?: string } }) {
-    const defaultRole = searchParams.role === "ESTABLISHMENT" ? "ESTABLISHMENT" : "FREELANCE";
+export default function RegisterPage() {
+    const searchParams = useSearchParams();
+    const defaultRole = searchParams.get("role") === "ESTABLISHMENT" ? "ESTABLISHMENT" : "FREELANCE";
     const [role, setRole] = useState<"ESTABLISHMENT" | "FREELANCE">(defaultRole);
     const [state, formAction] = useFormState(register, initialState);
 

@@ -4,8 +4,9 @@ import { cookies } from "next/headers";
 
 const ADMIN_SESSION_COOKIE = "lesextras_admin_token";
 
-export function getAdminSessionToken(): string {
-  const token = cookies().get(ADMIN_SESSION_COOKIE)?.value;
+export async function getAdminSessionToken(): Promise<string> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
 
   if (!token) {
     throw new Error("Session admin requise.");

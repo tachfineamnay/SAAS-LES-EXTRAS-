@@ -10,7 +10,7 @@ import { getCategoryLabel, getPublicCibleLabels, formatDuration } from "@/lib/at
 import type { ServiceSlot } from "@/lib/atelier-config";
 
 type PageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 function getAvatarFallback(name: string): string {
@@ -22,7 +22,8 @@ function getAvatarFallback(name: string): string {
 }
 
 export default async function ServiceDetailPage({ params }: PageProps) {
-  const service = await getService(params.id);
+  const { id } = await params;
+  const service = await getService(id);
 
   if (!service) {
     notFound();

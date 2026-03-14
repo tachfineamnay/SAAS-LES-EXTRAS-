@@ -22,8 +22,9 @@ type AdminLoginInput = {
   password: string;
 };
 
-function setAdminCookie(token: string): void {
-  cookies().set({
+async function setAdminCookie(token: string): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set({
     name: ADMIN_SESSION_COOKIE,
     value: token,
     httpOnly: true,
@@ -54,13 +55,14 @@ export async function adminLogin(input: AdminLoginInput): Promise<{ ok: true }> 
     throw new Error("Accès admin refusé.");
   }
 
-  setAdminCookie(response.accessToken);
+  await setAdminCookie(response.accessToken);
   revalidatePath("/admin");
   return { ok: true };
 }
 
 export async function adminLogout(): Promise<void> {
-  cookies().set({
+  const cookieStore = await cookies();
+  cookieStore.set({
     name: ADMIN_SESSION_COOKIE,
     value: "",
     httpOnly: true,
