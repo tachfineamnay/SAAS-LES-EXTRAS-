@@ -9,38 +9,50 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+          "border-transparent bg-[hsl(var(--color-navy-50))] text-[hsl(var(--color-navy-500))]",
         secondary:
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
-        /* Teal — confiance, validé, actif */
+        outline: "text-foreground border-border",
+        /* C.14 — Brand badge variants */
         teal:
-          "bg-[hsl(var(--teal-light))] text-[hsl(var(--teal))] border-[hsl(var(--teal)/0.2)]",
-        /* Coral — action, urgent, CTA badge */
+          "bg-[hsl(var(--color-teal-50))] text-[hsl(var(--color-teal-700))] border-[hsl(var(--teal)/0.2)]",
         coral:
-          "bg-[hsl(var(--coral-light))] text-[hsl(var(--coral))] border-[hsl(var(--coral)/0.2)]",
-        /* Sand — chaleur, accueil, onboarding */
+          "bg-[hsl(var(--color-coral-50))] text-[hsl(var(--color-coral-700))] border-[hsl(var(--coral)/0.2)]",
         sand:
-          "bg-[hsl(var(--sand-light))] text-[hsl(var(--sand))] border-[hsl(var(--sand)/0.2)]",
+          "bg-[hsl(var(--color-sand-50))] text-[hsl(var(--color-sand-700))] border-[hsl(var(--sand)/0.2)]",
+        violet:
+          "bg-[hsl(var(--color-violet-50))] text-[hsl(var(--color-violet-700))] border-[hsl(var(--violet)/0.2)]",
+        emerald:
+          "bg-[hsl(var(--color-emerald-50))] text-[hsl(var(--color-emerald-700))] border-[hsl(var(--emerald)/0.2)]",
+        amber:
+          "bg-[hsl(var(--color-amber-50))] text-[hsl(var(--color-amber-700))] border-[hsl(var(--amber)/0.2)]",
+        red:
+          "bg-[hsl(var(--color-red-50))] text-[hsl(var(--color-red-700))] border-[hsl(var(--color-red-500)/0.2)]",
+        /* Semantic aliases */
         success:
-          "bg-[hsl(var(--emerald-light))] text-[hsl(var(--emerald))] border-[hsl(var(--emerald)/0.2)]",
+          "bg-[hsl(var(--color-emerald-50))] text-[hsl(var(--color-emerald-700))] border-[hsl(var(--emerald)/0.2)]",
         warning:
-          "bg-[hsl(var(--amber-light))] text-[hsl(var(--amber))] border-[hsl(var(--amber)/0.2)]",
-        info:
-          "bg-[hsl(var(--violet-light))] text-[hsl(var(--violet))] border-[hsl(var(--violet)/0.2)]",
+          "bg-[hsl(var(--color-amber-50))] text-[hsl(var(--color-amber-700))] border-[hsl(var(--amber)/0.2)]",
         error:
-          "bg-[hsl(var(--coral-light))] text-[hsl(var(--coral))] border-[hsl(var(--coral)/0.2)]",
+          "bg-[hsl(var(--color-red-50))] text-[hsl(var(--color-red-700))] border-[hsl(var(--color-red-500)/0.2)]",
+        info:
+          "bg-[hsl(var(--color-teal-50))] text-[hsl(var(--color-teal-700))] border-[hsl(var(--teal)/0.2)]",
         quiet:
           "bg-muted text-muted-foreground font-medium border-transparent",
-        /* Status — uppercase for state indicators */
         status:
           "uppercase tracking-wide bg-muted text-muted-foreground border-transparent",
+      },
+      size: {
+        default: "px-2 py-px text-xs",
+        sm: "h-5 px-1.5 text-[11px]",
+        md: "h-6 px-2 text-[13px]",
       },
     },
     defaultVariants: {
       variant: "default",
+      size: "default",
     },
   }
 )

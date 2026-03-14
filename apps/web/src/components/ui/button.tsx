@@ -21,6 +21,9 @@ const buttonVariants = cva(
         /* Coral — Action forte (RENFORT, CTA urgent) — glow on hover only */
         coral:
           "bg-[hsl(var(--coral))] text-white hover:bg-[hsl(var(--coral)/0.88)] hover:shadow-glow-coral active:scale-[0.97]",
+        /* Action — alias for coral per C.1 spec */
+        action:
+          "bg-[hsl(var(--coral))] text-white hover:bg-[hsl(var(--coral)/0.88)] hover:shadow-glow-coral active:scale-[0.97]",
         /* Teal — primary action variant — glow on hover only */
         teal:
           "bg-[hsl(var(--teal))] text-white hover:bg-[hsl(var(--teal)/0.88)] hover:shadow-glow-teal active:scale-[0.97]",
@@ -30,6 +33,9 @@ const buttonVariants = cva(
         /* Coral soft — alerte douce */
         "coral-soft":
           "bg-[hsl(var(--coral-light))] text-[hsl(var(--coral))] border border-[hsl(var(--coral)/0.2)] hover:bg-[hsl(var(--coral)/0.12)] active:scale-[0.97]",
+        /* Warm — Ateliers secondary (sand tint) per C.1 */
+        warm:
+          "bg-[hsl(var(--sand-light))] text-[hsl(var(--sand-dim))] border border-[hsl(var(--sand)/0.2)] hover:bg-[hsl(var(--sand)/0.15)] active:scale-[0.97]",
         /* Glass — light surface button */
         glass:
           "bg-card border border-border text-foreground font-medium hover:bg-accent/40 hover:shadow-card active:scale-[0.97]",
@@ -43,6 +49,7 @@ const buttonVariants = cva(
         xs: "h-7 rounded-md px-2 text-xs",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
+        xl: "h-14 rounded-lg px-8 text-base font-semibold",
         icon: "h-10 w-10",
       },
     },

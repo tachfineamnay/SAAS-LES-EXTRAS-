@@ -84,10 +84,10 @@ export default async function DashboardPage() {
         return (
             <div className="space-y-8">
                 {/* Page header */}
-                <header className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Espace Établissement</p>
-                    <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
-                    <p className="text-sm text-muted-foreground">Vue d'ensemble de vos renforts et opérations.</p>
+                <header className="space-y-1.5">
+                    <p className="text-overline uppercase tracking-widest text-muted-foreground">Espace Établissement</p>
+                    <h1 className="font-display text-heading-xl tracking-tight">Tableau de bord</h1>
+                    <p className="text-body-md text-muted-foreground">Vue d'ensemble de vos renforts et opérations.</p>
                 </header>
 
                 {/* Alert zone */}
@@ -107,12 +107,12 @@ export default async function DashboardPage() {
                     <GlassCard className="md:col-span-2">
                         <GlassCardHeader>
                             <div className="flex items-center gap-2.5">
-                                <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                                    <Calendar className="h-4 w-4 text-primary" aria-hidden="true" />
+                                <div className="h-9 w-9 rounded-xl icon-teal flex items-center justify-center">
+                                    <Calendar className="h-4 w-4" aria-hidden="true" />
                                 </div>
                                 <div>
-                                    <h2 className="text-base font-semibold tracking-tight">Renforts à venir</h2>
-                                    <p className="text-xs text-muted-foreground">Missions confirmées</p>
+                                    <h2 className="text-heading-sm">Renforts à venir</h2>
+                                    <p className="text-caption text-muted-foreground">Missions confirmées</p>
                                 </div>
                             </div>
                         </GlassCardHeader>
@@ -125,10 +125,10 @@ export default async function DashboardPage() {
                     <GlassCard>
                         <GlassCardHeader>
                             <div className="flex items-center gap-2.5">
-                                <div className="h-9 w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                                    <DollarSign className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                                <div className="h-9 w-9 rounded-xl icon-emerald flex items-center justify-center">
+                                    <DollarSign className="h-4 w-4" aria-hidden="true" />
                                 </div>
-                                <h2 className="text-base font-semibold tracking-tight">Mes Crédits</h2>
+                                <h2 className="text-heading-sm">Mes Crédits</h2>
                             </div>
                         </GlassCardHeader>
                         <GlassCardContent>
@@ -141,10 +141,10 @@ export default async function DashboardPage() {
                         <GlassCard className="md:col-span-2">
                             <GlassCardHeader>
                                 <div className="flex items-center gap-2.5">
-                                    <div className="h-9 w-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                                        <DollarSign className="h-4 w-4 text-amber-600" aria-hidden="true" />
+                                    <div className="h-9 w-9 rounded-xl icon-amber flex items-center justify-center">
+                                        <DollarSign className="h-4 w-4" aria-hidden="true" />
                                     </div>
-                                    <h2 className="text-base font-semibold tracking-tight">Paiements à valider</h2>
+                                    <h2 className="text-heading-sm">Paiements à valider</h2>
                                 </div>
                             </GlassCardHeader>
                             <GlassCardContent>
@@ -157,10 +157,10 @@ export default async function DashboardPage() {
                     <GlassCard className="md:col-span-2">
                         <GlassCardHeader>
                             <div className="flex items-center gap-2.5">
-                                <div className="h-9 w-9 rounded-xl bg-secondary/10 flex items-center justify-center">
-                                    <FileText className="h-4 w-4 text-secondary" aria-hidden="true" />
+                                <div className="h-9 w-9 rounded-xl icon-gray flex items-center justify-center">
+                                    <FileText className="h-4 w-4" aria-hidden="true" />
                                 </div>
-                                <h2 className="text-base font-semibold tracking-tight">Mes Factures</h2>
+                                <h2 className="text-heading-sm">Mes Factures</h2>
                             </div>
                         </GlassCardHeader>
                         <GlassCardContent>
@@ -172,10 +172,10 @@ export default async function DashboardPage() {
                     <GlassCard>
                         <GlassCardHeader>
                             <div className="flex items-center gap-2.5">
-                                <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                                    <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
+                                <div className="h-9 w-9 rounded-xl icon-teal flex items-center justify-center">
+                                    <FileText className="h-4 w-4" aria-hidden="true" />
                                 </div>
-                                <h2 className="text-base font-semibold tracking-tight">Propositions</h2>
+                                <h2 className="text-heading-sm">Propositions</h2>
                             </div>
                         </GlassCardHeader>
                         <GlassCardContent>
@@ -187,10 +187,10 @@ export default async function DashboardPage() {
                     <GlassCard>
                         <GlassCardHeader>
                             <div className="flex items-center gap-2.5">
-                                <div className="h-9 w-9 rounded-xl bg-secondary/10 flex items-center justify-center">
-                                    <Users className="h-4 w-4 text-secondary" aria-hidden="true" />
+                                <div className="h-9 w-9 rounded-xl icon-coral flex items-center justify-center">
+                                    <Users className="h-4 w-4" aria-hidden="true" />
                                 </div>
-                                <h2 className="text-base font-semibold tracking-tight">Candidatures</h2>
+                                <h2 className="text-heading-sm">Candidatures</h2>
                             </div>
                         </GlassCardHeader>
                         <GlassCardContent>
@@ -206,10 +206,10 @@ export default async function DashboardPage() {
                     <GlassCard className="md:col-span-2">
                         <GlassCardHeader>
                             <div className="flex items-center gap-2.5">
-                                <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center">
-                                    <Briefcase className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                                <div className="h-9 w-9 rounded-xl icon-gray flex items-center justify-center">
+                                    <Briefcase className="h-4 w-4" aria-hidden="true" />
                                 </div>
-                                <h2 className="text-base font-semibold tracking-tight">Historique & Archives</h2>
+                                <h2 className="text-heading-sm">Historique & Archives</h2>
                             </div>
                         </GlassCardHeader>
                         <GlassCardContent>
@@ -227,10 +227,10 @@ export default async function DashboardPage() {
     return (
         <div className="space-y-8">
             {/* Page header */}
-            <header className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Espace Freelance</p>
-                <h1 className="text-3xl font-bold tracking-tight">Mon Tableau de bord</h1>
-                <p className="text-sm text-muted-foreground">Suivez vos missions, candidatures et revenus.</p>
+            <header className="space-y-1.5">
+                <p className="text-overline uppercase tracking-widest text-muted-foreground">Espace Freelance</p>
+                <h1 className="font-display text-heading-xl tracking-tight">Mon Tableau de bord</h1>
+                <p className="text-body-md text-muted-foreground">Suivez vos missions, candidatures et revenus.</p>
             </header>
 
             {/* KPI row */}
@@ -246,12 +246,12 @@ export default async function DashboardPage() {
                 <GlassCard className="md:col-span-2">
                     <GlassCardHeader>
                         <div className="flex items-center gap-2.5">
-                            <div className="h-9 w-9 rounded-xl bg-secondary/10 flex items-center justify-center">
-                                <Calendar className="h-4 w-4 text-secondary" aria-hidden="true" />
+                            <div className="h-9 w-9 rounded-xl icon-teal flex items-center justify-center">
+                                <Calendar className="h-4 w-4" aria-hidden="true" />
                             </div>
                             <div>
-                                <h2 className="text-base font-semibold tracking-tight">Mon Agenda</h2>
-                                <p className="text-xs text-muted-foreground">Missions confirmées</p>
+                                <h2 className="text-heading-sm">Mon Agenda</h2>
+                                <p className="text-caption text-muted-foreground">Missions confirmées</p>
                             </div>
                         </div>
                     </GlassCardHeader>
@@ -268,10 +268,10 @@ export default async function DashboardPage() {
                 <GlassCard>
                     <GlassCardHeader>
                         <div className="flex items-center gap-2.5">
-                            <div className="h-9 w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                                <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                            <div className="h-9 w-9 rounded-xl icon-emerald flex items-center justify-center">
+                                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                             </div>
-                            <h2 className="text-base font-semibold tracking-tight">Profil & Confiance</h2>
+                            <h2 className="text-heading-sm">Profil & Confiance</h2>
                         </div>
                     </GlassCardHeader>
                     <GlassCardContent>
@@ -283,12 +283,12 @@ export default async function DashboardPage() {
                 <GlassCard className="md:col-span-2">
                     <GlassCardHeader>
                         <div className="flex items-center gap-2.5">
-                            <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                                <Briefcase className="h-4 w-4 text-primary" aria-hidden="true" />
+                            <div className="h-9 w-9 rounded-xl icon-coral flex items-center justify-center">
+                                <Briefcase className="h-4 w-4" aria-hidden="true" />
                             </div>
                             <div>
-                                <h2 className="text-base font-semibold tracking-tight">Mes Candidatures</h2>
-                                <p className="text-xs text-muted-foreground">En cours de traitement</p>
+                                <h2 className="text-heading-sm">Mes Candidatures</h2>
+                                <p className="text-caption text-muted-foreground">En cours de traitement</p>
                             </div>
                         </div>
                     </GlassCardHeader>
@@ -305,10 +305,10 @@ export default async function DashboardPage() {
                 <GlassCard>
                     <GlassCardHeader>
                         <div className="flex items-center gap-2.5">
-                            <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                                <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
+                            <div className="h-9 w-9 rounded-xl icon-violet flex items-center justify-center">
+                                <FileText className="h-4 w-4" aria-hidden="true" />
                             </div>
-                            <h2 className="text-base font-semibold tracking-tight">Propositions</h2>
+                            <h2 className="text-heading-sm">Propositions</h2>
                         </div>
                     </GlassCardHeader>
                     <GlassCardContent>
@@ -320,10 +320,10 @@ export default async function DashboardPage() {
                 <GlassCard>
                     <GlassCardHeader>
                         <div className="flex items-center gap-2.5">
-                            <div className="h-9 w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                                <TrendingUp className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                            <div className="h-9 w-9 rounded-xl icon-emerald flex items-center justify-center">
+                                <TrendingUp className="h-4 w-4" aria-hidden="true" />
                             </div>
-                            <h2 className="text-base font-semibold tracking-tight">Mes Finances</h2>
+                            <h2 className="text-heading-sm">Mes Finances</h2>
                         </div>
                     </GlassCardHeader>
                     <GlassCardContent>

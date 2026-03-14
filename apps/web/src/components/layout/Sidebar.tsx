@@ -86,7 +86,7 @@ function NavLink({
           "transition-all duration-200 group min-h-[44px]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--teal)/0.5)]",
           isActive
-            ? "bg-[hsl(var(--teal-light))] text-[hsl(var(--teal-dim))] shadow-[0_0_12px_hsl(var(--teal)/0.15)]"
+            ? "bg-[hsl(var(--color-teal-50))] text-[hsl(var(--color-teal-700))] font-semibold shadow-[0_0_12px_hsl(var(--teal)/0.10)]"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
         )}
         aria-current={isActive ? "page" : undefined}
@@ -105,8 +105,8 @@ function NavLink({
           className={cn(
             "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors duration-200",
             isActive
-              ? "bg-[hsl(var(--teal)/0.15)] text-[hsl(var(--teal))]"
-              : "bg-muted text-muted-foreground group-hover:bg-[hsl(var(--teal-light))] group-hover:text-[hsl(var(--teal))]"
+              ? "bg-[hsl(var(--teal)/0.15)] text-[hsl(var(--color-teal-500))]"
+              : "bg-muted text-muted-foreground group-hover:bg-[hsl(var(--color-teal-50))] group-hover:text-[hsl(var(--color-teal-500))]"
           )}
         >
           <Icon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -173,9 +173,13 @@ function SidebarContent({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5"
+        className="flex-1 overflow-y-auto px-3 py-4 space-y-1"
         aria-label="Navigation principale"
       >
+        {/* Section label — C.18 overline style */}
+        <p className="px-3 pb-2 text-overline uppercase text-muted-foreground/70 tracking-widest">
+          Principal
+        </p>
         {links.map((link, i) => (
           <NavLink
             key={link.href}
@@ -191,7 +195,10 @@ function SidebarContent({
       <div className="mx-3 border-t border-border/60" />
 
       {/* Liens du bas */}
-      <div className="px-3 py-4 space-y-0.5">
+      <div className="px-3 py-4 space-y-1">
+        <p className="px-3 pb-2 text-overline uppercase text-muted-foreground/70 tracking-widest">
+          Compte
+        </p>
         {bottomLinks.map((link, i) => (
           <NavLink
             key={link.href}

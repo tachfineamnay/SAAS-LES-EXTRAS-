@@ -20,11 +20,21 @@ const config: Config = {
         display: ["var(--font-display)", "Plus Jakarta Sans", "system-ui", "sans-serif"],
       },
       fontSize: {
-        "display-xl": ["2.5rem",  { lineHeight: "1.1",  letterSpacing: "-0.03em",  fontWeight: "800" }],
-        "display-lg": ["2rem",    { lineHeight: "1.15", letterSpacing: "-0.025em", fontWeight: "700" }],
-        "heading":    ["1.25rem", { lineHeight: "1.3",  letterSpacing: "-0.015em", fontWeight: "600" }],
-        "body-lg":    ["1rem",    { lineHeight: "1.6",  fontWeight: "400" }],
-        "caption":    ["0.75rem", { lineHeight: "1.4",  letterSpacing: "0.02em",   fontWeight: "500" }],
+        /* B.2 — Full Typography Scale */
+        "display-2xl": ["3rem",      { lineHeight: "1.08", letterSpacing: "-0.03em",  fontWeight: "800" }],
+        "display-xl":  ["2.5rem",    { lineHeight: "1.1",  letterSpacing: "-0.03em",  fontWeight: "800" }],
+        "display-lg":  ["2rem",      { lineHeight: "1.15", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "heading-xl":  ["1.5rem",    { lineHeight: "1.25", letterSpacing: "-0.02em",  fontWeight: "700" }],
+        "heading-lg":  ["1.25rem",   { lineHeight: "1.3",  letterSpacing: "-0.015em", fontWeight: "600" }],
+        "heading-md":  ["1.125rem",  { lineHeight: "1.35", letterSpacing: "-0.01em",  fontWeight: "600" }],
+        "heading-sm":  ["1rem",      { lineHeight: "1.4",  letterSpacing: "-0.01em",  fontWeight: "600" }],
+        "body-lg":     ["1rem",      { lineHeight: "1.6",  fontWeight: "400" }],
+        "body-md":     ["0.875rem",  { lineHeight: "1.55", fontWeight: "400" }],
+        "body-sm":     ["0.8125rem", { lineHeight: "1.5",  fontWeight: "400" }],
+        "caption":     ["0.75rem",   { lineHeight: "1.4",  letterSpacing: "0.02em",   fontWeight: "500" }],
+        "overline":    ["0.6875rem", { lineHeight: "1.3",  letterSpacing: "0.08em",   fontWeight: "600" }],
+        /* Legacy aliases */
+        "heading":     ["1.25rem",   { lineHeight: "1.3",  letterSpacing: "-0.015em", fontWeight: "600" }],
       },
       colors: {
         /* ── Shadcn tokens ── */
@@ -62,65 +72,110 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
 
-        /* ── Brand tokens LES EXTRAS — Quietly Bold ── */
+        /* ── Brand tokens LES EXTRAS — Quietly Bold (B.1 full scale) ── */
 
-        /* Teal — Primary (confiance, soin, navigation) — vert profond médical */
+        /* Teal — Primary (confiance, navigation) */
         teal: {
           DEFAULT: "hsl(var(--teal))",
           dim:     "hsl(var(--teal-dim))",
-          muted:   "hsl(var(--teal-muted))",
-          50:      "hsla(170, 55%, 30%, 0.05)",
-          100:     "hsla(170, 55%, 30%, 0.10)",
-          200:     "hsla(170, 55%, 30%, 0.20)",
-          500:     "hsl(170, 55%, 30%)",
-          700:     "hsl(170, 48%, 22%)",
+          50:      "hsl(var(--color-teal-50))",
+          100:     "hsl(var(--color-teal-100))",
+          200:     "hsl(var(--color-teal-200))",
+          300:     "hsl(var(--color-teal-300))",
+          400:     "hsl(var(--color-teal-400))",
+          500:     "hsl(var(--color-teal-500))",
+          600:     "hsl(var(--color-teal-600))",
+          700:     "hsl(var(--color-teal-700))",
+          800:     "hsl(var(--color-teal-800))",
+          900:     "hsl(var(--color-teal-900))",
         },
 
         /* Coral → Terracotta — Action (CTA, urgence) */
         coral: {
           DEFAULT: "hsl(var(--coral))",
           dim:     "hsl(var(--coral-dim))",
-          muted:   "hsl(var(--coral-muted))",
-          50:      "hsla(14, 65%, 48%, 0.05)",
-          100:     "hsla(14, 65%, 48%, 0.10)",
-          200:     "hsla(14, 65%, 48%, 0.20)",
-          500:     "hsl(14, 65%, 48%)",
-          700:     "hsl(14, 58%, 36%)",
+          50:      "hsl(var(--color-coral-50))",
+          100:     "hsl(var(--color-coral-100))",
+          200:     "hsl(var(--color-coral-200))",
+          300:     "hsl(var(--color-coral-300))",
+          400:     "hsl(var(--color-coral-400))",
+          500:     "hsl(var(--color-coral-500))",
+          600:     "hsl(var(--color-coral-600))",
+          700:     "hsl(var(--color-coral-700))",
+          800:     "hsl(var(--color-coral-800))",
+          900:     "hsl(var(--color-coral-900))",
         },
 
         /* Sand — Chaleur, accueil, onboarding */
         sand: {
           DEFAULT: "hsl(var(--sand))",
           dim:     "hsl(var(--sand-dim))",
-          muted:   "hsl(var(--sand-muted))",
-          50:      "hsla(32, 75%, 50%, 0.05)",
-          100:     "hsla(32, 75%, 50%, 0.10)",
-          500:     "hsl(32, 75%, 50%)",
-          700:     "hsl(32, 68%, 40%)",
+          50:      "hsl(var(--color-sand-50))",
+          100:     "hsl(var(--color-sand-100))",
+          200:     "hsl(var(--color-sand-200))",
+          300:     "hsl(var(--color-sand-300))",
+          400:     "hsl(var(--color-sand-400))",
+          500:     "hsl(var(--color-sand-500))",
+          600:     "hsl(var(--color-sand-600))",
+          700:     "hsl(var(--color-sand-700))",
         },
 
-        /* Logo Gray — Neutre structural (du logo) */
+        /* Navy — Text scale */
+        navy: {
+          50:      "hsl(var(--color-navy-50))",
+          100:     "hsl(var(--color-navy-100))",
+          200:     "hsl(var(--color-navy-200))",
+          300:     "hsl(var(--color-navy-300))",
+          400:     "hsl(var(--color-navy-400))",
+          500:     "hsl(var(--color-navy-500))",
+          600:     "hsl(var(--color-navy-600))",
+          700:     "hsl(var(--color-navy-700))",
+          800:     "hsl(var(--color-navy-800))",
+          900:     "hsl(var(--color-navy-900))",
+        },
+
+        /* Violet — Ateliers, compétences */
+        violet: {
+          DEFAULT: "hsl(var(--violet))",
+          50:      "hsl(var(--color-violet-50))",
+          100:     "hsl(var(--color-violet-100))",
+          500:     "hsl(var(--color-violet-500))",
+          700:     "hsl(var(--color-violet-700))",
+        },
+
+        /* Logo Gray — Neutre structural */
         "logo-gray": {
           DEFAULT: "hsl(var(--logo-gray))",
-          50:      "hsla(220, 10%, 56%, 0.08)",
-          100:     "hsla(220, 10%, 56%, 0.14)",
-          500:     "hsl(220, 10%, 56%)",
+          50:      "hsl(var(--color-gray-100))",
+          100:     "hsl(var(--color-gray-100))",
+          400:     "hsl(var(--color-gray-400))",
+          500:     "hsl(var(--color-gray-400))",
         },
 
         /* Emerald — Succès, validé */
         emerald: {
           DEFAULT: "hsl(var(--emerald))",
-          50:      "hsla(145, 60%, 44%, 0.08)",
-          100:     "hsla(145, 60%, 44%, 0.14)",
-          500:     "hsl(145, 60%, 44%)",
+          50:      "hsl(var(--color-emerald-50))",
+          100:     "hsl(var(--color-emerald-100))",
+          500:     "hsl(var(--color-emerald-500))",
+          700:     "hsl(var(--color-emerald-700))",
         },
 
         /* Amber — Avertissement */
         amber: {
           DEFAULT: "hsl(var(--amber))",
-          50:      "hsla(38, 92%, 52%, 0.08)",
-          100:     "hsla(38, 92%, 52%, 0.14)",
-          500:     "hsl(38, 92%, 52%)",
+          50:      "hsl(var(--color-amber-50))",
+          100:     "hsl(var(--color-amber-100))",
+          500:     "hsl(var(--color-amber-500))",
+          700:     "hsl(var(--color-amber-700))",
+        },
+
+        /* Red — Erreur, destructif */
+        red: {
+          50:      "hsl(var(--color-red-50))",
+          100:     "hsl(var(--color-red-100))",
+          500:     "hsl(var(--color-red-500))",
+          700:     "hsl(var(--color-red-700))",
         },
 
         /* Surface secondaire */
@@ -138,15 +193,20 @@ const config: Config = {
         "4xl": "2rem",
       },
       boxShadow: {
-        /* Clinical card shadows — Quietly Bold */
+        /* B.5 — Shadow Scale (navy-tinted, not pure black) */
+        "xs":         "0 1px 2px hsla(220,25%,15%,0.04)",
         "card":       "0 1px 3px hsla(220,25%,15%,0.05), 0 4px 12px hsla(220,25%,15%,0.05)",
         "card-md":    "0 2px 8px hsla(220,25%,15%,0.06), 0 8px 24px hsla(220,25%,15%,0.07)",
         "card-lg":    "0 4px 16px hsla(220,25%,15%,0.08), 0 16px 48px hsla(220,25%,15%,0.09)",
         "card-hover": "0 8px 32px hsla(220,25%,15%,0.10), 0 2px 8px hsla(220,25%,15%,0.07)",
+        "xl":         "0 8px 32px hsla(220,25%,15%,0.10), 0 2px 8px hsla(220,25%,15%,0.07)",
         /* Glow accents — updated for deeper palette */
         "glow-teal":  "0 0 0 3px hsl(170,45%,92%), 0 4px 20px hsla(170,55%,30%,0.22)",
         "glow-coral": "0 0 0 3px hsl(14,80%,94%), 0 4px 20px hsla(14,65%,48%,0.22)",
         "glow-sand":  "0 0 0 3px hsl(32,80%,93%), 0 4px 16px hsla(32,75%,50%,0.18)",
+        /* Focus ring shadows (B.5) */
+        "focus-teal": "0 0 0 3px hsl(170,45%,92%), 0 4px 20px hsla(170,55%,30%,0.22)",
+        "focus-coral": "0 0 0 3px hsl(14,80%,94%), 0 4px 20px hsla(14,65%,48%,0.22)",
         /* Aliases */
         "warm-card":    "0 2px 12px hsla(220,25%,15%,0.07), 0 1px 3px hsla(220,25%,15%,0.04)",
         "warm-card-lg": "0 8px 32px hsla(220,25%,15%,0.10), 0 2px 8px hsla(220,25%,15%,0.06)",
