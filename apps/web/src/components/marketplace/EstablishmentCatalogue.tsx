@@ -41,7 +41,7 @@ export function EstablishmentCatalogue({ services, freelances }: EstablishmentCa
     <div className="space-y-6">
       <header className="space-y-1">
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Marketplace</p>
-        <h1 className="text-3xl font-bold tracking-tight">Catalogue & Annuaire</h1>
+        <h1 className="font-display text-heading-xl tracking-tight">Catalogue & Annuaire</h1>
         <p className="text-sm text-muted-foreground">
           Découvrez nos formations, ateliers et meilleurs freelances vérifiés.
         </p>
@@ -53,7 +53,7 @@ export function EstablishmentCatalogue({ services, freelances }: EstablishmentCa
             <GraduationCap className="h-4 w-4" aria-hidden="true" />
             Ateliers & Formations
             {services.length > 0 && (
-              <span className="ml-1 text-[10px] bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5 font-semibold">
+              <span className="ml-1 text-[10px] bg-[hsl(var(--color-teal-50))] text-[hsl(var(--color-teal-700))] rounded-full px-1.5 py-0.5 font-semibold">
                 {services.length}
               </span>
             )}
@@ -81,8 +81,8 @@ export function EstablishmentCatalogue({ services, freelances }: EstablishmentCa
                         onClick={() => setFilterCategory(active ? null : cat.id)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                           active
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600"
+                            ? "bg-[hsl(var(--color-teal-600))] text-white border-[hsl(var(--color-teal-600))]"
+                            : "border-border text-muted-foreground hover:border-[hsl(var(--color-teal-300))] hover:text-[hsl(var(--color-teal-600))]"
                         }`}
                       >
                         <Icon className="w-3 h-3" />
@@ -108,8 +108,8 @@ export function EstablishmentCatalogue({ services, freelances }: EstablishmentCa
                       onClick={() => setFilterPricing(active ? null : opt.id)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                         active
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600"
+                          ? "bg-[hsl(var(--color-teal-600))] text-white border-[hsl(var(--color-teal-600))]"
+                          : "border-border text-muted-foreground hover:border-[hsl(var(--color-teal-300))] hover:text-[hsl(var(--color-teal-600))]"
                       }`}
                     >
                       {opt.label}

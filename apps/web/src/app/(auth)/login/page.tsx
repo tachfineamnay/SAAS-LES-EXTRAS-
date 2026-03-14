@@ -34,7 +34,7 @@ export default function LoginPage() {
     const [state, action] = useFormState(login, undefined);
 
     return (
-        <div className="flex min-h-screen bg-[hsl(var(--surface-1))]">
+        <div className="flex min-h-screen bg-background">
             {/* Left — brand panel (teal gradient) */}
             <motion.div
                 className="relative hidden lg:flex lg:w-[45%] flex-col bg-[hsl(var(--teal))] p-12 text-white overflow-hidden"
