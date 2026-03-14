@@ -40,10 +40,10 @@ export class UsersService {
             }
         });
     }
-    async findAllTalents() {
+    async findAllFreelances() {
         return this.prisma.user.findMany({
             where: {
-                role: "TALENT",
+                role: "FREELANCE",
                 status: "VERIFIED",
             },
             include: {

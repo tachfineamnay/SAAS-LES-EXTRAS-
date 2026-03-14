@@ -126,7 +126,7 @@ export type SerializedMission = {
   isNetworkMatch?: boolean;
   establishmentName?: string;
   requiredDiploma?: string[];
-  client?: {
+  establishment?: {
     profile?: {
       companyName: string | null;
       city: string | null;
@@ -135,7 +135,7 @@ export type SerializedMission = {
   };
 };
 
-export type SerializedTalent = {
+export type SerializedFreelance = {
   id: string;
   email: string;
   profile?: {
@@ -163,34 +163,34 @@ export async function getAvailableMissions(token?: string): Promise<SerializedMi
   }
 }
 
-export async function getTalents(token?: string): Promise<SerializedTalent[]> {
+export async function getFreelances(token?: string): Promise<SerializedFreelance[]> {
   const activeToken = token || (await getSession())?.token;
   if (!activeToken) return [];
 
   try {
-    return await apiRequest<SerializedTalent[]>("/users/talents", {
+    return await apiRequest<SerializedFreelance[]>("/users/freelances", {
       method: "GET",
       token: activeToken,
     });
   } catch (error) {
-    console.error("getTalents error", error);
+    console.error("getFreelances error", error);
     return [];
   }
 }
 
 export async function getMarketplaceCatalogue(token?: string) {
   const activeToken = token || (await getSession())?.token;
-  if (!activeToken) return { services: [], talents: [] };
+  if (!activeToken) return { services: [], freelances: [] };
 
-  const [services, talents] = await Promise.all([
+  const [services, freelances] = await Promise.all([
     apiRequest<SerializedService[]>("/services", { method: "GET", token: activeToken }).catch((err) => {
       console.error("getMarketplaceCatalogue /services error", err);
       return [] as SerializedService[];
     }),
-    getTalents(activeToken),
+    getFreelances(activeToken),
   ]);
 
-  return { services, talents };
+  return { services, freelances };
 }
 
 export async function getMarketplaceData(token?: string): Promise<MarketplaceData> {

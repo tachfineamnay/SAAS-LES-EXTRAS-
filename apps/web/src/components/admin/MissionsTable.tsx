@@ -75,7 +75,7 @@ export function MissionsTable({ missions }: MissionsTableProps) {
   return (
     <>
       <DataTableShell
-        columns={["Titre", "Client", "Ville", "Statut", "Candidats", "Action"]}
+        columns={["Titre", "Établissement", "Ville", "Statut", "Candidats", "Action"]}
         emptyTitle="Aucune mission à modérer"
         emptyDescription="Toutes les missions sont traitées."
       >
@@ -86,7 +86,7 @@ export function MissionsTable({ missions }: MissionsTableProps) {
             onClick={() => handleOpenDetails(mission)}
           >
             <TableCell className="font-medium text-foreground">{mission.title}</TableCell>
-            <TableCell className="text-sm text-muted-foreground">{mission.clientName}</TableCell>
+            <TableCell className="text-sm text-muted-foreground">{mission.establishmentName}</TableCell>
             <TableCell className="text-sm text-muted-foreground">{mission.city}</TableCell>
             <TableCell>
               <StatusPill status={getMissionStatus(mission.status)} label={mission.status} />
@@ -127,7 +127,7 @@ export function MissionsTable({ missions }: MissionsTableProps) {
               <div className="flex items-center gap-2 text-muted-foreground">
                 <UserRound className="h-4 w-4" aria-hidden="true" />
                 <span>
-                  {selectedMission.clientName} ({selectedMission.clientEmail})
+                  {selectedMission.establishmentName} ({selectedMission.establishmentEmail})
                 </span>
               </div>
 

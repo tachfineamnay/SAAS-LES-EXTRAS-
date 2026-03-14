@@ -11,7 +11,7 @@ import { BookingsService } from "./bookings.service";
 
 @Controller("bookings")
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.CLIENT, UserRole.TALENT)
+@Roles(UserRole.ESTABLISHMENT, UserRole.FREELANCE)
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) { }
 

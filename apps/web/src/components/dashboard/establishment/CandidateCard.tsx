@@ -11,7 +11,7 @@ import { acceptCandidate } from "@/app/actions/missions";
 
 interface CandidateCardProps {
   bookingId: string;
-  talent: {
+  freelance: {
     id: string;
     email: string;
     profile?: {
@@ -28,19 +28,19 @@ interface CandidateCardProps {
 
 export function CandidateCard({
   bookingId,
-  talent,
+  freelance,
   status,
   motivation,
   proposedRate,
 }: CandidateCardProps) {
   const [isPending, setIsPending] = useState(false);
 
-  const firstName = talent?.profile?.firstName;
-  const lastName = talent?.profile?.lastName;
+  const firstName = freelance?.profile?.firstName;
+  const lastName = freelance?.profile?.lastName;
   const name =
     firstName || lastName
       ? `${firstName ?? ""} ${lastName ?? ""}`.trim()
-      : talent?.email ?? "Candidat";
+      : freelance?.email ?? "Candidat";
   const initials = name
     .split(" ")
     .map((w) => w[0])
@@ -71,8 +71,8 @@ export function CandidateCard({
     <Card className={`flex flex-col overflow-hidden ${isConfirmed ? "border-green-500/50 bg-green-50/30" : ""}`}>
       <CardHeader className="p-4 flex flex-row items-center gap-3 space-y-0">
         <Avatar className="h-10 w-10">
-          {talent?.profile?.avatar && (
-            <AvatarImage src={talent.profile.avatar} alt={name} />
+          {freelance?.profile?.avatar && (
+            <AvatarImage src={freelance.profile.avatar} alt={name} />
           )}
           <AvatarFallback className="text-xs font-semibold">
             {initials || <User className="h-5 w-5" />}
@@ -80,8 +80,8 @@ export function CandidateCard({
         </Avatar>
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-sm truncate">{name}</h4>
-          {talent?.profile?.jobTitle && (
-            <p className="text-xs text-muted-foreground truncate">{talent.profile.jobTitle}</p>
+          {freelance?.profile?.jobTitle && (
+            <p className="text-xs text-muted-foreground truncate">{freelance.profile.jobTitle}</p>
           )}
         </div>
         {isConfirmed && (

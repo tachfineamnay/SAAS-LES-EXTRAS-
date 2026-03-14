@@ -81,11 +81,11 @@ export class BookingsService {
   async getBookingsPageData(user: AuthenticatedUser): Promise<BookingsPageData> {
     const lines: BookingLine[] = [];
 
-    if (user.role === UserRole.CLIENT) {
+    if (user.role === UserRole.ESTABLISHMENT) {
       const [missions, serviceBookings] = await this.prisma.$transaction([
         this.prisma.reliefMission.findMany({
           where: {
-            clientId: user.id,
+            establishmentId: user.id,
           },
           orderBy: {
             dateStart: "asc",
@@ -102,7 +102,7 @@ export class BookingsService {
               select: {
                 id: true,
                 status: true,
-                talent: {
+                freelance: {
                   select: {
                     email: true,
                   },
@@ -118,7 +118,7 @@ export class BookingsService {
         }),
         this.prisma.booking.findMany({
           where: {
-            clientId: user.id,
+            establishmentId: user.id,
             serviceId: {
               not: null,
             },
@@ -130,7 +130,7 @@ export class BookingsService {
             id: true,
             status: true,
             scheduledAt: true,
-            talent: {
+            freelance: {
               select: {
                 email: true,
               },
@@ -157,8 +157,8 @@ export class BookingsService {
         const interlocutor =
           mission.bookings.find(
             (booking) =>
-              booking.status !== BookingStatus.CANCELLED && Boolean(booking.talent?.email),
-          )?.talent?.email ?? UNKNOWN_COUNTERPART;
+              booking.status !== BookingStatus.CANCELLED && Boolean(booking.freelance?.email),
+          )?.freelance?.email ?? UNKNOWN_COUNTERPART;
 
         lines.push({
           lineId: mission.id,
@@ -171,7 +171,7 @@ export class BookingsService {
           contactEmail: interlocutor,
           relatedBookingId: mission.bookings.find(
             (b) =>
-              b.status !== BookingStatus.CANCELLED && Boolean(b.talent?.email),
+              b.status !== BookingStatus.CANCELLED && Boolean(b.freelance?.email),
           )?.id,
           invoiceUrl: mission.bookings.find(
             (b) => b.status === BookingStatus.COMPLETED || b.status === BookingStatus.PAID,
@@ -181,7 +181,7 @@ export class BookingsService {
 
       for (const booking of serviceBookings) {
         const interlocutor =
-          booking.service?.owner.email ?? booking.talent?.email ?? UNKNOWN_COUNTERPART;
+          booking.service?.owner.email ?? booking.freelance?.email ?? UNKNOWN_COUNTERPART;
 
         lines.push({
           lineId: booking.id,
@@ -200,7 +200,7 @@ export class BookingsService {
       const [missionBookings, serviceBookings] = await this.prisma.$transaction([
         this.prisma.booking.findMany({
           where: {
-            talentId: user.id,
+            freelanceId: user.id,
             reliefMissionId: {
               not: null,
             },
@@ -223,7 +223,7 @@ export class BookingsService {
                 dateStart: true,
                 address: true,
                 status: true,
-                client: {
+                establishment: {
                   select: {
                     email: true,
                   },
@@ -239,7 +239,7 @@ export class BookingsService {
         }),
         this.prisma.booking.findMany({
           where: {
-            talentId: user.id,
+            freelanceId: user.id,
             serviceId: {
               not: null,
             },
@@ -251,7 +251,7 @@ export class BookingsService {
             id: true,
             status: true,
             scheduledAt: true,
-            client: {
+            establishment: {
               select: {
                 email: true,
               },
@@ -270,7 +270,7 @@ export class BookingsService {
           continue;
         }
 
-        const interlocutor = mb.reliefMission.client.email ?? UNKNOWN_COUNTERPART;
+        const interlocutor = mb.reliefMission.establishment.email ?? UNKNOWN_COUNTERPART;
 
         lines.push({
           lineId: mb.reliefMission.id,
@@ -287,7 +287,7 @@ export class BookingsService {
       }
 
       for (const booking of serviceBookings) {
-        const interlocutor = booking.client.email ?? UNKNOWN_COUNTERPART;
+        const interlocutor = booking.establishment.email ?? UNKNOWN_COUNTERPART;
         lines.push({
           lineId: booking.id,
           lineType: "SERVICE_BOOKING",
@@ -319,7 +319,7 @@ export class BookingsService {
         where: { id: input.lineId },
         select: {
           id: true,
-          clientId: true,
+          establishmentId: true,
         },
       });
 
@@ -327,20 +327,20 @@ export class BookingsService {
         throw new NotFoundException("Mission not found");
       }
 
-      if (user.role === UserRole.CLIENT && mission.clientId !== user.id) {
+      if (user.role === UserRole.ESTABLISHMENT && mission.establishmentId !== user.id) {
         throw new ForbiddenException("You cannot cancel this mission");
       }
 
-      if (user.role === UserRole.TALENT) {
-        const talentBooking = await this.prisma.booking.findFirst({
+      if (user.role === UserRole.FREELANCE) {
+        const freelanceBooking = await this.prisma.booking.findFirst({
           where: {
             reliefMissionId: input.lineId,
-            talentId: user.id,
+            freelanceId: user.id,
           },
           select: { id: true },
         });
 
-        if (!talentBooking) {
+        if (!freelanceBooking) {
           throw new ForbiddenException("You cannot cancel this mission");
         }
       }
@@ -372,8 +372,8 @@ export class BookingsService {
       where: { id: input.lineId },
       select: {
         id: true,
-        clientId: true,
-        talentId: true,
+        establishmentId: true,
+        freelanceId: true,
       },
     });
 
@@ -381,7 +381,7 @@ export class BookingsService {
       throw new NotFoundException("Booking not found");
     }
 
-    if (booking.clientId !== user.id && booking.talentId !== user.id) {
+    if (booking.establishmentId !== user.id && booking.freelanceId !== user.id) {
       throw new ForbiddenException("You cannot cancel this booking");
     }
 
@@ -406,9 +406,9 @@ export class BookingsService {
       const mission = await this.prisma.reliefMission.findUnique({
         where: { id: lineId },
         select: {
-          clientId: true,
+          establishmentId: true,
           address: true,
-          client: {
+          establishment: {
             select: {
               email: true,
             },
@@ -419,8 +419,8 @@ export class BookingsService {
             },
             select: {
               status: true,
-              talentId: true,
-              talent: {
+              freelanceId: true,
+              freelance: {
                 select: {
                   email: true,
                 },
@@ -434,24 +434,24 @@ export class BookingsService {
         throw new NotFoundException("Mission not found");
       }
 
-      if (user.role === UserRole.CLIENT && mission.clientId !== user.id) {
+      if (user.role === UserRole.ESTABLISHMENT && mission.establishmentId !== user.id) {
         throw new ForbiddenException("You cannot view this mission");
       }
 
-      if (user.role === UserRole.TALENT) {
-        const isParticipant = mission.bookings.some((booking) => booking.talentId === user.id);
+      if (user.role === UserRole.FREELANCE) {
+        const isParticipant = mission.bookings.some((booking) => booking.freelanceId === user.id);
         if (!isParticipant) {
           throw new ForbiddenException("You cannot view this mission");
         }
       }
 
       const contactEmail =
-        user.role === UserRole.CLIENT
+        user.role === UserRole.ESTABLISHMENT
           ? (mission.bookings.find(
             (booking) =>
-              booking.status !== BookingStatus.CANCELLED && Boolean(booking.talent?.email),
-          )?.talent?.email ?? UNKNOWN_COUNTERPART)
-          : (mission.client.email ?? UNKNOWN_COUNTERPART);
+              booking.status !== BookingStatus.CANCELLED && Boolean(booking.freelance?.email),
+          )?.freelance?.email ?? UNKNOWN_COUNTERPART)
+          : (mission.establishment.email ?? UNKNOWN_COUNTERPART);
 
       return {
         address: mission.address,
@@ -462,9 +462,9 @@ export class BookingsService {
     const booking = await this.prisma.booking.findUnique({
       where: { id: lineId },
       select: {
-        clientId: true,
-        talentId: true,
-        client: {
+        establishmentId: true,
+        freelanceId: true,
+        establishment: {
           select: {
             email: true,
           },
@@ -486,16 +486,16 @@ export class BookingsService {
       throw new NotFoundException("Booking not found");
     }
 
-    const isClientOwner = booking.clientId === user.id;
-    const isTalentOwner = booking.talentId === user.id || booking.service?.ownerId === user.id;
+    const isEstablishmentOwner = booking.establishmentId === user.id;
+    const isFreelanceOwner = booking.freelanceId === user.id || booking.service?.ownerId === user.id;
 
-    if (!isClientOwner && !isTalentOwner) {
+    if (!isEstablishmentOwner && !isFreelanceOwner) {
       throw new ForbiddenException("You cannot view this booking");
     }
 
-    const contactEmail = isClientOwner
+    const contactEmail = isEstablishmentOwner
       ? (booking.service?.owner.email ?? UNKNOWN_COUNTERPART)
-      : (booking.client.email ?? UNKNOWN_COUNTERPART);
+      : (booking.establishment.email ?? UNKNOWN_COUNTERPART);
 
     return {
       address: SERVICE_ADDRESS_PLACEHOLDER,
@@ -519,12 +519,12 @@ export class BookingsService {
       throw new NotFoundException("Booking not found");
     }
 
-    const isMissionClient =
-      booking.reliefMission && booking.reliefMission.clientId === user.id;
+    const isMissionEstablishment =
+      booking.reliefMission && booking.reliefMission.establishmentId === user.id;
     const isServiceOwner =
       booking.service && booking.service.ownerId === user.id;
 
-    if (!isMissionClient && !isServiceOwner) {
+    if (!isMissionEstablishment && !isServiceOwner) {
       throw new ForbiddenException("You cannot confirm this booking");
     }
 
@@ -532,13 +532,13 @@ export class BookingsService {
       throw new BadRequestException("Booking is not pending");
     }
 
-    // Check Client Credits
-    const clientProfile = await this.prisma.profile.findUnique({
+    // Check Establishment Credits
+    const establishmentProfile = await this.prisma.profile.findUnique({
       where: { userId: user.id },
       select: { availableCredits: true },
     });
 
-    if (!clientProfile || clientProfile.availableCredits <= 0) {
+    if (!establishmentProfile || establishmentProfile.availableCredits <= 0) {
       throw new ForbiddenException("Solde insuffisant. Veuillez acheter un pack pour valider cette mission.");
     }
 
@@ -584,10 +584,10 @@ export class BookingsService {
       ]);
     }
 
-    // Notify Talent
-    if (booking.talentId) {
+    // Notify Freelance
+    if (booking.freelanceId) {
       await this.notifications.create({
-        userId: booking.talentId,
+        userId: booking.freelanceId,
         message: `Vous avez été recruté pour la mission "${booking.reliefMission?.title ?? 'Mission'}" !`,
         type: "SUCCESS",
       });
@@ -612,10 +612,10 @@ export class BookingsService {
       throw new NotFoundException("Booking not found");
     }
 
-    const isMissionClient =
-      booking.reliefMission && booking.reliefMission.clientId === user.id;
+    const isMissionEstablishment2 =
+      booking.reliefMission && booking.reliefMission.establishmentId === user.id;
 
-    if (isMissionClient) {
+    if (isMissionEstablishment2) {
       // Mission flow: Client completes -> Awaiting Payment
     } else if (booking.service) {
       // Service flow: Owner completes -> Awaiting Payment? 
@@ -625,8 +625,8 @@ export class BookingsService {
       }
     } else {
       // Direct booking? (Quote without mission)
-      // Check if user is the client
-      if (booking.clientId !== user.id) {
+      // Check if user is the establishment
+      if (booking.establishmentId !== user.id) {
         throw new ForbiddenException("You cannot complete this booking");
       }
     }
@@ -664,10 +664,10 @@ export class BookingsService {
       }),
     ]);
 
-    // Notify Talent
-    if (booking.talentId) {
+    // Notify Freelance
+    if (booking.freelanceId) {
       await this.notifications.create({
-        userId: booking.talentId,
+        userId: booking.freelanceId,
         message: `Mission marquée comme terminée. En attente de validation du paiement.`,
         type: "INFO",
       });
@@ -691,8 +691,8 @@ export class BookingsService {
 
     if (!booking) throw new NotFoundException("Booking not found");
 
-    if (booking.clientId !== user.id) {
-      throw new ForbiddenException("Only the client can authorize payment");
+    if (booking.establishmentId !== user.id) {
+      throw new ForbiddenException("Only the establishment can authorize payment");
     }
 
     if (booking.status !== BookingStatus.COMPLETED_AWAITING_PAYMENT) {
@@ -720,10 +720,10 @@ export class BookingsService {
       }),
     ]);
 
-    // Notify Talent
-    if (booking.talentId) {
+    // Notify Freelance
+    if (booking.freelanceId) {
       await this.notifications.create({
-        userId: booking.talentId,
+        userId: booking.freelanceId,
         message: `Paiement validé ! Facture de ${invoice.amount}€ générée.`,
         type: "SUCCESS",
       });

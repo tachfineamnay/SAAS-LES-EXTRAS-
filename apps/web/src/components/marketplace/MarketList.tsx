@@ -25,7 +25,7 @@ export function MarketList({
   isVerified = true,
 }: MarketListProps) {
   const userRole = useUIStore((state) => state.userRole);
-  const isTalent = userRole === "TALENT";
+  const isFreelance = userRole === "FREELANCE";
 
   return (
     <section className="space-y-6">
@@ -33,13 +33,13 @@ export function MarketList({
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Marketplace</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {isTalent
+            {isFreelance
               ? "Missions de Renforts disponibles pour les freelances."
               : "Ateliers et formations disponibles à la réservation."}
           </p>
         </div>
 
-        {isTalent && (
+        {isFreelance && (
           <div className="flex flex-wrap gap-2 items-center">
             <Button variant="glass" size="sm" className="h-8 text-xs rounded-full">
               <Filter className="h-3 w-3 mr-1" aria-hidden="true" />
@@ -56,7 +56,7 @@ export function MarketList({
         )}
       </div>
 
-      {isTalent && missions.length > 0 && (
+      {isFreelance && missions.length > 0 && (
         <div className="text-xs text-muted-foreground font-medium">
           <Badge variant="quiet" className="mr-1">{missions.length}</Badge>
           mission{missions.length > 1 ? "s" : ""} de renfort disponible{missions.length > 1 ? "s" : ""}
@@ -73,7 +73,7 @@ export function MarketList({
         </div>
       )}
 
-      {isTalent ? (
+      {isFreelance ? (
         missions.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {missions.map((mission) => (

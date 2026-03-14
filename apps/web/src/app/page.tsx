@@ -457,13 +457,13 @@ export default function HomePage() {
                     <motion.div whileTap={{ scale: 0.97 }}>
                       <Button asChild size="lg" variant="coral"
                         className={`${DISPLAY} h-12 px-7 text-base font-semibold rounded-xl w-full sm:w-auto shadow-lg shadow-[hsl(var(--coral)/0.25)]`}>
-                        <Link href="/register?role=CLIENT">Trouver un renfort <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                        <Link href="/register?role=ESTABLISHMENT">Trouver un renfort <ArrowRight className="ml-2 h-4 w-4" /></Link>
                       </Button>
                     </motion.div>
                     <motion.div whileTap={{ scale: 0.97 }}>
                       <Button asChild size="lg" variant="teal-soft"
                         className={`${DISPLAY} h-12 px-7 text-base font-semibold rounded-xl w-full sm:w-auto`}>
-                        <Link href="/register?role=TALENT">Je suis indépendant</Link>
+                        <Link href="/register?role=FREELANCE">Je suis indépendant</Link>
                       </Button>
                     </motion.div>
                   </motion.div>
@@ -696,7 +696,7 @@ export default function HomePage() {
                         <motion.div whileTap={{ scale: 0.97 }}>
                           <Button asChild size="lg" variant="coral"
                             className={`${DISPLAY} h-12 px-7 text-sm font-semibold rounded-xl shadow-lg shadow-[hsl(var(--coral)/0.20)]`}>
-                            <Link href="/register?role=TALENT">
+                            <Link href="/register?role=FREELANCE">
                               Créer mon profil gratuit <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                           </Button>
@@ -827,13 +827,13 @@ export default function HomePage() {
                     <motion.div whileTap={{ scale: 0.97 }}>
                       <Button asChild size="lg" variant="coral"
                         className={`${DISPLAY} h-12 px-8 text-base font-semibold rounded-xl w-full sm:w-auto shadow-xl shadow-[hsl(var(--coral)/0.35)]`}>
-                        <Link href="/register?role=CLIENT">Commencer gratuitement <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                        <Link href="/register?role=ESTABLISHMENT">Commencer gratuitement <ArrowRight className="ml-2 h-4 w-4" /></Link>
                       </Button>
                     </motion.div>
                     <motion.div whileTap={{ scale: 0.97 }}>
                       <Button asChild size="lg"
                         className={`${DISPLAY} h-12 px-8 text-base font-semibold rounded-xl bg-white/15 text-white border border-white/25 hover:bg-white/25 w-full sm:w-auto`}>
-                        <Link href="/register?role=TALENT">Espace indépendant <ArrowUpRight className="ml-1.5 h-4 w-4" /></Link>
+                        <Link href="/register?role=FREELANCE">Espace indépendant <ArrowUpRight className="ml-1.5 h-4 w-4" /></Link>
                       </Button>
                     </motion.div>
                   </div>

@@ -23,10 +23,10 @@ export default async function EstablishmentPage() {
   let activeBookings = 0;
   try {
     const results = await Promise.all([
-      prisma.reliefMission.count({ where: { clientId: session.user.id } }),
+      prisma.reliefMission.count({ where: { establishmentId: session.user.id } }),
       prisma.booking.count({
         where: {
-          clientId: session.user.id,
+          establishmentId: session.user.id,
           status: { in: ["PENDING", "CONFIRMED"] },
         },
       }),

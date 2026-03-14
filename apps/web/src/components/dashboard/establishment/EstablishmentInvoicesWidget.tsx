@@ -5,18 +5,18 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download, FileText } from "lucide-react";
 
-interface ClientInvoicesWidgetProps {
+interface EstablishmentInvoicesWidgetProps {
     invoices: any[]; // We will type this loosely or import the type if available
 }
 
-export function ClientInvoicesWidget({ invoices }: ClientInvoicesWidgetProps) {
+export function EstablishmentInvoicesWidget({ invoices }: EstablishmentInvoicesWidgetProps) {
     const handleExportCsv = () => {
         // Simple client-side CSV export
         const headers = ["Numero", "Date", "Freelance", "Montant", "Statut"];
         const rows = invoices.map(inv => [
             inv.invoiceNumber,
             new Date(inv.createdAt).toLocaleDateString(),
-            inv.booking?.talent?.profile?.lastName || "Inconnu",
+            inv.booking?.freelance?.profile?.lastName || "Inconnu",
             inv.amount + " €",
             inv.status
         ]);
@@ -71,7 +71,7 @@ export function ClientInvoicesWidget({ invoices }: ClientInvoicesWidgetProps) {
                                     {new Date(invoice.createdAt).toLocaleDateString("fr-FR", { day: '2-digit', month: '2-digit', year: '2-digit' })}
                                 </TableCell>
                                 <TableCell className="text-xs">
-                                    {invoice.booking?.talent?.profile?.firstName} {invoice.booking?.talent?.profile?.lastName?.charAt(0)}.
+                                    {invoice.booking?.freelance?.profile?.firstName} {invoice.booking?.freelance?.profile?.lastName?.charAt(0)}.
                                 </TableCell>
                                 <TableCell className="text-right text-xs font-medium">
                                     {invoice.amount.toFixed(2)} €

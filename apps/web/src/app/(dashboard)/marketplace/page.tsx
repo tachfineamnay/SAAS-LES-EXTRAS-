@@ -1,6 +1,6 @@
 import { getAvailableMissions, getMarketplaceCatalogue } from "@/app/actions/marketplace";
 import { FreelanceJobBoard } from "@/components/marketplace/FreelanceJobBoard";
-import { ClientCatalogue } from "@/components/marketplace/ClientCatalogue";
+import { EstablishmentCatalogue } from "@/components/marketplace/EstablishmentCatalogue";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 
@@ -10,22 +10,22 @@ export default async function MarketplacePage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  if (session.user.role === "TALENT") {
+  if (session.user.role === "FREELANCE") {
     const missions = await getAvailableMissions(session.token);
     return <FreelanceJobBoard missions={missions} />;
   }
 
-  if (session.user.role === "CLIENT") {
+  if (session.user.role === "ESTABLISHMENT") {
     let services: Awaited<ReturnType<typeof getMarketplaceCatalogue>>["services"] = [];
-    let talents: Awaited<ReturnType<typeof getMarketplaceCatalogue>>["talents"] = [];
+    let freelances: Awaited<ReturnType<typeof getMarketplaceCatalogue>>["freelances"] = [];
     try {
       const data = await getMarketplaceCatalogue(session.token);
       services = data.services;
-      talents = data.talents;
+      freelances = data.freelances;
     } catch (err) {
       console.error("MarketplacePage catalogue error", err);
     }
-    return <ClientCatalogue services={services} talents={talents} />;
+    return <EstablishmentCatalogue services={services} freelances={freelances} />;
   }
 
   return (

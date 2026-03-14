@@ -6,7 +6,7 @@ import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 // In a real scenario, we would fetch the user from the session
 const mockUser = {
     id: "user_mock_id",
-    role: "TALENT" as "TALENT" | "CLIENT",
+    role: "FREELANCE" as "FREELANCE" | "ESTABLISHMENT",
 };
 
 export default async function WizardPage() {
@@ -21,7 +21,7 @@ export default async function WizardPage() {
             <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold tracking-tight">Complétez votre profil</h1>
                 <p className="text-muted-foreground mt-2">
-                    {user.role === "CLIENT" ? "Configurez votre établissement." : "Renseignez vos informations professionnelles."}
+                    {user.role === "ESTABLISHMENT" ? "Configurez votre établissement." : "Renseignez vos informations professionnelles."}
                 </p>
             </div>
 

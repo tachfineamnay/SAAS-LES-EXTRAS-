@@ -4,18 +4,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { MapPin, Briefcase } from "lucide-react";
-import { SerializedTalent } from "@/app/actions/marketplace";
+import { SerializedFreelance } from "@/app/actions/marketplace";
 
-interface TalentCardProps {
-    talent: SerializedTalent;
+interface FreelanceCardProps {
+    freelance: SerializedFreelance;
 }
 
 function getInitials(firstName: string, lastName: string) {
     return `${firstName[0]}${lastName[0]}`.toUpperCase();
 }
 
-export function TalentCard({ talent }: TalentCardProps) {
-    const profile = talent.profile;
+export function FreelanceCard({ freelance }: FreelanceCardProps) {
+    const profile = freelance.profile;
     const name = profile ? `${profile.firstName} ${profile.lastName}` : "Utilisateur";
     const initials = profile ? getInitials(profile.firstName, profile.lastName) : "U";
     const job = profile?.jobTitle || "Freelance";

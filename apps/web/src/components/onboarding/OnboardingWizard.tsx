@@ -18,7 +18,7 @@ const steps = [
     { id: "location", title: "Localisation", icon: MapPin },
 ];
 
-export default function OnboardingWizard({ userId, userRole }: { userId: string, userRole: "CLIENT" | "TALENT" }) {
+export default function OnboardingWizard({ userId, userRole }: { userId: string, userRole: "ESTABLISHMENT" | "FREELANCE" }) {
     const router = useRouter();
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -139,7 +139,7 @@ export default function OnboardingWizard({ userId, userRole }: { userId: string,
 
                             {currentStep === 1 && (
                                 <div className="space-y-4">
-                                    {userRole === "CLIENT" ? (
+                                    {userRole === "ESTABLISHMENT" ? (
                                         <>
                                             <div className="space-y-2">
                                                 <Label>Nom de l'établissement / Société</Label>

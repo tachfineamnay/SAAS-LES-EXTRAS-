@@ -88,7 +88,7 @@ export function ServicesTable({ services }: ServicesTableProps) {
   return (
     <>
       <DataTableShell
-        columns={["Titre", "Talent", "Prix", "Type", "Actions"]}
+        columns={["Titre", "Freelance", "Prix", "Type", "Actions"]}
         emptyTitle="Aucun service à modérer"
         emptyDescription="Tous les services sont traités."
       >
@@ -99,7 +99,7 @@ export function ServicesTable({ services }: ServicesTableProps) {
             onClick={() => handleOpenDetails(service)}
           >
             <TableCell className="font-medium text-foreground">{service.title}</TableCell>
-            <TableCell className="text-sm text-muted-foreground">{service.talentName}</TableCell>
+            <TableCell className="text-sm text-muted-foreground">{service.freelanceName}</TableCell>
             <TableCell className="text-sm text-foreground">
               {moneyFormatter.format(service.price)}
             </TableCell>
@@ -155,7 +155,7 @@ export function ServicesTable({ services }: ServicesTableProps) {
               <div className="flex items-center gap-2 text-muted-foreground">
                 <UserRound className="h-4 w-4" aria-hidden="true" />
                 <span>
-                  {selectedService.talentName} ({selectedService.talentEmail})
+                  {selectedService.freelanceName} ({selectedService.freelanceEmail})
                 </span>
               </div>
 

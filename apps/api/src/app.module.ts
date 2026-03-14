@@ -1,5 +1,8 @@
 import { Module } from "@nestjs/common";
+import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { SentryModule } from "@sentry/nestjs/setup";
 import { AdminOffersModule } from "./admin-offers/admin-offers.module";
 import { AdminUsersModule } from "./admin-users/admin-users.module";
 import { AuthModule } from "./auth/auth.module";
@@ -15,9 +18,22 @@ import { QuotesModule } from './quotes/quotes.module';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: "default",
+        ttl: 60000, // 1 minute window
+        limit: 60,  // 60 requests per minute globally
+      },
+      {
+        name: "auth",
+        ttl: 60000,
+        limit: 10,  // 10 auth attempts per minute
+      },
+    ]),
     PrismaModule,
     AdminUsersModule,
     AdminOffersModule,
@@ -31,5 +47,11 @@ import { QuotesModule } from './quotes/quotes.module';
     QuotesModule,
   ],
   controllers: [HealthController],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule { }

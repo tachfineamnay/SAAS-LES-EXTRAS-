@@ -2,7 +2,7 @@
 
 import { apiRequest } from "@/lib/api";
 
-export type DemoRole = "CLIENT" | "TALENT" | "ADMIN";
+export type DemoRole = "ESTABLISHMENT" | "FREELANCE" | "ADMIN";
 
 type DemoAuthSession = {
   token: string;
@@ -22,8 +22,8 @@ const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD ?? "password123";
 const AUTH_ENDPOINT = "/auth/login";
 
 const DEMO_CREDENTIALS: Record<DemoRole, { email: string }> = {
-  CLIENT: { email: "directeur@mecs-avenir.fr" },
-  TALENT: { email: "karim.educ@gmail.com" },
+  ESTABLISHMENT: { email: "directeur@mecs-avenir.fr" },
+  FREELANCE: { email: "karim.educ@gmail.com" },
   ADMIN: { email: "admin@lesextras.local" },
 };
 

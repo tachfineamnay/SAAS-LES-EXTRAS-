@@ -15,21 +15,21 @@ export class ServicesController {
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.CLIENT, UserRole.TALENT)
+  @Roles(UserRole.ESTABLISHMENT, UserRole.FREELANCE)
   findAll() {
     return this.servicesService.findAll();
   }
 
   @Get(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.CLIENT, UserRole.TALENT)
+  @Roles(UserRole.ESTABLISHMENT, UserRole.FREELANCE)
   findOne(@Param("id") id: string) {
     return this.servicesService.findOne(id);
   }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.TALENT)
+  @Roles(UserRole.FREELANCE)
   createService(
     @Body() dto: CreateServiceDto,
     @CurrentUser() user: AuthenticatedUser,
@@ -39,7 +39,7 @@ export class ServicesController {
 
   @Post(":serviceId/book")
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.CLIENT)
+  @Roles(UserRole.ESTABLISHMENT)
   bookService(
     @Param("serviceId") serviceId: string,
     @Body() dto: BookServiceDto,

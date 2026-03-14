@@ -10,7 +10,7 @@ import { UserRole } from "@/lib/stores/useUIStore";
 const RegisterSchema = z.object({
     email: z.string().email({ message: "Email invalide" }),
     password: z.string().min(8, { message: "Le mot de passe doit contenir au moins 8 caractères" }),
-    role: z.enum(["CLIENT", "TALENT"], { message: "Rôle invalide" }),
+    role: z.enum(["ESTABLISHMENT", "FREELANCE"], { message: "Rôle invalide" }),
 });
 
 export type RegisterState = {
@@ -28,7 +28,7 @@ type AuthResponse = {
     user: {
         id: string;
         email: string;
-        role: "CLIENT" | "TALENT" | "ADMIN";
+        role: "ESTABLISHMENT" | "FREELANCE" | "ADMIN";
         onboardingStep: number;
     };
 };

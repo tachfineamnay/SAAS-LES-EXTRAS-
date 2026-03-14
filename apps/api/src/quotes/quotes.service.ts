@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { BookingStatus, QuoteStatus } from '@prisma/client';
 
 @Injectable()
@@ -24,8 +24,8 @@ export class QuotesService {
     });
   }
 
-  async findAll(role: 'CLIENT' | 'TALENT', userId: string) {
-    const where = role === 'CLIENT'
+  async findAll(role: 'ESTABLISHMENT' | 'FREELANCE', userId: string) {
+    const where = role === 'ESTABLISHMENT'
       ? { establishmentId: userId }
       : { freelanceId: userId };
 
@@ -59,7 +59,7 @@ export class QuotesService {
     const quote = await this.findOne(id);
 
     if (quote.freelanceId !== userId) {
-      throw new ForbiddenException('Only the talent can edit this quote');
+      throw new ForbiddenException('Only the freelance can edit this quote');
     }
 
     if (quote.status === QuoteStatus.ACCEPTED || quote.status === QuoteStatus.REJECTED) {
@@ -107,8 +107,8 @@ export class QuotesService {
       await tx.booking.create({
         data: {
           status: BookingStatus.CONFIRMED,
-          clientId: quote.establishmentId,
-          talentId: quote.freelanceId,
+          establishmentId: quote.establishmentId,
+          freelanceId: quote.freelanceId,
           quoteId: quote.id,
           reliefMissionId: quote.reliefMissionId ?? undefined,
           scheduledAt: quote.startDate ?? new Date(),

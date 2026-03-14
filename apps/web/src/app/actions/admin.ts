@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getAdminSessionToken } from "@/app/actions/_shared/admin-session";
 import { apiRequest } from "@/lib/api";
 
-export type AdminUserRole = "CLIENT" | "TALENT" | "ADMIN";
+export type AdminUserRole = "ESTABLISHMENT" | "FREELANCE" | "ADMIN";
 export type AdminUserStatus = "PENDING" | "VERIFIED" | "BANNED";
 
 export type AdminUserRow = {
@@ -38,8 +38,8 @@ export type AdminMissionRow = {
   dateStart: string;
   dateEnd: string;
   hourlyRate: number;
-  clientName: string;
-  clientEmail: string;
+  establishmentName: string;
+  establishmentEmail: string;
   candidatesCount: number;
 };
 
@@ -52,8 +52,8 @@ export type AdminServiceRow = {
   isFeatured: boolean;
   isHidden: boolean;
   createdAt: string;
-  talentName: string;
-  talentEmail: string;
+  freelanceName: string;
+  freelanceEmail: string;
 };
 
 type GetAdminUsersInput = {

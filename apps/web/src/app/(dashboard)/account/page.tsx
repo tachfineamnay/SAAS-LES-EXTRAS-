@@ -39,7 +39,7 @@ export default async function AccountPage() {
   return (
     <UserProfileClient
       initialData={initialData}
-      userRole={session.user.role as "CLIENT" | "TALENT" | "ADMIN"}
+      userRole={session.user.role as "ESTABLISHMENT" | "FREELANCE" | "ADMIN"}
       userEmail={session.user.email}
     />
   );

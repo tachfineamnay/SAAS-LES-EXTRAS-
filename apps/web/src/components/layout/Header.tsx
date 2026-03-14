@@ -126,7 +126,7 @@ export function Header({ onOpenMobileSidebar, headerOpacity, borderOpacity }: He
             variant="outline"
             className="hidden sm:inline-flex text-[11px] rounded-full border-border px-2.5"
           >
-            {userRole === "CLIENT" ? "🏥 Établissement" : "👤 Freelance"}
+            {userRole === "ESTABLISHMENT" ? "🏥 Établissement" : "👤 Freelance"}
           </Badge>
 
           {/* Demo role switcher */}
@@ -135,13 +135,13 @@ export function Header({ onOpenMobileSidebar, headerOpacity, borderOpacity }: He
               <SelectValue placeholder="Rôle" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
-              <SelectItem value="CLIENT">Établissement</SelectItem>
-              <SelectItem value="TALENT">Freelance</SelectItem>
+              <SelectItem value="ESTABLISHMENT">Établissement</SelectItem>
+              <SelectItem value="FREELANCE">Freelance</SelectItem>
             </SelectContent>
           </Select>
 
           {/* Primary CTA */}
-          {userRole === "CLIENT" ? (
+          {userRole === "ESTABLISHMENT" ? (
             <Button
               onClick={openRenfortModal}
               variant="coral"

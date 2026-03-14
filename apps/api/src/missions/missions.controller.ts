@@ -16,7 +16,7 @@ export class MissionsController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.CLIENT)
+  @Roles(UserRole.ESTABLISHMENT)
   createMission(
     @Body() dto: CreateMissionDto,
     @CurrentUser() user: AuthenticatedUser,
@@ -26,21 +26,21 @@ export class MissionsController {
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.TALENT)
+  @Roles(UserRole.FREELANCE)
   findAll(@Query() filter: FindMissionsQueryDto) {
     return this.missionsService.findAll(filter);
   }
 
   @Get("managed")
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.CLIENT)
+  @Roles(UserRole.ESTABLISHMENT)
   getManagedMissions(@CurrentUser() user: AuthenticatedUser) {
     return this.missionsService.getManagedMissions(user.id);
   }
 
   @Post(":missionId/apply")
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.TALENT)
+  @Roles(UserRole.FREELANCE)
   apply(
     @Param("missionId") missionId: string,
     @Body() dto: ApplyMissionDto,

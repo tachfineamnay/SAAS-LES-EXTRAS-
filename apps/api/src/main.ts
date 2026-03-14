@@ -1,5 +1,8 @@
+import "./instrument";
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import { SentryGlobalFilter } from "@sentry/nestjs/setup";
+import helmet from "helmet";
 import { AppModule } from "./app.module";
 
 const DEFAULT_CORS_ORIGINS = [
@@ -44,6 +47,8 @@ async function bootstrap() {
     },
   });
 
+  app.use(helmet());
+
   app.setGlobalPrefix("api");
   app.useGlobalPipes(
     new ValidationPipe({
@@ -52,6 +57,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  app.useGlobalFilters(new SentryGlobalFilter());
   await app.listen(process.env.PORT ?? 3001);
 }
 

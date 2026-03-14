@@ -53,7 +53,7 @@ const seedUsers: SeedUser[] = [
     id: "seed-user-client-demo",
     profileId: "seed-profile-client-demo",
     email: "directeur@mecs-avenir.fr",
-    role: UserRole.CLIENT,
+    role: UserRole.ESTABLISHMENT,
     status: UserStatus.VERIFIED,
     firstName: "Laurence",
     lastName: "Ménard",
@@ -64,7 +64,7 @@ const seedUsers: SeedUser[] = [
     id: "seed-user-talent-demo",
     profileId: "seed-profile-talent-demo",
     email: "karim.educ@gmail.com",
-    role: UserRole.TALENT,
+    role: UserRole.FREELANCE,
     status: UserStatus.VERIFIED,
     firstName: "Karim",
     lastName: "Bensalem",
@@ -76,7 +76,7 @@ const seedUsers: SeedUser[] = [
     id: "seed-user-client-chrs",
     profileId: "seed-profile-client-chrs",
     email: "cadre-nuit@chrs-horizon.fr",
-    role: UserRole.CLIENT,
+    role: UserRole.ESTABLISHMENT,
     status: UserStatus.PENDING,
     firstName: "Sophie",
     lastName: "Bournet",
@@ -87,7 +87,7 @@ const seedUsers: SeedUser[] = [
     id: "seed-user-client-ehpad",
     profileId: "seed-profile-client-ehpad",
     email: "coordination@ehpad-rosiers.fr",
-    role: UserRole.CLIENT,
+    role: UserRole.ESTABLISHMENT,
     status: UserStatus.PENDING,
     firstName: "Marc",
     lastName: "Rochat",
@@ -98,7 +98,7 @@ const seedUsers: SeedUser[] = [
     id: "seed-user-client-itep",
     profileId: "seed-profile-client-itep",
     email: "direction@itep-monts.fr",
-    role: UserRole.CLIENT,
+    role: UserRole.ESTABLISHMENT,
     status: UserStatus.VERIFIED,
     firstName: "Claire",
     lastName: "Dubois",
@@ -109,7 +109,7 @@ const seedUsers: SeedUser[] = [
     id: "seed-user-talent-training",
     profileId: "seed-profile-talent-training",
     email: "amelie.formation@prointervenants.fr",
-    role: UserRole.TALENT,
+    role: UserRole.FREELANCE,
     status: UserStatus.PENDING,
     firstName: "Amélie",
     lastName: "Rodriguez",
@@ -121,7 +121,7 @@ const seedUsers: SeedUser[] = [
     id: "seed-user-talent-cooking",
     profileId: "seed-profile-talent-cooking",
     email: "nina.cuisine@prointervenants.fr",
-    role: UserRole.TALENT,
+    role: UserRole.FREELANCE,
     status: UserStatus.PENDING,
     firstName: "Nina",
     lastName: "Collet",
@@ -133,7 +133,7 @@ const seedUsers: SeedUser[] = [
     id: "seed-user-talent-visio",
     profileId: "seed-profile-talent-visio",
     email: "samir.visio@prointervenants.fr",
-    role: UserRole.TALENT,
+    role: UserRole.FREELANCE,
     status: UserStatus.VERIFIED,
     firstName: "Samir",
     lastName: "Haddad",
@@ -267,7 +267,7 @@ async function upsertReliefMissions(userIdByEmail: Map<string, string>): Promise
       dateEnd: tonight.dateEnd,
       hourlyRate: 26,
       address: "MECS Horizon Jeunes, 24 rue des Acacias, 69003 Lyon",
-      clientEmail: "cadre-nuit@chrs-horizon.fr",
+      establishmentEmail: "cadre-nuit@chrs-horizon.fr",
     },
     {
       id: "seed-mission-aide-soignant-ehpad",
@@ -276,7 +276,7 @@ async function upsertReliefMissions(userIdByEmail: Map<string, string>): Promise
       dateEnd: nextWeekend.dateEnd,
       hourlyRate: 24,
       address: "EHPAD Les Rosiers, 8 avenue Paul-Bert, 59491 Villeneuve-d'Ascq",
-      clientEmail: "coordination@ehpad-rosiers.fr",
+      establishmentEmail: "coordination@ehpad-rosiers.fr",
     },
     {
       id: "seed-mission-educateur-renfort-itep",
@@ -285,14 +285,14 @@ async function upsertReliefMissions(userIdByEmail: Map<string, string>): Promise
       dateEnd: nextWeek.dateEnd,
       hourlyRate: 30,
       address: "ITEP des Monts, 12 chemin de la Source, 31100 Toulouse",
-      clientEmail: "direction@itep-monts.fr",
+      establishmentEmail: "direction@itep-monts.fr",
     },
   ];
 
   for (const mission of missions) {
-    const clientId = userIdByEmail.get(mission.clientEmail);
-    if (!clientId) {
-      throw new Error(`Client introuvable pour la mission ${mission.id}`);
+    const establishmentId = userIdByEmail.get(mission.establishmentEmail);
+    if (!establishmentId) {
+      throw new Error(`Établissement introuvable pour la mission ${mission.id}`);
     }
 
     await prisma.reliefMission.upsert({
@@ -303,7 +303,7 @@ async function upsertReliefMissions(userIdByEmail: Map<string, string>): Promise
         dateEnd: mission.dateEnd,
         hourlyRate: mission.hourlyRate,
         address: mission.address,
-        clientId,
+        establishmentId,
         status: ReliefMissionStatus.OPEN,
       },
       create: {
@@ -313,7 +313,7 @@ async function upsertReliefMissions(userIdByEmail: Map<string, string>): Promise
         dateEnd: mission.dateEnd,
         hourlyRate: mission.hourlyRate,
         address: mission.address,
-        clientId,
+        establishmentId,
         status: ReliefMissionStatus.OPEN,
       },
     });

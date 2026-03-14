@@ -9,9 +9,9 @@ export class InvoicesService {
     constructor(private prisma: PrismaService) { }
 
     async findAll(user: AuthenticatedUser) {
-        const whereClause = user.role === UserRole.CLIENT
-            ? { booking: { clientId: user.id } }
-            : { booking: { talentId: user.id } }; // Or service owner
+        const whereClause = user.role === UserRole.ESTABLISHMENT
+            ? { booking: { establishmentId: user.id } }
+            : { booking: { freelanceId: user.id } }; // Or service owner
 
         // For freelance (TALENT), they might be the talent OR the service owner.
         // Simplified for now: Talent = Recipient of payment (Provider), Client = Payer.
@@ -24,8 +24,8 @@ export class InvoicesService {
             where: {
                 booking: {
                     OR: [
-                        { clientId: user.id }, // As client
-                        { talentId: user.id }, // As talent
+                        { establishmentId: user.id }, // As establishment
+                        { freelanceId: user.id }, // As freelance
                         { service: { ownerId: user.id } } // As service owner
                     ]
                 }
@@ -37,15 +37,15 @@ export class InvoicesService {
                         scheduledAt: true,
                         status: true,
                         reliefMission: {
-                            select: { title: true, client: { select: { email: true, profile: { select: { lastName: true, firstName: true } } } } }
+                            select: { title: true, establishment: { select: { email: true, profile: { select: { lastName: true, firstName: true } } } } }
                         },
                         service: {
                             select: { title: true, owner: { select: { email: true, profile: { select: { lastName: true, firstName: true } } } } }
                         },
-                        client: {
+                        establishment: {
                             select: { email: true, profile: { select: { lastName: true, firstName: true } } }
                         },
-                        talent: {
+                        freelance: {
                             select: { email: true, profile: { select: { lastName: true, firstName: true } } }
                         }
                     }
@@ -68,10 +68,10 @@ export class InvoicesService {
             include: {
                 booking: {
                     include: {
-                        reliefMission: { include: { client: true } },
+                        reliefMission: { include: { establishment: true } },
                         service: { include: { owner: true } },
-                        talent: true,
-                        client: true,
+                        freelance: true,
+                        establishment: true,
                     },
                 },
             },
@@ -99,10 +99,10 @@ export class InvoicesService {
             doc.moveDown();
 
             // Client / Provider
-            const client = invoice.booking.client;
+            const client = invoice.booking.establishment;
             const provider = invoice.booking.reliefMission
-                ? invoice.booking.talent
-                : (invoice.booking.service?.owner ?? invoice.booking.talent);
+                ? invoice.booking.freelance
+                : (invoice.booking.service?.owner ?? invoice.booking.freelance);
 
             doc.text(`Client: ${client?.email ?? 'N/A'}`);
             doc.text(`Prestataire: ${provider?.email ?? 'N/A'}`);

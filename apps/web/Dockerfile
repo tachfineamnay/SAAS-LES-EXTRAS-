@@ -1,20 +1,21 @@
 # syntax=docker/dockerfile:1.7
 FROM node:20-alpine AS base
+RUN corepack enable && corepack prepare pnpm@10.6.1 --activate
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
 FROM base AS deps
-COPY package*.json ./
-COPY apps/web/package*.json apps/web/
-COPY apps/api/package*.json apps/api/
-RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
+COPY apps/web/package.json apps/web/
+COPY apps/api/package.json apps/api/
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 
 FROM deps AS builder
 WORKDIR /app
 COPY . .
 RUN mkdir -p apps/web/public
 RUN npx prisma generate --schema=./apps/api/prisma/schema.prisma
-RUN npm run build -w @lesextras/web
+RUN pnpm --filter @lesextras/web build
 
 FROM node:20-alpine AS runner
 WORKDIR /app

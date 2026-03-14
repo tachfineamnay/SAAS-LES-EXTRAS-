@@ -1,21 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { SerializedService, SerializedTalent } from "@/app/actions/marketplace";
+import { SerializedService, SerializedFreelance } from "@/app/actions/marketplace";
 import { ServiceCard } from "@/components/cards/ServiceCard";
-import { TalentCard } from "./TalentCard";
+import { FreelanceCard } from "./FreelanceCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ui/empty-state";
 import { GraduationCap, Users, X } from "lucide-react";
 import { ATELIER_CATEGORIES } from "@/lib/atelier-config";
 import { Button } from "@/components/ui/button";
 
-interface ClientCatalogueProps {
+interface EstablishmentCatalogueProps {
   services: SerializedService[];
-  talents: SerializedTalent[];
+  freelances: SerializedFreelance[];
 }
 
-export function ClientCatalogue({ services, talents }: ClientCatalogueProps) {
+export function EstablishmentCatalogue({ services, freelances }: EstablishmentCatalogueProps) {
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterPricing, setFilterPricing] = useState<string | null>(null);
 
@@ -58,7 +58,7 @@ export function ClientCatalogue({ services, talents }: ClientCatalogueProps) {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="talents" className="gap-2 min-h-[40px]">
+          <TabsTrigger value="freelances" className="gap-2 min-h-[40px]">
             <Users className="h-4 w-4" aria-hidden="true" />
             Annuaire des Extras
           </TabsTrigger>
@@ -152,19 +152,19 @@ export function ClientCatalogue({ services, talents }: ClientCatalogueProps) {
           )}
         </TabsContent>
 
-        <TabsContent value="talents" className="mt-6">
-          {talents.length === 0 ? (
+        <TabsContent value="freelances" className="mt-6">
+          {freelances.length === 0 ? (
             <EmptyState
               icon={Users}
               title="Aucun freelance disponible"
-              description="Aucun talent vérifié n'est disponible pour le moment."
+              description="Aucun freelance vérifié n'est disponible pour le moment."
               primaryAction={{ label: "Demander un renfort SOS", href: "/dashboard" }}
               tips="Nos équipes valident les profils régulièrement."
             />
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {talents.map((talent) => (
-                <TalentCard key={talent.id} talent={talent} />
+              {freelances.map((freelance) => (
+                <FreelanceCard key={freelance.id} freelance={freelance} />
               ))}
             </div>
           )}

@@ -1,18 +1,19 @@
 # syntax=docker/dockerfile:1.7
 FROM node:20-alpine AS base
+RUN corepack enable && corepack prepare pnpm@10.6.1 --activate
 WORKDIR /app
 
 FROM base AS deps
-COPY package*.json ./
-COPY apps/api/package*.json apps/api/
-COPY apps/web/package*.json apps/web/
-RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 
 FROM deps AS builder
 COPY . .
-RUN npm run prisma:generate -w @lesextras/api
-RUN node -e "const client=require('@prisma/client'); if (!client.UserRole || !client.UserRole.CLIENT) { throw new Error('Prisma client UserRole enum is missing'); }"
-RUN npm run build -w @lesextras/api
+RUN pnpm --filter @lesextras/api prisma:generate
+RUN node -e "const client=require('@prisma/client'); if (!client.UserRole || !client.UserRole.ESTABLISHMENT) { throw new Error('Prisma client UserRole enum is missing'); }"
+RUN pnpm --filter @lesextras/api build
 
 FROM node:20-alpine AS runner
 WORKDIR /app

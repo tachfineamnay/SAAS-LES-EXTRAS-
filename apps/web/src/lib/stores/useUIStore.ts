@@ -2,14 +2,14 @@
 
 import { create } from "zustand";
 
-export type UserRole = "CLIENT" | "TALENT";
+export type UserRole = "ESTABLISHMENT" | "FREELANCE";
 
 export interface UIState {
   isRenfortModalOpen: boolean;
   isPublishModalOpen: boolean;
   isApplyModalOpen: boolean;
   applyMissionId: string | null;
-  userRole: "CLIENT" | "TALENT" | null;
+  userRole: "ESTABLISHMENT" | "FREELANCE" | null;
   onboardingStep: number;
   isMobileOpen: boolean;
 
@@ -35,7 +35,7 @@ export interface UIState {
   closeApplyModal: () => void;
   toggleMobile: () => void;
   setMobileOpen: (open: boolean) => void;
-  setUserRole: (role: "CLIENT" | "TALENT" | null) => void;
+  setUserRole: (role: "ESTABLISHMENT" | "FREELANCE" | null) => void;
   setOnboardingStep: (step: number) => void;
   setRenfortStep: (step: number) => void;
   setRenfortStepDir: (dir: number) => void;
@@ -57,7 +57,7 @@ export const useUIStore = create<UIState>((set) => ({
   isApplyModalOpen: false,
   applyMissionId: null,
   isMobileOpen: false,
-  userRole: "CLIENT",
+  userRole: "ESTABLISHMENT",
   onboardingStep: 0,
   renfortStep: 0,
   renfortStepDir: 1,

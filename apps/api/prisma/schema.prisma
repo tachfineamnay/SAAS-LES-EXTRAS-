@@ -8,9 +8,15 @@ datasource db {
 }
 
 enum UserRole {
-  CLIENT
-  TALENT
+  ESTABLISHMENT
+  FREELANCE
   ADMIN
+}
+
+enum ServiceStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
 }
 
 enum UserStatus {
@@ -44,16 +50,18 @@ model User {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   profile        Profile?
-  clientMissions ReliefMission[] @relation("ClientMissions")
+  establishmentMissions ReliefMission[] @relation("EstablishmentMissions")
   ownerServices   Service[]       @relation("OwnerServices")
-  clientBookings Booking[]       @relation("ClientBookings")
-  talentBookings Booking[]       @relation("TalentBookings")
-  freelanceQuotes Quote[]         @relation("FreelanceQuotes")
-  establishmentQuotes Quote[]     @relation("EstablishmentQuotes")
+  establishmentBookings Booking[]  @relation("EstablishmentBookings")
+  freelanceBookings Booking[]      @relation("FreelanceBookings")
+  freelanceQuotes Quote[]          @relation("FreelanceQuotes")
+  establishmentQuotes Quote[]      @relation("EstablishmentQuotes")
   sentMessages     DirectMessage[] @relation("SentMessages")
   receivedMessages DirectMessage[] @relation("ReceivedMessages")
   notifications    Notification[]
   packPurchases    PackPurchase[]
+  reviewsAuthored  Review[]        @relation("ReviewsAuthored")
+  reviewsReceived  Review[]        @relation("ReviewsReceived")
 }
 
 model DirectMessage {
@@ -103,12 +111,12 @@ model Notification {
 }
 
 model PackPurchase {
-  id           String   @id @default(cuid())
-  clientId     String
-  amount       Float
-  creditsAdded Int
-  createdAt    DateTime @default(now())
-  client       User     @relation(fields: [clientId], references: [id])
+  id              String   @id @default(cuid())
+  establishmentId String
+  amount          Float
+  creditsAdded    Int
+  createdAt       DateTime @default(now())
+  establishment   User     @relation(fields: [establishmentId], references: [id])
 }
 
 model ReliefMission {
@@ -139,14 +147,14 @@ model ReliefMission {
   perks               String[]
   exactAddress        String?
   accessInstructions  String?   @db.Text
-  clientId   String
+  establishmentId String
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
-  client     User                @relation("ClientMissions", fields: [clientId], references: [id], onDelete: Restrict)
+  establishment User             @relation("EstablishmentMissions", fields: [establishmentId], references: [id], onDelete: Restrict)
   bookings   Booking[]
   quotes     Quote[]
 
-  @@index([clientId])
+  @@index([establishmentId])
 }
 
 model Service {
@@ -169,6 +177,7 @@ model Service {
   methodology        String?
   evaluation         String?
   slots              Json?       // [{ date, heureDebut, heureFin }]
+  status             ServiceStatus @default(ACTIVE)
   ownerId            String
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
@@ -215,8 +224,6 @@ enum BookingStatus {
   CANCELLED
 }
 
-// ... existing models ...
-
 model Booking {
   id              String        @id @default(cuid())
   status          BookingStatus @default(PENDING)
@@ -226,22 +233,23 @@ model Booking {
   motivation      String?
   proposedRate    Float?
   nbParticipants  Int?
-  clientId        String
-  talentId        String?
+  establishmentId String
+  freelanceId     String?
   reliefMissionId String?
   serviceId       String?
   quoteId         String?       @unique
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  client          User          @relation("ClientBookings", fields: [clientId], references: [id], onDelete: Restrict)
-  talent          User?         @relation("TalentBookings", fields: [talentId], references: [id], onDelete: SetNull)
+  establishment   User          @relation("EstablishmentBookings", fields: [establishmentId], references: [id], onDelete: Restrict)
+  freelance       User?         @relation("FreelanceBookings", fields: [freelanceId], references: [id], onDelete: SetNull)
   reliefMission   ReliefMission? @relation(fields: [reliefMissionId], references: [id], onDelete: SetNull)
   service         Service?      @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   quote           Quote?        @relation(fields: [quoteId], references: [id])
   invoice         Invoice?
+  review          Review?
 
-  @@index([clientId])
-  @@index([talentId])
+  @@index([establishmentId])
+  @@index([freelanceId])
   @@index([reliefMissionId])
   @@index([serviceId])
 }
@@ -253,7 +261,7 @@ enum InvoiceStatus {
 
 model Invoice {
   id            String        @id @default(cuid())
-  invoiceNumber String?       @unique // Optional initially to allow backfill if needed, or default null
+  invoiceNumber String?       @unique
   status        InvoiceStatus @default(PENDING_PAYMENT)
   url           String
   amount        Float
@@ -262,4 +270,18 @@ model Invoice {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   booking       Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  bookingId String   @unique
+  authorId  String
+  targetId  String
+  rating    Int
+  comment   String?
+  type      String   // ESTABLISHMENT_TO_FREELANCE | FREELANCE_TO_ESTABLISHMENT
+  createdAt DateTime @default(now())
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  author    User     @relation("ReviewsAuthored", fields: [authorId], references: [id])
+  target    User     @relation("ReviewsReceived", fields: [targetId], references: [id])
 }
