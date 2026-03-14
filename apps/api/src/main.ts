@@ -1,5 +1,6 @@
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import helmet from "helmet";
 import { AppModule } from "./app.module";
 
 const DEFAULT_CORS_ORIGINS = [
@@ -43,6 +44,8 @@ async function bootstrap() {
       callback(new Error("Origin not allowed by CORS"));
     },
   });
+
+  app.use(helmet());
 
   app.setGlobalPrefix("api");
   app.useGlobalPipes(
