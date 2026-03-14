@@ -1,10 +1,11 @@
 import { getEstablishmentMissions } from "@/app/actions/missions";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { GlassCard, GlassCardContent, GlassCardHeader } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { CandidateCard } from "@/components/dashboard/establishment/CandidateCard";
-import { Calendar, Clock, MapPin, Sun, Moon } from "lucide-react";
+import { Calendar, Clock, MapPin, Sun, Moon, Users } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMetierLabel } from "@/lib/sos-config";
@@ -27,41 +28,40 @@ export default async function SosDashboardPage() {
   openMissions.sort((a: any, b: any) => b.bookings.length - a.bookings.length);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Gestion des Renforts</h1>
-        <p className="text-muted-foreground">
+    <div className="space-y-8">
+      <header className="space-y-1.5">
+        <p className="text-overline uppercase tracking-widest text-muted-foreground">Espace Établissement</p>
+        <h1 className="font-display text-heading-xl tracking-tight">Board de matching</h1>
+        <p className="text-body-md text-muted-foreground">
           Gérez vos missions de renfort et validez les candidatures des freelances.
         </p>
-      </div>
+      </header>
 
       <div className="grid gap-6">
         {openMissions.length === 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Aucune mission en cours</CardTitle>
-              <CardDescription>
-                Vous n'avez pas de demande de renfort active.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+          <EmptyState
+            icon={Users}
+            title="Aucune mission en cours"
+            description="Vous n'avez pas de demande de renfort active."
+            primaryAction={{ label: "Publier un renfort", href: "/dashboard/renforts/new" }}
+          />
         ) : (
           openMissions.map((mission: any) => {
             const activeCandidacies = mission.bookings.filter(
               (b: any) => b.status !== "CANCELLED",
             );
             return (
-              <Card key={mission.id} className="overflow-hidden">
-                <CardHeader className="bg-muted/30 border-b pb-4">
+              <GlassCard key={mission.id} className="overflow-hidden">
+                <GlassCardHeader className="border-b border-border/40">
                   <div className="flex justify-between items-start gap-4">
                     <div className="space-y-1.5 flex-1 min-w-0">
                       {/* Title + badges */}
                       <div className="flex flex-wrap items-center gap-2">
-                        <CardTitle className="text-lg">
+                        <h2 className="text-heading-sm font-display">
                           {mission.metier
                             ? getMetierLabel(mission.metier)
                             : mission.title}
-                        </CardTitle>
+                        </h2>
                         <Badge
                           variant={
                             mission.status === "ASSIGNED" ? "default" : "secondary"
@@ -118,10 +118,10 @@ export default async function SosDashboardPage() {
                       <span className="text-lg font-bold">{mission.hourlyRate}€ /h</span>
                     </div>
                   </div>
-                </CardHeader>
+                </GlassCardHeader>
 
-                <CardContent className="pt-6">
-                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <GlassCardContent className="pt-6">
+                  <h3 className="text-heading-xs font-semibold mb-4 flex items-center gap-2">
                     Candidatures
                     <Badge variant="outline" className="ml-1">
                       {activeCandidacies.length}
@@ -146,8 +146,8 @@ export default async function SosDashboardPage() {
                       ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </GlassCardContent>
+              </GlassCard>
             );
           })
         )}
