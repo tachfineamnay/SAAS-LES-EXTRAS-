@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useFormState, useFormStatus } from "react-dom";
@@ -59,7 +59,7 @@ function SubmitButton() {
     );
 }
 
-export default function RegisterPage() {
+function RegisterContent() {
     const searchParams = useSearchParams();
     const defaultRole = searchParams.get("role") === "ESTABLISHMENT" ? "ESTABLISHMENT" : "FREELANCE";
     const [role, setRole] = useState<"ESTABLISHMENT" | "FREELANCE">(defaultRole);
@@ -308,6 +308,14 @@ export default function RegisterPage() {
                 </motion.div>
             </div>
         </div>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense>
+            <RegisterContent />
+        </Suspense>
     );
 }
 
