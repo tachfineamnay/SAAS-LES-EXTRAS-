@@ -131,6 +131,26 @@ export function EstablishmentCatalogue({ services, freelances }: EstablishmentCa
             </div>
           )}
 
+          {/* D.4 — Recommandés pour vous */}
+          {!hasFilters && filteredServices.length >= 3 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-heading-sm font-display">Recommandés pour vous</span>
+                <span className="text-xs text-muted-foreground">Sélection personnalisée</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {filteredServices.slice(0, 3).map((service) => (
+                  <ServiceCard key={`rec-${service.id}`} service={service} />
+                ))}
+              </div>
+              <div
+                className="h-px bg-border"
+                role="separator"
+              />
+              <p className="text-heading-sm font-display">Tous les ateliers</p>
+            </div>
+          )}
+
           {/* Results */}
           {filteredServices.length === 0 ? (
             <EmptyState

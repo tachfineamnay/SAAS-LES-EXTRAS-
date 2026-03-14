@@ -206,6 +206,51 @@
     --brand-renfort-bg:  var(--color-coral-50);
     --brand-atelier:     var(--color-violet-500);
     --brand-atelier-bg:  var(--color-violet-50);
+
+    /* ═══════════════════════════════════════════
+       B.3 — SPACING SCALE (base unit: 4px)
+       ═══════════════════════════════════════════ */
+    --space-0:    0px;
+    --space-0-5:  2px;
+    --space-1:    4px;
+    --space-1-5:  6px;
+    --space-2:    8px;
+    --space-3:    12px;
+    --space-4:    16px;
+    --space-5:    20px;
+    --space-6:    24px;
+    --space-8:    32px;
+    --space-10:   40px;
+    --space-12:   48px;
+    --space-16:   64px;
+    --space-20:   80px;
+    --space-24:   96px;
+
+    /* ═══════════════════════════════════════════
+       B.4 — BORDER RADIUS SCALE
+       ═══════════════════════════════════════════ */
+    --radius-none: 0px;
+    --radius-sm:   6px;
+    --radius-md:   8px;
+    --radius-lg:   12px;
+    --radius-xl:   16px;
+    --radius-2xl:  20px;
+    --radius-3xl:  24px;
+    --radius-full: 9999px;
+
+    /* ═══════════════════════════════════════════
+       B.9 — Z-INDEX SCALE
+       ═══════════════════════════════════════════ */
+    --z-base:      0;
+    --z-raised:    10;
+    --z-dropdown:  100;
+    --z-sticky:    200;
+    --z-overlay:   300;
+    --z-modal:     400;
+    --z-drawer:    400;
+    --z-toast:     500;
+    --z-tooltip:   600;
+    --z-max:       9999;
   }
 
   * { @apply border-border; }
@@ -424,6 +469,22 @@
   .border-glow-indigo { @apply border-glow-teal; }
   .glow-indigo    { @apply glow-teal; }
   .glow-indigo-sm { @apply glow-teal-sm; }
+
+  /* ─── B.6 — BORDER SEMANTIC VARIANTS ─── */
+  .border-subtle      { border: 1px solid hsl(var(--border) / 0.5); }
+  .border-strong      { border: 1px solid hsl(var(--color-navy-200)); }
+  .border-focus-teal  { border: 2px solid hsl(var(--color-teal-500)); }
+  .border-focus-coral { border: 2px solid hsl(var(--color-coral-500)); }
+  .border-focus-violet { border: 2px solid hsl(var(--color-violet-500)); }
+  .border-success     { border: 1px solid hsl(var(--color-emerald-500)); }
+  .border-error       { border: 1px solid hsl(var(--color-red-500)); }
+  .border-brand-teal  { border: 1px solid hsl(var(--color-teal-500) / 0.2); }
+  .border-brand-coral { border: 1px solid hsl(var(--color-coral-500) / 0.2); }
+
+  /* ─── B.10 — DENSITY RULES ─── */
+  .density-compact  { --density-padding: var(--space-3); --density-gap: var(--space-2); font-size: 0.8125rem; }
+  .density-default  { --density-padding: var(--space-5); --density-gap: var(--space-4); font-size: 0.875rem; }
+  .density-relaxed  { --density-padding: var(--space-8); --density-gap: var(--space-6); font-size: 1rem; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════

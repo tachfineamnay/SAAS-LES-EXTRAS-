@@ -18,21 +18,23 @@ export default async function FinancePage() {
     const invoices = await getInvoices();
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold tracking-tight">Mon Espace Finance</h1>
-                <div className="flex gap-2">
-                    <Button variant="outline">
-                        <Download className="mr-2 h-4 w-4" />
-                        Exporter (CSV)
-                    </Button>
+                <div className="space-y-1.5">
+                    <p className="text-overline uppercase tracking-widest text-muted-foreground">Espace Freelance</p>
+                    <h1 className="font-display text-heading-xl tracking-tight">Mes Finances</h1>
+                    <p className="text-body-md text-muted-foreground">Suivez vos revenus et factures.</p>
                 </div>
+                <Button variant="glass" className="gap-2 min-h-[44px]">
+                    <Download className="h-4 w-4" aria-hidden="true" />
+                    Exporter (CSV)
+                </Button>
             </div>
 
             <RevenueOverviewWidget invoices={invoices} />
 
-            <div className="space-y-2">
-                <h2 className="text-xl font-semibold tracking-tight">Historique des Factures</h2>
+            <div className="space-y-3">
+                <h2 className="text-heading-md font-display">Historique des factures</h2>
                 <InvoiceListWidget invoices={invoices} />
             </div>
         </div>

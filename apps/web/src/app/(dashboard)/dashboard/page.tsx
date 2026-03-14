@@ -18,6 +18,9 @@ import { MissionsToValidateWidget } from "@/components/dashboard/establishment/M
 import { UpcomingMissionsWidget } from "@/components/dashboard/establishment/UpcomingMissionsWidget";
 import { EstablishmentInvoicesWidget } from "@/components/dashboard/establishment/EstablishmentInvoicesWidget";
 import { EstablishmentArchivesWidget } from "@/components/dashboard/establishment/EstablishmentArchivesWidget";
+import { NextMissionCard } from "@/components/dashboard/NextMissionCard";
+import { MatchingMissionsWidget } from "@/components/dashboard/MatchingMissionsWidget";
+import { RecentReviewsWidget } from "@/components/dashboard/RecentReviewsWidget";
 import { GlassCard, GlassCardHeader, GlassCardContent } from "@/components/ui/glass-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
@@ -29,6 +32,8 @@ import {
     FileText,
     ShieldCheck,
     TrendingUp,
+    Star,
+    Sparkles,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -95,10 +100,10 @@ export default async function DashboardPage() {
 
                 {/* KPI row */}
                 <EstablishmentKpiGrid
-                    confirmedCount={confirmedBookings.length}
-                    awaitingPaymentCount={awaitingPaymentBookings.length}
+                    activeMissions={confirmedBookings.length}
+                    ongoingBookings={pendingBookings.length}
                     availableCredits={availableCredits}
-                    pendingQuotesCount={pendingQuotes.length}
+                    averageRating={null}
                 />
 
                 {/* Main bento */}
@@ -224,6 +229,16 @@ export default async function DashboardPage() {
     // ─────────────────────────────────────────────────────────────────
     // FREELANCE VIEW
     // ─────────────────────────────────────────────────────────────────
+
+    // E.6.1 — Next mission: first upcoming confirmed booking
+    const nextMission = confirmedBookings[0] as any | undefined;
+
+    // E.6.3 — Matching missions placeholder (would come from API)
+    const matchingMissions: any[] = [];
+
+    // E.6.6 — Recent reviews placeholder (would come from API)
+    const recentReviews: any[] = [];
+
     return (
         <div className="space-y-8">
             {/* Page header */}
@@ -233,15 +248,70 @@ export default async function DashboardPage() {
                 <p className="text-body-md text-muted-foreground">Suivez vos missions, candidatures et revenus.</p>
             </header>
 
-            {/* KPI row */}
+            {/* E.6.1 — Prochaine mission (elevated card) */}
+            {nextMission && (
+                <NextMissionCard
+                    bookingId={nextMission.id}
+                    title={nextMission.service?.name ?? nextMission.title ?? "Mission confirmée"}
+                    establishment={nextMission.establishment?.name ?? "Établissement"}
+                    city={nextMission.establishment?.city ?? ""}
+                    scheduledAt={nextMission.scheduledAt ?? nextMission.startDate ?? new Date().toISOString()}
+                    dateDisplay={
+                        nextMission.scheduledAt
+                            ? new Date(nextMission.scheduledAt).toLocaleDateString("fr-FR", {
+                                  weekday: "long",
+                                  day: "numeric",
+                                  month: "long",
+                              })
+                            : "Date à confirmer"
+                    }
+                    timeRange={nextMission.timeRange}
+                />
+            )}
+
+            {/* E.6.2 — KPI row */}
             <FreelanceKpiGrid
-                confirmedCount={confirmedBookings.length}
-                completedCount={completedBookings.length}
-                pendingCount={pendingBookings.length}
+                completedThisMonth={completedBookings.length}
+                revenueThisMonth="850 €"
+                averageRating={null}
+                profileCompletion={65}
             />
 
             {/* Main bento */}
             <BentoSection cols={3} gap="md">
+                {/* E.6.3 — Nouvelles missions correspondantes — wide */}
+                <GlassCard className="md:col-span-2">
+                    <GlassCardHeader>
+                        <div className="flex items-center gap-2.5">
+                            <div className="h-9 w-9 rounded-xl icon-coral flex items-center justify-center">
+                                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                            </div>
+                            <div>
+                                <h2 className="text-heading-sm">Nouvelles missions</h2>
+                                <p className="text-caption text-muted-foreground">Correspondant à votre profil</p>
+                            </div>
+                        </div>
+                    </GlassCardHeader>
+                    <GlassCardContent>
+                        <MatchingMissionsWidget missions={matchingMissions} />
+                    </GlassCardContent>
+                </GlassCard>
+
+                {/* E.6.5 — Trust progress */}
+                <GlassCard>
+                    <GlassCardHeader>
+                        <div className="flex items-center gap-2.5">
+                            <div className="h-9 w-9 rounded-xl icon-emerald flex items-center justify-center">
+                                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                            </div>
+                            <h2 className="text-heading-sm">Profil & Confiance</h2>
+                        </div>
+                    </GlassCardHeader>
+                    <GlassCardContent>
+                        <TrustChecklistWidget />
+                    </GlassCardContent>
+                </GlassCard>
+
                 {/* Agenda — wide */}
                 <GlassCard className="md:col-span-2">
                     <GlassCardHeader>
@@ -264,22 +334,22 @@ export default async function DashboardPage() {
                     </GlassCardContent>
                 </GlassCard>
 
-                {/* Trust checklist */}
+                {/* E.6.6 — Derniers avis reçus */}
                 <GlassCard>
                     <GlassCardHeader>
                         <div className="flex items-center gap-2.5">
-                            <div className="h-9 w-9 rounded-xl icon-emerald flex items-center justify-center">
-                                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                            <div className="h-9 w-9 rounded-xl icon-amber flex items-center justify-center">
+                                <Star className="h-4 w-4" aria-hidden="true" />
                             </div>
-                            <h2 className="text-heading-sm">Profil & Confiance</h2>
+                            <h2 className="text-heading-sm">Derniers avis</h2>
                         </div>
                     </GlassCardHeader>
                     <GlassCardContent>
-                        <TrustChecklistWidget />
+                        <RecentReviewsWidget reviews={recentReviews} />
                     </GlassCardContent>
                 </GlassCard>
 
-                {/* Candidatures */}
+                {/* Candidatures — wide */}
                 <GlassCard className="md:col-span-2">
                     <GlassCardHeader>
                         <div className="flex items-center gap-2.5">
@@ -298,21 +368,6 @@ export default async function DashboardPage() {
                             emptyMessage="Aucune candidature en cours."
                             viewAllLink="/bookings"
                         />
-                    </GlassCardContent>
-                </GlassCard>
-
-                {/* Propositions */}
-                <GlassCard>
-                    <GlassCardHeader>
-                        <div className="flex items-center gap-2.5">
-                            <div className="h-9 w-9 rounded-xl icon-violet flex items-center justify-center">
-                                <FileText className="h-4 w-4" aria-hidden="true" />
-                            </div>
-                            <h2 className="text-heading-sm">Propositions</h2>
-                        </div>
-                    </GlassCardHeader>
-                    <GlassCardContent>
-                        <QuoteCreationModal />
                     </GlassCardContent>
                 </GlassCard>
 

@@ -1,32 +1,44 @@
 "use client";
 
-import { Briefcase, Calendar, CheckCircle, DollarSign } from "lucide-react";
+import { CheckCircle, DollarSign, Star, UserCheck } from "lucide-react";
 import { KpiTile } from "./KpiTile";
 
 interface FreelanceKpiGridProps {
-    confirmedCount: number;
-    completedCount: number;
-    pendingCount: number;
+    completedThisMonth: number;
+    revenueThisMonth: string;
+    averageRating: number | null;
+    profileCompletion: number;
 }
 
 export function FreelanceKpiGrid({
-    confirmedCount,
-    completedCount,
-    pendingCount,
+    completedThisMonth,
+    revenueThisMonth,
+    averageRating,
+    profileCompletion,
 }: FreelanceKpiGridProps) {
     return (
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-            <KpiTile label="Missions à venir" value={confirmedCount} icon={Calendar} iconColor="gray" />
+            <KpiTile label="Missions ce mois" value={completedThisMonth} icon={CheckCircle} iconColor="teal" />
             <KpiTile
-                label="Gains cumulés"
-                value="850 €"
+                label="CA ce mois"
+                value={revenueThisMonth}
                 icon={DollarSign}
                 iconColor="emerald"
                 trend="up"
-                trendLabel="+12% ce mois"
+                trendLabel="+12%"
             />
-            <KpiTile label="Missions réalisées" value={completedCount} icon={CheckCircle} iconColor="teal" />
-            <KpiTile label="Candidatures" value={pendingCount} icon={Briefcase} iconColor="amber" />
+            <KpiTile
+                label="Note moyenne"
+                value={averageRating != null ? `${averageRating.toFixed(1)}/5` : "–"}
+                icon={Star}
+                iconColor="amber"
+            />
+            <KpiTile
+                label="Profil complété"
+                value={`${profileCompletion}%`}
+                icon={UserCheck}
+                iconColor="coral"
+            />
         </div>
     );
 }

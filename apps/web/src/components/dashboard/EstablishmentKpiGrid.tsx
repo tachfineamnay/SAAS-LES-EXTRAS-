@@ -1,27 +1,32 @@
 "use client";
 
-import { Briefcase, DollarSign, FileText, TrendingUp } from "lucide-react";
+import { Briefcase, Calendar, DollarSign, Star } from "lucide-react";
 import { KpiTile } from "./KpiTile";
 
 interface EstablishmentKpiGridProps {
-    confirmedCount: number;
-    awaitingPaymentCount: number;
+    activeMissions: number;
+    ongoingBookings: number;
     availableCredits: number;
-    pendingQuotesCount: number;
+    averageRating: number | null;
 }
 
 export function EstablishmentKpiGrid({
-    confirmedCount,
-    awaitingPaymentCount,
+    activeMissions,
+    ongoingBookings,
     availableCredits,
-    pendingQuotesCount,
+    averageRating,
 }: EstablishmentKpiGridProps) {
     return (
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-            <KpiTile label="Renforts actifs" value={confirmedCount} icon={Briefcase} iconColor="gray" />
-            <KpiTile label="En attente paiement" value={awaitingPaymentCount} icon={DollarSign} iconColor="amber" />
-            <KpiTile label="Crédits disponibles" value={availableCredits} icon={TrendingUp} iconColor="emerald" />
-            <KpiTile label="Propositions reçues" value={pendingQuotesCount} icon={FileText} iconColor="teal" />
+            <KpiTile label="Missions actives" value={activeMissions} icon={Briefcase} iconColor="teal" />
+            <KpiTile label="Réservations en cours" value={ongoingBookings} icon={Calendar} iconColor="coral" />
+            <KpiTile label="Crédits disponibles" value={availableCredits} icon={DollarSign} iconColor="emerald" />
+            <KpiTile
+                label="Note moyenne"
+                value={averageRating != null ? `${averageRating.toFixed(1)}/5` : "–"}
+                icon={Star}
+                iconColor="amber"
+            />
         </div>
     );
 }
