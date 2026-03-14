@@ -23,10 +23,10 @@ export const SPRING_ICON:   Transition = { type: "spring", stiffness: 500, dampi
 
 /* ─── Duration Presets ─── */
 export const DURATION_FAST    = 0.2;
-export const DURATION_NORMAL  = 0.35;
+export const DURATION_NORMAL  = 0.3;
 export const DURATION_SLOW    = 0.5;
 export const STAGGER_FAST     = 0.04;
-export const STAGGER_DEFAULT  = 0.07;
+export const STAGGER_DEFAULT  = 0.05;
 export const STAGGER_SLOW     = 0.1;
 
 /* ─── Reusable Transitions ─── */
@@ -46,7 +46,7 @@ export const containerVariants: Variants = {
     visible: {
         transition: {
             staggerChildren: STAGGER_DEFAULT,
-            delayChildren: 0.1,
+            delayChildren: 0.05,
         },
     },
 };
@@ -96,3 +96,21 @@ export const hoverBounce = { scale: 1.05, transition: SPRING_BOUNCY };
 /* ─── Icon Hover ─── */
 export const iconHover   = { scale: 1.15, rotate: 8 };
 export const iconSpring  = SPRING_ICON;
+
+/* ─── Reduced Motion ─── */
+export const REDUCED_MOTION_TRANSITION: Transition = { duration: 0.01, ease: "linear" };
+
+/* ─── Page Transitions ─── */
+export const pageTransition: Variants = {
+    initial: { opacity: 0, y: 8 },
+    enter: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: DURATION_NORMAL, ease: EASE_PREMIUM },
+    },
+    exit: {
+        opacity: 0,
+        y: -8,
+        transition: { duration: DURATION_FAST, ease: EASE_PREMIUM },
+    },
+};

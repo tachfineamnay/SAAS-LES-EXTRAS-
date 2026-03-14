@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════════
-   LES EXTRAS — "SOLEIL VIVANT" Design System 2026
+   LES EXTRAS — "QUIETLY BOLD" Design System 2026
    ─────────────────────────────────────────────────────────────────
-   Concept: Light · Joyful · Human · Precise
+   Concept: Mature · Warm · Institutional · Precise
    Mode: FULL LIGHT — pas de dark mode
    Stack: Framer Motion × Lottie × Radix × Tailwind
    ═══════════════════════════════════════════════════════════════════ */
@@ -13,65 +13,65 @@
 @layer base {
   :root {
     /* ─────────────────── Page ─────────────────── */
-    --background:     36 28% 97%;   /* #FAF9F6  crème chaud */
+    --background:     36 25% 96%;   /* ivoire chaud */
     --foreground:     222 47% 11%;  /* #0F172A  navy profond */
 
     /* ─────────────────── Surfaces ─────────────── */
     --card:           0 0% 100%;    /* #FFFFFF  blanc pur */
     --card-foreground: 222 47% 11%;
-    --surface-2:      36 20% 95%;   /* #F3F1EC  crème secondaire */
+    --surface-2:      36 18% 93%;   /* crème secondaire différenciée */
 
     /* ─────────────────── Popover ──────────────── */
     --popover:        0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* ─────────────────── Primary — Teal ───────── */
-    --primary:        174 58% 38%;  /* #26A090 */
+    /* ─────────────────── Primary — Deep Teal ──── */
+    --primary:        170 55% 30%;  /* vert profond médical */
     --primary-foreground: 0 0% 100%;
 
     /* ─────────────────── Secondary — Logo Gray ── */
     --secondary:      220 9% 55%;   /* #878B97 */
     --secondary-foreground: 0 0% 100%;
 
-    /* ─────────────────── Accent — Coral CTA ───── */
-    --accent:         5 72% 58%;    /* #E85D4A */
+    /* ─────────────────── Accent — Terracotta ──── */
+    --accent:         14 65% 48%;   /* orange brûlé / terracotta */
     --accent-foreground: 0 0% 100%;
 
     /* ─────────────────── Muted ─────────────────── */
-    --muted:          36 20% 95%;   /* #F3F1EC */
-    --muted-foreground: 220 13% 52%; /* #78819A */
+    --muted:          36 18% 93%;   /* aligné sur surface-2 */
+    --muted-foreground: 220 15% 46%; /* plus foncé pour contraste AA */
 
     /* ─────────────────── Status ────────────────── */
     --destructive:    0 76% 56%;
     --destructive-foreground: 0 0% 100%;
 
     /* ─────────────────── UI Chrome ─────────────── */
-    --border:         36 18% 89%;   /* #E5E0D8  bord sable chaud */
-    --input:          36 18% 89%;
-    --ring:           174 58% 38%;  /* teal ring */
+    --border:         36 15% 86%;   /* bordures plus visibles */
+    --input:          36 15% 86%;
+    --ring:           170 55% 30%;  /* deep teal ring */
 
     --radius: 1rem;
 
     /* ═══════════════════════════════════════════
-       BRAND TOKENS LES EXTRAS
+       BRAND TOKENS LES EXTRAS — Quietly Bold
        ═══════════════════════════════════════════ */
 
-    /* Teal — confiance, navigation, primary */
-    --teal:        174 58% 38%;   /* #26A090 */
-    --teal-light:  174 72% 93%;   /* #DFFAF6 */
-    --teal-mid:    174 58% 52%;   /* #25C5AF */
-    --teal-dim:    174 50% 28%;   /* #1A7268 */
+    /* Teal — confiance, navigation, primary (vert profond médical) */
+    --teal:        170 55% 30%;   /* vert profond institutionnel */
+    --teal-light:  170 45% 92%;   /* teinte douce, moins saturée */
+    --teal-mid:    170 50% 42%;   /* mid profond */
+    --teal-dim:    170 48% 22%;   /* ancrage foncé */
 
-    /* Coral — ACTION (logo, CTA, urgence) */
-    --coral:       5 72% 58%;     /* #E85D4A */
-    --coral-light: 5 96% 95%;     /* #FEE9E7 */
-    --coral-mid:   5 72% 68%;     /* #EE7F70 */
-    --coral-dim:   5 62% 44%;     /* #B33D2C */
+    /* Coral → Terracotta — ACTION (CTA, urgence) */
+    --coral:       14 65% 48%;    /* terracotta / orange brûlé */
+    --coral-light: 14 80% 94%;    /* plus chaud, moins rose */
+    --coral-mid:   14 60% 60%;    /* mid atténué */
+    --coral-dim:   14 58% 36%;    /* ancrage foncé */
 
     /* Sand — chaleur, onboarding */
-    --sand:        36 90% 56%;    /* #F4A020 */
-    --sand-light:  36 100% 94%;   /* #FEF3DC */
-    --sand-dim:    36 78% 44%;    /* #C07E14 */
+    --sand:        32 75% 50%;    /* sable profond, moins néon */
+    --sand-light:  32 80% 93%;    /* plus chaud */
+    --sand-dim:    32 68% 40%;    /* ancrage */
 
     /* Logo Gray exact */
     --logo-gray:   220 9% 55%;   /* #878B97 */
@@ -131,32 +131,32 @@
 
 @layer utilities {
 
-  /* ─── CARD SHADOWS — warm depth ─── */
+  /* ─── CARD SHADOWS — clinical depth ─── */
   .card-shadow {
     box-shadow:
-      0 1px 3px hsla(220, 40%, 10%, 0.06),
-      0 4px 12px hsla(220, 40%, 10%, 0.06),
-      0 1px 2px hsla(0, 0%, 0%, 0.04);
+      0 1px 3px hsla(220, 25%, 15%, 0.05),
+      0 4px 12px hsla(220, 25%, 15%, 0.05),
+      0 1px 2px hsla(0, 0%, 0%, 0.03);
   }
 
   .card-shadow-md {
     box-shadow:
-      0 2px 8px hsla(220, 40%, 10%, 0.07),
-      0 8px 24px hsla(220, 40%, 10%, 0.08),
-      0 1px 3px hsla(0, 0%, 0%, 0.05);
+      0 2px 8px hsla(220, 25%, 15%, 0.06),
+      0 8px 24px hsla(220, 25%, 15%, 0.07),
+      0 1px 3px hsla(0, 0%, 0%, 0.04);
   }
 
   .card-shadow-lg {
     box-shadow:
-      0 4px 16px hsla(220, 40%, 10%, 0.09),
-      0 16px 48px hsla(220, 40%, 10%, 0.10),
-      0 2px 6px hsla(0, 0%, 0%, 0.06);
+      0 4px 16px hsla(220, 25%, 15%, 0.08),
+      0 16px 48px hsla(220, 25%, 15%, 0.09),
+      0 2px 6px hsla(0, 0%, 0%, 0.05);
   }
 
   .card-shadow-hover {
     box-shadow:
-      0 8px 32px hsla(220, 40%, 10%, 0.12),
-      0 2px 8px hsla(220, 40%, 10%, 0.08),
+      0 8px 32px hsla(220, 25%, 15%, 0.10),
+      0 2px 8px hsla(220, 25%, 15%, 0.07),
       0 0 0 2px hsl(var(--border));
   }
 
@@ -232,9 +232,14 @@
   .text-gradient-indigo { @apply text-gradient-brand; }
   .text-gradient-pure   { @apply text-gradient-brand; }
 
+  /* ─── FOCUS RING — accessible focus indicator ─── */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--teal)/0.5)] focus-visible:ring-offset-2;
+  }
+
   /* ─── PATTERN BACKGROUND ─── */
   .dot-grid {
-    background-image: radial-gradient(hsl(var(--border)) 1px, transparent 1px);
+    background-image: radial-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px);
     background-size: 24px 24px;
   }
 
@@ -242,8 +247,8 @@
   .auth-panel-teal {
     background: linear-gradient(155deg,
       hsl(var(--teal)) 0%,
-      hsl(174, 72%, 28%) 55%,
-      hsl(222, 47% 11%) 100%);
+      hsl(170, 50%, 22%) 55%,
+      hsl(222, 47%, 11%) 100%);
   }
   .auth-brand-halo-primary  { background: transparent; }
   .auth-brand-halo-secondary { background: transparent; }

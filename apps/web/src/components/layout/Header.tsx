@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useUIStore, type UserRole } from "@/lib/stores/useUIStore";
 import { cn } from "@/lib/utils";
-import { SPRING_BOUNCY } from "@/lib/motion";
 
 type HeaderProps = {
   onOpenMobileSidebar: () => void;
@@ -46,7 +45,7 @@ export function Header({ onOpenMobileSidebar, headerOpacity, borderOpacity }: He
   return (
     <motion.header
       className={cn(
-        "sticky top-0 z-40 backdrop-blur-xl border-b",
+        "sticky top-0 z-40 backdrop-blur-md border-b",
         !dynamicStyle && "bg-white/80 backdrop-blur-md border-border/70"
       )}
       style={dynamicStyle}
@@ -143,28 +142,24 @@ export function Header({ onOpenMobileSidebar, headerOpacity, borderOpacity }: He
 
           {/* Primary CTA */}
           {userRole === "CLIENT" ? (
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={SPRING_BOUNCY}>
-              <Button
-                onClick={openRenfortModal}
-                variant="coral"
-                size="sm"
-                className="min-h-[36px] gap-2 rounded-xl font-semibold text-[13px] shadow-glow-coral"
-              >
-                <Siren className="h-3.5 w-3.5" aria-hidden="true" />
-                <span className="hidden sm:inline">RENFORT</span>
-              </Button>
-            </motion.div>
+            <Button
+              onClick={openRenfortModal}
+              variant="coral"
+              size="sm"
+              className="min-h-[36px] gap-2 rounded-lg font-semibold text-[13px]"
+            >
+              <Siren className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="hidden sm:inline">RENFORT</span>
+            </Button>
           ) : (
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={SPRING_BOUNCY}>
-              <Button
-                variant="teal-soft"
-                onClick={openPublishModal}
-                size="sm"
-                className="min-h-[36px] rounded-xl font-semibold text-[13px]"
-              >
-                <span className="hidden sm:inline">➕ PUBLIER</span>
-              </Button>
-            </motion.div>
+            <Button
+              variant="teal-soft"
+              onClick={openPublishModal}
+              size="sm"
+              className="min-h-[36px] rounded-lg font-semibold text-[13px]"
+            >
+              <span className="hidden sm:inline">➕ PUBLIER</span>
+            </Button>
           )}
         </div>
       </div>

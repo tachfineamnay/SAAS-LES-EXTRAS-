@@ -68,16 +68,11 @@ export function KpiTile({
             }}
             whileHover={hoverLift}
             className={cn(
-                "glass-panel glass-highlight card-spotlight rounded-2xl",
+                "bg-card card-shadow border border-border rounded-2xl",
                 "focus-within:ring-2 focus-within:ring-ring",
                 "p-6 cursor-default relative overflow-hidden",
                 className
             )}
-            onMouseMove={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-                e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-            }}
             {...props}
         >
             <div className="relative z-10 flex items-start justify-between mb-4">
