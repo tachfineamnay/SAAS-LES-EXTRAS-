@@ -171,7 +171,7 @@ export class BookingsService {
           contactEmail: interlocutor,
           relatedBookingId: mission.bookings.find(
             (b) =>
-              b.status !== BookingStatus.CANCELLED && Boolean(b.talent?.email),
+              b.status !== BookingStatus.CANCELLED && Boolean(b.freelance?.email),
           )?.id,
           invoiceUrl: mission.bookings.find(
             (b) => b.status === BookingStatus.COMPLETED || b.status === BookingStatus.PAID,
@@ -223,7 +223,7 @@ export class BookingsService {
                 dateStart: true,
                 address: true,
                 status: true,
-                client: {
+                establishment: {
                   select: {
                     email: true,
                   },

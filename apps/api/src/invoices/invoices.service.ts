@@ -99,10 +99,10 @@ export class InvoicesService {
             doc.moveDown();
 
             // Client / Provider
-            const client = invoice.booking.client;
+            const client = invoice.booking.establishment;
             const provider = invoice.booking.reliefMission
-                ? invoice.booking.talent
-                : (invoice.booking.service?.owner ?? invoice.booking.talent);
+                ? invoice.booking.freelance
+                : (invoice.booking.service?.owner ?? invoice.booking.freelance);
 
             doc.text(`Client: ${client?.email ?? 'N/A'}`);
             doc.text(`Prestataire: ${provider?.email ?? 'N/A'}`);
