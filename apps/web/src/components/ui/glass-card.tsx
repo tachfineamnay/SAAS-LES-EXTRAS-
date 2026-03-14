@@ -14,12 +14,12 @@ const glassCardVariants = cva(
                 /* White card — default clean surface */
                 solid:
                     "bg-card card-shadow border border-border",
-                /* Real glassmorphism — translucent with backdrop-blur */
+                /* Subtle blur — light translucency, no heavy glassmorphism */
                 glass:
-                    "glass-panel glass-highlight card-shadow",
-                /* Hover-lift interactive card with spotlight */
+                    "bg-card/95 backdrop-blur-sm card-shadow border border-border",
+                /* Hover-lift interactive card — clean, no spotlight */
                 interactive:
-                    "bg-card card-shadow border border-border hover:card-shadow-md hover:-translate-y-0.5 hover:border-[hsl(var(--teal)/0.2)] cursor-pointer card-spotlight",
+                    "bg-card card-shadow border border-border hover:card-shadow-md hover:-translate-y-0.5 hover:border-[hsl(var(--teal)/0.25)] cursor-pointer",
                 /* Teal tint — KPI primary / trust widget */
                 teal:
                     "bg-[hsl(var(--teal-light))] border border-[hsl(var(--teal)/0.15)]",
@@ -54,17 +54,6 @@ const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
     ({ className, variant, animate, delay = 0, ...props }, ref) => {
         const classes = cn(glassCardVariants({ variant }), className);
 
-        /* Spotlight effect — track mouse position for interactive variant */
-        const handleMouseMove = React.useCallback(
-            (e: React.MouseEvent<HTMLDivElement>) => {
-                if (variant !== "interactive") return;
-                const rect = e.currentTarget.getBoundingClientRect();
-                e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-                e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-            },
-            [variant]
-        );
-
         if (animate) {
             return (
                 <motion.div
@@ -73,7 +62,6 @@ const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: DURATION_NORMAL, delay, ease: EASE_PREMIUM }}
-                    onMouseMove={handleMouseMove as unknown as React.MouseEventHandler<HTMLDivElement>}
                     {...(props as HTMLMotionProps<"div">)}
                 />
             );
@@ -82,7 +70,6 @@ const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
             <div
                 ref={ref}
                 className={classes}
-                onMouseMove={handleMouseMove}
                 {...(props as React.HTMLAttributes<HTMLDivElement>)}
             />
         );

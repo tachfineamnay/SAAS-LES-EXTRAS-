@@ -19,6 +19,13 @@ const config: Config = {
         sans:    ["var(--font-body)", "Inter", "system-ui", "sans-serif"],
         display: ["var(--font-display)", "Plus Jakarta Sans", "system-ui", "sans-serif"],
       },
+      fontSize: {
+        "display-xl": ["2.5rem",  { lineHeight: "1.1",  letterSpacing: "-0.03em",  fontWeight: "800" }],
+        "display-lg": ["2rem",    { lineHeight: "1.15", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "heading":    ["1.25rem", { lineHeight: "1.3",  letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-lg":    ["1rem",    { lineHeight: "1.6",  fontWeight: "400" }],
+        "caption":    ["0.75rem", { lineHeight: "1.4",  letterSpacing: "0.02em",   fontWeight: "500" }],
+      },
       colors: {
         /* ── Shadcn tokens ── */
         border:     "hsl(var(--border))",
@@ -55,30 +62,30 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
 
-        /* ── Brand tokens LES EXTRAS ── */
+        /* ── Brand tokens LES EXTRAS — Quietly Bold ── */
 
-        /* Teal — Primary (confiance, soin, navigation) */
+        /* Teal — Primary (confiance, soin, navigation) — vert profond médical */
         teal: {
           DEFAULT: "hsl(var(--teal))",
           dim:     "hsl(var(--teal-dim))",
           muted:   "hsl(var(--teal-muted))",
-          50:      "hsla(174, 64%, 42%, 0.05)",
-          100:     "hsla(174, 64%, 42%, 0.10)",
-          200:     "hsla(174, 64%, 42%, 0.20)",
-          500:     "hsl(174, 64%, 42%)",
-          700:     "hsl(174, 56%, 32%)",
+          50:      "hsla(170, 55%, 30%, 0.05)",
+          100:     "hsla(170, 55%, 30%, 0.10)",
+          200:     "hsla(170, 55%, 30%, 0.20)",
+          500:     "hsl(170, 55%, 30%)",
+          700:     "hsl(170, 48%, 22%)",
         },
 
-        /* Coral — Action (CTA, urgence, logo) */
+        /* Coral → Terracotta — Action (CTA, urgence) */
         coral: {
           DEFAULT: "hsl(var(--coral))",
           dim:     "hsl(var(--coral-dim))",
           muted:   "hsl(var(--coral-muted))",
-          50:      "hsla(5, 72%, 58%, 0.05)",
-          100:     "hsla(5, 72%, 58%, 0.10)",
-          200:     "hsla(5, 72%, 58%, 0.20)",
-          500:     "hsl(5, 72%, 58%)",
-          700:     "hsl(5, 60%, 44%)",
+          50:      "hsla(14, 65%, 48%, 0.05)",
+          100:     "hsla(14, 65%, 48%, 0.10)",
+          200:     "hsla(14, 65%, 48%, 0.20)",
+          500:     "hsl(14, 65%, 48%)",
+          700:     "hsl(14, 58%, 36%)",
         },
 
         /* Sand — Chaleur, accueil, onboarding */
@@ -86,10 +93,10 @@ const config: Config = {
           DEFAULT: "hsl(var(--sand))",
           dim:     "hsl(var(--sand-dim))",
           muted:   "hsl(var(--sand-muted))",
-          50:      "hsla(36, 80%, 58%, 0.05)",
-          100:     "hsla(36, 80%, 58%, 0.10)",
-          500:     "hsl(36, 80%, 58%)",
-          700:     "hsl(36, 70%, 44%)",
+          50:      "hsla(32, 75%, 50%, 0.05)",
+          100:     "hsla(32, 75%, 50%, 0.10)",
+          500:     "hsl(32, 75%, 50%)",
+          700:     "hsl(32, 68%, 40%)",
         },
 
         /* Logo Gray — Neutre structural (du logo) */
@@ -131,22 +138,22 @@ const config: Config = {
         "4xl": "2rem",
       },
       boxShadow: {
-        /* Warm card shadows (light mode) */
-        "card":       "0 1px 3px hsla(222,47%,11%,0.06), 0 4px 12px hsla(222,47%,11%,0.06)",
-        "card-md":    "0 2px 8px hsla(222,47%,11%,0.07), 0 8px 24px hsla(222,47%,11%,0.08)",
-        "card-lg":    "0 4px 16px hsla(222,47%,11%,0.09), 0 16px 48px hsla(222,47%,11%,0.10)",
-        "card-hover": "0 8px 32px hsla(222,47%,11%,0.12), 0 2px 8px hsla(222,47%,11%,0.08)",
-        /* Glow accents */
-        "glow-teal":  "0 0 0 3px hsl(174,72%,93%), 0 4px 20px hsla(174,58%,38%,0.22)",
-        "glow-coral": "0 0 0 3px hsl(5,96%,95%), 0 4px 20px hsla(5,72%,58%,0.22)",
-        "glow-sand":  "0 0 0 3px hsl(36,100%,94%), 0 4px 16px hsla(36,90%,56%,0.18)",
+        /* Clinical card shadows — Quietly Bold */
+        "card":       "0 1px 3px hsla(220,25%,15%,0.05), 0 4px 12px hsla(220,25%,15%,0.05)",
+        "card-md":    "0 2px 8px hsla(220,25%,15%,0.06), 0 8px 24px hsla(220,25%,15%,0.07)",
+        "card-lg":    "0 4px 16px hsla(220,25%,15%,0.08), 0 16px 48px hsla(220,25%,15%,0.09)",
+        "card-hover": "0 8px 32px hsla(220,25%,15%,0.10), 0 2px 8px hsla(220,25%,15%,0.07)",
+        /* Glow accents — updated for deeper palette */
+        "glow-teal":  "0 0 0 3px hsl(170,45%,92%), 0 4px 20px hsla(170,55%,30%,0.22)",
+        "glow-coral": "0 0 0 3px hsl(14,80%,94%), 0 4px 20px hsla(14,65%,48%,0.22)",
+        "glow-sand":  "0 0 0 3px hsl(32,80%,93%), 0 4px 16px hsla(32,75%,50%,0.18)",
         /* Aliases */
-        "warm-card":    "0 2px 12px hsla(222,47%,11%,0.08), 0 1px 3px hsla(222,47%,11%,0.05)",
-        "warm-card-lg": "0 8px 32px hsla(222,47%,11%,0.12), 0 2px 8px hsla(222,47%,11%,0.07)",
-        /* Glass shadows */
-        "glass":    "0 8px 32px hsla(0,0%,0%,0.06), inset 0 1px 0 0 hsla(0,0%,100%,0.5)",
-        "glass-lg": "0 12px 48px hsla(0,0%,0%,0.08), inset 0 1px 0 0 hsla(0,0%,100%,0.6)",
-        "glass-sm": "0 4px 16px hsla(0,0%,0%,0.04), inset 0 1px 0 0 hsla(0,0%,100%,0.35)",
+        "warm-card":    "0 2px 12px hsla(220,25%,15%,0.07), 0 1px 3px hsla(220,25%,15%,0.04)",
+        "warm-card-lg": "0 8px 32px hsla(220,25%,15%,0.10), 0 2px 8px hsla(220,25%,15%,0.06)",
+        /* Glass shadows (kept for compat, reduced intensity) */
+        "glass":    "0 8px 32px hsla(0,0%,0%,0.05), inset 0 1px 0 0 hsla(0,0%,100%,0.4)",
+        "glass-lg": "0 12px 48px hsla(0,0%,0%,0.07), inset 0 1px 0 0 hsla(0,0%,100%,0.5)",
+        "glass-sm": "0 4px 16px hsla(0,0%,0%,0.03), inset 0 1px 0 0 hsla(0,0%,100%,0.3)",
       },
       animation: {
         "fade-up":        "fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both",

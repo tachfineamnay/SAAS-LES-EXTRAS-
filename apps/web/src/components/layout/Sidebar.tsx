@@ -146,7 +146,7 @@ function SidebarContent({
   const bottomLinks = userRole === "CLIENT" ? CLIENT_BOTTOM_LINKS : BOTTOM_LINKS;
 
   return (
-    <div className="flex h-full flex-col glass-panel-dense border-r border-white/20">
+    <div className="flex h-full flex-col bg-background border-r border-border">
       {/* Logo zone */}
       <div className="px-4 py-5 border-b border-border/40">
         <div className="flex items-center gap-2.5">

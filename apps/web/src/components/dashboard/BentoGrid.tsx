@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ReactNode, useCallback } from "react";
+import { ReactNode } from "react";
 
 type BentoGridProps = {
     children: ReactNode;
@@ -25,7 +25,7 @@ export function BentoGrid({ children, className, compact }: BentoGridProps) {
     return (
         <div
             className={cn(
-                "grid grid-cols-1 md:grid-cols-3 gap-4",
+                "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5",
                 compact ? "auto-rows-[minmax(120px,auto)]" : "auto-rows-[minmax(160px,auto)]",
                 className
             )}
@@ -37,11 +37,11 @@ export function BentoGrid({ children, className, compact }: BentoGridProps) {
 
 const variantClasses: Record<NonNullable<BentoCardProps["variant"]>, string> = {
     glass:
-        "glass-panel glass-highlight border border-white/30 shadow-glass",
+        "bg-card/95 backdrop-blur-sm border border-border card-shadow",
     solid:
-        "bg-card border border-border shadow-sm",
+        "bg-card border border-border card-shadow",
     interactive:
-        "glass-panel glass-highlight card-spotlight border border-white/30 shadow-glass hover:-translate-y-0.5 hover:shadow-glass-lg hover:border-[hsl(var(--teal)/0.2)] cursor-pointer focus-within:ring-2 focus-within:ring-ring",
+        "bg-card border border-border card-shadow hover:-translate-y-0.5 hover:card-shadow-md hover:border-[hsl(var(--teal)/0.25)] cursor-pointer focus-within:ring-2 focus-within:ring-ring",
 };
 
 export function BentoCard({
@@ -55,16 +55,6 @@ export function BentoCard({
     action,
     variant = "glass",
 }: BentoCardProps) {
-    const handleMouseMove = useCallback(
-        (e: React.MouseEvent<HTMLDivElement>) => {
-            if (variant !== "interactive") return;
-            const rect = e.currentTarget.getBoundingClientRect();
-            e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-            e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-        },
-        [variant]
-    );
-
     return (
         <div
             className={cn(
@@ -75,7 +65,6 @@ export function BentoCard({
                 rowSpan === 2 && "md:row-span-2",
                 className
             )}
-            onMouseMove={handleMouseMove}
         >
             <div className="relative z-10 flex flex-col h-full">
                 {(title || icon) && (

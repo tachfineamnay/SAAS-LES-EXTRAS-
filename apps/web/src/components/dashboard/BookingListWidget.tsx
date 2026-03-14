@@ -60,7 +60,7 @@ export function BookingListWidget({
                             <motion.div
                                 key={booking.lineId}
                                 variants={listItem}
-                                className="flex items-center justify-between rounded-xl border border-white/30 glass-panel-subtle p-4 transition-colors hover:bg-white/60"
+                                className="flex items-center justify-between rounded-xl border border-border bg-card card-shadow p-4 transition-colors hover:bg-muted/50"
                             >
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">

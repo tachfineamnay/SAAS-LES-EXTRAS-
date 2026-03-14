@@ -101,7 +101,7 @@ export function CreditsWidget({ credits }: CreditsWidgetProps) {
                                 {PACKS.map((pack) => (
                                     <div
                                         key={pack.id}
-                                        className={`relative flex flex-col rounded-2xl p-4 transition-all duration-200 ${pack.popular ? 'glass-panel border border-[hsl(var(--teal)/0.3)] shadow-[0_0_20px_hsl(var(--teal)/0.12)]' : 'border border-border hover:shadow-md'}`}
+                                        className={`relative flex flex-col rounded-2xl p-4 transition-all duration-200 ${pack.popular ? 'bg-card border border-[hsl(var(--teal)/0.3)] card-shadow-md' : 'bg-card border border-border hover:card-shadow-md'}`}
                                     >
                                         {pack.popular && (
                                             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full shadow-[0_0_12px_hsl(var(--teal)/0.3)]">
