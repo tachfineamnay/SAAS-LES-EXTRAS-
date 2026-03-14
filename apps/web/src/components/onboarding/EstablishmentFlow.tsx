@@ -28,7 +28,7 @@ const ESTABLISHMENT_TYPES = {
     "Autre": ["SAAD", "SPASAD", "Autre"],
 };
 
-export function ClientFlow({ currentStep }: { currentStep: number }) {
+export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
     const router = useRouter();
     // Step 0 = welcome screen, then steps 1-3
     const [step, setStep] = useState(currentStep === 0 ? 0 : currentStep);

@@ -18,7 +18,7 @@ interface Booking {
     service?: {
         title: string;
     };
-    talent?: {
+    freelance?: {
         email: string;
     };
     // We might need price/amount here to display? 

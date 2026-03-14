@@ -26,7 +26,7 @@ import { useUIStore } from "@/lib/stores/useUIStore";
 import { cn } from "@/lib/utils";
 import { EASE_SNAPPY, SPRING_STIFF, itemSlideLeft, containerVariants } from "@/lib/motion";
 
-const CLIENT_LINKS = [
+const ESTABLISHMENT_LINKS = [
   { href: "/dashboard",          label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/marketplace",        label: "Marketplace",     icon: ShoppingBag },
   { href: "/dashboard/packs",    label: "Crédits",         icon: WalletCards },
@@ -34,7 +34,7 @@ const CLIENT_LINKS = [
   { href: "/dashboard/inbox",    label: "Messagerie",      icon: Mail },
 ];
 
-const TALENT_LINKS = [
+const FREELANCE_LINKS = [
   { href: "/dashboard",      label: "Tableau de bord",   icon: LayoutDashboard },
   { href: "/marketplace",    label: "Offres de Renforts", icon: ShoppingBag },
   { href: "/bookings",       label: "Mon Agenda",         icon: CalendarDays },
@@ -46,7 +46,7 @@ const BOTTOM_LINKS = [
   { href: "/settings", label: "Paramètres",   icon: Settings },
 ];
 
-const CLIENT_BOTTOM_LINKS = [
+const ESTABLISHMENT_BOTTOM_LINKS = [
   { href: "/account",                label: "Mon Profil",          icon: UserRound },
   { href: "/account/establishment",  label: "Mon Établissement",   icon: Building2 },
   { href: "/settings",               label: "Paramètres",          icon: Settings },
@@ -135,7 +135,7 @@ function SidebarContent({
   onNavigate,
   userRole,
 }: {
-  links: typeof CLIENT_LINKS;
+  links: typeof ESTABLISHMENT_LINKS;
   pathname: string;
   onNavigate?: () => void;
   userRole?: "ESTABLISHMENT" | "FREELANCE" | null;
@@ -143,7 +143,7 @@ function SidebarContent({
   const isLinkActive = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
-  const bottomLinks = userRole === "ESTABLISHMENT" ? CLIENT_BOTTOM_LINKS : BOTTOM_LINKS;
+  const bottomLinks = userRole === "ESTABLISHMENT" ? ESTABLISHMENT_BOTTOM_LINKS : BOTTOM_LINKS;
 
   return (
     <div className="flex h-full flex-col bg-background border-r border-border">
@@ -214,7 +214,7 @@ function SidebarContent({
 export function Sidebar({ isMobileOpen, onMobileOpenChange }: SidebarProps) {
   const pathname = usePathname();
   const userRole = useUIStore((state) => state.userRole);
-  const links = userRole === "ESTABLISHMENT" ? CLIENT_LINKS : TALENT_LINKS;
+  const links = userRole === "ESTABLISHMENT" ? ESTABLISHMENT_LINKS : FREELANCE_LINKS;
 
   return (
     <>

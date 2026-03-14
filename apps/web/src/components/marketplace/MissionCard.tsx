@@ -17,12 +17,12 @@ interface MissionCardProps {
 }
 
 export function MissionCard({ mission, onApply }: MissionCardProps) {
-  const clientName =
-    mission.client?.profile?.companyName || "Établissement confidentiel";
+  const establishmentName =
+    mission.establishment?.profile?.companyName || "Établissement confidentiel";
 
   const displayCity =
     mission.city ||
-    mission.client?.profile?.city ||
+    mission.establishment?.profile?.city ||
     mission.address.split(",").pop()?.trim() ||
     "Localisation inconnue";
 
@@ -87,7 +87,7 @@ export function MissionCard({ mission, onApply }: MissionCardProps) {
         {/* Établissement */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Building2 className="h-4 w-4 shrink-0" />
-          <span className="truncate">{clientName}</span>
+          <span className="truncate">{establishmentName}</span>
         </div>
       </CardHeader>
 

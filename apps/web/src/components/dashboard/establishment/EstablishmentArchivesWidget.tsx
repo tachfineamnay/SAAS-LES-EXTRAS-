@@ -6,11 +6,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { QuoteCreationModal } from "@/components/dashboard/QuoteCreationModal";
 import { RefreshCcw, User } from "lucide-react";
 
-interface ClientArchivesWidgetProps {
+interface EstablishmentArchivesWidgetProps {
     bookings: BookingLine[];
 }
 
-export function ClientArchivesWidget({ bookings }: ClientArchivesWidgetProps) {
+export function EstablishmentArchivesWidget({ bookings }: EstablishmentArchivesWidgetProps) {
     if (bookings.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-4 text-muted-foreground">

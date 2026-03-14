@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FreelanceFlow } from "./FreelanceFlow";
-import { ClientFlow } from "./ClientFlow";
+import { EstablishmentFlow } from "./EstablishmentFlow";
 import { UserRole } from "@prisma/client";
 import { useUIStore } from "@/lib/stores/useUIStore";
 
@@ -39,7 +39,7 @@ export function OnboardingGuard({ children, userRole, onboardingStep }: Onboardi
                     {userRole === "FREELANCE" ? (
                         <FreelanceFlow currentStep={onboardingStep} />
                     ) : userRole === "ESTABLISHMENT" ? (
-                        <ClientFlow currentStep={onboardingStep} />
+                        <EstablishmentFlow currentStep={onboardingStep} />
                     ) : (
                         <>{children}</>
                     )}

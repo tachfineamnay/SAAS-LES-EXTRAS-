@@ -12,7 +12,7 @@ export type OnboardingData = {
     diplomaUrl?: string; // We'll just store the URL for now
     address?: string;
 
-    // Client
+    // Establishment
     establishmentName?: string;
     establishmentType?: string; // MECS, EHPAD...
     phone?: string;

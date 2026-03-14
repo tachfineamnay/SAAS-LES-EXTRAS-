@@ -7,8 +7,8 @@ import { MarketList } from "./MarketList";
 type MarketplaceClientProps = {
   missions: MissionCardProps["mission"][];
   services: ServiceCardProps["service"][];
-  mockClientId?: string;
-  mockTalentId?: string;
+  mockEstablishmentId?: string;
+  mockFreelanceId?: string;
 };
 
 export function MarketplaceClient({ missions, services }: MarketplaceClientProps) {

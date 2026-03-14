@@ -3,19 +3,19 @@
 import { Briefcase, DollarSign, FileText, TrendingUp } from "lucide-react";
 import { KpiTile } from "./KpiTile";
 
-interface ClientKpiGridProps {
+interface EstablishmentKpiGridProps {
     confirmedCount: number;
     awaitingPaymentCount: number;
     availableCredits: number;
     pendingQuotesCount: number;
 }
 
-export function ClientKpiGrid({
+export function EstablishmentKpiGrid({
     confirmedCount,
     awaitingPaymentCount,
     availableCredits,
     pendingQuotesCount,
-}: ClientKpiGridProps) {
+}: EstablishmentKpiGridProps) {
     return (
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
             <KpiTile label="Renforts actifs" value={confirmedCount} icon={Briefcase} iconColor="gray" />

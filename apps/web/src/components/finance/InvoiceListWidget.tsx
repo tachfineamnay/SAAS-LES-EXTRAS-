@@ -51,7 +51,7 @@ export function InvoiceListWidget({ invoices }: InvoiceListProps) {
                                 {new Date(invoice.createdAt).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
-                                {invoice.booking.client.profile?.firstName} {invoice.booking.client.profile?.lastName}
+                                {invoice.booking.establishment.profile?.firstName} {invoice.booking.establishment.profile?.lastName}
                             </TableCell>
                             <TableCell>{invoice.amount.toFixed(2)} €</TableCell>
                             <TableCell>

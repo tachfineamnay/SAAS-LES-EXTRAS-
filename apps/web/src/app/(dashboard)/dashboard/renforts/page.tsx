@@ -3,7 +3,7 @@ import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CandidateCard } from "@/components/dashboard/client/CandidateCard";
+import { CandidateCard } from "@/components/dashboard/establishment/CandidateCard";
 import { Calendar, Clock, MapPin, Sun, Moon } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -138,7 +138,7 @@ export default async function SosDashboardPage() {
                         <CandidateCard
                           key={booking.id}
                           bookingId={booking.id}
-                          talent={booking.talent}
+                          freelance={booking.freelance}
                           status={booking.status}
                           motivation={booking.motivation}
                           proposedRate={booking.proposedRate}

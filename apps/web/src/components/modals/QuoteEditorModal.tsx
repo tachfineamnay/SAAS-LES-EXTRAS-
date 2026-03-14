@@ -86,7 +86,7 @@ export function QuoteEditorModal() {
     });
   };
 
-  const clientName = quote?.establishment?.profile?.companyName
+  const establishmentName = quote?.establishment?.profile?.companyName
     ?? `${quote?.establishment?.profile?.firstName ?? ""} ${quote?.establishment?.profile?.lastName ?? ""}`.trim()
     ?? "le client";
 
@@ -103,7 +103,7 @@ export function QuoteEditorModal() {
         {/* Client request recap */}
         {quote?.booking && (
           <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm space-y-1.5">
-            <p className="font-medium text-blue-800 text-xs uppercase tracking-wide">Demande de {clientName}</p>
+            <p className="font-medium text-blue-800 text-xs uppercase tracking-wide">Demande de {establishmentName}</p>
             <div className="flex flex-wrap gap-3 text-blue-700">
               {quote.booking.scheduledAt && (
                 <span className="flex items-center gap-1 text-xs">

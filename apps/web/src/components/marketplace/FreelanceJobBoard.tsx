@@ -37,8 +37,8 @@ export function FreelanceJobBoard({ missions }: FreelanceJobBoardProps) {
           m.title.toLowerCase().includes(q) ||
           m.address.toLowerCase().includes(q) ||
           m.city?.toLowerCase().includes(q) ||
-          m.client?.profile?.city?.toLowerCase().includes(q) ||
-          m.client?.profile?.companyName?.toLowerCase().includes(q) ||
+          m.establishment?.profile?.city?.toLowerCase().includes(q) ||
+          m.establishment?.profile?.companyName?.toLowerCase().includes(q) ||
           false;
         if (!matchText) return false;
       }

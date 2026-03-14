@@ -6,18 +6,18 @@ import { getQuotes } from "@/actions/quotes";
 import { getInvoices } from "@/actions/finance";
 import { getCredits } from "@/actions/credits";
 import { BentoSection } from "@/components/layout/BentoSection";
-import { ClientKpiGrid } from "@/components/dashboard/ClientKpiGrid";
-import { TalentKpiGrid } from "@/components/dashboard/TalentKpiGrid";
+import { EstablishmentKpiGrid } from "@/components/dashboard/EstablishmentKpiGrid";
+import { FreelanceKpiGrid } from "@/components/dashboard/FreelanceKpiGrid";
 import { BookingListWidget } from "@/components/dashboard/BookingListWidget";
 import { CreditsWidget } from "@/components/dashboard/CreditsWidget";
 import { TrustChecklistWidget } from "@/components/dashboard/TrustChecklistWidget";
 import { QuoteCreationModal } from "@/components/dashboard/QuoteCreationModal";
 import { QuoteListWidget } from "@/components/dashboard/QuoteListWidget";
 import { PaymentValidationWidget } from "@/components/dashboard/PaymentValidationWidget";
-import { MissionsToValidateWidget } from "@/components/dashboard/client/MissionsToValidateWidget";
-import { UpcomingMissionsWidget } from "@/components/dashboard/client/UpcomingMissionsWidget";
-import { ClientInvoicesWidget } from "@/components/dashboard/client/ClientInvoicesWidget";
-import { ClientArchivesWidget } from "@/components/dashboard/client/ClientArchivesWidget";
+import { MissionsToValidateWidget } from "@/components/dashboard/establishment/MissionsToValidateWidget";
+import { UpcomingMissionsWidget } from "@/components/dashboard/establishment/UpcomingMissionsWidget";
+import { EstablishmentInvoicesWidget } from "@/components/dashboard/establishment/EstablishmentInvoicesWidget";
+import { EstablishmentArchivesWidget } from "@/components/dashboard/establishment/EstablishmentArchivesWidget";
 import { GlassCard, GlassCardHeader, GlassCardContent } from "@/components/ui/glass-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
@@ -94,7 +94,7 @@ export default async function DashboardPage() {
                 <MissionsToValidateWidget bookings={missionsToValidate} />
 
                 {/* KPI row */}
-                <ClientKpiGrid
+                <EstablishmentKpiGrid
                     confirmedCount={confirmedBookings.length}
                     awaitingPaymentCount={awaitingPaymentBookings.length}
                     availableCredits={availableCredits}
@@ -164,7 +164,7 @@ export default async function DashboardPage() {
                             </div>
                         </GlassCardHeader>
                         <GlassCardContent>
-                            <ClientInvoicesWidget invoices={invoices} />
+                            <EstablishmentInvoicesWidget invoices={invoices} />
                         </GlassCardContent>
                     </GlassCard>
 
@@ -213,7 +213,7 @@ export default async function DashboardPage() {
                             </div>
                         </GlassCardHeader>
                         <GlassCardContent>
-                            <ClientArchivesWidget bookings={completedBookings} />
+                            <EstablishmentArchivesWidget bookings={completedBookings} />
                         </GlassCardContent>
                     </GlassCard>
                 </BentoSection>
@@ -222,7 +222,7 @@ export default async function DashboardPage() {
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // TALENT / FREELANCE VIEW
+    // FREELANCE VIEW
     // ─────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-8">
@@ -234,7 +234,7 @@ export default async function DashboardPage() {
             </header>
 
             {/* KPI row */}
-            <TalentKpiGrid
+            <FreelanceKpiGrid
                 confirmedCount={confirmedBookings.length}
                 completedCount={completedBookings.length}
                 pendingCount={pendingBookings.length}
