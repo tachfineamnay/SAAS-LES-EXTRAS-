@@ -234,7 +234,7 @@ export function RenfortModal() {
               key={label}
               className={cn(
                 "h-1 flex-1 rounded-full transition-colors duration-300",
-                i <= step ? "bg-primary" : "bg-muted"
+                i <= step ? "bg-[hsl(var(--teal))]" : "bg-muted"
               )}
             />
           ))}
@@ -412,8 +412,8 @@ function StepProfil({
                     className={cn(
                       "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm text-left transition-colors",
                       selected
-                        ? "border-primary bg-primary/10 text-primary font-medium"
-                        : "border-border hover:border-primary/50 hover:bg-muted"
+                        ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))] font-medium"
+                        : "border-border hover:border-[hsl(var(--teal)/0.3)] hover:bg-muted"
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
@@ -442,8 +442,8 @@ function StepProfil({
               className={cn(
                 "flex-1 rounded-lg border py-2 text-sm font-medium transition-colors",
                 diplomaRequired === opt.value
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border hover:border-primary/50"
+                  ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))]"
+                  : "border-border hover:border-[hsl(var(--teal)/0.3)]"
               )}
             >
               {opt.label}
@@ -469,8 +469,8 @@ function StepProfil({
                 className={cn(
                   "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                   active
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border hover:border-primary/50 hover:bg-muted"
+                    ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))]"
+                    : "border-border hover:border-[hsl(var(--teal)/0.3)] hover:bg-muted"
                 )}
               >
                 {skill}
@@ -543,8 +543,8 @@ function StepContext({
                 className={cn(
                   "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                   active
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border hover:border-primary/50 hover:bg-muted"
+                    ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))]"
+                    : "border-border hover:border-[hsl(var(--teal)/0.3)] hover:bg-muted"
                 )}
               >
                 {pub}
@@ -723,8 +723,8 @@ function StepRemuneration({
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 rounded-lg border py-3 text-sm font-medium transition-colors",
                 shift === s
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border hover:border-primary/50"
+                  ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))]"
+                  : "border-border hover:border-[hsl(var(--teal)/0.3)]"
               )}
             >
               {s === "JOUR" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -738,7 +738,7 @@ function StepRemuneration({
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <Label className="text-sm font-semibold">Taux horaire brut</Label>
-          <span className="text-lg font-bold text-primary">{hourlyRate} €/h</span>
+          <span className="text-lg font-bold text-[hsl(var(--teal))]">{hourlyRate} €/h</span>
         </div>
         <input
           type="range"
@@ -773,14 +773,14 @@ function StepRemuneration({
                 className={cn(
                   "flex items-center gap-3 rounded-lg border px-3 py-2 text-sm text-left transition-colors",
                   active
-                    ? "border-primary bg-primary/10 text-primary font-medium"
-                    : "border-border hover:border-primary/50 hover:bg-muted"
+                    ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))] font-medium"
+                    : "border-border hover:border-[hsl(var(--teal)/0.3)] hover:bg-muted"
                 )}
               >
                 <span
                   className={cn(
                     "h-4 w-4 rounded-sm border shrink-0 flex items-center justify-center",
-                    active ? "border-primary bg-primary text-primary-foreground" : "border-border"
+                    active ? "border-[hsl(var(--teal))] bg-[hsl(var(--teal))] text-white" : "border-border"
                   )}
                 >
                   {active && <Check className="h-3 w-3" />}

@@ -19,7 +19,6 @@ const PACKS = [
             "Facturation automatique"
         ],
         popular: false,
-        color: "bg-blue-500",
         description: "Idéal pour un besoin ponctuel."
     },
     {
@@ -35,7 +34,6 @@ const PACKS = [
             "Accès aux profils vérifiés"
         ],
         popular: true,
-        color: "bg-purple-500",
         description: "Le choix préféré des directeurs."
     },
     {
@@ -52,7 +50,6 @@ const PACKS = [
             "Reporting mensuel"
         ],
         popular: false,
-        color: "bg-indigo-500",
         description: "Pour les besoins réguliers."
     }
 ] as const;
@@ -77,7 +74,7 @@ export default function PacksPage() {
     return (
         <div className="space-y-8 p-8 max-w-7xl mx-auto">
             <div className="text-center space-y-4">
-                <h1 className="text-4xl font-bold tracking-tight">Choisissez votre Pack de Crédits</h1>
+                <h1 className="font-display text-heading-xl tracking-tight">Choisissez votre Pack de Crédits</h1>
                 <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                     Simplifiez vos recrutements avec nos formules prépayées.
                     Plus vous achetez, plus vous économisez sur vos mises en relation.
@@ -88,11 +85,11 @@ export default function PacksPage() {
                 {PACKS.map((pack) => (
                     <div
                         key={pack.id}
-                        className={`relative flex flex-col rounded-2xl border bg-card p-8 shadow-sm transition-all hover:shadow-xl ${pack.popular ? 'border-primary ring-2 ring-primary ring-opacity-50 scale-105 z-10' : 'hover:border-primary/50'
+                        className={`relative flex flex-col rounded-2xl border bg-card p-8 shadow-sm transition-all hover:shadow-xl ${pack.popular ? 'border-[hsl(var(--teal)/0.3)] ring-2 ring-[hsl(var(--teal)/0.4)] scale-105 z-10' : 'hover:border-[hsl(var(--teal)/0.3)]'
                             }`}
                     >
                         {pack.popular && (
-                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-sm font-bold px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[hsl(var(--teal))] text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1">
                                 <Star className="h-4 w-4 fill-current" />
                                 Plus Populaire
                             </div>
@@ -108,7 +105,7 @@ export default function PacksPage() {
                                 <span className="text-5xl font-extrabold">{pack.price}€</span>
                                 <span className="text-muted-foreground ml-2 font-medium">HT</span>
                             </div>
-                            <p className="text-sm font-medium mt-2 text-primary">
+                            <p className="text-sm font-medium mt-2 text-[hsl(var(--teal))]">
                                 Soit {Math.round(pack.price / pack.credits)}€ / recrutement
                             </p>
                         </div>
@@ -116,7 +113,7 @@ export default function PacksPage() {
                         <ul className="space-y-4 mb-8 flex-1">
                             {pack.features.map((feature, i) => (
                                 <li key={i} className="flex items-start text-sm text-muted-foreground">
-                                    <div className={`mr-3 h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${pack.popular ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                                    <div className={`mr-3 h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${pack.popular ? 'bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))]' : 'bg-muted text-muted-foreground'}`}>
                                         <Check className="h-3 w-3" />
                                     </div>
                                     <span>{feature}</span>
@@ -125,10 +122,10 @@ export default function PacksPage() {
                         </ul>
 
                         <Button
-                            className={`w-full h-12 text-lg font-semibold ${pack.popular ? 'shadow-lg shadow-primary/20' : ''}`}
+                            className={`w-full h-12 text-lg font-semibold ${pack.popular ? 'shadow-lg' : ''}`}
                             onClick={() => handleBuyPack(pack.id, pack.name, pack.price)}
                             disabled={isPending}
-                            variant={pack.popular ? "default" : "outline"}
+                            variant={pack.popular ? "coral" : "outline"}
                         >
                             {isPending ? "Traitement..." : "Choisir ce pack"}
                         </Button>
@@ -140,9 +137,9 @@ export default function PacksPage() {
                 ))}
             </div>
 
-            <div className="mt-16 bg-muted/30 rounded-xl p-8 max-w-4xl mx-auto">
+            <div className="mt-16 bg-[hsl(var(--color-sand-50))] rounded-xl p-8 max-w-4xl mx-auto">
                 <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary text-xs">?</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))] text-xs">?</span>
                     Questions Fréquentes
                 </h3>
                 <div className="grid md:grid-cols-2 gap-6 text-sm text-muted-foreground">

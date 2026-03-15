@@ -52,7 +52,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         <div className="lg:col-span-2 space-y-8">
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="text-primary border-primary">
+              <Badge variant="teal">
                 {service.type === "WORKSHOP" ? "ATELIER" : "FORMATION"}
               </Badge>
               {service.category && (
@@ -65,7 +65,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               )}
             </div>
 
-            <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">{service.title}</h1>
+            <h1 className="font-display text-heading-xl tracking-tight">{service.title}</h1>
 
             {/* Public cible */}
             {publicLabels.length > 0 && (
@@ -73,7 +73,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 {publicLabels.map((label) => (
                   <span
                     key={label}
-                    className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100"
+                    className="inline-flex items-center px-2.5 py-1 rounded-full bg-[hsl(var(--color-violet-50))] text-[hsl(var(--color-violet-700))] text-xs font-medium border border-[hsl(var(--violet)/0.2)]"
                   >
                     {label}
                   </span>
@@ -84,7 +84,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             {/* Owner mini-profile */}
             <div className="flex items-center gap-3 pt-2">
               <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
-                <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                <AvatarFallback className="bg-[hsl(var(--teal)/0.1)] text-[hsl(var(--teal))] font-bold">
                   {getAvatarFallback(ownerName)}
                 </AvatarFallback>
               </Avatar>
@@ -101,7 +101,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           {/* Description */}
           {service.description && (
             <div className="space-y-2">
-              <h3 className="text-xl font-bold">À propos de ce service</h3>
+              <h3 className="text-heading-sm">À propos de ce service</h3>
               <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{service.description}</p>
             </div>
           )}
@@ -110,27 +110,27 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           {(service.objectives || service.methodology || service.evaluation) && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {service.objectives && (
-                <div className="bg-green-50 border border-green-100 rounded-xl p-4 space-y-2">
-                  <div className="flex items-center gap-2 font-semibold text-green-800">
+                <div className="bg-[hsl(var(--color-emerald-50))] border border-[hsl(var(--emerald)/0.2)] rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2 font-semibold text-[hsl(var(--color-emerald-700))]">
                     <Target className="w-4 h-4" /> Objectifs
                   </div>
-                  <p className="text-sm text-green-700 leading-relaxed">{service.objectives}</p>
+                  <p className="text-sm text-[hsl(var(--color-emerald-700))] leading-relaxed">{service.objectives}</p>
                 </div>
               )}
               {service.methodology && (
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-2">
-                  <div className="flex items-center gap-2 font-semibold text-blue-800">
+                <div className="bg-[hsl(var(--color-teal-50))] border border-[hsl(var(--teal)/0.2)] rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2 font-semibold text-[hsl(var(--color-teal-700))]">
                     <BookOpen className="w-4 h-4" /> Méthodologie
                   </div>
-                  <p className="text-sm text-blue-700 leading-relaxed">{service.methodology}</p>
+                  <p className="text-sm text-[hsl(var(--color-teal-700))] leading-relaxed">{service.methodology}</p>
                 </div>
               )}
               {service.evaluation && (
-                <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 space-y-2">
-                  <div className="flex items-center gap-2 font-semibold text-purple-800">
+                <div className="bg-[hsl(var(--color-violet-50))] border border-[hsl(var(--violet)/0.2)] rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2 font-semibold text-[hsl(var(--color-violet-700))]">
                     <ClipboardList className="w-4 h-4" /> Évaluation
                   </div>
-                  <p className="text-sm text-purple-700 leading-relaxed">{service.evaluation}</p>
+                  <p className="text-sm text-[hsl(var(--color-violet-700))] leading-relaxed">{service.evaluation}</p>
                 </div>
               )}
             </div>
@@ -139,7 +139,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           {/* Materials */}
           {service.materials && (
             <div className="flex items-start gap-3 bg-muted/30 rounded-xl p-4 border">
-              <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+              <CheckCircle2 className="w-5 h-5 text-[hsl(var(--teal))] mt-0.5 shrink-0" />
               <div>
                 <p className="font-medium text-sm">Matériel fourni</p>
                 <p className="text-sm text-muted-foreground">{service.materials}</p>
@@ -150,8 +150,8 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           {/* Available slots */}
           {slots.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <CalendarDays className="w-5 h-5 text-primary" />
+              <h3 className="text-heading-sm flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-[hsl(var(--teal))]" />
                 Créneaux disponibles
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -173,8 +173,8 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
           {/* Instructor bio */}
           <div className="bg-muted/30 p-6 rounded-xl border">
-            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-primary" />
+            <h3 className="text-heading-sm mb-4 flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-[hsl(var(--teal))]" />
               L&apos;Intervenant
             </h3>
             <div className="flex flex-col md:flex-row gap-6">
@@ -184,7 +184,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               <div className="space-y-2">
                 <div>
                   <h4 className="font-semibold text-lg">{ownerName}</h4>
-                  <p className="text-sm text-primary font-medium">{ownerJob}</p>
+                  <p className="text-sm text-[hsl(var(--teal))] font-medium">{ownerJob}</p>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">{ownerBio}</p>
               </div>
@@ -195,9 +195,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         {/* RIGHT COLUMN: STICKY BUY BOX */}
         <div className="relative">
           <div className="sticky top-24">
-            <Card className="border-2 border-primary/20 shadow-lg overflow-hidden">
-              <div className="bg-primary/5 p-4 border-b border-primary/10">
-                <h3 className="font-semibold text-primary text-center">Récapitulatif</h3>
+            <Card className="border-2 border-[hsl(var(--teal)/0.2)] shadow-lg overflow-hidden">
+              <div className="bg-[hsl(var(--teal)/0.05)] p-4 border-b border-[hsl(var(--teal)/0.1)]">
+                <h3 className="font-semibold text-[hsl(var(--teal))] text-center">Récapitulatif</h3>
               </div>
               <CardContent className="p-6 space-y-5">
                 {/* Price display */}

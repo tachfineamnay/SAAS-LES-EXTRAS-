@@ -1,6 +1,7 @@
 "use client";
 
 import { BookingLine } from "@/app/actions/bookings";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Phone, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -32,9 +33,7 @@ export function UpcomingMissionsWidget({ bookings }: UpcomingMissionsWidgetProps
                                 <span className="font-semibold text-sm">{booking.date}</span>
                                 {/* We could parse date to check if it is today */}
                             </div>
-                            <div className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                                Confirmé
-                            </div>
+                            <Badge variant="teal" className="text-xs">Confirmé</Badge>
                         </div>
 
                         <div className="flex items-center gap-3">

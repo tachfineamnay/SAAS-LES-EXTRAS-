@@ -86,7 +86,7 @@ export function TrustChecklistWidget() {
                                 className={cn(
                                     "flex h-8 w-8 items-center justify-center rounded-full border",
                                     step.status === "COMPLETED"
-                                        ? "border-emerald-500 bg-emerald-50 text-emerald-600"
+                                        ? "border-[hsl(var(--emerald))] bg-[hsl(var(--color-emerald-50))] text-[hsl(var(--emerald))]"
                                         : "border-muted bg-background text-muted-foreground",
                                 )}
                             >
@@ -114,7 +114,7 @@ export function TrustChecklistWidget() {
                 ))}
             </motion.div>
 
-            <div className="rounded-md bg-blue-50 p-3 text-xs text-blue-700">
+            <div className="rounded-md bg-[hsl(var(--color-teal-50))] p-3 text-xs text-[hsl(var(--color-teal-700))]">
                 <p>Un profil vérifié à 100% augmente vos chances d'être sélectionné par les établissements.</p>
             </div>
         </div>
