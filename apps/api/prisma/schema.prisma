@@ -7,16 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
 enum UserRole {
   ESTABLISHMENT
   FREELANCE
   ADMIN
-}
-
-enum ServiceStatus {
-  DRAFT
-  ACTIVE
-  ARCHIVED
 }
 
 enum UserStatus {
@@ -37,182 +35,16 @@ enum ServiceType {
   TRAINING
 }
 
-
-
-model User {
-  id             String          @id @default(cuid())
-  email          String          @unique
-  password       String
-  role           UserRole
-  status         UserStatus      @default(PENDING)
-  onboardingStep Int             @default(0)
-  isAvailable    Boolean         @default(false)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  profile        Profile?
-  establishmentMissions ReliefMission[] @relation("EstablishmentMissions")
-  ownerServices   Service[]       @relation("OwnerServices")
-  establishmentBookings Booking[]  @relation("EstablishmentBookings")
-  freelanceBookings Booking[]      @relation("FreelanceBookings")
-  freelanceQuotes Quote[]          @relation("FreelanceQuotes")
-  establishmentQuotes Quote[]      @relation("EstablishmentQuotes")
-  sentMessages     DirectMessage[] @relation("SentMessages")
-  receivedMessages DirectMessage[] @relation("ReceivedMessages")
-  notifications    Notification[]
-  packPurchases    PackPurchase[]
-  reviewsAuthored  Review[]        @relation("ReviewsAuthored")
-  reviewsReceived  Review[]        @relation("ReviewsReceived")
-}
-
-model DirectMessage {
-  id        String   @id @default(cuid())
-  content   String
-  senderId  String
-  receiverId String
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  
-  sender    User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-}
-
-model Profile {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  firstName      String
-  lastName       String
-  bio            String?
-  avatar         String?
-  jobTitle       String?
-  phone          String?
-  address        String?
-  city           String?
-  zipCode        String?
-  country        String?
-  skills         String[]
-  companyName    String?
-  siret          String?
-  tvaNumber      String?
-  onboardingStep Int      @default(0)
-  availableCredits Int    @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  message   String
-  type      String   // INFO, SUCCESS, WARNING
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model PackPurchase {
-  id              String   @id @default(cuid())
-  establishmentId String
-  amount          Float
-  creditsAdded    Int
-  createdAt       DateTime @default(now())
-  establishment   User     @relation(fields: [establishmentId], references: [id])
-}
-
-model ReliefMission {
-  id         String              @id @default(cuid())
-  title      String
-  dateStart  DateTime
-  dateEnd    DateTime
-  hourlyRate Float
-  status     ReliefMissionStatus @default(OPEN)
-  isRenfort  Boolean             @default(false)
-  address    String
-  // Extended SOS Renfort fields
-  metier     String?
-  shift      String?             // "JOUR" | "NUIT"
-  city       String?
-  zipCode    String?
-  slots      Json?               // [{ date, heureDebut, heureFin }]
-  // SOS Renfort v2 — contexte clinique
-  description         String?   @db.Text
-  establishmentType   String?
-  targetPublic        String[]
-  unitSize            String?
-  requiredSkills      String[]
-  diplomaRequired     Boolean   @default(true)
-  // SOS Renfort v2 — logistique
-  hasTransmissions    Boolean   @default(false)
-  transmissionTime    String?
-  perks               String[]
-  exactAddress        String?
-  accessInstructions  String?   @db.Text
-  establishmentId String
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
-  establishment User             @relation("EstablishmentMissions", fields: [establishmentId], references: [id], onDelete: Restrict)
-  bookings   Booking[]
-  quotes     Quote[]
-
-  @@index([establishmentId])
-}
-
-model Service {
-  id                 String      @id @default(cuid())
-  title              String
-  description        String?
-  price              Float       @default(0)
-  type               ServiceType
-  capacity           Int         @default(10)
-  isFeatured         Boolean     @default(false)
-  isHidden           Boolean     @default(false)
-  // Extended atelier fields
-  pricingType        String      @default("SESSION") // "SESSION" | "PER_PARTICIPANT" | "QUOTE"
-  pricePerParticipant Float?
-  durationMinutes    Int         @default(120)
-  category           String?
-  publicCible        Json?       // string[]
-  materials          String?
-  objectives         String?
-  methodology        String?
-  evaluation         String?
-  slots              Json?       // [{ date, heureDebut, heureFin }]
-  status             ServiceStatus @default(ACTIVE)
-  ownerId            String
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
-  owner              User        @relation("OwnerServices", fields: [ownerId], references: [id], onDelete: Restrict)
-  bookings           Booking[]
-  quotes             Quote[]
-
-  @@index([ownerId])
+enum ServiceStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
 }
 
 enum QuoteStatus {
   PENDING
   ACCEPTED
   REJECTED
-}
-
-model Quote {
-  id              String         @id @default(cuid())
-  amount          Float          @default(0)
-  description     String         @default("")
-  startDate       DateTime?
-  endDate         DateTime?
-  status          QuoteStatus    @default(PENDING)
-  freelanceId     String
-  establishmentId String
-  reliefMissionId String?
-  serviceId       String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-
-  freelance       User           @relation("FreelanceQuotes", fields: [freelanceId], references: [id])
-  establishment   User           @relation("EstablishmentQuotes", fields: [establishmentId], references: [id])
-  reliefMission   ReliefMission? @relation(fields: [reliefMissionId], references: [id])
-  service         Service?       @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  booking         Booking?
 }
 
 enum BookingStatus {
@@ -224,29 +56,282 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum InvoiceStatus {
+  PENDING_PAYMENT
+  PAID
+}
+
+enum ReviewType {
+  ESTABLISHMENT_TO_FREELANCE
+  FREELANCE_TO_ESTABLISHMENT
+}
+
+enum DocumentType {
+  AVATAR
+  SERVICE_PHOTO
+  IDENTITY_DOC
+  OTHER
+}
+
+// ─────────────────────────────────────────────
+// CORE IDENTITY
+// ─────────────────────────────────────────────
+
+model User {
+  id               String     @id @default(cuid())
+  email            String     @unique
+  password         String
+  role             UserRole
+  status           UserStatus @default(PENDING)
+  onboardingStep   Int        @default(0)
+  isAvailable      Boolean    @default(false)
+  stripeCustomerId String? /// Stripe Customer ID (ESTABLISHMENT — for payments)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  // Relations
+  profile               Profile?
+  establishmentMissions ReliefMission[] @relation("EstablishmentMissions")
+  ownerServices         Service[]       @relation("OwnerServices")
+  establishmentBookings Booking[]       @relation("EstablishmentBookings")
+  freelanceBookings     Booking[]       @relation("FreelanceBookings")
+  freelanceQuotes       Quote[]         @relation("FreelanceQuotes")
+  establishmentQuotes   Quote[]         @relation("EstablishmentQuotes")
+  sentMessages          Message[]       @relation("SentMessages")
+  receivedMessages      Message[]       @relation("ReceivedMessages")
+  conversationsAsA      Conversation[]  @relation("ConversationParticipantA")
+  conversationsAsB      Conversation[]  @relation("ConversationParticipantB")
+  notifications         Notification[]
+  packPurchases         PackPurchase[]
+  reviewsAuthored       Review[]        @relation("ReviewsAuthored")
+  reviewsReceived       Review[]        @relation("ReviewsReceived")
+  documents             Document[]
+}
+
+model Profile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  firstName        String
+  lastName         String
+  bio              String?
+  avatar           String?
+  jobTitle         String?
+  phone            String?
+  address          String?
+  city             String?
+  zipCode          String?
+  country          String?
+  latitude         Float? /// Géolocalisation (future recherche par rayon)
+  longitude        Float?
+  skills           String[]
+  companyName      String?
+  siret            String?
+  tvaNumber        String?
+  stripeAccountId  String? /// Stripe Connect Account ID (FREELANCE — for payouts)
+  onboardingStep   Int      @default(0)
+  availableCredits Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────────────────────────────────────
+// MESSAGING
+// ─────────────────────────────────────────────
+
+model Conversation {
+  id             String   @id @default(cuid())
+  participantAId String
+  participantBId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  participantAUser User      @relation("ConversationParticipantA", fields: [participantAId], references: [id], onDelete: Cascade)
+  participantBUser User      @relation("ConversationParticipantB", fields: [participantBId], references: [id], onDelete: Cascade)
+  messages         Message[]
+
+  @@unique([participantAId, participantBId])
+  @@index([participantAId])
+  @@index([participantBId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  content        String
+  senderId       String
+  receiverId     String
+  conversationId String?
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  sender       User          @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver     User          @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+// ─────────────────────────────────────────────
+// NOTIFICATIONS & PACKS
+// ─────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  message   String
+  type      String // INFO, SUCCESS, WARNING
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PackPurchase {
+  id              String   @id @default(cuid())
+  establishmentId String
+  amount          Float
+  creditsAdded    Int
+  createdAt       DateTime @default(now())
+
+  establishment User @relation(fields: [establishmentId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// PILIER 1 — RENFORT (ReliefMission)
+// ─────────────────────────────────────────────
+
+model ReliefMission {
+  id                 String              @id @default(cuid())
+  title              String
+  dateStart          DateTime
+  dateEnd            DateTime
+  hourlyRate         Float
+  status             ReliefMissionStatus @default(OPEN)
+  isRenfort          Boolean             @default(false)
+  address            String
+  // Extended SOS Renfort fields
+  metier             String?
+  shift              String? // "JOUR" | "NUIT"
+  city               String?
+  zipCode            String?
+  slots              Json? // [{ date, heureDebut, heureFin }]
+  // SOS Renfort v2 — contexte clinique
+  description        String?             @db.Text
+  establishmentType  String?
+  targetPublic       String[]
+  unitSize           String?
+  requiredSkills     String[]
+  diplomaRequired    Boolean             @default(true)
+  // SOS Renfort v2 — logistique
+  hasTransmissions   Boolean             @default(false)
+  transmissionTime   String?
+  perks              String[]
+  exactAddress       String?
+  accessInstructions String?             @db.Text
+
+  establishmentId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  establishment User      @relation("EstablishmentMissions", fields: [establishmentId], references: [id], onDelete: Restrict)
+  bookings      Booking[]
+  quotes        Quote[]
+
+  @@index([establishmentId])
+}
+
+// ─────────────────────────────────────────────
+// PILIER 2 — ATELIERS (Service)
+// ─────────────────────────────────────────────
+
+model Service {
+  id                  String        @id @default(cuid())
+  title               String
+  description         String?
+  price               Float         @default(0)
+  type                ServiceType
+  capacity            Int           @default(10)
+  isFeatured          Boolean       @default(false)
+  isHidden            Boolean       @default(false)
+  // Extended atelier fields
+  pricingType         String        @default("SESSION") // "SESSION" | "PER_PARTICIPANT" | "QUOTE"
+  pricePerParticipant Float?
+  durationMinutes     Int           @default(120)
+  category            String?
+  publicCible         Json? // string[]
+  materials           String?
+  objectives          String?
+  methodology         String?
+  evaluation          String?
+  slots               Json? // [{ date, heureDebut, heureFin }]
+  status              ServiceStatus @default(ACTIVE)
+
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner     User       @relation("OwnerServices", fields: [ownerId], references: [id], onDelete: Restrict)
+  bookings  Booking[]
+  quotes    Quote[]
+  documents Document[]
+
+  @@index([ownerId])
+}
+
+// ─────────────────────────────────────────────
+// DEVIS & RÉSERVATIONS
+// ─────────────────────────────────────────────
+
+model Quote {
+  id              String      @id @default(cuid())
+  amount          Float       @default(0)
+  description     String      @default("")
+  startDate       DateTime?
+  endDate         DateTime?
+  status          QuoteStatus @default(PENDING)
+  freelanceId     String
+  establishmentId String
+  reliefMissionId String?
+  serviceId       String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  freelance     User           @relation("FreelanceQuotes", fields: [freelanceId], references: [id])
+  establishment User           @relation("EstablishmentQuotes", fields: [establishmentId], references: [id])
+  reliefMission ReliefMission? @relation(fields: [reliefMissionId], references: [id])
+  service       Service?       @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  booking       Booking?
+}
+
 model Booking {
-  id              String        @id @default(cuid())
-  status          BookingStatus @default(PENDING)
-  message         String?
-  scheduledAt     DateTime      @default(now())
+  id                    String        @id @default(cuid())
+  status                BookingStatus @default(PENDING)
+  message               String?
+  scheduledAt           DateTime      @default(now())
+  stripePaymentIntentId String? /// Stripe PaymentIntent ID (set on payment)
   // Candidature fields (SOS Renfort)
-  motivation      String?
-  proposedRate    Float?
-  nbParticipants  Int?
+  motivation            String?
+  proposedRate          Float?
+  nbParticipants        Int?
+
   establishmentId String
   freelanceId     String?
   reliefMissionId String?
   serviceId       String?
-  quoteId         String?       @unique
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  establishment   User          @relation("EstablishmentBookings", fields: [establishmentId], references: [id], onDelete: Restrict)
-  freelance       User?         @relation("FreelanceBookings", fields: [freelanceId], references: [id], onDelete: SetNull)
-  reliefMission   ReliefMission? @relation(fields: [reliefMissionId], references: [id], onDelete: SetNull)
-  service         Service?      @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  quote           Quote?        @relation(fields: [quoteId], references: [id])
-  invoice         Invoice?
-  review          Review?
+  quoteId         String?  @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  establishment User           @relation("EstablishmentBookings", fields: [establishmentId], references: [id], onDelete: Restrict)
+  freelance     User?          @relation("FreelanceBookings", fields: [freelanceId], references: [id], onDelete: SetNull)
+  reliefMission ReliefMission? @relation(fields: [reliefMissionId], references: [id], onDelete: SetNull)
+  service       Service?       @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  quote         Quote?         @relation(fields: [quoteId], references: [id])
+  invoice       Invoice?
+  review        Review?
 
   @@index([establishmentId])
   @@index([freelanceId])
@@ -254,34 +339,64 @@ model Booking {
   @@index([serviceId])
 }
 
-enum InvoiceStatus {
-  PENDING_PAYMENT
-  PAID
-}
+// ─────────────────────────────────────────────
+// FACTURATION & PAIEMENT
+// ─────────────────────────────────────────────
 
 model Invoice {
-  id            String        @id @default(cuid())
-  invoiceNumber String?       @unique
-  status        InvoiceStatus @default(PENDING_PAYMENT)
-  url           String
-  amount        Float
-  commissionAmount Float        @default(0)
-  bookingId     String        @unique
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  booking       Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  id               String        @id @default(cuid())
+  invoiceNumber    String?       @unique
+  status           InvoiceStatus @default(PENDING_PAYMENT)
+  url              String
+  amount           Float
+  commissionAmount Float         @default(0)
+  bookingId        String        @unique
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
 
+// ─────────────────────────────────────────────
+// AVIS
+// ─────────────────────────────────────────────
+
 model Review {
-  id        String   @id @default(cuid())
-  bookingId String   @unique
+  id        String     @id @default(cuid())
+  bookingId String     @unique
   authorId  String
   targetId  String
   rating    Int
   comment   String?
-  type      String   // ESTABLISHMENT_TO_FREELANCE | FREELANCE_TO_ESTABLISHMENT
-  createdAt DateTime @default(now())
-  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  author    User     @relation("ReviewsAuthored", fields: [authorId], references: [id])
-  target    User     @relation("ReviewsReceived", fields: [targetId], references: [id])
+  type      ReviewType
+  createdAt DateTime   @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  author  User    @relation("ReviewsAuthored", fields: [authorId], references: [id])
+  target  User    @relation("ReviewsReceived", fields: [targetId], references: [id])
+
+  @@index([targetId])
+  @@index([authorId])
+}
+
+// ─────────────────────────────────────────────
+// DOCUMENTS / UPLOADS
+// ─────────────────────────────────────────────
+
+model Document {
+  id        String       @id @default(cuid())
+  type      DocumentType @default(OTHER)
+  url       String
+  filename  String
+  mimeType  String?
+  sizeBytes Int?
+  userId    String?
+  serviceId String?
+  createdAt DateTime     @default(now())
+
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([serviceId])
 }

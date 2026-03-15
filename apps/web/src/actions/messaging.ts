@@ -29,11 +29,10 @@ export async function sendMessage(data: SendMessageData) {
     const { receiverId, content } = validatedFields.data;
 
     try {
-        // 1. Create DirectMessage
+        // 1. Create Message
         // Note: We use a transaction to ensure both message and notification are created
-        // @ts-ignore - DirectMessage model not yet in generated client
         await (prisma as any).$transaction(async (tx: any) => {
-            await tx.directMessage.create({
+            await tx.message.create({
                 data: {
                     content,
                     senderId: user.id,
@@ -69,8 +68,7 @@ export async function getUnreadMessagesCount() {
     if (!session) return 0;
 
     try {
-        // @ts-ignore
-        const count = await (prisma as any).directMessage.count({
+        const count = await (prisma as any).message.count({
             where: {
                 receiverId: session.user.id,
                 isRead: false,
