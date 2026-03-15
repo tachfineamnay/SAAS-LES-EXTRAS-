@@ -1,4 +1,4 @@
-import { ReliefMissionStatus, ServiceType } from "@prisma/client";
+import { ReliefMissionStatus } from "@prisma/client";
 
 export type AdminMissionRow = {
   id: string;
@@ -19,9 +19,6 @@ export type AdminServiceRow = {
   title: string;
   description: string | null;
   price: number;
-  type: ServiceType;
-  isFeatured: boolean;
-  isHidden: boolean;
   createdAt: string;
   freelanceName: string;
   freelanceEmail: string;

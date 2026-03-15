@@ -13,11 +13,11 @@ export class InvoicesService {
             ? { booking: { establishmentId: user.id } }
             : { booking: { freelanceId: user.id } }; // Or service owner
 
-        // For freelance (TALENT), they might be the talent OR the service owner.
-        // Simplified for now: Talent = Recipient of payment (Provider), Client = Payer.
-        // Actually, Invoice is generated for the Client to pay? Or for the Freelance to receive?
-        // Usually Invoice is from Provider to Client.
-        // So Freelance "owns" the invoice (issuer), Client "receives" it.
+        // For freelance, they might be the freelance OR the service owner.
+        // Simplified for now: Freelance = Recipient of payment (Provider), Establishment = Payer.
+        // Actually, Invoice is generated for the Establishment to pay? Or for the Freelance to receive?
+        // Usually Invoice is from Provider to Establishment.
+        // So Freelance "owns" the invoice (issuer), Establishment "receives" it.
         // Queries should reflect this.
 
         return this.prisma.invoice.findMany({

@@ -35,9 +35,13 @@ export class ReviewsController {
     return this.reviewsService.getAverageRating(targetId);
   }
 
+  // C5: Protected — only participants of the booking can see its reviews
   @UseGuards(JwtAuthGuard)
   @Get("booking/:bookingId")
-  findByBooking(@Param("bookingId") bookingId: string) {
-    return this.reviewsService.findByBooking(bookingId);
+  findByBooking(
+    @Param("bookingId") bookingId: string,
+    @Request() req: { user: AuthenticatedUser },
+  ) {
+    return this.reviewsService.findByBooking(bookingId, req.user.id);
   }
 }

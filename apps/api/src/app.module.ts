@@ -14,8 +14,10 @@ import { ServicesModule } from "./services/services.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { InvoicesModule } from "./invoices/invoices.module";
 import { UsersModule } from "./users/users.module";
-import { QuotesModule } from './quotes/quotes.module';
+
 import { ReviewsModule } from './reviews/reviews.module';
+import { ConversationsModule } from './conversations/conversations.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -45,8 +47,10 @@ import { ReviewsModule } from './reviews/reviews.module';
     NotificationsModule,
     InvoicesModule,
     UsersModule,
-    QuotesModule,
+
     ReviewsModule,
+    ConversationsModule,
+    MailModule,
   ],
   controllers: [HealthController],
   providers: [

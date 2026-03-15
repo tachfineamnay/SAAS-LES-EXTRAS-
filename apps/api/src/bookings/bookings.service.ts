@@ -17,6 +17,8 @@ import {
   BookingsPageData,
 } from "./types/bookings.types";
 import { NotificationsService } from "../notifications/notifications.service";
+import { MailService } from "../mail/mail.service";
+import { format } from "date-fns";
 
 const UNKNOWN_COUNTERPART = "À confirmer";
 const SERVICE_ADDRESS_PLACEHOLDER = "Adresse non renseignée";
@@ -76,6 +78,7 @@ export class BookingsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly mailService: MailService,
   ) { }
 
   async getBookingsPageData(user: AuthenticatedUser): Promise<BookingsPageData> {
@@ -105,11 +108,6 @@ export class BookingsService {
                 freelance: {
                   select: {
                     email: true,
-                  },
-                },
-                invoice: {
-                  select: {
-                    url: true,
                   },
                 },
               },
@@ -144,11 +142,6 @@ export class BookingsService {
                 },
               },
             },
-            invoice: {
-              select: {
-                url: true,
-              },
-            },
           },
         }),
       ]);
@@ -173,9 +166,6 @@ export class BookingsService {
             (b) =>
               b.status !== BookingStatus.CANCELLED && Boolean(b.freelance?.email),
           )?.id,
-          invoiceUrl: mission.bookings.find(
-            (b) => b.status === BookingStatus.COMPLETED || b.status === BookingStatus.PAID,
-          )?.invoice?.url,
         });
       }
 
@@ -193,7 +183,6 @@ export class BookingsService {
           address: SERVICE_ADDRESS_PLACEHOLDER,
           contactEmail: interlocutor,
           relatedBookingId: booking.id,
-          invoiceUrl: booking.invoice?.url,
         });
       }
     } else {
@@ -230,11 +219,6 @@ export class BookingsService {
                 },
               },
             },
-            invoice: {
-              select: {
-                url: true,
-              },
-            },
           },
         }),
         this.prisma.booking.findMany({
@@ -254,11 +238,6 @@ export class BookingsService {
             establishment: {
               select: {
                 email: true,
-              },
-            },
-            invoice: {
-              select: {
-                url: true,
               },
             },
           },
@@ -282,7 +261,6 @@ export class BookingsService {
           address: mb.reliefMission.address,
           contactEmail: interlocutor,
           relatedBookingId: mb.id,
-          invoiceUrl: mb.invoice?.url,
         });
       }
 
@@ -298,7 +276,6 @@ export class BookingsService {
           address: SERVICE_ADDRESS_PLACEHOLDER,
           contactEmail: interlocutor,
           relatedBookingId: booking.id,
-          invoiceUrl: booking.invoice?.url,
         });
       }
     }
@@ -356,7 +333,7 @@ export class BookingsService {
           where: {
             reliefMissionId: input.lineId,
             status: {
-              in: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.PAID],
+              in: [BookingStatus.PENDING, BookingStatus.CONFIRMED],
             },
           },
           data: {
@@ -532,16 +509,6 @@ export class BookingsService {
       throw new BadRequestException("Booking is not pending");
     }
 
-    // Check Establishment Credits
-    const establishmentProfile = await this.prisma.profile.findUnique({
-      where: { userId: user.id },
-      select: { availableCredits: true },
-    });
-
-    if (!establishmentProfile || establishmentProfile.availableCredits <= 0) {
-      throw new ForbiddenException("Solde insuffisant. Veuillez acheter un pack pour valider cette mission.");
-    }
-
     // Mission Assignment Logic
     if (booking.reliefMissionId) {
       await this.prisma.$transaction([
@@ -564,33 +531,34 @@ export class BookingsService {
           },
           data: { status: "CANCELLED" },
         }),
-        // 4. Decriment Credits
-        this.prisma.profile.update({
-          where: { userId: user.id },
-          data: { availableCredits: { decrement: 1 } },
-        }),
       ]);
     } else {
       // Standard Service Confirmation
-      await this.prisma.$transaction([
-        this.prisma.booking.update({
-          where: { id: bookingId },
-          data: { status: "CONFIRMED" },
-        }),
-        this.prisma.profile.update({
-          where: { userId: user.id },
-          data: { availableCredits: { decrement: 1 } },
-        }),
-      ]);
+      await this.prisma.booking.update({
+        where: { id: bookingId },
+        data: { status: "CONFIRMED" },
+      });
     }
 
     // Notify Freelance
     if (booking.freelanceId) {
+      const freelance = await this.prisma.user.findUnique({ where: { id: booking.freelanceId } });
+      const establishment = await this.prisma.user.findUnique({ where: { id: booking.establishmentId } });
+      const missionTitle = booking.reliefMission?.title ?? 'Mission';
+      
       await this.notifications.create({
         userId: booking.freelanceId,
-        message: `Vous avez été recruté pour la mission "${booking.reliefMission?.title ?? 'Mission'}" !`,
+        message: `Vous avez été recruté pour la mission "${missionTitle}" !`,
         type: "SUCCESS",
       });
+
+      if (freelance?.email && establishment?.email) {
+        const missionDateStr = booking.reliefMission?.dateStart ? format(booking.reliefMission.dateStart, "dd/MM/yyyy") : "prochainement";
+        const estabName = establishment.email.split('@')[0];
+        if (freelance.email && estabName) {
+          this.mailService.sendMissionConfirmedEmail(freelance.email, missionDateStr, estabName).catch(e => console.error(e));
+        }
+      }
     }
 
     return { ok: true };
@@ -618,14 +586,10 @@ export class BookingsService {
     if (isMissionEstablishment2) {
       // Mission flow: Client completes -> Awaiting Payment
     } else if (booking.service) {
-      // Service flow: Owner completes -> Awaiting Payment? 
-      // Or maybe Service flow is simpler. Let's start with Mission flow focus.
       if (booking.service.ownerId !== user.id) {
         throw new ForbiddenException("You cannot complete this booking");
       }
     } else {
-      // Direct booking? (Quote without mission)
-      // Check if user is the establishment
       if (booking.establishmentId !== user.id) {
         throw new ForbiddenException("You cannot complete this booking");
       }
@@ -635,48 +599,44 @@ export class BookingsService {
       throw new BadRequestException("Booking must be confirmed before completion");
     }
 
-    // Calculate Amount
-    let amount = 0;
-    const b = booking as any;
-    if (b.quote) {
-      amount = b.quote.amount;
-    } else if (b.reliefMission) {
-      const durationHours = (b.reliefMission.dateEnd.getTime() - b.reliefMission.dateStart.getTime()) / (1000 * 60 * 60);
-      amount = b.reliefMission.hourlyRate * durationHours;
-    } else if (b.service) {
-      amount = b.service.price;
-    }
-
-    // NEW FLOW: Complete -> Awaiting Payment + Generate Pending Invoice
-    await this.prisma.$transaction([
+    const transactions: any[] = [
       this.prisma.booking.update({
         where: { id: bookingId },
-        data: { status: BookingStatus.COMPLETED_AWAITING_PAYMENT },
+        data: { status: BookingStatus.COMPLETED },
       }),
-      this.prisma.invoice.create({
-        data: {
-          bookingId: booking.id,
-          amount: Math.round(amount * 100) / 100,
-          url: `/invoices/${booking.id}/download`,
-          status: "PENDING_PAYMENT",
-          invoiceNumber: `F-${new Date().getFullYear()}-${booking.id.slice(-6).toUpperCase()}`,
-        },
-      }),
-    ]);
+    ];
+
+    if (booking.reliefMissionId) {
+      transactions.push(
+        this.prisma.reliefMission.update({
+          where: { id: booking.reliefMissionId },
+          data: { status: ReliefMissionStatus.COMPLETED },
+        }),
+      );
+    }
+
+    await this.prisma.$transaction(transactions);
 
     // Notify Freelance
     if (booking.freelanceId) {
+      const freelance = await this.prisma.user.findUnique({ where: { id: booking.freelanceId } });
+
       await this.notifications.create({
         userId: booking.freelanceId,
-        message: `Mission marquée comme terminée. En attente de validation du paiement.`,
+        message: `La mission a été marquée comme terminée. Le paiement manuel sera traité prochainement.`,
         type: "INFO",
       });
+
+      if (freelance?.email) {
+        const missionDateStr = booking.reliefMission?.dateStart ? format(booking.reliefMission.dateStart, "dd/MM/yyyy") : "récemment";
+        this.mailService.sendMissionCompletedEmail(freelance.email, missionDateStr).catch(e => console.error(e));
+      }
     }
 
     return { ok: true };
   }
 
-  async authorizePayment(
+  async markPaymentSettled(
     bookingId: string,
     user: AuthenticatedUser,
   ): Promise<{ ok: true }> {
@@ -685,46 +645,29 @@ export class BookingsService {
       include: {
         reliefMission: true,
         service: true,
-        quote: true,
       },
     });
 
     if (!booking) throw new NotFoundException("Booking not found");
 
     if (booking.establishmentId !== user.id) {
-      throw new ForbiddenException("Only the establishment can authorize payment");
+      throw new ForbiddenException("Only the establishment can approve the manual payment");
     }
 
-    if (booking.status !== BookingStatus.COMPLETED_AWAITING_PAYMENT) {
-      throw new BadRequestException("Booking must be completed and awaiting payment");
+    if (booking.status !== BookingStatus.COMPLETED) {
+      throw new BadRequestException("Booking must be completed before payment tracking");
     }
 
-    const invoice = await this.prisma.invoice.findUnique({
-      where: { bookingId: booking.id },
+    await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { paymentStatus: "PAID" },
     });
-
-    if (!invoice) {
-      throw new NotFoundException("Invoice not found");
-    }
-
-    await this.prisma.$transaction([
-      this.prisma.booking.update({
-        where: { id: bookingId },
-        data: { status: "PAID" },
-      }),
-      this.prisma.invoice.update({
-        where: { bookingId: booking.id },
-        data: {
-          status: "PAID",
-        },
-      }),
-    ]);
 
     // Notify Freelance
     if (booking.freelanceId) {
       await this.notifications.create({
         userId: booking.freelanceId,
-        message: `Paiement validé ! Facture de ${invoice.amount}€ générée.`,
+        message: `Le paiement de votre mission a été marqué comme réglé par l'établissement.`,
         type: "SUCCESS",
       });
     }

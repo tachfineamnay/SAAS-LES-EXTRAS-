@@ -103,7 +103,7 @@ export class AdminOffersService {
         where: {
           reliefMissionId: missionId,
           status: {
-            in: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.PAID],
+            in: [BookingStatus.PENDING, BookingStatus.CONFIRMED],
           },
         },
         data: {
@@ -125,9 +125,6 @@ export class AdminOffersService {
         title: true,
         description: true,
         price: true,
-        type: true,
-        isFeatured: true,
-        isHidden: true,
         createdAt: true,
         owner: {
           select: {
@@ -148,9 +145,6 @@ export class AdminOffersService {
       title: service.title,
       description: service.description,
       price: service.price,
-      type: service.type,
-      isFeatured: service.isFeatured,
-      isHidden: service.isHidden,
       createdAt: service.createdAt.toISOString(),
       freelanceName: getDisplayName(
         service.owner.profile?.firstName,
@@ -159,45 +153,5 @@ export class AdminOffersService {
       ),
       freelanceEmail: service.owner.email,
     }));
-  }
-
-  async toggleFeatureService(serviceId: string): Promise<{ ok: true }> {
-    const service = await this.prisma.service.findUnique({
-      where: { id: serviceId },
-      select: { id: true, isFeatured: true },
-    });
-
-    if (!service) {
-      throw new NotFoundException("Service not found");
-    }
-
-    await this.prisma.service.update({
-      where: { id: serviceId },
-      data: {
-        isFeatured: !service.isFeatured,
-      },
-    });
-
-    return { ok: true };
-  }
-
-  async toggleHideService(serviceId: string): Promise<{ ok: true }> {
-    const service = await this.prisma.service.findUnique({
-      where: { id: serviceId },
-      select: { id: true, isHidden: true },
-    });
-
-    if (!service) {
-      throw new NotFoundException("Service not found");
-    }
-
-    await this.prisma.service.update({
-      where: { id: serviceId },
-      data: {
-        isHidden: !service.isHidden,
-      },
-    });
-
-    return { ok: true };
   }
 }

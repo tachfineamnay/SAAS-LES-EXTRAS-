@@ -33,26 +33,14 @@ export class MissionsService {
         dateEnd,
         hourlyRate: dto.hourlyRate,
         address: dto.address,
-        isRenfort: dto.isRenfort ?? false,
         establishmentId,
         status: ReliefMissionStatus.OPEN,
-        // Extended SOS Renfort fields
         metier: dto.metier,
         shift: dto.shift,
         city: dto.city,
         zipCode: dto.zipCode,
-        slots: dto.slots ? (dto.slots as unknown as Prisma.InputJsonValue) : undefined,
-        // SOS Renfort v2 — contexte clinique
         description: dto.description,
-        establishmentType: dto.establishmentType,
-        targetPublic: dto.targetPublic ?? [],
-        unitSize: dto.unitSize,
         requiredSkills: dto.requiredSkills ?? [],
-        diplomaRequired: dto.diplomaRequired ?? true,
-        // SOS Renfort v2 — logistique
-        hasTransmissions: dto.hasTransmissions ?? false,
-        transmissionTime: dto.transmissionTime,
-        perks: dto.perks ?? [],
         exactAddress: dto.exactAddress,
         accessInstructions: dto.accessInstructions,
       },
@@ -65,7 +53,7 @@ export class MissionsService {
     };
 
     if (filter.city) {
-      where.address = {
+      where.city = {
         contains: filter.city,
         mode: "insensitive",
       };
@@ -135,7 +123,7 @@ export class MissionsService {
         freelanceId,
         reliefMissionId: mission.id,
         scheduledAt: mission.dateStart,
-        motivation: dto.motivation,
+        message: dto.motivation, // mapped from motivation for compatibility
         proposedRate: dto.proposedRate,
       },
     });
@@ -145,7 +133,7 @@ export class MissionsService {
     return this.prisma.reliefMission.findMany({
       where: {
         establishmentId,
-        status: { in: [ReliefMissionStatus.OPEN, ReliefMissionStatus.ASSIGNED] },
+        // No status filter: returns full history (OPEN, ASSIGNED, COMPLETED, CANCELLED)
       },
       orderBy: { dateStart: 'asc' },
       include: {

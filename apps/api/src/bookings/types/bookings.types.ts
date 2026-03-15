@@ -6,8 +6,7 @@ export type BookingLineStatus =
   | "PAID"
   | "CANCELLED"
   | "ASSIGNED"
-  | "COMPLETED"
-  | "COMPLETED_AWAITING_PAYMENT";
+  | "COMPLETED";
 
 export type BookingLine = {
   lineId: string;
@@ -19,7 +18,6 @@ export type BookingLine = {
   address: string;
   contactEmail: string;
   relatedBookingId?: string;
-  invoiceUrl?: string;
 };
 
 export type BookingsPageData = {

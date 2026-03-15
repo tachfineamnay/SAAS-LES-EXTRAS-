@@ -73,7 +73,7 @@ export class UsersService {
                     take: 20,
                 },
                 ownerServices: {
-                    where: { status: "ACTIVE", isHidden: false },
+                    where: { status: "ACTIVE" },
                     take: 10,
                 },
             },

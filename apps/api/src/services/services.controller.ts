@@ -13,6 +13,14 @@ import { ServicesService } from "./services.service";
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) { }
 
+  // C3: "Mes ateliers" — FREELANCE sees their own services with bookings
+  @Get("my")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.FREELANCE)
+  findMyServices(@CurrentUser() user: AuthenticatedUser) {
+    return this.servicesService.findMyServices(user.id);
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ESTABLISHMENT, UserRole.FREELANCE)
@@ -45,6 +53,6 @@ export class ServicesController {
     @Body() dto: BookServiceDto,
     @CurrentUser() user: AuthenticatedUser
   ) {
-    return this.servicesService.bookService(serviceId, user.id, new Date(dto.date), dto.message);
+    return this.servicesService.bookService(serviceId, user.id, new Date(dto.date), dto.message, dto.nbParticipants);
   }
 }

@@ -2,15 +2,20 @@ import { ConflictException, Injectable, NotFoundException } from "@nestjs/common
 import { BookingStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateServiceDto } from "./dto/create-service.dto";
+import { MailService } from "../mail/mail.service";
+import { format } from "date-fns";
 
 @Injectable()
 export class ServicesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async findAll() {
     return this.prisma.service.findMany({
       where: {
-        isHidden: false,
+        status: "ACTIVE",
       },
       include: {
         owner: {
@@ -44,24 +49,39 @@ export class ServicesService {
     return service;
   }
 
+  async findMyServices(ownerId: string) {
+    return this.prisma.service.findMany({
+      where: { ownerId },
+      include: {
+        bookings: {
+          select: {
+            id: true,
+            status: true,
+            scheduledAt: true,
+            nbParticipants: true,
+            establishment: {
+              select: {
+                id: true,
+                profile: { select: { firstName: true, lastName: true, companyName: true } },
+              },
+            },
+          },
+          orderBy: { scheduledAt: "asc" },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   async createService(dto: CreateServiceDto, ownerId: string) {
     return this.prisma.service.create({
       data: {
         title: dto.title,
         description: dto.description,
         price: dto.price,
-        type: dto.type,
         capacity: dto.capacity,
-        pricingType: dto.pricingType ?? "SESSION",
-        pricePerParticipant: dto.pricePerParticipant,
         durationMinutes: dto.durationMinutes ?? 120,
         category: dto.category,
-        publicCible: dto.publicCible ?? [],
-        materials: dto.materials,
-        objectives: dto.objectives,
-        methodology: dto.methodology,
-        evaluation: dto.evaluation,
-        slots: dto.slots ?? [],
         ownerId,
       },
     });
@@ -78,8 +98,8 @@ export class ServicesService {
       where: { id: serviceId },
       select: {
         id: true,
+        title: true,
         ownerId: true,
-        pricingType: true,
       },
     });
 
@@ -101,37 +121,7 @@ export class ServicesService {
       throw new ConflictException("Une demande est déjà en cours pour ce service");
     }
 
-    // For QUOTE services: create Booking + a draft Quote atomically
-    if (service.pricingType === "QUOTE") {
-      return this.prisma.$transaction(async (tx) => {
-        const booking = await tx.booking.create({
-          data: {
-            status: BookingStatus.PENDING,
-            establishmentId,
-            freelanceId: service.ownerId,
-            serviceId: service.id,
-            scheduledAt: date,
-            message,
-            nbParticipants,
-          },
-        });
-
-        const quote = await tx.quote.create({
-          data: {
-            amount: 0,
-            description: "",
-            freelanceId: service.ownerId,
-            establishmentId,
-            serviceId: service.id,
-            booking: { connect: { id: booking.id } },
-          },
-        });
-
-        return { booking, quote };
-      });
-    }
-
-    return this.prisma.booking.create({
+    const booking = await this.prisma.booking.create({
       data: {
         status: BookingStatus.PENDING,
         establishmentId,
@@ -142,5 +132,20 @@ export class ServicesService {
         nbParticipants,
       },
     });
+
+    // C2: Send workshop booking confirmation email (non-blocking)
+    const establishment = await this.prisma.user.findUnique({
+      where: { id: establishmentId },
+      select: { email: true },
+    });
+
+    if (establishment?.email) {
+      const dateStr = format(date, "dd/MM/yyyy");
+      this.mailService
+        .sendWorkshopBookingEmail(establishment.email, service.title, dateStr)
+        .catch((e: unknown) => console.error("workshopBookingEmail failed:", e));
+    }
+
+    return booking;
   }
 }

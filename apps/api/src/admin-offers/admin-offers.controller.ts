@@ -26,13 +26,4 @@ export class AdminOffersController {
     return this.adminOffersService.getServices();
   }
 
-  @Post("services/:serviceId/feature")
-  featureService(@Param("serviceId") serviceId: string) {
-    return this.adminOffersService.toggleFeatureService(serviceId);
-  }
-
-  @Post("services/:serviceId/hide")
-  hideService(@Param("serviceId") serviceId: string) {
-    return this.adminOffersService.toggleHideService(serviceId);
-  }
 }

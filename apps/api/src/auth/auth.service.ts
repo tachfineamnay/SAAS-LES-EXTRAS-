@@ -11,6 +11,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { JwtPayload } from "./types/jwt-payload.type";
+import { MailService } from "../mail/mail.service";
 
 type AuthResponse = {
   accessToken: string;
@@ -27,6 +28,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
   ) { }
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
@@ -53,6 +55,13 @@ export class AuthService {
         role: true,
       },
     });
+
+    const nameForEmail = dto.email.split('@')[0];
+    if (dto.role === UserRole.FREELANCE) {
+      this.mailService.sendWelcomeFreelanceEmail(user.email, nameForEmail!).catch(e => console.error(e));
+    } else if (dto.role === UserRole.ESTABLISHMENT) {
+      this.mailService.sendWelcomeEstablishmentEmail(user.email, nameForEmail!).catch(e => console.error(e));
+    }
 
     return {
       accessToken: await this.signToken(user.id, user.email, user.role, 0),

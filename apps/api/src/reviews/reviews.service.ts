@@ -12,8 +12,6 @@ import { CreateReviewDto } from "./dto/create-review.dto";
 
 const REVIEWABLE_STATUSES = new Set<BookingStatus>([
   BookingStatus.COMPLETED,
-  BookingStatus.COMPLETED_AWAITING_PAYMENT,
-  BookingStatus.PAID,
 ]);
 
 @Injectable()
@@ -28,7 +26,7 @@ export class ReviewsService {
         status: true,
         establishmentId: true,
         freelanceId: true,
-        review: { select: { id: true } },
+        reviews: { select: { id: true, authorId: true } },
       },
     });
 
@@ -36,16 +34,16 @@ export class ReviewsService {
       throw new NotFoundException("Booking not found");
     }
 
-    // Only completed/paid bookings can be reviewed
+    // Only completed bookings can be reviewed
     if (!REVIEWABLE_STATUSES.has(booking.status)) {
       throw new BadRequestException(
         "Impossible de laisser un avis : la mission n'est pas terminée",
       );
     }
 
-    // Only one review per booking
-    if (booking.review) {
-      throw new ConflictException("Un avis existe déjà pour cette réservation");
+    // Only one review per participant per booking
+    if (booking.reviews.some((r) => r.authorId === user.id)) {
+      throw new ConflictException("Vous avez déjà laissé un avis pour cette réservation");
     }
 
     // Determine who can review whom
@@ -122,8 +120,22 @@ export class ReviewsService {
     };
   }
 
-  async findByBooking(bookingId: string) {
-    return this.prisma.review.findUnique({
+  async findByBooking(bookingId: string, requestingUserId: string) {
+    // C5: Verify caller is a participant before exposing booking reviews
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: { establishmentId: true, freelanceId: true },
+    });
+
+    if (!booking) {
+      throw new NotFoundException("Booking not found");
+    }
+
+    if (booking.establishmentId !== requestingUserId && booking.freelanceId !== requestingUserId) {
+      throw new ForbiddenException("Vous n'êtes pas participant de cette réservation");
+    }
+
+    return this.prisma.review.findMany({
       where: { bookingId },
       include: {
         author: {

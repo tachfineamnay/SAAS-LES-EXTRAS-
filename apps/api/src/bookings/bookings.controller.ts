@@ -53,11 +53,11 @@ export class BookingsController {
     return this.bookingsService.completeBooking(dto.bookingId, user);
   }
 
-  @Post("authorize-payment")
-  authorizePayment(
+  @Post("mark-payment-settled")
+  markPaymentSettled(
     @Body() dto: ActionBookingDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.bookingsService.authorizePayment(dto.bookingId, user);
+    return this.bookingsService.markPaymentSettled(dto.bookingId, user);
   }
 }
