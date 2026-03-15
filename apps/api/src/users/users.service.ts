@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
@@ -53,5 +53,32 @@ export class UsersService {
                 createdAt: "desc",
             },
         });
+    }
+
+    async findFreelanceById(id: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id, role: "FREELANCE" },
+            include: {
+                profile: true,
+                reviewsReceived: {
+                    include: {
+                        author: {
+                            select: {
+                                id: true,
+                                profile: { select: { firstName: true, lastName: true, avatar: true, companyName: true } },
+                            },
+                        },
+                    },
+                    orderBy: { createdAt: "desc" },
+                    take: 20,
+                },
+                ownerServices: {
+                    where: { status: "ACTIVE", isHidden: false },
+                    take: 10,
+                },
+            },
+        });
+        if (!user) throw new NotFoundException("Freelance introuvable");
+        return user;
     }
 }

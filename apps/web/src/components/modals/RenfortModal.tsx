@@ -347,8 +347,9 @@ export function RenfortModal() {
             ) : (
               <Button
                 type="submit"
+                variant="coral"
                 disabled={form.formState.isSubmitting}
-                className="gap-1 bg-primary"
+                className="gap-1"
               >
                 {form.formState.isSubmitting ? (
                   "Publication..."
@@ -617,6 +618,7 @@ function StepPlanification({
                 <button
                   type="button"
                   onClick={() => onRemove(i)}
+                  aria-label="Supprimer ce créneau"
                   className="text-destructive hover:opacity-75 transition-opacity"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -745,6 +747,7 @@ function StepRemuneration({
           step={1}
           value={hourlyRate}
           onChange={(e) => onRateChange(Number(e.target.value))}
+          aria-label={`Taux horaire brut : ${hourlyRate} €/h`}
           className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-primary"
         />
         <div className="flex justify-between text-xs text-muted-foreground">
