@@ -15,6 +15,7 @@ import { NotificationsModule } from "./notifications/notifications.module";
 import { InvoicesModule } from "./invoices/invoices.module";
 import { UsersModule } from "./users/users.module";
 import { QuotesModule } from './quotes/quotes.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { QuotesModule } from './quotes/quotes.module';
     InvoicesModule,
     UsersModule,
     QuotesModule,
+    ReviewsModule,
   ],
   controllers: [HealthController],
   providers: [
