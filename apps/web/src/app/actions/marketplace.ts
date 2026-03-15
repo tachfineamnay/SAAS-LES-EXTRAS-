@@ -147,6 +147,40 @@ export type SerializedFreelance = {
   } | null;
 };
 
+export type SerializedReview = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  author: {
+    id: string;
+    profile?: {
+      firstName: string;
+      lastName: string;
+      avatar: string | null;
+      companyName: string | null;
+    } | null;
+  };
+};
+
+export type SerializedFreelanceDetail = {
+  id: string;
+  email: string;
+  isAvailable: boolean;
+  profile?: {
+    firstName: string;
+    lastName: string;
+    avatar: string | null;
+    jobTitle: string | null;
+    bio: string | null;
+    city: string | null;
+    skills: string[];
+    siret: string | null;
+  } | null;
+  reviewsReceived: SerializedReview[];
+  ownerServices: SerializedService[];
+};
+
 export async function getAvailableMissions(token?: string): Promise<SerializedMission[]> {
   const activeToken = token || (await getSession())?.token;
   if (!activeToken) return [];
@@ -212,6 +246,25 @@ export async function getService(id: string, token?: string): Promise<Serialized
     });
   } catch (error) {
     console.error("GetService error:", error);
+    return null;
+  }
+}
+
+export async function getFreelanceById(id: string, token?: string): Promise<SerializedFreelanceDetail | null> {
+  let activeToken = token;
+  if (!activeToken) {
+    const session = await getSession();
+    if (!session) return null;
+    activeToken = session.token;
+  }
+
+  try {
+    return await apiRequest<SerializedFreelanceDetail>(`/users/freelances/${id}`, {
+      method: "GET",
+      token: activeToken,
+    });
+  } catch (error) {
+    console.error("getFreelanceById error:", error);
     return null;
   }
 }
