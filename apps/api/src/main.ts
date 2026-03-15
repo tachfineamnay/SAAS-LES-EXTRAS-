@@ -1,6 +1,7 @@
 import "./instrument";
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import { HttpAdapterHost } from "@nestjs/core";
 import { SentryGlobalFilter } from "@sentry/nestjs/setup";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
@@ -57,7 +58,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  app.useGlobalFilters(new SentryGlobalFilter());
+  app.useGlobalFilters(new SentryGlobalFilter(app.get(HttpAdapterHost)));
   await app.listen(process.env.PORT ?? 3001);
 }
 
