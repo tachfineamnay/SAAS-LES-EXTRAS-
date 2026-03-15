@@ -10,11 +10,11 @@ export default function OnboardingLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <div className="min-h-screen bg-muted/30">
+        <div className="min-h-screen bg-[hsl(var(--color-sand-50))]">
             <div className="fixed top-0 left-0 p-6 z-50">
                 <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-primary" />
-                    <span className="text-xl font-bold tracking-tight text-primary">Les Extras</span>
+                    <div className="h-8 w-8 rounded-lg bg-[hsl(var(--teal))]" />
+                    <span className="text-xl font-bold tracking-tight text-[hsl(var(--teal))]">Les Extras</span>
                 </div>
             </div>
             {children}
