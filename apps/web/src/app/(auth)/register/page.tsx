@@ -190,7 +190,7 @@ function RegisterContent() {
                                             ? isTeal
                                                 ? "border-[hsl(var(--teal))] bg-[hsl(var(--teal-light))]"
                                                 : "border-[hsl(var(--coral))] bg-[hsl(var(--coral-light))]"
-                                            : "border-border hover:border-border/80 hover:bg-[hsl(var(--surface-1))]"
+                                            : "border-border hover:border-border/80 hover:bg-[hsl(var(--surface-2))]"
                                     )}
                                 >
                                     <div
@@ -318,5 +318,6 @@ export default function RegisterPage() {
         </Suspense>
     );
 }
+
 
 
