@@ -1,7 +1,20 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { CalendarClock, Check, CheckCheck, CircleUserRound, Eye, MapPin, XCircle } from "lucide-react";
+import {
+  CalendarClock,
+  Check,
+  CheckCheck,
+  CircleUserRound,
+  Eye,
+  MapPin,
+  XCircle,
+  CalendarDays,
+  Building2,
+  Clock,
+  ArrowRight,
+  FileText,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   cancelBookingLine,
@@ -17,7 +30,8 @@ import {
 } from "@/app/actions/bookings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GlassCard, GlassCardContent } from "@/components/ui/glass-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Dialog,
   DialogContent,
@@ -36,28 +50,25 @@ const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   timeStyle: "short",
 });
 
-function getStatusBadgeClass(status: BookingLineStatus): string {
-  if (status === "ASSIGNED") {
-    return "bg-blue-100 text-blue-800 border-blue-200";
+function getStatusBadge(status: BookingLineStatus) {
+  switch (status) {
+    case "PENDING":
+      return <Badge variant="amber" size="sm">En attente</Badge>;
+    case "ASSIGNED":
+      return <Badge variant="info" size="sm">Assigné</Badge>;
+    case "CONFIRMED":
+      return <Badge variant="teal" size="sm">Confirmé</Badge>;
+    case "PAID":
+      return <Badge variant="emerald" size="sm">Payé</Badge>;
+    case "COMPLETED":
+      return <Badge variant="outline" size="sm">Terminé</Badge>;
+    case "COMPLETED_AWAITING_PAYMENT":
+      return <Badge variant="amber" size="sm">Paiement en attente</Badge>;
+    case "CANCELLED":
+      return <Badge variant="red" size="sm">Annulé</Badge>;
+    default:
+      return <Badge variant="outline" size="sm">{status}</Badge>;
   }
-
-  if (status === "CONFIRMED") {
-    return "bg-cyan-100 text-cyan-800 border-cyan-200";
-  }
-
-  if (status === "PAID") {
-    return "bg-emerald-100 text-emerald-800 border-emerald-200";
-  }
-
-  if (status === "CANCELLED") {
-    return "bg-red-100 text-red-800 border-red-200";
-  }
-
-  if (status === "COMPLETED") {
-    return "bg-slate-200 text-slate-800 border-slate-300";
-  }
-
-  return "bg-amber-100 text-amber-800 border-amber-200";
 }
 
 function canCancel(status: BookingLineStatus): boolean {
@@ -76,37 +87,27 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
 
   useEffect(() => {
-    if (userRole === loadedRole) {
-      return;
-    }
+    if (userRole === loadedRole) return;
 
     let cancelled = false;
     startRoleLoading(async () => {
       try {
         const nextData = await getBookingsPageData();
-        if (cancelled) {
-          return;
-        }
+        if (cancelled) return;
         setData(nextData);
-        if (userRole) {
-          setLoadedRole(userRole);
-        }
+        if (userRole) setLoadedRole(userRole);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Impossible de charger les réservations.");
       }
     });
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [loadedRole, userRole]);
 
   const handleCancel = (line: BookingLine) => {
     startActionLoading(async () => {
       try {
         await cancelBookingLine({ lineType: line.lineType, lineId: line.lineId });
-        const refreshedData = await getBookingsPageData();
-        setData(refreshedData);
+        setData(await getBookingsPageData());
         toast.success("Réservation annulée.");
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Impossible d'annuler cette réservation.");
@@ -122,9 +123,8 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
     startActionLoading(async () => {
       try {
         await confirmBookingLine({ bookingId: line.relatedBookingId! });
-        const refreshedData = await getBookingsPageData();
-        setData(refreshedData);
-        toast.success("Réservation confirmée (Recruté).");
+        setData(await getBookingsPageData());
+        toast.success("Réservation confirmée.");
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Impossible de confirmer.");
       }
@@ -139,8 +139,7 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
     startActionLoading(async () => {
       try {
         await completeBookingLine({ bookingId: line.relatedBookingId! });
-        const refreshedData = await getBookingsPageData();
-        setData(refreshedData);
+        setData(await getBookingsPageData());
         toast.success("Mission terminée. Facture générée.");
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Impossible de terminer.");
@@ -153,166 +152,200 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
     setDetails(null);
     setIsDetailsOpen(true);
     setIsDetailsLoading(true);
-
     void getBookingLineDetails({ lineType: line.lineType, lineId: line.lineId })
-      .then((response) => {
-        setDetails(response);
-      })
-      .catch((error) => {
-        toast.error(error instanceof Error ? error.message : "Impossible de récupérer les détails.");
-      })
-      .finally(() => {
-        setIsDetailsLoading(false);
-      });
+      .then((response) => setDetails(response))
+      .catch((error) => toast.error(error instanceof Error ? error.message : "Impossible de récupérer les détails."))
+      .finally(() => setIsDetailsLoading(false));
   };
 
   return (
     <section className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Mes Réservations</h1>
-        <p className="text-sm text-muted-foreground">
-          Vue planning des interventions et réservations selon votre rôle.
+      {/* ── Header ── */}
+      <header className="space-y-0.5">
+        <p className="text-overline text-[hsl(var(--teal))] uppercase tracking-widest text-xs font-semibold">
+          Espace Planning
+        </p>
+        <h1 className="text-heading-xl">Mes Réservations</h1>
+        <p className="text-body-sm text-[hsl(var(--text-secondary))]">
+          Vue planning de vos interventions et réservations selon votre rôle.
         </p>
       </header>
 
-      <Card className="border-blue-200 bg-blue-50/60">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Prochaine Intervention</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {data.nextStep ? (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">{dateFormatter.format(new Date(data.nextStep.date))}</p>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className={getStatusBadgeClass(data.nextStep.status)}>{data.nextStep.status}</Badge>
-                <span className="font-medium">{data.nextStep.typeLabel}</span>
-                <span className="text-muted-foreground">avec {data.nextStep.interlocutor}</span>
+      {/* ── Next step highlight ── */}
+      <GlassCard variant="teal" className="p-5">
+        <div className="flex items-start gap-4">
+          <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[hsl(var(--teal)/0.15)] shrink-0">
+            <CalendarDays className="h-5 w-5 text-[hsl(var(--teal))]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-[hsl(var(--teal))] uppercase tracking-wide mb-1">
+              Prochaine intervention
+            </p>
+            {data.nextStep ? (
+              <div className="space-y-1">
+                <p className="text-body-sm font-medium text-[hsl(var(--text-primary))]">
+                  {data.nextStep.typeLabel} — {data.nextStep.interlocutor}
+                </p>
+                <div className="flex flex-wrap items-center gap-3 text-body-sm text-[hsl(var(--text-secondary))]">
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" />
+                    {dateFormatter.format(new Date(data.nextStep.date))}
+                  </span>
+                  {getStatusBadge(data.nextStep.status)}
+                </div>
               </div>
+            ) : (
+              <p className="text-body-sm text-[hsl(var(--text-secondary))]">
+                Aucune intervention future planifiée pour le moment.
+              </p>
+            )}
+          </div>
+        </div>
+      </GlassCard>
+
+      {/* ── Planning table ── */}
+      <GlassCard variant="solid">
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+          <h2 className="text-heading-sm">
+            Planning{isRoleLoading ? " (mise à jour...)" : ""}
+          </h2>
+          <span className="text-body-sm text-[hsl(var(--text-secondary))]">
+            {data.lines.length} ligne{data.lines.length > 1 ? "s" : ""}
+          </span>
+        </div>
+        <GlassCardContent className="p-0">
+          {data.lines.length === 0 ? (
+            <div className="p-8">
+              <EmptyState
+                icon={CalendarClock}
+                title="Aucune réservation"
+                description="Vous n'avez pas encore de missions ou réservations planifiées."
+                tips="Les nouvelles réservations apparaissent ici automatiquement."
+              />
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Aucune intervention future planifiée pour le moment.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            Planning {isRoleLoading ? "(mise à jour...)" : ""}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {data.lines.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucune ligne à afficher pour ce rôle.</p>
-          ) : (
-            <>
-              <div className="hidden border-b px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.3fr_1fr_1fr_auto_auto] md:gap-3">
+            <div className="divide-y divide-border">
+              {/* Desktop header */}
+              <div className="hidden md:grid md:grid-cols-[1.4fr_1fr_1.2fr_auto_auto] md:gap-4 px-5 py-2.5 bg-[hsl(var(--surface-2))] text-[10px] font-semibold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
                 <span>Date</span>
                 <span>Type</span>
                 <span>Interlocuteur</span>
                 <span>Statut</span>
                 <span>Actions</span>
               </div>
+
               {data.lines.map((line) => (
                 <div
                   key={`${line.lineType}-${line.lineId}`}
-                  className="grid gap-3 rounded-lg border p-3 md:grid-cols-[1.3fr_1fr_1fr_auto_auto] md:items-center"
+                  className="grid gap-3 px-5 py-4 md:grid-cols-[1.4fr_1fr_1.2fr_auto_auto] md:items-center hover:bg-[hsl(var(--surface-2))] transition-colors"
                 >
-                  <div className="flex items-center gap-2 text-sm">
-                    <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                  {/* Date */}
+                  <div className="flex items-center gap-2 text-body-sm">
+                    <CalendarClock className="h-4 w-4 text-[hsl(var(--text-secondary))] shrink-0" />
                     <span>{dateFormatter.format(new Date(line.date))}</span>
                   </div>
 
-                  <div className="text-sm font-medium">{line.typeLabel}</div>
+                  {/* Type */}
+                  <div className="flex items-center gap-1.5 text-body-sm font-medium">
+                    {line.lineType === "SERVICE_BOOKING" ? (
+                      <Building2 className="h-4 w-4 text-[hsl(var(--violet))]" />
+                    ) : (
+                      <CalendarDays className="h-4 w-4 text-[hsl(var(--teal))]" />
+                    )}
+                    {line.typeLabel}
+                  </div>
 
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <CircleUserRound className="h-4 w-4" />
+                  {/* Interlocutor */}
+                  <div className="flex items-center gap-2 text-body-sm text-[hsl(var(--text-secondary))]">
+                    <CircleUserRound className="h-4 w-4 shrink-0" />
                     <span>{line.interlocutor}</span>
                   </div>
 
-                  <Badge className={getStatusBadgeClass(line.status)}>{line.status}</Badge>
+                  {/* Status */}
+                  <div>{getStatusBadge(line.status)}</div>
 
-                  <div className="flex items-center gap-2">
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleOpenDetails(line)}
                       disabled={isActionLoading}
                     >
-                      <Eye className="mr-1 h-4 w-4" />
-                      Voir Détails
+                      <Eye className="mr-1 h-3.5 w-3.5" />
+                      Détails
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCancel(line)}
-                      disabled={isActionLoading || !canCancel(line.status)}
-                    >
-                      Annuler
-                    </Button>
+
+                    {canCancel(line.status) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCancel(line)}
+                        disabled={isActionLoading}
+                        className="text-[hsl(var(--color-red-600))] hover:text-[hsl(var(--color-red-600))] hover:bg-[hsl(var(--color-red-50))]"
+                      >
+                        <XCircle className="mr-1 h-3.5 w-3.5" />
+                        Annuler
+                      </Button>
+                    )}
 
                     {userRole === "ESTABLISHMENT" && line.status === "PENDING" && (
                       <Button
-                        variant="default"
+                        variant="teal"
                         size="sm"
-                        className="bg-cyan-600 hover:bg-cyan-700 text-white"
                         onClick={() => handleConfirm(line)}
                         disabled={isActionLoading}
                       >
-                        <Check className="mr-1 h-4 w-4" />
+                        <Check className="mr-1 h-3.5 w-3.5" />
                         Recruter
                       </Button>
                     )}
 
                     {userRole === "ESTABLISHMENT" && line.status === "CONFIRMED" && (
                       <Button
-                        variant="default"
+                        variant="coral"
                         size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
                         onClick={() => handleComplete(line)}
                         disabled={isActionLoading}
                       >
-                        <CheckCheck className="mr-1 h-4 w-4" />
+                        <CheckCheck className="mr-1 h-3.5 w-3.5" />
                         Terminer
                       </Button>
                     )}
                   </div>
                 </div>
               ))}
-            </>
+            </div>
           )}
-        </CardContent>
-      </Card>
+        </GlassCardContent>
+      </GlassCard>
 
+      {/* ── Details dialog ── */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Détails de la réservation</DialogTitle>
             <DialogDescription>
-              Informations de lieu et de contact pour préparer l’intervention.
+              Informations de lieu et de contact pour préparer l'intervention.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 text-sm">
-            <div className="flex items-start gap-2">
-              <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-[hsl(var(--surface-2))]">
+              <MapPin className="mt-0.5 h-4 w-4 text-[hsl(var(--teal))] shrink-0" />
               <div>
-                <p className="font-medium">Adresse</p>
-                <p className="text-muted-foreground">
+                <p className="font-medium mb-0.5">Adresse</p>
+                <p className="text-[hsl(var(--text-secondary))]">
                   {isDetailsLoading ? "Chargement..." : (details?.address ?? selectedLine?.address ?? "N/A")}
                 </p>
               </div>
             </div>
-            <div className="flex items-start gap-2">
-              <CircleUserRound className="mt-0.5 h-4 w-4 text-muted-foreground" />
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-[hsl(var(--surface-2))]">
+              <FileText className="mt-0.5 h-4 w-4 text-[hsl(var(--teal))] shrink-0" />
               <div>
-                <p className="font-medium">Contact</p>
-                <p className="text-muted-foreground">
-                  {isDetailsLoading
-                    ? "Chargement..."
-                    : (details?.contactEmail ?? selectedLine?.contactEmail ?? "N/A")}
+                <p className="font-medium mb-0.5">Contact</p>
+                <p className="text-[hsl(var(--text-secondary))]">
+                  {isDetailsLoading ? "Chargement..." : (details?.contactEmail ?? selectedLine?.contactEmail ?? "N/A")}
                 </p>
               </div>
             </div>
@@ -322,3 +355,4 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
     </section>
   );
 }
+

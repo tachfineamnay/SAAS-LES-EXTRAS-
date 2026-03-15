@@ -7,7 +7,7 @@ import { Check, ChevronRight, Loader2, MapPin, User, Building } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { GlassCard, GlassCardContent, GlassCardHeader } from "@/components/ui/glass-card";
 import { updateProfile, completeOnboarding } from "@/app/actions/onboarding";
 import { toast } from "sonner";
 
@@ -76,9 +76,9 @@ export default function OnboardingWizard({ userId, userRole }: { userId: string,
         <div className="max-w-2xl mx-auto py-12 px-4">
             {/* Progress Bar */}
             <div className="mb-12 relative">
-                <div className="absolute top-1/2 left-0 w-full h-1 bg-muted -translate-y-1/2 z-0" />
+                <div className="absolute top-1/2 left-0 w-full h-1 bg-[hsl(var(--border))] -translate-y-1/2 z-0" />
                 <div
-                    className="absolute top-1/2 left-0 h-1 bg-primary -translate-y-1/2 z-0 transition-all duration-500 ease-in-out"
+                    className="absolute top-1/2 left-0 h-1 bg-[hsl(var(--teal))] -translate-y-1/2 z-0 transition-all duration-500 ease-in-out"
                     style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
                 />
                 <div className="relative z-10 flex justify-between">
@@ -90,15 +90,18 @@ export default function OnboardingWizard({ userId, userRole }: { userId: string,
                         return (
                             <div key={step.id} className="flex flex-col items-center gap-2">
                                 <div
-                                    className={`
-                        w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all
-                        ${isActive ? "border-primary bg-primary text-white scale-110" :
-                                            isCompleted ? "border-primary bg-primary text-white" : "border-muted bg-background text-muted-foreground"}
-                    `}
+                                    className={[
+                                        "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all",
+                                        isActive
+                                            ? "border-[hsl(var(--teal))] bg-[hsl(var(--teal))] text-white scale-110 shadow-md"
+                                            : isCompleted
+                                            ? "border-[hsl(var(--teal))] bg-[hsl(var(--teal))] text-white"
+                                            : "border-[hsl(var(--border))] bg-background text-[hsl(var(--text-secondary))]",
+                                    ].join(" ")}
                                 >
                                     {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
                                 </div>
-                                <span className={`text-xs font-medium ${isActive ? "text-primary" : "text-muted-foreground"}`}>
+                                <span className={`text-xs font-medium ${isActive ? "text-[hsl(var(--teal))]" : "text-[hsl(var(--text-secondary))]"}`}>
                                     {step.title}
                                 </span>
                             </div>
@@ -115,14 +118,17 @@ export default function OnboardingWizard({ userId, userRole }: { userId: string,
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
                 >
-                    <Card className="border-2">
-                        <CardHeader>
-                            <CardTitle>Étape {currentStep + 1} : {steps[currentStep]?.title}</CardTitle>
-                            <CardDescription>
+                    <GlassCard variant="muted" className="overflow-hidden">
+                        <GlassCardHeader className="border-b border-border pb-4">
+                            <p className="text-xs font-semibold text-[hsl(var(--teal))] uppercase tracking-widest mb-0.5">
+                                Étape {currentStep + 1} / {steps.length}
+                            </p>
+                            <h2 className="text-heading-sm">{steps[currentStep]?.title}</h2>
+                            <p className="text-body-sm text-[hsl(var(--text-secondary))] mt-1">
                                 Complétez les informations ci-dessous.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
+                            </p>
+                        </GlassCardHeader>
+                        <GlassCardContent className="p-6 space-y-6">
                             {currentStep === 0 && (
                                 <div className="space-y-4">
                                     <div className="space-y-2">
@@ -218,15 +224,20 @@ export default function OnboardingWizard({ userId, userRole }: { userId: string,
                                     </div>
                                 </div>
                             )}
-                        </CardContent>
-                        <CardFooter className="flex justify-end">
-                            <Button onClick={nextStep} disabled={loading} size="lg">
+                        </GlassCardContent>
+                        <div className="flex justify-end px-6 py-4 border-t border-border">
+                            <Button
+                                onClick={nextStep}
+                                disabled={loading}
+                                size="lg"
+                                variant={currentStep === steps.length - 1 ? "coral" : "teal"}
+                            >
                                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {currentStep === steps.length - 1 ? "Terminer" : "Suivant"}
+                                {currentStep === steps.length - 1 ? "Terminer mon profil" : "Suivant"}
                                 {!loading && <ChevronRight className="ml-2 h-4 w-4" />}
                             </Button>
-                        </CardFooter>
-                    </Card>
+                        </div>
+                    </GlassCard>
                 </motion.div>
             </AnimatePresence>
         </div>
