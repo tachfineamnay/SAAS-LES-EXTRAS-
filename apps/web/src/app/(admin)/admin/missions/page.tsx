@@ -9,7 +9,7 @@ export default async function AdminMissionsPage() {
   return (
     <section className="space-y-5">
       <header className="space-y-1">
-        <h2 className="text-2xl font-semibold tracking-tight text-foreground">Missions Renforts</h2>
+        <h2 className="font-display text-heading-xl tracking-tight">Missions Renforts</h2>
         <p className="text-sm text-muted-foreground">
           Vue globale des urgences publiées et modération rapide du contenu.
         </p>

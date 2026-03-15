@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function AdminFinancePage() {
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Finance</h2>
+      <h2 className="font-display text-heading-xl tracking-tight">Finance</h2>
       <Card>
         <CardHeader>
           <CardTitle>Suivi des commissions</CardTitle>
