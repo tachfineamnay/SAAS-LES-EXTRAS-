@@ -12,10 +12,10 @@ type ApplyInput = {
 export async function applyToMission(
     missionId: string,
     input?: ApplyInput,
-): Promise<{ ok: true; error?: string }> {
+): Promise<{ ok: boolean; error?: string }> {
     try {
         const session = await getSession();
-        if (!session) return { ok: true, error: "Non connecté" };
+        if (!session) return { ok: false, error: "Non connecté" };
 
         await apiRequest(`/missions/${missionId}/apply`, {
             method: "POST",
@@ -28,14 +28,17 @@ export async function applyToMission(
         return { ok: true };
     } catch (error) {
         console.error("applyToMission error", error);
-        return { ok: true, error: error instanceof Error ? error.message : "Erreur lors de la candidature" };
+        if (error instanceof Error && error.message.toLowerCase().includes("already applied")) {
+            return { ok: false, error: "Vous avez déjà postulé à cette mission." };
+        }
+        return { ok: false, error: error instanceof Error ? error.message : "Erreur lors de la candidature" };
     }
 }
 
-export async function acceptCandidate(bookingId: string): Promise<{ ok: true; error?: string }> {
+export async function acceptCandidate(bookingId: string): Promise<{ ok: boolean; error?: string }> {
     try {
         const session = await getSession();
-        if (!session) return { ok: true, error: "Non connecté" };
+        if (!session) return { ok: false, error: "Non connecté" };
 
         await apiRequest(`/bookings/confirm`, {
             method: "POST",
@@ -44,11 +47,31 @@ export async function acceptCandidate(bookingId: string): Promise<{ ok: true; er
         });
 
         revalidatePath("/dashboard");
-        revalidatePath("/dashboard/sos");
+        revalidatePath("/dashboard/renforts");
         return { ok: true };
     } catch (error) {
         console.error("acceptCandidate error", error);
-        return { ok: true, error: error instanceof Error ? error.message : "Erreur lors de la validation" };
+        return { ok: false, error: error instanceof Error ? error.message : "Erreur lors de la validation" };
+    }
+}
+
+export async function declineCandidate(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+    try {
+        const session = await getSession();
+        if (!session) return { ok: false, error: "Non connecté" };
+
+        await apiRequest(`/bookings/cancel`, {
+            method: "POST",
+            token: session.token,
+            body: { lineType: "MISSION", lineId: bookingId },
+        });
+
+        revalidatePath("/dashboard");
+        revalidatePath("/dashboard/renforts");
+        return { ok: true };
+    } catch (error) {
+        console.error("declineCandidate error", error);
+        return { ok: false, error: error instanceof Error ? error.message : "Erreur lors du refus" };
     }
 }
 

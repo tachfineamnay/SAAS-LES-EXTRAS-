@@ -3,9 +3,10 @@ import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { GlassCard, GlassCardContent, GlassCardHeader } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
-import { EmptyState } from "@/components/ui/empty-state";
 import { CandidateCard } from "@/components/dashboard/establishment/CandidateCard";
-import { Calendar, Clock, MapPin, Sun, Moon, Users } from "lucide-react";
+import { PublishRenfortButton } from "@/components/dashboard/establishment/PublishRenfortButton";
+import { RenfortsEmptyState } from "@/components/dashboard/establishment/RenfortsEmptyState";
+import { Calendar, Clock, MapPin, Sun, Moon, Siren } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMetierLabel } from "@/lib/sos-config";
@@ -31,20 +32,20 @@ export default async function SosDashboardPage() {
     <div className="space-y-8">
       <header className="space-y-1.5">
         <p className="text-overline uppercase tracking-widest text-muted-foreground">Espace Établissement</p>
-        <h1 className="font-display text-heading-xl tracking-tight">Board de matching</h1>
-        <p className="text-body-md text-muted-foreground">
-          Gérez vos missions de renfort et validez les candidatures des freelances.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="font-display text-heading-xl tracking-tight">Board de matching</h1>
+            <p className="text-body-md text-muted-foreground">
+              Gérez vos missions de renfort et validez les candidatures des freelances.
+            </p>
+          </div>
+          <PublishRenfortButton label="Nouveau renfort" size="sm" />
+        </div>
       </header>
 
       <div className="grid gap-6">
         {openMissions.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="Aucune mission en cours"
-            description="Vous n'avez pas de demande de renfort active."
-            primaryAction={{ label: "Publier un renfort", href: "/dashboard/renforts/new" }}
-          />
+          <RenfortsEmptyState />
         ) : (
           openMissions.map((mission: any) => {
             const activeCandidacies = mission.bookings.filter(

@@ -1,18 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FreelanceFlow } from "./FreelanceFlow";
-import { EstablishmentFlow } from "./EstablishmentFlow";
-import { UserRole } from "@prisma/client";
+import { useRouter } from "next/navigation";
 import { useUIStore } from "@/lib/stores/useUIStore";
 
 type OnboardingGuardProps = {
     children: React.ReactNode;
-    userRole: UserRole;
+    userRole: "ESTABLISHMENT" | "FREELANCE" | "ADMIN";
     onboardingStep: number;
 };
 
 export function OnboardingGuard({ children, userRole, onboardingStep }: OnboardingGuardProps) {
+    const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const { setUserRole, setOnboardingStep } = useUIStore();
 
@@ -25,7 +24,7 @@ export function OnboardingGuard({ children, userRole, onboardingStep }: Onboardi
     }, [userRole, onboardingStep, setUserRole, setOnboardingStep]);
 
     if (!mounted) {
-        return <>{children}</>;
+        return <div className="min-h-screen bg-background" />;
     }
 
     // ESTABLISHMENT flow has 3 steps, FREELANCE flow has 4 steps
@@ -33,19 +32,8 @@ export function OnboardingGuard({ children, userRole, onboardingStep }: Onboardi
     const isComplete = onboardingStep >= maxSteps;
 
     if (!isComplete) {
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm p-4">
-                <div className="w-full max-w-2xl">
-                    {userRole === "FREELANCE" ? (
-                        <FreelanceFlow currentStep={onboardingStep} />
-                    ) : userRole === "ESTABLISHMENT" ? (
-                        <EstablishmentFlow currentStep={onboardingStep} />
-                    ) : (
-                        <>{children}</>
-                    )}
-                </div>
-            </div>
-        );
+        router.push("/wizard");
+        return null;
     }
 
     return <>{children}</>;

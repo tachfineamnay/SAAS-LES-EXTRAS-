@@ -1,12 +1,16 @@
-"use client";
+﻿"use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { StepLayout } from "./StepLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { saveOnboardingStep, completeOnboarding, type OnboardingData } from "@/app/actions/onboarding";
+import {
+    saveOnboardingStep,
+    completeOnboarding,
+    type OnboardingData,
+} from "@/app/actions/onboarding";
 import { toast } from "sonner";
 import {
     Select,
@@ -19,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Building2, Clock, CheckCircle2, ChevronRight } from "lucide-react";
 
-const ESTABLISHMENT_TYPES = {
+const ESTABLISHMENT_TYPES: Record<string, string[]> = {
     "Protection de l'enfance": ["MECS", "AEMO", "Foyer de l'Enfance", "PEAD"],
     "Personnes âgées": ["EHPAD", "USLD", "Résidence Autonomie", "SSIAD"],
     "Handicap adulte": ["FAM", "MAS", "SAMSAH", "ESAT", "Foyer de vie", "Foyer d'hébergement"],
@@ -28,18 +32,19 @@ const ESTABLISHMENT_TYPES = {
     "Autre": ["SAAD", "SPASAD", "Autre"],
 };
 
+const STORAGE_KEY = "lesextras_wizard_est";
+
 export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
     const router = useRouter();
-    // Step 0 = welcome screen, then steps 1-3
     const [step, setStep] = useState(currentStep === 0 ? 0 : currentStep);
     const [isPending, startTransition] = useTransition();
 
-    // Step 1 — Identity
+    // Step 1 — Identité structure
     const [establishmentName, setEstablishmentName] = useState("");
     const [establishmentType, setEstablishmentType] = useState("");
     const [finess, setFiness] = useState("");
 
-    // Step 2 — Address
+    // Step 2 — Adresse
     const [street, setStreet] = useState("");
     const [postalCode, setPostalCode] = useState("");
     const [city, setCity] = useState("");
@@ -49,6 +54,46 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
     const [phone, setPhone] = useState("");
 
     const totalSteps = 3;
+
+    // ── Restaurer depuis sessionStorage au montage ───────────────
+    useEffect(() => {
+        try {
+            const raw = sessionStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            const saved = JSON.parse(raw) as Record<string, string>;
+            if (saved.establishmentName) setEstablishmentName(saved.establishmentName);
+            if (saved.establishmentType) setEstablishmentType(saved.establishmentType);
+            if (saved.finess) setFiness(saved.finess);
+            if (saved.street) setStreet(saved.street);
+            if (saved.postalCode) setPostalCode(saved.postalCode);
+            if (saved.city) setCity(saved.city);
+            if (saved.contactName) setContactName(saved.contactName);
+            if (saved.phone) setPhone(saved.phone);
+        } catch {
+            // sessionStorage peut être indisponible (SSR, iframe sécurisé)
+        }
+    }, []);
+
+    // ── Persister dans sessionStorage à chaque changement ────────
+    useEffect(() => {
+        try {
+            sessionStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify({
+                    establishmentName,
+                    establishmentType,
+                    finess,
+                    street,
+                    postalCode,
+                    city,
+                    contactName,
+                    phone,
+                }),
+            );
+        } catch {
+            // silently ignore
+        }
+    }, [establishmentName, establishmentType, finess, street, postalCode, city, contactName, phone]);
 
     const handleStart = () => setStep(1);
     const handleBack = () => setStep((s) => Math.max(1, s - 1));
@@ -64,14 +109,13 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                     data = {
                         establishmentName,
                         establishmentType,
-                        // store finess in bio field as workaround since schema doesn't have finess yet
-                        ...(finess && { bio: `FINESS: ${finess}` }),
+                        ...(finess ? { bio: `FINESS: ${finess}` } : {}),
                     };
                 } else if (step === 2) {
                     if (!street) throw new Error("La rue est requise.");
                     if (!postalCode) throw new Error("Le code postal est requis.");
                     if (!city) throw new Error("La ville est requise.");
-                    data = { address: `${street}, ${postalCode} ${city}` };
+                    data = { address: street, city, zipCode: postalCode };
                 } else if (step === 3) {
                     if (!contactName) throw new Error("Le nom du responsable est requis.");
                     if (!phone) throw new Error("Le téléphone est requis.");
@@ -84,6 +128,7 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                     setStep(step + 1);
                 } else {
                     await completeOnboarding();
+                    try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
                     toast.success("🎉 Établissement configuré ! Bienvenue sur Les-Extras.");
                     router.push("/dashboard");
                     router.refresh();
@@ -94,7 +139,7 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
         });
     };
 
-    // --- Welcome screen ---
+    // ── Écran de bienvenue (step 0) ──────────────────────────────
     if (step === 0) {
         return (
             <div className="mx-auto max-w-2xl px-4 py-8">
@@ -105,12 +150,14 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <h1 className="text-2xl font-bold tracking-tight">Configurons votre établissement</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            Configurons votre établissement
+                        </h1>
                         <p className="text-muted-foreground">
-                            Ces informations nous permettent de vous mettre en relation avec les bons profils et de générer vos documents.
+                            Ces informations nous permettent de vous mettre en relation avec les bons profils
+                            et de générer vos documents.
                         </p>
                     </div>
-
                     <div className="rounded-lg border bg-muted/40 p-4 text-left space-y-3">
                         {[
                             "Nom et type de votre structure",
@@ -123,12 +170,10 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                             </div>
                         ))}
                     </div>
-
                     <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
                         <span>Environ 2 minutes</span>
                     </div>
-
                     <Button className="w-full gap-2" size="lg" onClick={handleStart}>
                         Commencer la configuration
                         <ChevronRight className="h-4 w-4" />
@@ -138,14 +183,17 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
         );
     }
 
-    // --- Step content ---
+    // ── Contenu des steps ────────────────────────────────────────
     const renderStepContent = () => {
         switch (step) {
             case 1:
                 return (
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="name">Nom de l'établissement <span className="text-destructive">*</span></Label>
+                            <Label htmlFor="name">
+                                Nom de l&apos;établissement{" "}
+                                <span className="text-destructive">*</span>
+                            </Label>
                             <Input
                                 id="name"
                                 placeholder="Ex: MECS Les Érables"
@@ -154,7 +202,9 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="type">Type de structure <span className="text-destructive">*</span></Label>
+                            <Label htmlFor="type">
+                                Type de structure <span className="text-destructive">*</span>
+                            </Label>
                             <Select onValueChange={setEstablishmentType} value={establishmentType}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Sélectionnez le type" />
@@ -164,7 +214,9 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                                         <SelectGroup key={group}>
                                             <SelectLabel>{group}</SelectLabel>
                                             {types.map((t) => (
-                                                <SelectItem key={t} value={t}>{t}</SelectItem>
+                                                <SelectItem key={t} value={t}>
+                                                    {t}
+                                                </SelectItem>
                                             ))}
                                         </SelectGroup>
                                     ))}
@@ -174,7 +226,9 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                         <div className="space-y-2">
                             <Label htmlFor="finess">
                                 Numéro FINESS
-                                <span className="ml-2 text-xs text-muted-foreground">(optionnel, recommandé pour les contrats)</span>
+                                <span className="ml-2 text-xs text-muted-foreground">
+                                    (optionnel, recommandé)
+                                </span>
                             </Label>
                             <Input
                                 id="finess"
@@ -185,11 +239,14 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                         </div>
                     </div>
                 );
+
             case 2:
                 return (
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="street">Rue et numéro <span className="text-destructive">*</span></Label>
+                            <Label htmlFor="street">
+                                Rue et numéro <span className="text-destructive">*</span>
+                            </Label>
                             <Input
                                 id="street"
                                 placeholder="10 rue de la République"
@@ -199,7 +256,9 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="postal">Code postal <span className="text-destructive">*</span></Label>
+                                <Label htmlFor="postal">
+                                    Code postal <span className="text-destructive">*</span>
+                                </Label>
                                 <Input
                                     id="postal"
                                     placeholder="75001"
@@ -209,7 +268,9 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="city">Ville <span className="text-destructive">*</span></Label>
+                                <Label htmlFor="city">
+                                    Ville <span className="text-destructive">*</span>
+                                </Label>
                                 <Input
                                     id="city"
                                     placeholder="Paris"
@@ -223,11 +284,14 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                         </p>
                     </div>
                 );
+
             case 3:
                 return (
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="contact">Nom du Responsable <span className="text-destructive">*</span></Label>
+                            <Label htmlFor="contact">
+                                Nom du Responsable <span className="text-destructive">*</span>
+                            </Label>
                             <Input
                                 id="contact"
                                 placeholder="Jean Dupont"
@@ -236,7 +300,9 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="phone">Téléphone direct <span className="text-destructive">*</span></Label>
+                            <Label htmlFor="phone">
+                                Téléphone direct <span className="text-destructive">*</span>
+                            </Label>
                             <Input
                                 id="phone"
                                 type="tel"
@@ -250,6 +316,7 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                         </p>
                     </div>
                 );
+
             default:
                 return null;
         }
@@ -260,33 +327,36 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
             currentStep={step}
             totalSteps={totalSteps}
             title={
-                step === 1 ? "Identité de la Structure" :
-                    step === 2 ? "Adresse de Facturation" :
-                        "Contact Prioritaire"
+                step === 1
+                    ? "Identité de la Structure"
+                    : step === 2
+                      ? "Adresse de Facturation"
+                      : "Contact Prioritaire"
             }
             description={
-                step === 1 ? "Dites-nous qui vous êtes pour apparaître correctement sur la plateforme." :
-                    step === 2 ? "L'adresse qui figurera sur vos factures et contrats." :
-                        "Le responsable que nous contacterons en cas de besoin urgent."
+                step === 1
+                    ? "Dites-nous qui vous êtes pour apparaître correctement sur la plateforme."
+                    : step === 2
+                      ? "L'adresse qui figurera sur vos factures et contrats."
+                      : "Le responsable que nous contacterons en cas de besoin urgent."
             }
         >
             <div className="space-y-6">
                 {renderStepContent()}
-
                 <div className="flex justify-between pt-4">
                     <Button
                         variant="ghost"
                         onClick={handleBack}
-                        disabled={isPending}
+                        disabled={isPending || step === 1}
                     >
-                        ← Retour
+                        Retour
                     </Button>
                     <Button onClick={handleNext} disabled={isPending}>
                         {isPending
-                            ? "Enregistrement..."
-                            : step === totalSteps
-                                ? "Terminer la configuration"
-                                : "Suivant →"}
+                            ? "Enregistrement…"
+                            : step < totalSteps
+                              ? "Continuer"
+                              : "Valider mon profil"}
                     </Button>
                 </div>
             </div>

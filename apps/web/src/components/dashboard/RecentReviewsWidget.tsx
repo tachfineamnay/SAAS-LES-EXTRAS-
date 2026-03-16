@@ -20,9 +20,20 @@ export interface RecentReview {
 
 interface RecentReviewsWidgetProps {
   reviews: RecentReview[];
+  error?: string | null;
 }
 
-export function RecentReviewsWidget({ reviews }: RecentReviewsWidgetProps) {
+export function RecentReviewsWidget({ reviews, error }: RecentReviewsWidgetProps) {
+  if (error) {
+    return (
+      <EmptyState
+        icon={Star}
+        title="Avis indisponibles"
+        description={error}
+      />
+    );
+  }
+
   if (reviews.length === 0) {
     return (
       <EmptyState

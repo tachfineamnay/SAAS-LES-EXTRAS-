@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getFreelanceById } from "@/app/actions/marketplace";
 import { FicheFreelanceClient } from "./FicheFreelanceClient";
+import { freelancePublicQueryKeys } from "@/lib/messaging-query-keys";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,9 @@ export default async function FicheFreelancePage({
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
+
+  const profileQueryKey = freelancePublicQueryKeys.detail(params.id);
+  if (!profileQueryKey.length) notFound();
 
   const freelance = await getFreelanceById(params.id);
   if (!freelance) notFound();

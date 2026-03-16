@@ -1,0 +1,70 @@
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { RenfortsWidget } from "@/components/dashboard/establishment/RenfortsWidget";
+import type { SerializedMission } from "@/app/actions/marketplace";
+
+vi.mock("next/link", () => ({
+  default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
+    <a href={href} {...props}>{children}</a>
+  ),
+}));
+
+const makeMission = (overrides?: Partial<SerializedMission>): SerializedMission => ({
+  id: "mission-1",
+  title: "Infirmier de nuit",
+  dateStart: "2026-05-01T00:00:00.000Z",
+  dateEnd: "2026-05-01T08:00:00.000Z",
+  address: "1 rue Test, 75001 Paris",
+  hourlyRate: 30,
+  status: "OPEN",
+  isRenfort: true,
+  metier: "INFIRMIER",
+  shift: "NUIT",
+  city: "Paris",
+  ...overrides,
+});
+
+describe("RenfortsWidget", () => {
+  it("affiche 'Ouverte' pour le statut OPEN", () => {
+    render(<RenfortsWidget missions={[makeMission({ status: "OPEN" })]} />);
+    expect(screen.getByText("Ouverte")).toBeInTheDocument();
+  });
+
+  it("affiche un état vide quand aucune mission n'est passée", () => {
+    render(<RenfortsWidget missions={[]} />);
+    expect(screen.getByText(/aucun renfort actif/i)).toBeInTheDocument();
+  });
+
+  it("affiche le titre de la mission", () => {
+    render(<RenfortsWidget missions={[makeMission({ title: "Aide-soignant jour" })]} />);
+    expect(screen.getByText(/aide-soignant jour/i)).toBeInTheDocument();
+  });
+
+  it("affiche le badge de statut OPEN comme 'Ouverte'", () => {
+    render(<RenfortsWidget missions={[makeMission({ status: "OPEN" })]} />);
+    expect(screen.getByText("Ouverte")).toBeInTheDocument();
+  });
+
+  it("affiche le badge de statut ASSIGNED comme 'Attribuée'", () => {
+    render(<RenfortsWidget missions={[makeMission({ status: "ASSIGNED" })]} />);
+    expect(screen.getByText("Attribuée")).toBeInTheDocument();
+  });
+
+  it("affiche toutes les missions jusqu'à 5", () => {
+    const missions = Array.from({ length: 5 }, (_, i) =>
+      makeMission({ id: `mission-${i}`, title: `Mission ${i + 1}` }),
+    );
+    render(<RenfortsWidget missions={missions} />);
+    for (let i = 1; i <= 5; i++) {
+      expect(screen.getByText(`Mission ${i}`)).toBeInTheDocument();
+    }
+  });
+
+  it("affiche le lien 'Voir tous' quand plus de 5 missions", () => {
+    const missions = Array.from({ length: 6 }, (_, i) =>
+      makeMission({ id: `mission-${i}`, title: `Mission ${i + 1}` }),
+    );
+    render(<RenfortsWidget missions={missions} />);
+    expect(screen.getByRole("link", { name: /voir tous/i })).toBeInTheDocument();
+  });
+});

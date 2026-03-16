@@ -5,6 +5,7 @@ import {
   CalendarClock,
   Check,
   CheckCheck,
+  CreditCard,
   CircleUserRound,
   Eye,
   MapPin,
@@ -28,8 +29,10 @@ import {
   type BookingsPageData,
   type DashboardRole,
 } from "@/app/actions/bookings";
+import { authorizePayment } from "@/actions/payments";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BookingLineLot6Panel } from "@/components/bookings/BookingLineLot6Panel";
 import { GlassCard, GlassCardContent } from "@/components/ui/glass-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -86,6 +89,10 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
   const [details, setDetails] = useState<BookingDetails | null>(null);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
 
+  const refreshBookings = async () => {
+    setData(await getBookingsPageData());
+  };
+
   useEffect(() => {
     if (userRole === loadedRole) return;
 
@@ -107,7 +114,7 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
     startActionLoading(async () => {
       try {
         await cancelBookingLine({ lineType: line.lineType, lineId: line.lineId });
-        setData(await getBookingsPageData());
+        await refreshBookings();
         toast.success("Réservation annulée.");
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Impossible d'annuler cette réservation.");
@@ -123,7 +130,7 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
     startActionLoading(async () => {
       try {
         await confirmBookingLine({ bookingId: line.relatedBookingId! });
-        setData(await getBookingsPageData());
+        await refreshBookings();
         toast.success("Réservation confirmée.");
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Impossible de confirmer.");
@@ -139,11 +146,29 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
     startActionLoading(async () => {
       try {
         await completeBookingLine({ bookingId: line.relatedBookingId! });
-        setData(await getBookingsPageData());
+        await refreshBookings();
         toast.success("Mission terminée. Facture générée.");
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Impossible de terminer.");
       }
+    });
+  };
+
+  const handleAuthorizePayment = (line: BookingLine) => {
+    if (!line.relatedBookingId) {
+      toast.error("Impossible de valider ce règlement (ID manquant).");
+      return;
+    }
+
+    startActionLoading(async () => {
+      const result = await authorizePayment(line.relatedBookingId!);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      await refreshBookings();
+      toast.success("Règlement validé.");
     });
   };
 
@@ -262,7 +287,15 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
                   </div>
 
                   {/* Status */}
-                  <div>{getStatusBadge(line.status)}</div>
+                  <div className="space-y-2">
+                    {getStatusBadge(line.status)}
+                    <BookingLineLot6Panel
+                      line={line}
+                      userRole={userRole ?? loadedRole}
+                      onBookingUpdated={refreshBookings}
+                      disabled={isActionLoading}
+                    />
+                  </div>
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 flex-wrap">
@@ -310,6 +343,18 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
                       >
                         <CheckCheck className="mr-1 h-3.5 w-3.5" />
                         Terminer
+                      </Button>
+                    )}
+
+                    {userRole === "ESTABLISHMENT" && line.status === "COMPLETED_AWAITING_PAYMENT" && (
+                      <Button
+                        variant="teal"
+                        size="sm"
+                        onClick={() => handleAuthorizePayment(line)}
+                        disabled={isActionLoading}
+                      >
+                        <CreditCard className="mr-1 h-3.5 w-3.5" />
+                        Valider règlement
                       </Button>
                     )}
                   </div>

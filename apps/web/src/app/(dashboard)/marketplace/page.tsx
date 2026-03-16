@@ -18,14 +18,22 @@ export default async function MarketplacePage() {
   if (session.user.role === "ESTABLISHMENT") {
     let services: Awaited<ReturnType<typeof getMarketplaceCatalogue>>["services"] = [];
     let freelances: Awaited<ReturnType<typeof getMarketplaceCatalogue>>["freelances"] = [];
+    let catalogueError: string | null = null;
     try {
       const data = await getMarketplaceCatalogue(session.token);
       services = data.services;
       freelances = data.freelances;
     } catch (err) {
       console.error("MarketplacePage catalogue error", err);
+      catalogueError = "Impossible de charger certaines données du catalogue.";
     }
-    return <EstablishmentCatalogue services={services} freelances={freelances} />;
+    return (
+      <EstablishmentCatalogue
+        services={services}
+        freelances={freelances}
+        catalogueError={catalogueError}
+      />
+    );
   }
 
   return (

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
 import { ArrowRight, Briefcase } from "lucide-react";
+import { useUIStore } from "@/lib/stores/useUIStore";
 
 /* ─── E.6.3 — Matching Missions Widget ───────────────────────────
    Shows 3 compact Renfort Cards for new missions matching the
@@ -27,12 +28,15 @@ interface MatchingMissionsWidgetProps {
 }
 
 export function MatchingMissionsWidget({ missions }: MatchingMissionsWidgetProps) {
+  const openApplyModal = useUIStore((s) => s.openApplyModal);
+
   if (missions.length === 0) {
     return (
       <EmptyState
         icon={Briefcase}
         title="Aucune nouvelle mission"
         description="Pas de mission correspondante pour l'instant. Revenez bientôt."
+        primaryAction={{ label: "Voir toutes les missions", href: "/marketplace" }}
       />
     );
   }
@@ -51,7 +55,8 @@ export function MatchingMissionsWidget({ missions }: MatchingMissionsWidgetProps
             hours={m.hours}
             rate={m.rate}
             actionLabel="Postuler"
-            onAction={() => {}}
+            onAction={() => openApplyModal(m.id)}
+            href={`/marketplace/missions/${m.id}`}
           />
         ))}
       </div>

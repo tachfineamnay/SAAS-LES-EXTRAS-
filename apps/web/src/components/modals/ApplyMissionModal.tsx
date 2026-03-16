@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Send } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,6 +43,7 @@ export function ApplyMissionModal() {
   const isOpen = useUIStore((state) => state.isApplyModalOpen);
   const missionId = useUIStore((state) => state.applyMissionId);
   const closeApplyModal = useUIStore((state) => state.closeApplyModal);
+  const router = useRouter();
 
   const form = useForm<ApplyForm>({
     resolver: zodResolver(applySchema),
@@ -68,6 +70,10 @@ export function ApplyMissionModal() {
         toast.success("Candidature envoyée !", {
           description: "L'établissement a été notifié de votre intérêt.",
         });
+        handleClose();
+        router.refresh();
+      } else if (result.error?.includes("déjà postulé")) {
+        toast.info("Déjà postulé", { description: result.error });
         handleClose();
       } else {
         toast.error("Erreur", { description: result.error || "Impossible de postuler." });
@@ -114,6 +120,7 @@ export function ApplyMissionModal() {
             </div>
             <input
               type="range"
+              aria-label="Taux horaire proposé"
               min={HOURLY_RATE_MIN}
               max={HOURLY_RATE_MAX}
               step={1}
