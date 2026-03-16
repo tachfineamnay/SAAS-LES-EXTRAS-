@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +61,8 @@ export interface RenfortCardProps
   onAction?: () => void;
   /** CTA label override */
   actionLabel?: string;
+  /** Optional link to the detail page (makes the title a link) */
+  href?: string;
 }
 
 const RenfortCard = React.forwardRef<HTMLElement, RenfortCardProps>(
@@ -77,6 +80,7 @@ const RenfortCard = React.forwardRef<HTMLElement, RenfortCardProps>(
       badges,
       onAction,
       actionLabel,
+      href,
       ...props
     },
     ref
@@ -114,9 +118,17 @@ const RenfortCard = React.forwardRef<HTMLElement, RenfortCardProps>(
           </div>
 
           {/* Title */}
-          <h3 className="text-heading-md text-[hsl(var(--text-primary))]">
-            {title}
-          </h3>
+          {href ? (
+            <Link href={href} className="hover:underline focus-visible:outline-none focus-visible:underline">
+              <h3 className="text-heading-md text-[hsl(var(--text-primary))]">
+                {title}
+              </h3>
+            </Link>
+          ) : (
+            <h3 className="text-heading-md text-[hsl(var(--text-primary))]">
+              {title}
+            </h3>
+          )}
 
           {/* Establishment · City */}
           <p className="text-body-sm text-[hsl(var(--text-secondary))]">

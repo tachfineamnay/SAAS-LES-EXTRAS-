@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { CalendarDays, Users, MessageSquare } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { bookService } from "@/app/actions/marketplace";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,7 @@ export function QuoteRequestModal() {
   const isOpen = useUIStore((s) => s.isQuoteRequestModalOpen);
   const serviceId = useUIStore((s) => s.quoteRequestServiceId);
   const close = useUIStore((s) => s.closeQuoteRequestModal);
+  const router = useRouter();
 
   const [date, setDate] = useState("");
   const [nbParticipants, setNbParticipants] = useState(1);
@@ -52,10 +54,16 @@ export function QuoteRequestModal() {
         nbParticipants,
       );
       if ("error" in result) {
-        toast.error(result.error);
+        if (result.error.toLowerCase().includes("déjà")) {
+          toast.info(result.error);
+          handleClose();
+        } else {
+          toast.error(result.error);
+        }
       } else {
         toast.success("Demande de devis envoyée ! Le freelance vous répondra prochainement.");
         handleClose();
+        router.refresh();
       }
     });
   };

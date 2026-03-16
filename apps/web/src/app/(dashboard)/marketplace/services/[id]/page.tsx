@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getService } from "@/app/actions/marketplace";
+import { getSession } from "@/lib/session";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +24,7 @@ function getAvatarFallback(name: string): string {
 
 export default async function ServiceDetailPage({ params }: PageProps) {
   const { id } = await params;
+  const session = await getSession();
   const service = await getService(id);
 
   if (!service) {
@@ -257,6 +259,8 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 <ServiceDetailActions
                   serviceId={service.id}
                   pricingType={service.pricingType}
+                  viewerRole={session?.user.role ?? null}
+                  isOwner={session?.user.id === service.owner?.id}
                 />
 
                 <p className="text-xs text-center text-muted-foreground px-2">

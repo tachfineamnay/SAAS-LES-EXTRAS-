@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { StepLayout } from "./StepLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,36 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
     const [diplomaFile, setDiplomaFile] = useState<File | null>(null);
     const [address, setAddress] = useState("");
 
+    const router = useRouter();
     const totalSteps = 4;
+
+    const STORAGE_KEY = "lesextras_wizard_fre";
+
+    // ── Restaurer depuis sessionStorage au montage ───────────────
+    useEffect(() => {
+        try {
+            const raw = sessionStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            const saved = JSON.parse(raw) as Record<string, string | string[]>;
+            if (saved.jobTitle && typeof saved.jobTitle === "string") setJobTitle(saved.jobTitle);
+            if (saved.bio && typeof saved.bio === "string") setBio(saved.bio);
+            if (Array.isArray(saved.skills)) setSkills(saved.skills as string[]);
+            if (saved.address && typeof saved.address === "string") setAddress(saved.address);
+        } catch {
+            // sessionStorage peut être indisponible
+        }
+    }, []);
+
+    // ── Persister dans sessionStorage à chaque changement ────────
+    useEffect(() => {
+        try {
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ jobTitle, bio, skills, address }));
+        } catch {
+            // silently ignore
+        }
+    }, [jobTitle, bio, skills, address]);
+
+    const handleBack = () => setStep((s) => Math.max(1, s - 1));
 
     const handleNext = () => {
         startTransition(async () => {
@@ -38,10 +68,11 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
                     if (!bio) throw new Error("Veuillez écrire une courte bio.");
                     data = { bio, skills };
                 } else if (step === 3) {
-                    // File upload logic would go here. 
-                    // For now, we simulation upload by just passing a mock URL if file is present
-                    if (!diplomaFile) throw new Error("Veuillez télécharger votre diplôme.");
-                    data = { diplomaUrl: "https://mock.url/diploma.pdf" };
+                    // Diplôme optionnel — on skip si absent
+                    if (diplomaFile) {
+                        data = { diplomaUrl: "https://mock.url/diploma.pdf" };
+                    }
+                    // Si pas de fichier, on passe au step suivant sans rien envoyer au backend
                 } else if (step === 4) {
                     if (!address) throw new Error("Veuillez renseigner votre adresse.");
                     data = { address };
@@ -53,9 +84,10 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
                     setStep(step + 1);
                 } else {
                     await completeOnboarding();
+                    try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
                     toast.success("Profil complété ! En attente de validation.");
-                    // Force refresh or redirect?
-                    window.location.reload();
+                    router.push("/marketplace");
+                    router.refresh();
                 }
             } catch (error) {
                 toast.error(error instanceof Error ? error.message : "Une erreur est survenue.");
@@ -196,9 +228,20 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
             <div className="space-y-6">
                 {renderStepContent()}
 
-                <div className="flex justify-end gap-2 pt-4">
+                <div className="flex justify-between pt-4">
+                    <Button
+                        variant="ghost"
+                        onClick={handleBack}
+                        disabled={isPending || step === 1}
+                    >
+                        Retour
+                    </Button>
                     <Button onClick={handleNext} disabled={isPending}>
-                        {isPending ? "Enregistrement..." : step === totalSteps ? "Terminer" : "Suivant"}
+                        {isPending
+                            ? "Enregistrement…"
+                            : step === totalSteps
+                              ? "Terminer"
+                              : "Continuer"}
                     </Button>
                 </div>
             </div>

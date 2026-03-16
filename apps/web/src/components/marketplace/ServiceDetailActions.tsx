@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { CalendarDays, FileText } from "lucide-react";
@@ -7,11 +8,29 @@ import { CalendarDays, FileText } from "lucide-react";
 interface ServiceDetailActionsProps {
   serviceId: string;
   pricingType: string;
+  viewerRole: "ESTABLISHMENT" | "FREELANCE" | "ADMIN" | null;
+  isOwner: boolean;
 }
 
-export function ServiceDetailActions({ serviceId, pricingType }: ServiceDetailActionsProps) {
+export function ServiceDetailActions({ serviceId, pricingType, viewerRole, isOwner }: ServiceDetailActionsProps) {
   const openBookServiceModal = useUIStore((s) => s.openBookServiceModal);
   const openQuoteRequestModal = useUIStore((s) => s.openQuoteRequestModal);
+
+  if (viewerRole !== "ESTABLISHMENT") {
+    if (isOwner) {
+      return (
+        <Button size="lg" className="w-full text-md h-12 shadow-md hover:shadow-lg" asChild>
+          <Link href="/dashboard/ateliers">Gérer cet atelier</Link>
+        </Button>
+      );
+    }
+
+    return (
+      <Button size="lg" variant="outline" className="w-full text-md h-12" disabled>
+        Réservation réservée aux établissements
+      </Button>
+    );
+  }
 
   if (pricingType === "QUOTE") {
     return (

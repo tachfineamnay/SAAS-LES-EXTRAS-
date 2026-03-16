@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { MesAteliersClient } from "@/components/dashboard/MesAteliersClient";
+import { getMyAteliers } from "@/app/actions/marketplace";
+import { getBookingsPageData } from "@/app/actions/bookings";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +11,24 @@ export default async function MesAteliersPage() {
     if (!session) redirect("/login");
     if (session.user.role !== "FREELANCE") redirect("/dashboard");
 
-    // TODO: Fetch freelance's ateliers from API when endpoint is available
-    const ateliers: any[] = [];
+    try {
+        const [ateliers, bookingsData] = await Promise.all([
+            getMyAteliers(session.token),
+            getBookingsPageData(session.token),
+        ]);
 
-    return <MesAteliersClient ateliers={ateliers} />;
+        const serviceBookings = bookingsData.lines.filter(
+            (line) => line.lineType === "SERVICE_BOOKING",
+        );
+
+        return (
+            <MesAteliersClient
+                ateliers={ateliers}
+                serviceBookings={serviceBookings}
+            />
+        );
+    } catch (error) {
+        console.error("MesAteliersPage error", error);
+        return <MesAteliersClient ateliers={[]} serviceBookings={[]} error="Impossible de charger vos ateliers." />;
+    }
 }

@@ -1,45 +1,133 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { UpdateOnboardingDto } from "./dto/update-onboarding.dto";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
 
 @Injectable()
 export class UsersService {
     constructor(private readonly prisma: PrismaService) { }
 
-    async updateOnboardingStep(userId: string, step: number, data: any) {
-        // Determine what to update based on data keys
-        // This is a simplified approach. Ideally we filter data.
+    /**
+     * Persiste les données d'un step wizard ET met à jour onboardingStep.
+     * Les alias établissement (establishmentName → companyName, etc.) sont
+     * résolus ici pour que le Profile soit toujours cohérent.
+     */
+    async updateOnboardingStep(userId: string, dto: UpdateOnboardingDto) {
+        const { step, contactName, establishmentName, establishmentType, isAvailable, ...rest } = dto as any;
 
-        // We update the user's onboardingStep
-        // And potentially other fields in User or related models (Profile?)
-        // For now, let's assume 'data' contains fields that match User model or we handle generic profile data later
+        // ── Résolution des alias wizard ──────────────────────────
+        const profileFields: Record<string, unknown> = { ...rest };
 
-        return this.prisma.user.update({
-            where: { id: userId },
-            data: {
-                onboardingStep: step,
-                // We can add other fields here if we extended User model or have a Profile model
-                // For the MVP, we might just store json or specific fields if they exist
-                // The implementation plan said "Update User model"
-                // Let's assume we might need to store the extra data (jobTitle, bio, etc)
-                // If they are not in schema, we can't save them yet!
+        if (establishmentName) profileFields.companyName = establishmentName;
 
-                // Wait, I updated Schema to add ONLY onboardingStep.
-                // Where do jobTitle, bio, address go?
-                // I need to check Schema again.
-            },
+        // Le type d'établissement (IME, MECS…) va dans jobTitle
+        if (establishmentType) profileFields.jobTitle = establishmentType;
+
+        // contactName "Jean Dupont" → firstName="Jean" lastName="Dupont"
+        if (contactName) {
+            const parts = (contactName as string).trim().split(/\s+/);
+            profileFields.firstName = parts[0] ?? "";
+            profileFields.lastName = parts.slice(1).join(" ") || parts[0] ?? "";
+        }
+
+        // Exclure les champs undefined pour ne pas écraser avec null
+        Object.keys(profileFields).forEach((k) => {
+            if (profileFields[k] === undefined) delete profileFields[k];
+        });
+
+        return this.prisma.$transaction(async (tx) => {
+            const user = await tx.user.update({
+                where: { id: userId },
+                data: {
+                    onboardingStep: step,
+                    ...(typeof isAvailable === "boolean" ? { isAvailable } : {}),
+                },
+            });
+
+            // Upsert Profile — crée le profil s'il n'existe pas encore
+            if (Object.keys(profileFields).length > 0) {
+                await tx.profile.upsert({
+                    where: { userId },
+                    create: {
+                        userId,
+                        firstName: (profileFields.firstName as string) ?? "",
+                        lastName: (profileFields.lastName as string) ?? "",
+                        ...profileFields,
+                    },
+                    update: profileFields,
+                });
+            }
+
+            return user;
         });
     }
 
     async completeOnboarding(userId: string) {
-        // Maybe set status to VERIFIED or similar?
-        // Or just ensure step is 4.
         return this.prisma.user.update({
             where: { id: userId },
-            data: {
-                onboardingStep: 4, // or whatever max step
-            }
+            data: { onboardingStep: 4 },
         });
     }
+    /**
+     * Retourne l'utilisateur courant avec son profil.
+     * Utilisé par GET /users/me.
+     */
+    async getMe(userId: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                email: true,
+                role: true,
+                status: true,
+                onboardingStep: true,
+                isAvailable: true,
+                createdAt: true,
+                profile: true,
+            },
+        });
+        if (!user) throw new NotFoundException("Utilisateur introuvable");
+        return user;
+    }
+
+    /**
+     * Met à jour le profil de l'utilisateur courant.
+     * Utilisé par PATCH /users/me.
+     */
+    async updateMe(userId: string, dto: UpdateProfileDto) {
+        const { isAvailable, ...profileFields } = dto;
+
+        // Exclure les champs undefined
+        const cleanProfile: Record<string, unknown> = {};
+        Object.entries(profileFields).forEach(([k, v]) => {
+            if (v !== undefined) cleanProfile[k] = v;
+        });
+
+        return this.prisma.$transaction(async (tx) => {
+            if (typeof isAvailable === "boolean") {
+                await tx.user.update({
+                    where: { id: userId },
+                    data: { isAvailable },
+                });
+            }
+
+            if (Object.keys(cleanProfile).length > 0) {
+                await tx.profile.upsert({
+                    where: { userId },
+                    create: {
+                        userId,
+                        firstName: (cleanProfile.firstName as string) ?? "",
+                        lastName: (cleanProfile.lastName as string) ?? "",
+                        ...cleanProfile,
+                    },
+                    update: cleanProfile,
+                });
+            }
+
+            return this.getMe(userId);
+        });
+    }
+
     async findAllFreelances() {
         return this.prisma.user.findMany({
             where: {

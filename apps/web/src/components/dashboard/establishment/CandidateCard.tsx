@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
-import { Check, Loader2, User, Euro, FileText } from "lucide-react";
+import { Check, Loader2, User, Euro, FileText, X, ExternalLink, MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { acceptCandidate } from "@/app/actions/missions";
+import { acceptCandidate, declineCandidate } from "@/app/actions/missions";
 
 interface CandidateCardProps {
   bookingId: string;
@@ -33,7 +35,9 @@ export function CandidateCard({
   motivation,
   proposedRate,
 }: CandidateCardProps) {
+  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
+  const [isDeclining, setIsDeclining] = useState(false);
 
   const firstName = freelance?.profile?.firstName;
   const lastName = freelance?.profile?.lastName;
@@ -57,9 +61,25 @@ export function CandidateCard({
       toast.success("Candidat accepté !", {
         description: "La mission a été assignée. Les autres candidatures sont automatiquement rejetées.",
       });
+      router.refresh();
     } else {
       toast.error("Erreur", {
         description: result.error || "Impossible d'accepter ce candidat.",
+      });
+    }
+  };
+
+  const handleDecline = async () => {
+    setIsDeclining(true);
+    const result = await declineCandidate(bookingId);
+    setIsDeclining(false);
+
+    if (result.ok) {
+      toast.info("Candidature refusée.");
+      router.refresh();
+    } else {
+      toast.error("Erreur", {
+        description: result.error || "Impossible de refuser ce candidat.",
       });
     }
   };
@@ -84,9 +104,25 @@ export function CandidateCard({
             <p className="text-xs text-muted-foreground truncate">{freelance.profile.jobTitle}</p>
           )}
         </div>
-        {isConfirmed && (
-          <Badge className="bg-green-600 text-white text-xs shrink-0">Accepté</Badge>
-        )}
+        <div className="flex items-center gap-1 shrink-0">
+          {isConfirmed && (
+            <Badge className="bg-green-600 text-white text-xs">Accepté</Badge>
+          )}
+          <Link
+            href={`/freelances/${freelance.id}`}
+            className="text-muted-foreground hover:text-foreground p-1 rounded"
+            title="Voir le profil"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+          </Link>
+          <Link
+            href={`/dashboard/inbox?counterpartId=${freelance.id}&counterpartName=${encodeURIComponent(name)}`}
+            className="text-muted-foreground hover:text-foreground p-1 rounded"
+            title="Ouvrir la messagerie"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       </CardHeader>
 
       <CardContent className="px-4 pb-0 space-y-2 flex-grow">
@@ -113,24 +149,47 @@ export function CandidateCard({
         )}
       </CardContent>
 
-      <CardFooter className="p-4 mt-3 border-t bg-muted/10">
-        <Button
-          size="sm"
-          className={`w-full gap-2 ${
-            isConfirmed
-              ? "bg-green-600 hover:bg-green-700 text-white cursor-default"
-              : "bg-green-600 hover:bg-green-700 text-white"
-          }`}
-          onClick={isConfirmed ? undefined : handleAccept}
-          disabled={isPending || !isPending_}
-        >
-          {isPending ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
+      <CardFooter className="p-4 mt-3 border-t bg-muted/10 gap-2">
+        {isConfirmed ? (
+          <Button
+            size="sm"
+            className="w-full bg-green-600 hover:bg-green-700 text-white cursor-default"
+            disabled
+          >
             <Check className="h-3.5 w-3.5" />
-          )}
-          {isConfirmed ? "Candidature acceptée" : "Accepter ce candidat"}
-        </Button>
+            Candidature acceptée
+          </Button>
+        ) : (
+          <>
+            <Button
+              size="sm"
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-1"
+              onClick={handleAccept}
+              disabled={isPending || isDeclining || !isPending_}
+            >
+              {isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Check className="h-3.5 w-3.5" />
+              )}
+              Accepter
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 gap-1 border-destructive/40 text-destructive hover:bg-destructive/10"
+              onClick={handleDecline}
+              disabled={isPending || isDeclining || !isPending_}
+            >
+              {isDeclining ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <X className="h-3.5 w-3.5" />
+              )}
+              Décliner
+            </Button>
+          </>
+        )}
       </CardFooter>
     </Card>
   );

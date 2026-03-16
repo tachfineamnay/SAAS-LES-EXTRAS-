@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { apiRequest } from "@/lib/api";
 import { getSession } from "@/lib/session";
+import { atelierInvalidationPaths } from "@/lib/atelier-query-keys";
 import type { ServiceSlot } from "@/lib/atelier-config";
 
 export type MissionStatus = "OPEN" | "ASSIGNED" | "COMPLETED" | "CANCELLED";
@@ -227,6 +228,31 @@ export async function getMarketplaceCatalogue(token?: string) {
   return { services, freelances };
 }
 
+export type MesAtelierItem = SerializedService & {
+  status: "ACTIVE";
+};
+
+export async function getMyAteliers(token?: string): Promise<MesAtelierItem[]> {
+  const session = await getSession();
+  const activeToken = token || session?.token;
+  if (!activeToken || !session) return [];
+
+  try {
+    const services = await apiRequest<SerializedService[]>("/services", {
+      method: "GET",
+      token: activeToken,
+    });
+
+    return services
+      .filter((service) => service.owner?.id === session.user.id)
+      .map((service) => ({ ...service, status: "ACTIVE" as const }))
+      .sort((a, b) => a.title.localeCompare(b.title, "fr"));
+  } catch (error) {
+    console.error("getMyAteliers error", error);
+    return [];
+  }
+}
+
 export async function getMarketplaceData(token?: string): Promise<MarketplaceData> {
   return { missions: [], services: [], isDegraded: false };
 }
@@ -282,6 +308,7 @@ export async function createMissionFromRenfort(input: CreateMissionInput): Promi
   try {
     revalidatePath("/marketplace");
     revalidatePath("/bookings");
+    revalidatePath("/dashboard");
     revalidatePath("/dashboard/renforts");
   } catch {
     // Revalidation errors should not fail the action
@@ -299,8 +326,10 @@ export async function createServiceFromPublish(input: CreateServiceInput): Promi
     body: input,
   });
 
-  revalidatePath("/marketplace");
-  revalidatePath("/bookings");
+  revalidatePath(atelierInvalidationPaths.catalogue);
+  revalidatePath(atelierInvalidationPaths.bookings);
+  revalidatePath(atelierInvalidationPaths.dashboard);
+  revalidatePath(atelierInvalidationPaths.mesAteliers);
   return { ok: true };
 }
 
@@ -342,10 +371,15 @@ export async function bookService(
       },
     });
 
-    revalidatePath("/marketplace");
-    revalidatePath("/bookings");
+    revalidatePath(atelierInvalidationPaths.catalogue);
+    revalidatePath(atelierInvalidationPaths.bookings);
+    revalidatePath(atelierInvalidationPaths.dashboard);
+    revalidatePath(atelierInvalidationPaths.mesAteliers);
     return { ok: true };
   } catch (error) {
+    if (error instanceof Error && error.message.toLowerCase().includes("déjà")) {
+      return { error: "Vous avez déjà une demande en cours pour cet atelier." };
+    }
     return {
       error: error instanceof Error ? error.message : "Erreur lors de la réservation",
     };

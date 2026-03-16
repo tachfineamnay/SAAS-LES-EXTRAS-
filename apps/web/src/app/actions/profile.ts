@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { apiRequest } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 
 const profileSchema = z.object({
@@ -28,8 +28,6 @@ export async function updateFreelanceProfile(data: ProfileFormValues) {
         return { error: "Non connecté" };
     }
 
-    const { user } = session;
-
     const validatedFields = profileSchema.safeParse(data);
 
     if (!validatedFields.success) {
@@ -37,24 +35,10 @@ export async function updateFreelanceProfile(data: ProfileFormValues) {
     }
 
     try {
-        // Upsert profile: create if not exists (though onboarding usually creates it)
-        await prisma.profile.upsert({
-            where: { userId: user.id },
-            update: {
-                firstName: data.firstName,
-                lastName: data.lastName,
-                jobTitle: data.jobTitle,
-                bio: data.bio,
-                skills: data.skills || [],
-                phone: data.phone,
-                address: data.address,
-                city: data.city,
-                zipCode: data.zipCode,
-                siret: data.siret,
-                tvaNumber: data.tvaNumber,
-            },
-            create: {
-                userId: user.id,
+        await apiRequest("/users/me", {
+            method: "PATCH",
+            token: session.token,
+            body: {
                 firstName: data.firstName,
                 lastName: data.lastName,
                 jobTitle: data.jobTitle,
@@ -70,7 +54,7 @@ export async function updateFreelanceProfile(data: ProfileFormValues) {
         });
 
         revalidatePath("/account");
-        revalidatePath("/dashboard"); // In case name/avatar is shown there
+        revalidatePath("/dashboard");
 
         return { success: true };
     } catch (error) {

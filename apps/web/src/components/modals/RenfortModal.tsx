@@ -5,6 +5,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Trash2, Sun, Moon, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { createMissionFromRenfort } from "@/app/actions/marketplace";
@@ -108,6 +109,7 @@ const slideVariants = {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function RenfortModal() {
+  const router = useRouter();
   const isOpen = useUIStore((state) => state.isRenfortModalOpen);
   const openRenfortModal = useUIStore((state) => state.openRenfortModal);
   const closeRenfortModal = useUIStore((state) => state.closeRenfortModal);
@@ -196,11 +198,12 @@ export function RenfortModal() {
         accessInstructions: data.accessInstructions || undefined,
       });
 
-      toast.success("SOS Renfort diffusé !", {
+      toast.success("Renfort publié !", {
         description: `${getMetierLabel(data.metier)} · ${data.slots.length} créneau(x)`,
       });
 
-      setTimeout(() => handleClose(), 2500);
+      handleClose();
+      router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Impossible de créer la demande.");
     }

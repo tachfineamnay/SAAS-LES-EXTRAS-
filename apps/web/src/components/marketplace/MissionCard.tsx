@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -80,11 +81,16 @@ export function MissionCard({ mission, onApply }: MissionCardProps) {
           </span>
         </div>
 
-        {/* Métier */}
-        <h3 className="font-bold text-base leading-tight line-clamp-2 flex items-center gap-2">
-          {MetierIcon && <MetierIcon className="h-4 w-4 shrink-0 text-primary" />}
-          {metier ? metier.label : mission.title}
-        </h3>
+        {/* Métier — link to detail page */}
+        <Link
+          href={`/marketplace/missions/${mission.id}`}
+          className="group"
+        >
+          <h3 className="font-bold text-base leading-tight line-clamp-2 flex items-center gap-2 group-hover:underline">
+            {MetierIcon && <MetierIcon className="h-4 w-4 shrink-0 text-primary" />}
+            {metier ? metier.label : mission.title}
+          </h3>
+        </Link>
 
         {/* Établissement */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

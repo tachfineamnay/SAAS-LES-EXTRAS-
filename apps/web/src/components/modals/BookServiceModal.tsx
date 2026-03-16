@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from "react";
 import { toast } from "sonner";
 import { CalendarDays, Users, MessageSquare, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { bookService } from "@/app/actions/marketplace";
 import { getService, type SerializedService } from "@/app/actions/marketplace";
 import { Button } from "@/components/ui/button";
@@ -25,10 +26,12 @@ export function BookServiceModal() {
   const isOpen = useUIStore((s) => s.isBookServiceModalOpen);
   const serviceId = useUIStore((s) => s.bookServiceModalId);
   const close = useUIStore((s) => s.closeBookServiceModal);
+  const router = useRouter();
 
   const [service, setService] = useState<SerializedService | null>(null);
   const [step, setStep] = useState<Step>(0);
   const [selectedSlot, setSelectedSlot] = useState<ServiceSlot | null>(null);
+  const [manualDate, setManualDate] = useState("");
   const [nbParticipants, setNbParticipants] = useState(1);
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -45,33 +48,52 @@ export function BookServiceModal() {
       setService(null);
       setStep(0);
       setSelectedSlot(null);
+      setManualDate("");
       setNbParticipants(1);
       setMessage("");
     }, 300);
   };
 
   const goNext = () => {
-    if (step === 0 && !selectedSlot) {
-      toast.error("Sélectionnez un créneau");
+    if (step === 0 && !selectedSlot && !manualDate) {
+      toast.error("Sélectionnez un créneau ou renseignez une date.");
       return;
     }
     setStep((s) => (Math.min(s + 1, 2) as Step));
   };
 
   const onSubmit = () => {
-    if (!serviceId || !selectedSlot) return;
+    if (!serviceId) return;
+
+    const computedDate = selectedSlot
+      ? new Date(`${selectedSlot.date}T${selectedSlot.heureDebut}`)
+      : manualDate
+        ? new Date(`${manualDate}T09:00`)
+        : null;
+
+    if (!computedDate || Number.isNaN(computedDate.getTime())) {
+      toast.error("Date invalide.");
+      return;
+    }
+
     startTransition(async () => {
       const result = await bookService(
         serviceId,
-        new Date(`${selectedSlot.date}T${selectedSlot.heureDebut}`),
+        computedDate,
         message || undefined,
         nbParticipants,
       );
       if ("error" in result) {
-        toast.error(result.error);
+        if (result.error.toLowerCase().includes("déjà")) {
+          toast.info(result.error);
+          handleClose();
+        } else {
+          toast.error(result.error);
+        }
       } else {
         toast.success("Demande envoyée au freelance !");
         handleClose();
+        router.refresh();
       }
     });
   };
@@ -115,7 +137,16 @@ export function BookServiceModal() {
                 Choisissez un créneau disponible
               </Label>
               {slots.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun créneau renseigné par le freelance.</p>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Aucun créneau renseigné par le freelance. Proposez une date.</p>
+                  <Input
+                    id="book-manual-date"
+                    type="date"
+                    min={new Date().toISOString().split("T")[0]}
+                    value={manualDate}
+                    onChange={(e) => setManualDate(e.target.value)}
+                  />
+                </div>
               ) : (
                 <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1">
                   {slots.map((slot, i) => {
@@ -185,7 +216,7 @@ export function BookServiceModal() {
           )}
 
           {/* Step 2: recap */}
-          {step === 2 && selectedSlot && (
+          {step === 2 && (selectedSlot || manualDate) && (
             <div className="rounded-xl bg-gray-50 border p-4 space-y-3 text-sm">
               <p className="font-semibold text-gray-700">Récapitulatif de votre demande</p>
               <div className="space-y-1.5 text-gray-600">
@@ -196,8 +227,18 @@ export function BookServiceModal() {
                 <div className="flex justify-between">
                   <span className="text-gray-400">Date</span>
                   <span>
-                    {new Date(selectedSlot.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
-                    {" "}{selectedSlot.heureDebut} – {selectedSlot.heureFin}
+                    {selectedSlot ? (
+                      <>
+                        {new Date(selectedSlot.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
+                        {" "}{selectedSlot.heureDebut} – {selectedSlot.heureFin}
+                      </>
+                    ) : (
+                      new Date(`${manualDate}T09:00`).toLocaleDateString("fr-FR", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    )}
                   </span>
                 </div>
                 <div className="flex justify-between">

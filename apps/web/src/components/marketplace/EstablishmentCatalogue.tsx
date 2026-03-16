@@ -13,9 +13,10 @@ import { Button } from "@/components/ui/button";
 interface EstablishmentCatalogueProps {
   services: SerializedService[];
   freelances: SerializedFreelance[];
+  catalogueError?: string | null;
 }
 
-export function EstablishmentCatalogue({ services, freelances }: EstablishmentCatalogueProps) {
+export function EstablishmentCatalogue({ services, freelances, catalogueError }: EstablishmentCatalogueProps) {
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterPricing, setFilterPricing] = useState<string | null>(null);
 
@@ -39,6 +40,12 @@ export function EstablishmentCatalogue({ services, freelances }: EstablishmentCa
 
   return (
     <div className="space-y-6">
+      {catalogueError && (
+        <div className="rounded-lg border border-[hsl(var(--color-coral-300))] bg-[hsl(var(--color-coral-50))] px-4 py-3 text-sm text-[hsl(var(--color-coral-700))]">
+          {catalogueError}
+        </div>
+      )}
+
       <header className="space-y-1">
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Marketplace</p>
         <h1 className="font-display text-heading-xl tracking-tight">Catalogue & Annuaire</h1>

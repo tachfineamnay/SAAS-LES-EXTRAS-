@@ -71,6 +71,6 @@ export async function register(prevState: RegisterState, formData: FormData): Pr
         };
     }
 
-    // Redirect to dashboard now that we have a session
-    redirect("/dashboard");
+    // Redirect to wizard for onboarding (step will be 0 after fresh register)
+    redirect("/wizard");
 }
