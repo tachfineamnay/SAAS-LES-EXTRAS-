@@ -17,6 +17,8 @@ export type OnboardingData = {
     establishmentType?: string; // MECS, EHPAD...
     phone?: string;
     contactName?: string;
+    city?: string;
+    zipCode?: string;
 }
 
 export async function saveOnboardingStep(step: number, data: OnboardingData) {
