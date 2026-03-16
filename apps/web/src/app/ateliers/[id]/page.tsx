@@ -269,6 +269,8 @@ export default async function FicheAtelierPage({
         <ServiceDetailActions
           serviceId={service.id}
           pricingType={service.pricingType}
+          viewerRole={session.user.role ?? null}
+          isOwner={session.user.id === owner?.id}
         />
       </div>
     </div>
