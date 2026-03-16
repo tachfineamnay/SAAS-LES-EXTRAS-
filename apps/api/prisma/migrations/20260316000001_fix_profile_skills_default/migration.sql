@@ -1,11 +1,15 @@
--- Fix Profile.skills column: ensure it has an empty-array default
--- and convert any existing NULL values to empty arrays.
+-- Fix Profile.skills column: ensure it has an empty-array default.
+-- Uses DO $$ block so it is safe to re-run and skips if column does not exist.
 
--- Set the default so future Prisma upserts/creates work without providing skills
-ALTER TABLE "Profile" ALTER COLUMN "skills" SET DEFAULT ARRAY[]::TEXT[];
-
--- Convert any existing NULL rows (shouldn't exist, but just in case)
-UPDATE "Profile" SET "skills" = ARRAY[]::TEXT[] WHERE "skills" IS NULL;
-
--- Make the column NOT NULL now that NULLs are gone and default is set
-ALTER TABLE "Profile" ALTER COLUMN "skills" SET NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'Profile'
+      AND column_name = 'skills'
+  ) THEN
+    ALTER TABLE "Profile" ALTER COLUMN "skills" SET DEFAULT ARRAY[]::TEXT[];
+    UPDATE "Profile" SET "skills" = ARRAY[]::TEXT[] WHERE "skills" IS NULL;
+  END IF;
+END $$;
