@@ -6,7 +6,11 @@ const nextConfig = {
   output: "standalone",
 };
 
-export default withSentryConfig(nextConfig, {
-  silent: true,
-  disableLogger: true,
-});
+const hasSentryDsn = !!process.env.NEXT_PUBLIC_SENTRY_DSN;
+
+export default hasSentryDsn
+  ? withSentryConfig(nextConfig, {
+      silent: true,
+      disableLogger: true,
+    })
+  : nextConfig;

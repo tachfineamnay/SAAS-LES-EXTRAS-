@@ -15,6 +15,11 @@ WORKDIR /app
 COPY . .
 RUN mkdir -p apps/web/public
 RUN npx prisma generate --schema=./apps/api/prisma/schema.prisma
+# Accept build-time public env vars so Next.js bakes them into the client bundle
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_SENTRY_DSN
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 RUN pnpm --filter @lesextras/web build
 
 FROM node:20-alpine AS runner
