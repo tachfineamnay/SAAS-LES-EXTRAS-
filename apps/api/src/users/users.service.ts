@@ -70,6 +70,7 @@ export class UsersService {
             }
             throw err;
         }
+    }
 
     async completeOnboarding(userId: string) {
         return this.prisma.user.update({
@@ -137,6 +138,13 @@ export class UsersService {
 
             return this.getMe(userId);
         });
+        } catch (err) {
+            if (err instanceof Prisma.PrismaClientKnownRequestError) {
+                if (err.code === "P2025") throw new NotFoundException("Utilisateur introuvable");
+                if (err.code === "P2002") throw new BadRequestException("Donnees en conflit");
+            }
+            throw err;
+        }
     }
 
     async findAllFreelances() {
