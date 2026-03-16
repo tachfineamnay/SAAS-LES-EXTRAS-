@@ -53,7 +53,7 @@ export default async function EstablishmentPage() {
   const stats = {
     totalMissions,
     activeBookings,
-    availableCredits: profile?.availableCredits || 0,
+    availableCredits: 0,
   };
 
   return (

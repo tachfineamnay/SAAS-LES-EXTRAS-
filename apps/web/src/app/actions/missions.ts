@@ -90,3 +90,16 @@ export async function getEstablishmentMissions() {
         return [];
     }
 }
+
+export async function getAvailableMissions(token: string): Promise<any[]> {
+    try {
+        const missions = await apiRequest("/missions", {
+            method: "GET",
+            token,
+        });
+        return Array.isArray(missions) ? missions : [];
+    } catch (error) {
+        console.error("getAvailableMissions error", error);
+        return [];
+    }
+}
