@@ -27,7 +27,7 @@ export class UsersService {
         if (contactName) {
             const parts = (contactName as string).trim().split(/\s+/);
             profileFields.firstName = parts[0] ?? "";
-            profileFields.lastName = parts.slice(1).join(" ") || parts[0] ?? "";
+            profileFields.lastName = (parts.slice(1).join(" ") || parts[0]) ?? "";
         }
 
         // Exclure les champs undefined pour ne pas écraser avec null
