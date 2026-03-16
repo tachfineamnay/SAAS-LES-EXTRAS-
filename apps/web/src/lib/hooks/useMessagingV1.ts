@@ -109,9 +109,11 @@ export function useMessagingV1({
       setConversations(nextConversations);
 
       if (!activeConversationId && nextConversations.length > 0) {
-        const firstId = nextConversations[0].id;
-        setActiveConversationId(firstId);
-        setThreadMessages(markConversationRead(firstId, currentUserId));
+        const first = nextConversations[0];
+        if (first) {
+          setActiveConversationId(first.id);
+          setThreadMessages(markConversationRead(first.id, currentUserId));
+        }
       }
       setError(null);
     } catch {
