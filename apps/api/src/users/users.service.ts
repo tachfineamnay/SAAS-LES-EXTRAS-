@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { UpdateOnboardingDto } from "./dto/update-onboarding.dto";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
@@ -35,7 +36,8 @@ export class UsersService {
             if (profileFields[k] === undefined) delete profileFields[k];
         });
 
-        return this.prisma.$transaction(async (tx) => {
+        try {
+            return await this.prisma.$transaction(async (tx) => {
             const user = await tx.user.update({
                 where: { id: userId },
                 data: {
@@ -49,18 +51,25 @@ export class UsersService {
                 await tx.profile.upsert({
                     where: { userId },
                     create: {
-                        userId,
-                        firstName: (profileFields.firstName as string) ?? "",
-                        lastName: (profileFields.lastName as string) ?? "",
-                        ...profileFields,
-                    },
-                    update: profileFields,
+                            userId,
+                            firstName: (profileFields.firstName as string) ?? "",
+                            lastName: (profileFields.lastName as string) ?? "",
+                            skills: (profileFields.skills as string[] | undefined) ?? [],
+                            ...profileFields,
+                        },
+                        update: profileFields,
                 });
             }
 
             return user;
         });
-    }
+        } catch (err) {
+            if (err instanceof Prisma.PrismaClientKnownRequestError) {
+                if (err.code === "P2025") throw new NotFoundException("Utilisateur introuvable");
+                if (err.code === "P2002") throw new BadRequestException("Donnees en conflit");
+            }
+            throw err;
+        }
 
     async completeOnboarding(userId: string) {
         return this.prisma.user.update({
@@ -103,7 +112,8 @@ export class UsersService {
             if (v !== undefined) cleanProfile[k] = v;
         });
 
-        return this.prisma.$transaction(async (tx) => {
+        try {
+            return await this.prisma.$transaction(async (tx) => {
             if (typeof isAvailable === "boolean") {
                 await tx.user.update({
                     where: { id: userId },
@@ -118,6 +128,7 @@ export class UsersService {
                         userId,
                         firstName: (cleanProfile.firstName as string) ?? "",
                         lastName: (cleanProfile.lastName as string) ?? "",
+                        skills: (cleanProfile.skills as string[] | undefined) ?? [],
                         ...cleanProfile,
                     },
                     update: cleanProfile,
@@ -170,3 +181,5 @@ export class UsersService {
         return user;
     }
 }
+
+

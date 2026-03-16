@@ -15,6 +15,10 @@ export function OnboardingGuard({ children, userRole, onboardingStep }: Onboardi
     const [mounted, setMounted] = useState(false);
     const { setUserRole, setOnboardingStep } = useUIStore();
 
+    // ESTABLISHMENT flow has 3 steps, FREELANCE flow has 4 steps
+    const maxSteps = userRole === "FREELANCE" ? 4 : 3;
+    const isComplete = onboardingStep >= maxSteps;
+
     useEffect(() => {
         setMounted(true);
         if (userRole === "ESTABLISHMENT" || userRole === "FREELANCE") {
@@ -23,16 +27,17 @@ export function OnboardingGuard({ children, userRole, onboardingStep }: Onboardi
         setOnboardingStep(onboardingStep);
     }, [userRole, onboardingStep, setUserRole, setOnboardingStep]);
 
+    useEffect(() => {
+        if (mounted && !isComplete) {
+            router.push("/wizard");
+        }
+    }, [mounted, isComplete, router]);
+
     if (!mounted) {
         return <div className="min-h-screen bg-background" />;
     }
 
-    // ESTABLISHMENT flow has 3 steps, FREELANCE flow has 4 steps
-    const maxSteps = userRole === "FREELANCE" ? 4 : 3;
-    const isComplete = onboardingStep >= maxSteps;
-
     if (!isComplete) {
-        router.push("/wizard");
         return null;
     }
 

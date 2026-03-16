@@ -68,11 +68,8 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
                     if (!bio) throw new Error("Veuillez écrire une courte bio.");
                     data = { bio, skills };
                 } else if (step === 3) {
-                    // Diplôme optionnel — on skip si absent
-                    if (diplomaFile) {
-                        data = { diplomaUrl: "https://mock.url/diploma.pdf" };
-                    }
-                    // Si pas de fichier, on passe au step suivant sans rien envoyer au backend
+                    // Diploma upload requires a dedicated endpoint — just advance the step
+                    data = {};
                 } else if (step === 4) {
                     if (!address) throw new Error("Veuillez renseigner votre adresse.");
                     data = { address };
@@ -248,3 +245,4 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
         </StepLayout>
     );
 }
+

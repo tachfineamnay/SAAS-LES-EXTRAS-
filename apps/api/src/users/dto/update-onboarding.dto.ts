@@ -1,4 +1,4 @@
-import { IsArray, IsNumber, IsOptional, IsString, Min, Max } from "class-validator";
+import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, Min, Max } from "class-validator";
 
 /**
  * Payload envoyé à chaque step du wizard d'onboarding.
@@ -72,9 +72,18 @@ export class UpdateOnboardingDto {
      */
     @IsOptional()
     @IsString()
-    establishmentType?: string;
-
-    @IsOptional()
+    establishmentType?: string;    @IsOptional()
     @IsString()
     siret?: string;
+
+    // ── Disponibilite ──────────────────────────────────────────────
+    @IsOptional()
+    @IsBoolean()
+    isAvailable?: boolean;
+
+    // ── Documents (reference URL apres upload) ──────────────────────
+    @IsOptional()
+    @IsString()
+    diplomaUrl?: string;
 }
+
