@@ -44,8 +44,9 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
 
     const { email, password } = validatedFields.data;
 
+    let response: AuthResponse;
     try {
-        const response = await apiRequest<AuthResponse>("/auth/login", {
+        response = await apiRequest<AuthResponse>("/auth/login", {
             method: "POST",
             body: { email, password },
         });
