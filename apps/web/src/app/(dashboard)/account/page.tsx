@@ -32,7 +32,7 @@ export default async function AccountPage() {
     siret: profile?.siret || "",
     tvaNumber: profile?.tvaNumber || "",
     skills: profile?.skills || [],
-    availableCredits: profile?.availableCredits || 0,
+    availableCredits: 0,
     createdAt: profile?.createdAt?.toISOString() || new Date().toISOString(),
   };
 
