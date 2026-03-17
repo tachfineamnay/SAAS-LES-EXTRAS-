@@ -118,4 +118,32 @@ describe("AppShell", () => {
       expect(mockCloseRenfortModal).toHaveBeenCalledTimes(1);
     });
   });
+
+  it("FAB affiche le label générique quand userRole est null", () => {
+    store.userRole = null;
+    render(<AppShell><div>content</div></AppShell>);
+    expect(screen.getByRole("button", { name: /action rapide/i })).toBeInTheDocument();
+  });
+
+  it("FAB ne déclenche aucune action quand userRole est null", async () => {
+    const user = userEvent.setup();
+    store.userRole = null;
+    render(<AppShell><div>content</div></AppShell>);
+
+    await user.click(screen.getByRole("button", { name: /action rapide/i }));
+    expect(mockRouterPush).not.toHaveBeenCalled();
+    expect(mockOpenRenfortModal).not.toHaveBeenCalled();
+  });
+
+  it("label FAB est 'Chercher des missions' pour un FREELANCE", () => {
+    store.userRole = "FREELANCE";
+    render(<AppShell><div /></AppShell>);
+    expect(screen.getByRole("button", { name: /chercher des missions/i })).toBeInTheDocument();
+  });
+
+  it("label FAB est 'Publier un renfort' pour un ESTABLISHMENT", () => {
+    store.userRole = "ESTABLISHMENT";
+    render(<AppShell><div /></AppShell>);
+    expect(screen.getByRole("button", { name: /publier un renfort/i })).toBeInTheDocument();
+  });
 });

@@ -51,9 +51,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           { id: "bookings", label: "Agenda", icon: CalendarDays, active: isActive("/bookings"), onClick: () => router.push("/bookings") },
           { id: "account", label: "Profil", icon: UserRound, active: isActive("/account"), onClick: () => router.push("/account") },
         ]
-      : [
+      : userRole === "ESTABLISHMENT"
+      ? [
           { id: "dashboard", label: "Accueil", icon: LayoutDashboard, active: isActive("/dashboard"), onClick: () => router.push("/dashboard") },
           { id: "marketplace", label: "Catalogue", icon: ShoppingBag, active: isActive("/marketplace"), onClick: () => router.push("/marketplace") },
+          { id: "fab", label: "", icon: LayoutDashboard }, // placeholder for FAB slot
+          { id: "inbox", label: "Messages", icon: Mail, active: isActive("/dashboard/inbox"), onClick: () => router.push("/dashboard/inbox") },
+          { id: "account", label: "Profil", icon: UserRound, active: isActive("/account"), onClick: () => router.push("/account") },
+        ]
+      : [
+          // Rôle null — rôle pas encore hydraté : structure stable 5 éléments
+          // (OnboardingGuard cache AppShell jusqu'à hydratation, ce cas est défensif)
+          { id: "dashboard", label: "Accueil", icon: LayoutDashboard, active: isActive("/dashboard"), onClick: () => router.push("/dashboard") },
+          { id: "marketplace", label: "Explorer", icon: ShoppingBag, active: isActive("/marketplace"), onClick: () => router.push("/marketplace") },
           { id: "fab", label: "", icon: LayoutDashboard }, // placeholder for FAB slot
           { id: "inbox", label: "Messages", icon: Mail, active: isActive("/dashboard/inbox"), onClick: () => router.push("/dashboard/inbox") },
           { id: "account", label: "Profil", icon: UserRound, active: isActive("/account"), onClick: () => router.push("/account") },
@@ -86,8 +96,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MobileBottomNav
         items={bottomNavItems}
         useFab
-        onFabClick={userRole === "FREELANCE" ? () => router.push("/marketplace") : openRenfortModal}
-        fabLabel={userRole === "FREELANCE" ? "Chercher des missions" : "Publier un renfort"}
+        onFabClick={
+          // null  → inerte (rôle pas encore hydraté)
+          // FREELANCE → navigation marketplace
+          // ESTABLISHMENT → ouvre RenfortModal
+          userRole === null
+            ? undefined
+            : userRole === "FREELANCE"
+            ? () => router.push("/marketplace")
+            : openRenfortModal
+        }
+        fabLabel={
+          userRole === null
+            ? "Action rapide"
+            : userRole === "FREELANCE"
+            ? "Chercher des missions"
+            : "Publier un renfort"
+        }
       />
       <Toaster
         richColors

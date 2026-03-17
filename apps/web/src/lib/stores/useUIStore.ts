@@ -57,7 +57,8 @@ export const useUIStore = create<UIState>((set) => ({
   isApplyModalOpen: false,
   applyMissionId: null,
   isMobileOpen: false,
-  userRole: "ESTABLISHMENT",
+  // null = rôle pas encore hydraté (avant que OnboardingGuard appelle setUserRole)
+  userRole: null,
   onboardingStep: 0,
   renfortStep: 0,
   renfortStepDir: 1,
