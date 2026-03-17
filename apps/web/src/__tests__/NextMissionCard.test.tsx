@@ -6,7 +6,7 @@ describe("NextMissionCard", () => {
   it("pointe vers le lien de détail canonique fourni", () => {
     render(
       <NextMissionCard
-        detailsHref="/bookings?lineType=MISSION&lineId=line-42"
+        detailsHref="/bookings/MISSION/line-42"
         title="Mission infirmier"
         establishment="EHPAD Test"
         city="Paris"
@@ -18,7 +18,7 @@ describe("NextMissionCard", () => {
 
     expect(screen.getByRole("link", { name: /voir les détails/i })).toHaveAttribute(
       "href",
-      "/bookings?lineType=MISSION&lineId=line-42",
+      "/bookings/MISSION/line-42",
     );
   });
 });

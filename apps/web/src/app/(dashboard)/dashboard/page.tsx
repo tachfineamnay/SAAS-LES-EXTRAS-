@@ -278,7 +278,7 @@ export default async function DashboardPage() {
     const nextMission = confirmedBookings[0] as any | undefined;
     const nextMissionDetailsHref =
         nextMission?.lineType && nextMission?.lineId
-            ? `/bookings?lineType=${nextMission.lineType}&lineId=${nextMission.lineId}`
+            ? `/bookings/${nextMission.lineType}/${nextMission.lineId}`
             : "/bookings";
 
     // E.6.3 — Matching missions: fetch real open missions from API

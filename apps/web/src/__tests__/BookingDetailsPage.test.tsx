@@ -1,0 +1,108 @@
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+
+const mockNotFound = vi.fn(() => {
+  throw new Error("NEXT_NOT_FOUND");
+});
+const mockRedirect = vi.fn((path: string) => {
+  throw new Error(`NEXT_REDIRECT:${path}`);
+});
+
+vi.mock("next/navigation", () => ({
+  notFound: () => mockNotFound(),
+  redirect: (path: string) => mockRedirect(path),
+}));
+
+vi.mock("@/lib/session", () => ({
+  getSession: () => mockGetSession(),
+}));
+
+vi.mock("@/app/actions/bookings", () => ({
+  getBookingsPageData: (...args: unknown[]) => mockGetBookingsPageData(...args),
+  getBookingLineDetails: (...args: unknown[]) => mockGetBookingLineDetails(...args),
+}));
+
+const mockGetSession = vi.fn();
+const mockGetBookingsPageData = vi.fn();
+const mockGetBookingLineDetails = vi.fn();
+
+const { default: BookingDetailsPage } = await import(
+  "@/app/(dashboard)/bookings/[lineType]/[lineId]/page"
+);
+
+const mockLine = {
+  lineId: "line-1",
+  lineType: "MISSION" as const,
+  date: "2026-03-20T09:00:00.000Z",
+  typeLabel: "Mission SOS" as const,
+  interlocutor: "EHPAD Les Pins",
+  status: "CONFIRMED" as const,
+  address: "5 av. de la paix",
+  contactEmail: "contact@ehpad.fr",
+};
+
+describe("BookingDetailsPage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ token: "tok", user: { id: "u1" } });
+    mockGetBookingsPageData.mockResolvedValue({
+      lines: [mockLine],
+      nextStep: null,
+    });
+    mockGetBookingLineDetails.mockResolvedValue({
+      address: "5 av. de la paix",
+      contactEmail: "contact@ehpad.fr",
+    });
+  });
+
+  it("affiche les informations de la réservation", async () => {
+    render(await BookingDetailsPage({ params: { lineType: "MISSION", lineId: "line-1" } }));
+
+    expect(screen.getByText("EHPAD Les Pins")).toBeInTheDocument();
+    expect(screen.getByText("5 av. de la paix")).toBeInTheDocument();
+    expect(screen.getByText("contact@ehpad.fr")).toBeInTheDocument();
+  });
+
+  it("appelle getBookingLineDetails avec les bons paramètres", async () => {
+    await BookingDetailsPage({ params: { lineType: "MISSION", lineId: "line-1" } });
+
+    expect(mockGetBookingLineDetails).toHaveBeenCalledWith({
+      lineType: "MISSION",
+      lineId: "line-1",
+    });
+  });
+
+  it("contient un lien retour vers /bookings", async () => {
+    render(await BookingDetailsPage({ params: { lineType: "MISSION", lineId: "line-1" } }));
+
+    const backLink = screen
+      .getAllByRole("link")
+      .find((l) => l.getAttribute("href") === "/bookings");
+    expect(backLink).toBeDefined();
+  });
+
+  it("appelle notFound pour un lineType invalide", async () => {
+    await expect(
+      BookingDetailsPage({ params: { lineType: "INVALID", lineId: "x" } }),
+    ).rejects.toThrow();
+    expect(mockNotFound).toHaveBeenCalledTimes(1);
+  });
+
+  it("appelle notFound si la ligne n'appartient pas à l'utilisateur", async () => {
+    mockGetBookingsPageData.mockResolvedValue({ lines: [], nextStep: null });
+
+    await expect(
+      BookingDetailsPage({ params: { lineType: "MISSION", lineId: "ghost" } }),
+    ).rejects.toThrow();
+    expect(mockNotFound).toHaveBeenCalledTimes(1);
+  });
+
+  it("redirige vers /login si la session est absente", async () => {
+    mockGetSession.mockResolvedValue(null);
+
+    await expect(
+      BookingDetailsPage({ params: { lineType: "MISSION", lineId: "line-1" } }),
+    ).rejects.toThrow("NEXT_REDIRECT:/login");
+    expect(mockRedirect).toHaveBeenCalledWith("/login");
+  });
+});

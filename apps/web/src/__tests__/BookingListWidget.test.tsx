@@ -15,13 +15,13 @@ const booking: BookingLine = {
 };
 
 describe("BookingListWidget", () => {
-  it("génère un lien détails canonique vers /bookings avec query params", () => {
+  it("génère un lien détails canonique vers /bookings/[lineType]/[lineId]", () => {
     render(<BookingListWidget bookings={[booking]} />);
 
     const detailsLink = screen
       .getAllByRole("link")
       .find((link) =>
-        link.getAttribute("href") === "/bookings?lineType=MISSION&lineId=line-1",
+        link.getAttribute("href") === "/bookings/MISSION/line-1",
       );
 
     expect(detailsLink).toBeDefined();

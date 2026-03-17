@@ -111,7 +111,7 @@ export function BookingListWidget({
                                         </div>
                                     )}
                                     <Button variant="ghost" size="icon" asChild>
-                                        <Link href={`/bookings?lineType=${booking.lineType}&lineId=${booking.lineId}`}>
+                                        <Link href={`/bookings/${booking.lineType}/${booking.lineId}`}>
                                             <ChevronRight className="h-4 w-4" />
                                         </Link>
                                     </Button>
