@@ -105,7 +105,8 @@ model Profile {
   city             String?
   zipCode          String?
   country          String?
-  skills           String[]  @default([])
+  skills           String[] @default([])
+  diplomaUrl       String?
   companyName      String?
   siret            String?
   tvaNumber        String?

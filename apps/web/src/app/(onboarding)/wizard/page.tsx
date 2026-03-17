@@ -9,6 +9,10 @@ export default async function WizardPage() {
 
     const { role, onboardingStep } = session.user;
 
+    if (role === "ADMIN") {
+        redirect("/dashboard");
+    }
+
     // Si l'onboarding est déjà terminé, renvoyer vers l'espace correspondant
     const maxStep = role === "FREELANCE" ? 4 : 3;
     if (onboardingStep >= maxStep) {

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSession, createSession } from "@/lib/session";
 import { apiRequest } from "@/lib/api";
+import { MAX_STEP_BY_ROLE } from "@/lib/constants";
 
 export type OnboardingData = {
     // Freelance
@@ -52,13 +53,40 @@ export async function completeOnboarding() {
         token: session.token,
     });
 
-    // Update local session to completed state (e.g., 4)
-    // Assuming 4 is the completion step based on logic elsewhere
-    session.user.onboardingStep = 4;
+    // Update local session to completed state based on role
+    const userRole = session.user.role as keyof typeof MAX_STEP_BY_ROLE;
+    const maxStep = MAX_STEP_BY_ROLE[userRole] || 4;
+    
+    session.user.onboardingStep = maxStep;
     await createSession(session);
 
     revalidatePath("/dashboard");
     revalidatePath("/marketplace");
+}
+
+export async function uploadDiploma(formData: FormData): Promise<{ url: string }> {
+    const session = await getSession();
+    if (!session) {
+        throw new Error("Unauthorized");
+    }
+
+    const { getApiBaseUrl } = await import("@/lib/api");
+    const url = `${getApiBaseUrl()}/users/me/diploma`;
+
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${session.token}`,
+        },
+        body: formData,
+    });
+
+    if (!response.ok) {
+        throw new Error("Erreur lors de l'upload du diplôme");
+    }
+
+    const data = await response.json();
+    return data;
 }
 
 export const updateProfile = saveOnboardingStep;

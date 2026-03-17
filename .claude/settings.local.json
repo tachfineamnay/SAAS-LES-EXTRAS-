@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -r \"Slider\\\\|Toggle\" C:UsershpDesktopBooking-lesextras.claudeworktreesvigorous-ramanappswebsrccomponentsui --include=*.tsx)",
+      "Bash(find \"C:\\\\Users\\\\hp\\\\Desktop\\\\Booking-lesextras\\\\.claude\\\\worktrees\\\\vigorous-raman\\\\apps\\\\web\\\\src\\\\components\\\\ui\" -name \"*.tsx\" -type f -exec basename {})",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(where npm:*)",
+      "Bash(npx next:*)"
+    ]
+  }
+}

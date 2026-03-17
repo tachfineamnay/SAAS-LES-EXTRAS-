@@ -37,6 +37,10 @@ export function OnboardingGuard({ children, userRole, onboardingStep }: Onboardi
         return <div className="min-h-screen bg-background" />;
     }
 
+    if (userRole === "ADMIN") {
+        return <>{children}</>;
+    }
+
     if (!isComplete) {
         return null;
     }

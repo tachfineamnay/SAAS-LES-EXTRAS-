@@ -1,4 +1,7 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { diskStorage } from "multer";
+import { extname } from "path";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
@@ -38,7 +41,38 @@ export class UsersController {
 
     @Post("me/onboarding/complete")
     completeOnboarding(@CurrentUser() user: AuthenticatedUser) {
-        return this.usersService.completeOnboarding(user.id);
+        return this.usersService.completeOnboarding(user.id, user.role);
+    }
+
+    @Post("me/diploma")
+    @UseInterceptors(
+        FileInterceptor("file", {
+            storage: diskStorage({
+                destination: "./uploads",
+                filename: (req, file, cb) => {
+                    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+                    const ext = extname(file.originalname);
+                    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+                },
+            }),
+            limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+        }),
+    )
+    uploadDiploma(
+        @CurrentUser() user: AuthenticatedUser,
+        @UploadedFile() file: Express.Multer.File,
+    ) {
+        if (!file) {
+            throw new BadRequestException("Aucun fichier fourni");
+        }
+        
+        // Simulating a public URL. In a real application, you might use S3, etc.
+        // For V1 Light, returning the local path or dummy cloud URL.
+        const fileUrl = `/uploads/${file.filename}`;
+        
+        return {
+            url: fileUrl,
+        };
     }
 
     // ── Freelances publics ─────────────────────────────────────────

@@ -68,6 +68,11 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
 
     // If onboarding not completed, send back to wizard
     const role = response.user.role as "ESTABLISHMENT" | "FREELANCE" | "ADMIN";
+    
+    if (role === "ADMIN") {
+        redirect("/dashboard");
+    }
+
     const maxStep = role === "FREELANCE" ? 4 : 3;
     if (response.user.onboardingStep < maxStep) {
         redirect("/wizard");

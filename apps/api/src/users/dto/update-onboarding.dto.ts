@@ -45,6 +45,10 @@ export class UpdateOnboardingDto {
     @IsString({ each: true })
     skills?: string[];
 
+    @IsOptional()
+    @IsString()
+    diplomaUrl?: string;
+
     // ── Localisation ──────────────────────────────────────────────
     @IsOptional()
     @IsString()

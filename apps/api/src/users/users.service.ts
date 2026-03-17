@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { UpdateOnboardingDto } from "./dto/update-onboarding.dto";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
+import { MAX_STEP_BY_ROLE } from "../common/constants";
 
 @Injectable()
 export class UsersService {
@@ -72,10 +73,13 @@ export class UsersService {
         }
     }
 
-    async completeOnboarding(userId: string) {
+    async completeOnboarding(userId: string, role: string) {
+        const userRole = role as keyof typeof MAX_STEP_BY_ROLE;
+        const maxStep = MAX_STEP_BY_ROLE[userRole] || 4;
+
         return this.prisma.user.update({
             where: { id: userId },
-            data: { onboardingStep: 4 },
+            data: { onboardingStep: maxStep },
         });
     }
     /**

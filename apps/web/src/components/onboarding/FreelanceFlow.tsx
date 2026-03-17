@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { saveOnboardingStep, completeOnboarding, type OnboardingData } from "@/app/actions/onboarding";
+import { saveOnboardingStep, completeOnboarding, type OnboardingData, uploadDiploma } from "@/app/actions/onboarding";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -68,8 +68,13 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
                     if (!bio) throw new Error("Veuillez écrire une courte bio.");
                     data = { bio, skills };
                 } else if (step === 3) {
-                    // Diploma upload requires a dedicated endpoint — just advance the step
-                    data = {};
+                    if (!diplomaFile) throw new Error("Veuillez envoyer votre diplôme principal.");
+                    
+                    const formData = new FormData();
+                    formData.append("file", diplomaFile);
+                    
+                    const { url } = await uploadDiploma(formData);
+                    data = { diplomaUrl: url };
                 } else if (step === 4) {
                     if (!address) throw new Error("Veuillez renseigner votre adresse.");
                     data = { address };
