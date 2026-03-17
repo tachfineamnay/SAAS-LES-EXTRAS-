@@ -47,6 +47,9 @@ function AtelierRow({ atelier }: { atelier: MesAtelierItem }) {
                             </Link>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                                 <Badge variant="success">Actif</Badge>
+                                <Badge variant="outline" className="border-[hsl(var(--teal)/0.5)] text-[hsl(var(--teal))]">
+                                    {atelier.type === "TRAINING" ? "Formation" : "Atelier"}
+                                </Badge>
                                 {atelier.category && <span>{getCategoryLabel(atelier.category)}</span>}
                                 <span className="inline-flex items-center gap-1">
                                     <Clock3 className="h-3 w-3" aria-hidden="true" />

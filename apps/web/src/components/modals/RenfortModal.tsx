@@ -83,7 +83,18 @@ const renfortSchema = z.object({
   zipCode: z.string().min(5, "Code postal requis"),
   city: z.string().min(2, "Ville requise"),
   accessInstructions: z.string().optional(),
-});
+}).refine(
+  (data) => {
+    if (data.hasTransmissions) {
+      return !!data.transmissionTime;
+    }
+    return true;
+  },
+  {
+    message: "Le temps de relève est requis si les transmissions sont activées",
+    path: ["transmissionTime"],
+  }
+);
 
 type RenfortForm = z.infer<typeof renfortSchema>;
 

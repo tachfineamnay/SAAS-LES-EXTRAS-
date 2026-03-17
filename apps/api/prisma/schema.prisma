@@ -36,6 +36,17 @@ enum ServiceStatus {
   ARCHIVED
 }
 
+enum ServiceType {
+  WORKSHOP
+  TRAINING
+}
+
+enum PricingType {
+  SESSION
+  PER_PARTICIPANT
+  QUOTE
+}
+
 enum BookingStatus {
   PENDING
   CONFIRMED
@@ -100,16 +111,16 @@ model Profile {
   bio            String?
   avatar         String?
   jobTitle       String?
-  phone            String?
-  address          String?
-  city             String?
-  zipCode          String?
-  country          String?
-  skills           String[] @default([])
-  diplomaUrl       String?
-  companyName      String?
-  siret            String?
-  tvaNumber        String?
+  phone          String?
+  address        String?
+  city           String?
+  zipCode        String?
+  country        String?
+  skills         String[] @default([])
+  diplomaUrl     String?
+  companyName    String?
+  siret          String?
+  tvaNumber      String?
   onboardingStep Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -188,6 +199,14 @@ model ReliefMission {
   zipCode            String?
   description        String?             @db.Text
   requiredSkills     String[]
+  establishmentType  String?
+  targetPublic       String[]            @default([])
+  unitSize           String?
+  slots              Json?
+  diplomaRequired    Boolean?            @default(false)
+  hasTransmissions   Boolean?            @default(false)
+  transmissionTime   String?
+  perks              String[]            @default([])
   exactAddress       String?
   accessInstructions String?             @db.Text
 
@@ -206,14 +225,25 @@ model ReliefMission {
 // ─────────────────────────────────────────────
 
 model Service {
-  id              String        @id @default(cuid())
+  id              String  @id @default(cuid())
   title           String
   description     String?
-  price           Float         @default(0)
-  capacity        Int           @default(10)
-  durationMinutes Int            @default(120)
+  price           Float   @default(0)
+  capacity        Int     @default(10)
+  durationMinutes Int     @default(120)
   category        String?
-  status          ServiceStatus @default(ACTIVE)
+
+  type                ServiceType @default(WORKSHOP)
+  pricingType         PricingType @default(SESSION)
+  publicCible         String[]    @default([])
+  slots               Json?
+  pricePerParticipant Float?
+  materials           String?
+  objectives          String?     @db.Text
+  methodology         String?     @db.Text
+  evaluation          String?     @db.Text
+
+  status ServiceStatus @default(ACTIVE)
 
   ownerId   String
   createdAt DateTime @default(now())
@@ -323,4 +353,3 @@ model Document {
   @@index([userId])
   @@index([serviceId])
 }
-

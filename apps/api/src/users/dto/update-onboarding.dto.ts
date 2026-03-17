@@ -86,8 +86,5 @@ export class UpdateOnboardingDto {
     isAvailable?: boolean;
 
     // ── Documents (reference URL apres upload) ──────────────────────
-    @IsOptional()
-    @IsString()
-    diplomaUrl?: string;
 }
 

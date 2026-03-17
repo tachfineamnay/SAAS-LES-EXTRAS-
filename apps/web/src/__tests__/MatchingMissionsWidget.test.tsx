@@ -45,7 +45,7 @@ describe("MatchingMissionsWidget", () => {
   it("appelle openApplyModal au clic sur Postuler", () => {
     render(<MatchingMissionsWidget missions={missions} />);
     const buttons = screen.getAllByRole("button", { name: /postuler/i });
-    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[0]!);
     expect(mockOpenApplyModal).toHaveBeenCalledWith("m-1");
   });
 

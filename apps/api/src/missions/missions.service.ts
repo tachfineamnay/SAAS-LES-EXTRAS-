@@ -19,8 +19,18 @@ export class MissionsService {
   constructor(private readonly prisma: PrismaService) { }
 
   async createMission(dto: CreateMissionDto, establishmentId: string) {
-    const dateStart = new Date(dto.dateStart);
-    const dateEnd = new Date(dto.dateEnd);
+    let dateStartStr = dto.dateStart;
+    let dateEndStr = dto.dateEnd;
+
+    if (dto.slots && dto.slots.length > 0) {
+      const starts = dto.slots.map((s) => new Date(`${s.date}T${s.heureDebut}`).getTime());
+      const ends = dto.slots.map((s) => new Date(`${s.date}T${s.heureFin}`).getTime());
+      dateStartStr = new Date(Math.min(...starts)).toISOString();
+      dateEndStr = new Date(Math.max(...ends)).toISOString();
+    }
+
+    const dateStart = new Date(dateStartStr);
+    const dateEnd = new Date(dateEndStr);
 
     if (dateEnd <= dateStart) {
       throw new BadRequestException("dateEnd must be after dateStart");
@@ -43,6 +53,14 @@ export class MissionsService {
         requiredSkills: dto.requiredSkills ?? [],
         exactAddress: dto.exactAddress,
         accessInstructions: dto.accessInstructions,
+        establishmentType: dto.establishmentType,
+        targetPublic: dto.targetPublic ?? [],
+        unitSize: dto.unitSize,
+        slots: dto.slots ? (dto.slots as any) : null,
+        diplomaRequired: dto.diplomaRequired ?? false,
+        hasTransmissions: dto.hasTransmissions ?? false,
+        transmissionTime: dto.transmissionTime,
+        perks: dto.perks ?? [],
       },
     });
   }

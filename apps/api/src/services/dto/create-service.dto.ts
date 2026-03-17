@@ -6,9 +6,28 @@ import {
   IsString,
   Min,
   MinLength,
+  IsEnum,
+  IsArray,
+  ValidateNested,
 } from "class-validator";
+import { ServiceType, PricingType } from "@prisma/client";
+
+export class ServiceSlotDto {
+  @IsString()
+  date!: string;
+
+  @IsString()
+  heureDebut!: string;
+
+  @IsString()
+  heureFin!: string;
+}
 
 export class CreateServiceDto {
+  @IsEnum(ServiceType)
+  @IsOptional()
+  type?: ServiceType;
+
   @IsString()
   @MinLength(2)
   title!: string;
@@ -36,4 +55,41 @@ export class CreateServiceDto {
   @IsOptional()
   @IsString()
   category?: string;
+
+  @IsEnum(PricingType)
+  @IsOptional()
+  pricingType?: PricingType;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  publicCible?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ServiceSlotDto)
+  slots?: ServiceSlotDto[];
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  pricePerParticipant?: number;
+
+  @IsOptional()
+  @IsString()
+  materials?: string;
+
+  @IsOptional()
+  @IsString()
+  objectives?: string;
+
+  @IsOptional()
+  @IsString()
+  methodology?: string;
+
+  @IsOptional()
+  @IsString()
+  evaluation?: string;
 }

@@ -172,10 +172,10 @@ export function PublishModal() {
           evaluation: data.evaluation || undefined,
           slots: data.slots,
         });
-        toast.success("Atelier publié avec succès !");
+        toast.success(data.type === "WORKSHOP" ? "Atelier publié avec succès !" : "Formation publiée avec succès !");
         handleClose();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Impossible de publier l'atelier.");
+        toast.error(error instanceof Error ? error.message : "Impossible de publier l'offre.");
       }
     });
   });
@@ -193,7 +193,9 @@ export function PublishModal() {
     >
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Publier un atelier</DialogTitle>
+          <DialogTitle>
+            Publier {values.type === "WORKSHOP" ? "un atelier" : "une formation"}
+          </DialogTitle>
           <DialogDescription>
             Étape {step + 1} sur {STEPS.length} — {STEPS[step]}
           </DialogDescription>
@@ -605,7 +607,7 @@ export function PublishModal() {
                 disabled={isPending}
                 className="bg-blue-600 text-white hover:bg-blue-700 gap-2"
               >
-                {isPending ? "Publication..." : "Publier l'atelier"}
+                {isPending ? "Publication..." : `Publier ${values.type === "WORKSHOP" ? "l'atelier" : "la formation"}`}
               </Button>
             ) : (
               <Button

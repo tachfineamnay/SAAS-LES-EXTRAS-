@@ -11,6 +11,7 @@ import {
   IsString,
   MinLength,
   ValidateNested,
+  ValidateIf,
 } from "class-validator";
 
 export class MissionSlotDto {
@@ -107,7 +108,7 @@ export class CreateMissionDto {
   @Transform(({ value }) => value === true || value === "true")
   hasTransmissions?: boolean;
 
-  @IsOptional()
+  @ValidateIf((o) => o.hasTransmissions === true)
   @IsString()
   transmissionTime?: string;
 
