@@ -345,6 +345,44 @@ export class BookingsService {
       return { ok: true };
     }
 
+    // Refus d'une candidature individuelle par bookingId (usage établissement)
+    if (input.lineType === "BOOKING") {
+      if (user.role !== UserRole.ESTABLISHMENT) {
+        throw new ForbiddenException("Seul un établissement peut refuser une candidature");
+      }
+
+      const booking = await this.prisma.booking.findUnique({
+        where: { id: input.lineId },
+        select: {
+          id: true,
+          status: true,
+          freelanceId: true,
+          reliefMission: { select: { establishmentId: true } },
+        },
+      });
+
+      if (!booking) {
+        throw new NotFoundException("Candidature introuvable");
+      }
+
+      if (booking.reliefMission?.establishmentId !== user.id) {
+        throw new ForbiddenException("Vous ne pouvez pas refuser cette candidature");
+      }
+
+      if (booking.status !== BookingStatus.PENDING) {
+        throw new BadRequestException(
+          "Seules les candidatures en attente peuvent être refusées",
+        );
+      }
+
+      await this.prisma.booking.update({
+        where: { id: input.lineId },
+        data: { status: BookingStatus.CANCELLED },
+      });
+
+      return { ok: true };
+    }
+
     const booking = await this.prisma.booking.findUnique({
       where: { id: input.lineId },
       select: {

@@ -1,4 +1,4 @@
-export type BookingLineType = "MISSION" | "SERVICE_BOOKING";
+export type BookingLineType = "MISSION" | "SERVICE_BOOKING" | "BOOKING";
 
 export type BookingLineStatus =
   | "PENDING"

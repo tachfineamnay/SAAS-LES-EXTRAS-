@@ -61,15 +61,22 @@ describe("declineCandidate", () => {
     mockApiRequest.mockResolvedValue({});
   });
 
-  it("appelle POST /bookings/cancel avec lineType MISSION et lineId", async () => {
+  it("appelle POST /bookings/cancel avec lineType BOOKING et le bookingId", async () => {
     await declineCandidate("booking-99");
     expect(mockApiRequest).toHaveBeenCalledWith(
       "/bookings/cancel",
       expect.objectContaining({
         method: "POST",
-        body: { lineType: "MISSION", lineId: "booking-99" },
+        body: { lineType: "BOOKING", lineId: "booking-99" },
       }),
     );
+  });
+
+  it("retourne l'erreur API comme message user-friendly", async () => {
+    mockApiRequest.mockRejectedValue(new Error("Seules les candidatures en attente peuvent être refusées"));
+    const result = await declineCandidate("booking-99");
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe("Seules les candidatures en attente peuvent être refusées");
   });
 
   it("retourne { ok: true } en cas de succès", async () => {

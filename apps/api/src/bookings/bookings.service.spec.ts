@@ -164,4 +164,74 @@ describe('BookingsService', () => {
       await expect(service.markPaymentSettled('booking-1', user)).rejects.toThrow(BadRequestException);
     });
   });
+
+  describe('cancelBookingLine — lineType BOOKING', () => {
+    const estUser = { id: 'est-1', email: 'est@test.com', role: UserRole.ESTABLISHMENT };
+    const freeUser = { id: 'free-1', email: 'free@test.com', role: UserRole.FREELANCE };
+
+    it('annule le booking PENDING et retourne { ok: true }', async () => {
+      const booking = {
+        id: 'booking-1',
+        status: BookingStatus.PENDING,
+        freelanceId: 'free-1',
+        reliefMission: { establishmentId: 'est-1' },
+      };
+      mockPrisma.booking.findUnique.mockResolvedValue(booking);
+      mockPrisma.booking.update.mockResolvedValue({ ...booking, status: BookingStatus.CANCELLED });
+
+      const result = await service.cancelBookingLine(
+        { lineType: 'BOOKING', lineId: 'booking-1' },
+        estUser,
+      );
+
+      expect(result).toEqual({ ok: true });
+      expect(mockPrisma.booking.update).toHaveBeenCalledWith({
+        where: { id: 'booking-1' },
+        data: { status: BookingStatus.CANCELLED },
+      });
+    });
+
+    it('lève ForbiddenException si le rôle est FREELANCE', async () => {
+      await expect(
+        service.cancelBookingLine({ lineType: 'BOOKING', lineId: 'booking-1' }, freeUser),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.booking.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('lève NotFoundException si le booking est introuvable', async () => {
+      mockPrisma.booking.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.cancelBookingLine({ lineType: 'BOOKING', lineId: 'ghost-id' }, estUser),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('lève ForbiddenException si la mission appartient à un autre établissement', async () => {
+      const booking = {
+        id: 'booking-1',
+        status: BookingStatus.PENDING,
+        freelanceId: 'free-1',
+        reliefMission: { establishmentId: 'other-est' },
+      };
+      mockPrisma.booking.findUnique.mockResolvedValue(booking);
+
+      await expect(
+        service.cancelBookingLine({ lineType: 'BOOKING', lineId: 'booking-1' }, estUser),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('lève BadRequestException si le booking n\'est pas PENDING', async () => {
+      const booking = {
+        id: 'booking-1',
+        status: BookingStatus.CONFIRMED,
+        freelanceId: 'free-1',
+        reliefMission: { establishmentId: 'est-1' },
+      };
+      mockPrisma.booking.findUnique.mockResolvedValue(booking);
+
+      await expect(
+        service.cancelBookingLine({ lineType: 'BOOKING', lineId: 'booking-1' }, estUser),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
 });
