@@ -8,25 +8,15 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2, Check } from "lucide-react";
+import type { SerializedQuote } from "@/actions/quotes";
 
-interface Quote {
-    id: string;
-    amount: number;
-    description: string;
-    startDate: string;
-    endDate: string;
-    status: "PENDING" | "ACCEPTED" | "REJECTED";
-    freelance: {
-        profile?: {
-            firstName: string;
-            lastName: string;
-        }
-    };
-}
-
-export function QuoteListWidget({ quotes }: { quotes: Quote[] }) {
+export function QuoteListWidget({ quotes, error }: { quotes: SerializedQuote[]; error?: string | null }) {
     const router = useRouter();
     const [loadingId, setLoadingId] = useState<string | null>(null);
+
+    if (error) {
+        return <div className="text-sm text-muted-foreground">{error}</div>;
+    }
 
     if (!quotes || quotes.length === 0) {
         return <div className="text-sm text-muted-foreground">Aucune proposition en attente.</div>;

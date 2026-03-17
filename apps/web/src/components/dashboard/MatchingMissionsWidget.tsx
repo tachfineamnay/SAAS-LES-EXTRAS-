@@ -25,10 +25,22 @@ export interface MatchingMission {
 
 interface MatchingMissionsWidgetProps {
   missions: MatchingMission[];
+  error?: string | null;
 }
 
-export function MatchingMissionsWidget({ missions }: MatchingMissionsWidgetProps) {
+export function MatchingMissionsWidget({ missions, error }: MatchingMissionsWidgetProps) {
   const openApplyModal = useUIStore((s) => s.openApplyModal);
+
+  if (error) {
+    return (
+      <EmptyState
+        icon={Briefcase}
+        title="Missions indisponibles"
+        description={error}
+        primaryAction={{ label: "Voir toutes les missions", href: "/marketplace" }}
+      />
+    );
+  }
 
   if (missions.length === 0) {
     return (

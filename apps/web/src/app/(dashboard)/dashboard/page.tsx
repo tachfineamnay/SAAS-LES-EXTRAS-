@@ -2,11 +2,16 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getBookingsPageData } from "@/app/actions/bookings";
+import type { BookingsPageData } from "@/app/actions/bookings";
 import { getQuotes } from "@/actions/quotes";
+import type { SerializedQuote } from "@/actions/quotes";
 import { getInvoices } from "@/actions/finance";
+import type { SerializedInvoice } from "@/actions/finance";
 import { getCredits } from "@/actions/credits";
 import { getReviewsByTarget } from "@/app/actions/reviews";
 import { getEstablishmentMissions, getAvailableMissions } from "@/app/actions/missions";
+import type { EstablishmentMission } from "@/app/actions/missions";
+import { fetchSafe } from "@/lib/widget-result";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMetierLabel } from "@/lib/sos-config";
@@ -59,55 +64,72 @@ export default async function DashboardPage() {
         try { availableCredits = await getCredits(); } catch { /* swallow */ }
     }
 
-    let bookingsData: { lines: any[] } = { lines: [] };
-    try {
-        bookingsData = await getBookingsPageData(token);
-    } catch { /* API might be down */ }
+    const bookingsResult = await fetchSafe<BookingsPageData>(
+        () => getBookingsPageData(token),
+        { lines: [], nextStep: null },
+        "Réservations",
+    );
+    const bookingsData = bookingsResult.data;
+    const bookingsError = bookingsResult.error;
 
-    let establishmentMissions: any[] = [];
+    let establishmentMissions: EstablishmentMission[] = [];
+    let missionsError: string | null = null;
     if (userRole === "ESTABLISHMENT") {
-        try { establishmentMissions = await getEstablishmentMissions(); } catch { /* swallow */ }
-        if (!Array.isArray(establishmentMissions)) establishmentMissions = [];
+        const missionsResult = await fetchSafe<EstablishmentMission[]>(
+            () => getEstablishmentMissions(),
+            [],
+            "Renforts",
+        );
+        establishmentMissions = missionsResult.data;
+        missionsError = missionsResult.error;
     }
 
-    let quotes: any[] = [];
+    let quotes: SerializedQuote[] = [];
+    let quotesError: string | null = null;
     if (userRole === "ESTABLISHMENT") {
-        try { quotes = await getQuotes(token); } catch { /* swallow */ }
+        const quotesResult = await fetchSafe<SerializedQuote[]>(
+            () => getQuotes(token),
+            [],
+            "Propositions",
+        );
+        quotes = quotesResult.data;
+        quotesError = quotesResult.error;
     }
-    if (!Array.isArray(quotes)) quotes = [];
 
-    let invoices: any[] = [];
-    try {
-        const inv = await getInvoices();
-        invoices = Array.isArray(inv) ? inv : [];
-    } catch { /* swallow */ }
+    const invoicesResult = await fetchSafe<SerializedInvoice[]>(
+        () => getInvoices(),
+        [],
+        "Factures",
+    );
+    const invoices = invoicesResult.data;
+    const invoicesError = invoicesResult.error;
 
-    const pendingBookings = (bookingsData?.lines ?? []).filter((b: any) => b.status === "PENDING");
+    const pendingBookings = (bookingsData?.lines ?? []).filter((b) => b.status === "PENDING");
     const confirmedBookings = (bookingsData?.lines ?? []).filter(
-        (b: any) => b.status === "CONFIRMED" || b.status === "ASSIGNED"
+        (b) => b.status === "CONFIRMED" || b.status === "ASSIGNED"
     );
     const completedBookings = (bookingsData?.lines ?? []).filter(
-        (b: any) => b.status === "COMPLETED" || b.status === "PAID"
+        (b) => b.status === "COMPLETED" || b.status === "PAID"
     );
 
     // ─────────────────────────────────────────────────────────────────
     // ESTABLISHMENT VIEW
     // ─────────────────────────────────────────────────────────────────
     if (userRole === "ESTABLISHMENT") {
-        const pendingQuotes = quotes.filter((q: any) => q.status === "PENDING");
+        const pendingQuotes = quotes.filter((q) => q.status === "PENDING");
         const awaitingPaymentBookings = (bookingsData?.lines ?? []).filter(
-            (b: any) => b.status === "COMPLETED_AWAITING_PAYMENT"
+            (b) => b.status === "COMPLETED_AWAITING_PAYMENT"
         );
         const missionsToValidate = (bookingsData?.lines ?? []).filter(
-            (b: any) => b.status === "COMPLETED_AWAITING_PAYMENT"
+            (b) => b.status === "COMPLETED_AWAITING_PAYMENT"
         );
         const upcomingMissions = confirmedBookings;
 
         const activeMissions = establishmentMissions.filter(
-            (m: any) => m.status === "OPEN" || m.status === "ASSIGNED"
+            (m) => m.status === "OPEN" || m.status === "ASSIGNED"
         );
         const pendingCandidatures = establishmentMissions.reduce(
-            (acc: number, m: any) => acc + (m.bookings?.filter((b: any) => b.status === "PENDING").length ?? 0),
+            (acc, m) => acc + (m.bookings?.filter((b) => b.status === "PENDING").length ?? 0),
             0
         );
 
@@ -155,7 +177,7 @@ export default async function DashboardPage() {
                             </div>
                         </GlassCardHeader>
                         <GlassCardContent>
-                            <RenfortsWidget missions={activeMissions as any} />
+                            <RenfortsWidget missions={activeMissions} error={missionsError} />
                         </GlassCardContent>
                     </GlassCard>
 
@@ -202,7 +224,7 @@ export default async function DashboardPage() {
                             </div>
                         </GlassCardHeader>
                         <GlassCardContent>
-                            <EstablishmentInvoicesWidget invoices={invoices} />
+                            <EstablishmentInvoicesWidget invoices={invoices} error={invoicesError} />
                         </GlassCardContent>
                     </GlassCard>
 
@@ -217,7 +239,7 @@ export default async function DashboardPage() {
                             </div>
                         </GlassCardHeader>
                         <GlassCardContent>
-                            <QuoteListWidget quotes={pendingQuotes} />
+                            <QuoteListWidget quotes={pendingQuotes} error={quotesError} />
                         </GlassCardContent>
                     </GlassCard>
 
@@ -282,11 +304,15 @@ export default async function DashboardPage() {
             : "/bookings";
 
     // E.6.3 — Matching missions: fetch real open missions from API
-    let availableMissions: any[] = [];
-    try { availableMissions = await getAvailableMissions(token); } catch { /* swallow */ }
-    if (!Array.isArray(availableMissions)) availableMissions = [];
+    const availableMissionsResult = await fetchSafe(
+        () => getAvailableMissions(token),
+        [],
+        "Missions disponibles",
+    );
+    const availableMissions = availableMissionsResult.data;
+    const availableMissionsError = availableMissionsResult.error;
 
-    const matchingMissions: MatchingMission[] = availableMissions.slice(0, 3).map((m: any) => ({
+    const matchingMissions: MatchingMission[] = availableMissions.slice(0, 3).map((m) => ({
         id: m.id,
         title: m.metier ? getMetierLabel(m.metier) : m.title,
         establishment: m.establishment?.profile?.companyName ?? "Établissement",
@@ -384,7 +410,7 @@ export default async function DashboardPage() {
                         </div>
                     </GlassCardHeader>
                     <GlassCardContent>
-                        <MatchingMissionsWidget missions={matchingMissions} />
+                        <MatchingMissionsWidget missions={matchingMissions} error={availableMissionsError} />
                     </GlassCardContent>
                 </GlassCard>
 
@@ -421,6 +447,7 @@ export default async function DashboardPage() {
                             bookings={confirmedBookings}
                             emptyMessage="Aucune mission prévue."
                             viewAllLink="/bookings"
+                            error={bookingsError}
                         />
                     </GlassCardContent>
                 </GlassCard>
@@ -458,6 +485,7 @@ export default async function DashboardPage() {
                             bookings={pendingBookings}
                             emptyMessage="Aucune candidature en cours."
                             viewAllLink="/bookings"
+                            error={bookingsError}
                         />
                     </GlassCardContent>
                 </GlassCard>

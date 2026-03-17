@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
-import type { SerializedMission } from "@/app/actions/marketplace";
+import type { EstablishmentMission } from "@/app/actions/missions";
 
 interface RenfortsWidgetProps {
-    missions: SerializedMission[];
+    missions: EstablishmentMission[];
+    error?: string | null;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -26,7 +27,18 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline" | "dest
     CANCELLED: "destructive",
 };
 
-export function RenfortsWidget({ missions }: RenfortsWidgetProps) {
+export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
+    if (error) {
+        return (
+            <EmptyState
+                icon={Users}
+                title="Renforts indisponibles"
+                description={error}
+                className="py-8"
+            />
+        );
+    }
+
     if (missions.length === 0) {
         return (
             <EmptyState
@@ -41,9 +53,9 @@ export function RenfortsWidget({ missions }: RenfortsWidgetProps) {
     return (
         <div className="space-y-3">
             {missions.slice(0, 5).map((mission) => {
-                const candidatureCount = (mission as any).bookings?.length ?? 0;
-                const pendingCount = (mission as any).bookings?.filter(
-                    (b: any) => b.status === "PENDING"
+                const candidatureCount = mission.bookings?.length ?? 0;
+                const pendingCount = mission.bookings?.filter(
+                    (b) => b.status === "PENDING"
                 ).length ?? 0;
 
                 return (
@@ -56,9 +68,7 @@ export function RenfortsWidget({ missions }: RenfortsWidgetProps) {
                             <div className="flex-1 min-w-0 space-y-1.5">
                                 <div className="flex flex-wrap items-center gap-2">
                                     <span className="font-semibold text-sm truncate">
-                                        {mission.metier
-                                            ? (mission as any).metierLabel ?? mission.title
-                                            : mission.title}
+                                        {mission.metierLabel ?? mission.title}
                                     </span>
                                     <Badge variant={STATUS_VARIANT[mission.status] ?? "secondary"}>
                                         {STATUS_LABEL[mission.status] ?? mission.status}

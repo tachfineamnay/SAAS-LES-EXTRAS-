@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download, FileText } from "lucide-react";
+import type { SerializedInvoice } from "@/actions/finance";
 
 interface EstablishmentInvoicesWidgetProps {
-    invoices: any[]; // We will type this loosely or import the type if available
+    invoices: SerializedInvoice[];
+    error?: string | null;
 }
 
-export function EstablishmentInvoicesWidget({ invoices }: EstablishmentInvoicesWidgetProps) {
+export function EstablishmentInvoicesWidget({ invoices, error }: EstablishmentInvoicesWidgetProps) {
     const handleExportCsv = () => {
         // Simple client-side CSV export
         const headers = ["Numero", "Date", "Freelance", "Montant", "Statut"];
@@ -33,6 +35,15 @@ export function EstablishmentInvoicesWidget({ invoices }: EstablishmentInvoicesW
         link.click();
         document.body.removeChild(link);
     };
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center p-4 text-muted-foreground">
+                <FileText className="h-8 w-8 mb-2 opacity-50" />
+                <p className="text-sm">{error}</p>
+            </div>
+        );
+    }
 
     if (invoices.length === 0) {
         return (
@@ -78,7 +89,7 @@ export function EstablishmentInvoicesWidget({ invoices }: EstablishmentInvoicesW
                                 </TableCell>
                                 <TableCell>
                                     <Button variant="ghost" size="icon" asChild title="Télécharger la facture">
-                                        <a href={invoice.url} target="_blank" rel="noopener noreferrer" title="Télécharger la facture">
+                                        <a href={invoice.pdfUrl} target="_blank" rel="noopener noreferrer" title="Télécharger la facture">
                                             <Download className="h-4 w-4" />
                                             <span className="sr-only">Télécharger la facture</span>
                                         </a>

@@ -4,24 +4,34 @@ import { getSession } from "@/lib/session";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-export async function getQuotes(token: string) {
-    try {
-        const res = await fetch(`${API_URL}/quotes`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            next: { tags: ["quotes"] },
-        });
+export interface SerializedQuote {
+    id: string;
+    amount: number;
+    description: string;
+    startDate: string;
+    endDate: string;
+    status: "PENDING" | "ACCEPTED" | "REJECTED";
+    freelance: {
+        profile?: {
+            firstName: string;
+            lastName: string;
+        };
+    };
+}
 
-        if (!res.ok) {
-            return [];
-        }
+export async function getQuotes(token: string): Promise<SerializedQuote[]> {
+    const res = await fetch(`${API_URL}/quotes`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        next: { tags: ["quotes"] },
+    });
 
-        return await res.json();
-    } catch (error) {
-        console.error("Fetch quotes error:", error);
-        return [];
+    if (!res.ok) {
+        throw new Error(`Quotes API responded with ${res.status}`);
     }
+
+    return (await res.json()) as SerializedQuote[];
 }
 
 export async function acceptQuote(quoteId: string) {

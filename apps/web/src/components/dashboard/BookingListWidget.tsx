@@ -34,6 +34,7 @@ type BookingListWidgetProps = {
     emptyMessage?: string;
     viewAllLink?: string;
     className?: string;
+    error?: string | null;
 };
 
 export function BookingListWidget({
@@ -41,6 +42,7 @@ export function BookingListWidget({
     emptyMessage = "Aucune donnée disponible.",
     viewAllLink = "/bookings",
     className,
+    error,
 }: BookingListWidgetProps) {
     return (
         <div className={cn("flex flex-col h-full", className)}>
@@ -53,7 +55,7 @@ export function BookingListWidget({
                 >
                     {bookings.length === 0 ? (
                         <div className="flex h-32 items-center justify-center rounded-lg border border-dashed bg-muted/50 text-sm text-muted-foreground">
-                            {emptyMessage}
+                            {error ?? emptyMessage}
                         </div>
                     ) : (
                         bookings.map((booking) => (

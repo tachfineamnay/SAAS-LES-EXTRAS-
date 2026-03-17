@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { RenfortsWidget } from "@/components/dashboard/establishment/RenfortsWidget";
-import type { SerializedMission } from "@/app/actions/marketplace";
+import type { EstablishmentMission } from "@/app/actions/missions";
 
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
@@ -9,7 +9,7 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-const makeMission = (overrides?: Partial<SerializedMission>): SerializedMission => ({
+const makeMission = (overrides?: Partial<EstablishmentMission>): EstablishmentMission => ({
   id: "mission-1",
   title: "Infirmier de nuit",
   dateStart: "2026-05-01T00:00:00.000Z",
@@ -21,6 +21,7 @@ const makeMission = (overrides?: Partial<SerializedMission>): SerializedMission 
   metier: "INFIRMIER",
   shift: "NUIT",
   city: "Paris",
+  bookings: [],
   ...overrides,
 });
 
