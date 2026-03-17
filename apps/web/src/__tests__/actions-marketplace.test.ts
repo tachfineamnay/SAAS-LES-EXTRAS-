@@ -8,7 +8,7 @@ vi.mock("@/lib/api", () => ({ apiRequest: (...args: unknown[]) => mockApiRequest
 vi.mock("@/lib/session", () => ({ getSession: () => mockGetSession() }));
 vi.mock("next/cache", () => ({ revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args) }));
 
-const { createMissionFromRenfort } = await import("@/app/actions/marketplace");
+const { createMissionFromRenfort, getMyAteliers } = await import("@/app/actions/marketplace");
 
 const baseInput = {
   title: "Infirmier de nuit",
@@ -67,5 +67,83 @@ describe("createMissionFromRenfort", () => {
   it("lance une erreur si la session est absente", async () => {
     mockGetSession.mockResolvedValue(null);
     await expect(createMissionFromRenfort(baseInput)).rejects.toThrow("Non connecté");
+  });
+});
+
+// ─── getMyAteliers ────────────────────────────────────────────────────────────
+
+const mockService = {
+  id: "svc-1",
+  title: "Zumba thérapeutique",
+  description: null,
+  price: 100,
+  type: "WORKSHOP" as const,
+  capacity: 12,
+  pricingType: "SESSION" as const,
+  pricePerParticipant: null,
+  durationMinutes: 60,
+  category: null,
+  publicCible: null,
+  materials: null,
+  objectives: null,
+  methodology: null,
+  evaluation: null,
+  slots: null,
+};
+
+describe("getMyAteliers", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ token: "test-token", user: { id: "u-1" } });
+    mockApiRequest.mockResolvedValue([mockService]);
+  });
+
+  it("appelle GET /services/my (endpoint dédié)", async () => {
+    await getMyAteliers();
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/services/my",
+      expect.objectContaining({ method: "GET" }),
+    );
+  });
+
+  it("n'appelle jamais GET /services (pas de sur-fetch)", async () => {
+    await getMyAteliers();
+    expect(mockApiRequest).not.toHaveBeenCalledWith(
+      "/services",
+      expect.anything(),
+    );
+  });
+
+  it("ajoute status ACTIVE à chaque atelier retourné", async () => {
+    const result = await getMyAteliers();
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ id: "svc-1", status: "ACTIVE" });
+  });
+
+  it("trie les ateliers par titre (locale fr)", async () => {
+    mockApiRequest.mockResolvedValue([
+      { ...mockService, id: "2", title: "Yoga doux" },
+      { ...mockService, id: "1", title: "Atelier bien-être" },
+      { ...mockService, id: "3", title: "Méditation" },
+    ]);
+    const result = await getMyAteliers();
+    expect(result.map((s) => s.title)).toEqual([
+      "Atelier bien-être",
+      "Méditation",
+      "Yoga doux",
+    ]);
+  });
+
+  it("retourne [] si la session est absente", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const result = await getMyAteliers();
+    expect(result).toEqual([]);
+    expect(mockApiRequest).not.toHaveBeenCalled();
+  });
+
+  it("retourne [] et logue en cas d'erreur API", async () => {
+    mockApiRequest.mockRejectedValue(new Error("Network error"));
+    const result = await getMyAteliers();
+    expect(result).toEqual([]);
   });
 });

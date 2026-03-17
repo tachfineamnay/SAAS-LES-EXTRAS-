@@ -238,13 +238,12 @@ export async function getMyAteliers(token?: string): Promise<MesAtelierItem[]> {
   if (!activeToken || !session) return [];
 
   try {
-    const services = await apiRequest<SerializedService[]>("/services", {
+    const services = await apiRequest<SerializedService[]>("/services/my", {
       method: "GET",
       token: activeToken,
     });
 
     return services
-      .filter((service) => service.owner?.id === session.user.id)
       .map((service) => ({ ...service, status: "ACTIVE" as const }))
       .sort((a, b) => a.title.localeCompare(b.title, "fr"));
   } catch (error) {
