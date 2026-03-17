@@ -214,6 +214,7 @@ export function RenfortModal() {
       });
 
       handleClose();
+      router.push("/dashboard/renforts");
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Impossible de créer la demande.");

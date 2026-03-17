@@ -7,6 +7,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Trash2, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { createServiceFromPublish } from "@/app/actions/marketplace";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,6 +98,7 @@ const slideVariants = {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function PublishModal() {
+  const router = useRouter();
   const isOpen = useUIStore((s) => s.isPublishModalOpen);
   const openPublishModal = useUIStore((s) => s.openPublishModal);
   const closePublishModal = useUIStore((s) => s.closePublishModal);
@@ -174,6 +176,8 @@ export function PublishModal() {
         });
         toast.success(data.type === "WORKSHOP" ? "Atelier publié avec succès !" : "Formation publiée avec succès !");
         handleClose();
+        router.push("/marketplace");
+        router.refresh();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Impossible de publier l'offre.");
       }
