@@ -17,13 +17,13 @@ export default async function DashboardLayout({
   const onboardingStep = session.user.onboardingStep ?? 0;
 
   return (
-    <AppShell>
-      <OnboardingGuard
-        userRole={session.user.role}
-        onboardingStep={onboardingStep}
-      >
+    <OnboardingGuard
+      userRole={session.user.role}
+      onboardingStep={onboardingStep}
+    >
+      <AppShell>
         {children}
-      </OnboardingGuard>
-    </AppShell>
+      </AppShell>
+    </OnboardingGuard>
   );
 }

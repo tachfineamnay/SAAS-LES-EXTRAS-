@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   CalendarClock,
   Check,
@@ -80,6 +81,8 @@ function canCancel(status: BookingLineStatus): boolean {
 
 export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
   const userRole = useUIStore((state) => state.userRole);
+  const searchParams = useSearchParams();
+  const hasAutoOpenedDetailsRef = useRef(false);
   const [data, setData] = useState<BookingsPageData>(initialData);
   const [loadedRole, setLoadedRole] = useState<DashboardRole>("ESTABLISHMENT");
   const [isRoleLoading, startRoleLoading] = useTransition();
@@ -172,7 +175,7 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
     });
   };
 
-  const handleOpenDetails = (line: BookingLine) => {
+  const handleOpenDetails = useCallback((line: BookingLine) => {
     setSelectedLine(line);
     setDetails(null);
     setIsDetailsOpen(true);
@@ -181,7 +184,24 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
       .then((response) => setDetails(response))
       .catch((error) => toast.error(error instanceof Error ? error.message : "Impossible de récupérer les détails."))
       .finally(() => setIsDetailsLoading(false));
-  };
+  }, []);
+
+  useEffect(() => {
+    if (hasAutoOpenedDetailsRef.current) return;
+
+    const lineType = searchParams.get("lineType");
+    const lineId = searchParams.get("lineId");
+    if (!lineType || !lineId) return;
+    if (lineType !== "MISSION" && lineType !== "SERVICE_BOOKING") return;
+
+    const matchingLine = data.lines.find(
+      (line) => line.lineType === lineType && line.lineId === lineId,
+    );
+    if (!matchingLine) return;
+
+    hasAutoOpenedDetailsRef.current = true;
+    handleOpenDetails(matchingLine);
+  }, [data.lines, handleOpenDetails, searchParams]);
 
   return (
     <section className="space-y-6">

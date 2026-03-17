@@ -140,10 +140,15 @@ function SidebarContent({
   onNavigate?: () => void;
   userRole?: "ESTABLISHMENT" | "FREELANCE" | null;
 }) {
-  const isLinkActive = (href: string) =>
-    pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
-
   const bottomLinks = userRole === "ESTABLISHMENT" ? ESTABLISHMENT_BOTTOM_LINKS : BOTTOM_LINKS;
+  const allHrefs = [...links, ...bottomLinks].map((link) => link.href);
+
+  const matchesHref = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
+
+  const activeHref = allHrefs
+    .filter(matchesHref)
+    .sort((a, b) => b.length - a.length)[0];
 
   return (
     <div className="flex h-full flex-col bg-background border-r border-border">
@@ -184,7 +189,7 @@ function SidebarContent({
           <NavLink
             key={link.href}
             {...link}
-            isActive={isLinkActive(link.href)}
+            isActive={activeHref === link.href}
             index={i}
             onClick={onNavigate}
           />
@@ -203,7 +208,7 @@ function SidebarContent({
           <NavLink
             key={link.href}
             {...link}
-            isActive={isLinkActive(link.href)}
+            isActive={activeHref === link.href}
             index={i}
             onClick={onNavigate}
           />

@@ -276,6 +276,10 @@ export default async function DashboardPage() {
 
     // E.6.1 — Next mission: first upcoming confirmed booking
     const nextMission = confirmedBookings[0] as any | undefined;
+    const nextMissionDetailsHref =
+        nextMission?.lineType && nextMission?.lineId
+            ? `/bookings?lineType=${nextMission.lineType}&lineId=${nextMission.lineId}`
+            : "/bookings";
 
     // E.6.3 — Matching missions: fetch real open missions from API
     let availableMissions: any[] = [];
@@ -338,7 +342,7 @@ export default async function DashboardPage() {
             {/* E.6.1 — Prochaine mission (elevated card) */}
             {nextMission && (
                 <NextMissionCard
-                    bookingId={nextMission.id}
+                    detailsHref={nextMissionDetailsHref}
                     title={nextMission.service?.name ?? nextMission.title ?? "Mission confirmée"}
                     establishment={nextMission.establishment?.name ?? "Établissement"}
                     city={nextMission.establishment?.city ?? ""}

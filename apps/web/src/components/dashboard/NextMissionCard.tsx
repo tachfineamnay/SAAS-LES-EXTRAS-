@@ -16,8 +16,8 @@ import { EASE_PREMIUM, hoverLift } from "@/lib/motion";
    ─────────────────────────────────────────────────────────────── */
 
 export interface NextMissionCardProps {
-  /** Booking ID for link */
-  bookingId: string;
+  /** Canonical details link */
+  detailsHref: string;
   /** Mission title */
   title: string;
   /** Establishment name */
@@ -44,7 +44,7 @@ function getCountdown(dateStr: string): string {
 }
 
 export function NextMissionCard({
-  bookingId,
+  detailsHref,
   title,
   establishment,
   city,
@@ -92,7 +92,7 @@ export function NextMissionCard({
       </div>
 
       <Button variant="default" size="sm" className="min-h-[44px]" asChild>
-        <Link href={`/bookings/${bookingId}`}>
+        <Link href={detailsHref}>
           Voir les détails
           <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
         </Link>

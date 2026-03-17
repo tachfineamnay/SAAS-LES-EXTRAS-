@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ApplyMissionModal } from "@/components/modals/ApplyMissionModal";
 import { PublishModal } from "@/components/modals/PublishModal";
@@ -18,7 +18,16 @@ import { LayoutDashboard, ShoppingBag, CalendarDays, Mail, UserRound } from "luc
 
 export function RenfortModalWrapper() {
   const isOpen = useUIStore((state) => state.isRenfortModalOpen);
-  if (!isOpen) return null;
+  const userRole = useUIStore((state) => state.userRole);
+  const closeRenfortModal = useUIStore((state) => state.closeRenfortModal);
+
+  useEffect(() => {
+    if (isOpen && userRole !== "ESTABLISHMENT") {
+      closeRenfortModal();
+    }
+  }, [closeRenfortModal, isOpen, userRole]);
+
+  if (!isOpen || userRole !== "ESTABLISHMENT") return null;
   return <RenfortModal />;
 }
 
@@ -77,7 +86,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MobileBottomNav
         items={bottomNavItems}
         useFab
-        onFabClick={openRenfortModal}
+        onFabClick={userRole === "FREELANCE" ? () => router.push("/marketplace") : openRenfortModal}
         fabLabel={userRole === "FREELANCE" ? "Chercher des missions" : "Publier un renfort"}
       />
       <Toaster

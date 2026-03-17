@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getService } from "@/app/actions/marketplace";
 import { getSession } from "@/lib/session";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -44,7 +45,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
     <div className="container max-w-6xl py-8 space-y-8">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <a href="/marketplace" className="hover:text-foreground">Marketplace</a>
+        <Link href="/marketplace" className="hover:text-foreground">Marketplace</Link>
         <span>/</span>
         <span className="text-foreground">{service.title}</span>
       </div>
