@@ -63,7 +63,7 @@ async function bootstrap() {
   app.useGlobalFilters(new SentryGlobalFilter(app.get(HttpAdapterHost)));
   // Serve uploaded files (diplomas, etc.) at /uploads/* — in production replace with S3/CDN
   app.useStaticAssets(join(process.cwd(), "uploads"), { prefix: "/uploads" });
-  await app.listen(process.env.PORT ?? 3001);
+  await app.listen(process.env.PORT ?? 3001, "0.0.0.0");
 }
 
 void bootstrap();
