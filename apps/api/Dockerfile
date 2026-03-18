@@ -28,6 +28,10 @@ COPY --from=builder /app/apps/api/package.json ./package.json
 COPY --from=builder /app/apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
 
 RUN chmod +x ./docker-entrypoint.sh
+RUN mkdir -p /app/uploads
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+  CMD wget -qO- http://localhost:3001/api/health || exit 1
 
 EXPOSE 3001
 ENTRYPOINT ["./docker-entrypoint.sh"]
