@@ -8,7 +8,7 @@ vi.mock("@/lib/api", () => ({ apiRequest: (...args: unknown[]) => mockApiRequest
 vi.mock("@/lib/session", () => ({ getSession: () => mockGetSession() }));
 vi.mock("next/cache", () => ({ revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args) }));
 
-const { createMissionFromRenfort, getMyAteliers } = await import("@/app/actions/marketplace");
+const { createMissionFromRenfort, getMyAteliers, createServiceFromPublish } = await import("@/app/actions/marketplace");
 
 const baseInput = {
   title: "Infirmier de nuit",
@@ -145,5 +145,68 @@ describe("getMyAteliers", () => {
     mockApiRequest.mockRejectedValue(new Error("Network error"));
     const result = await getMyAteliers();
     expect(result).toEqual([]);
+  });
+});
+
+// ─── createServiceFromPublish ─────────────────────────────────────────────────
+
+const baseServiceInput = {
+  title: "Zumba thérapeutique",
+  price: 100,
+  type: "WORKSHOP" as const,
+  capacity: 12,
+  durationMinutes: 60,
+};
+
+describe("createServiceFromPublish", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ token: "test-token" });
+    mockApiRequest.mockResolvedValue({ id: "new-service-id" });
+  });
+
+  it("appelle POST /services avec les données correctes", async () => {
+    await createServiceFromPublish(baseServiceInput);
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/services",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.objectContaining({
+          title: "Zumba thérapeutique",
+          type: "WORKSHOP",
+          capacity: 12,
+        }),
+      }),
+    );
+  });
+
+  it("retourne { ok: true } en cas de succès", async () => {
+    const result = await createServiceFromPublish(baseServiceInput);
+    expect(result).toEqual({ ok: true });
+  });
+
+  it("invalide /marketplace après création (atelierInvalidationPaths.catalogue)", async () => {
+    await createServiceFromPublish(baseServiceInput);
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/marketplace");
+  });
+
+  it("invalide /dashboard/ateliers après création (atelierInvalidationPaths.mesAteliers)", async () => {
+    await createServiceFromPublish(baseServiceInput);
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/ateliers");
+  });
+
+  it("invalide /dashboard après création", async () => {
+    await createServiceFromPublish(baseServiceInput);
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard");
+  });
+
+  it("invalide /bookings après création", async () => {
+    await createServiceFromPublish(baseServiceInput);
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/bookings");
+  });
+
+  it("lance une erreur si la session est absente", async () => {
+    mockGetSession.mockResolvedValue(null);
+    await expect(createServiceFromPublish(baseServiceInput)).rejects.toThrow("Non connecté");
   });
 });

@@ -21,12 +21,12 @@ export default async function SosDashboardPage() {
 
   const missions = await getEstablishmentMissions();
 
-  const openMissions = (missions as any[]).filter(
-    (m: any) => m.status === "OPEN" || m.status === "ASSIGNED",
+  const openMissions = missions.filter(
+    (m) => m.status === "OPEN" || m.status === "ASSIGNED",
   );
 
   // Sort: missions with most candidates first
-  openMissions.sort((a: any, b: any) => b.bookings.length - a.bookings.length);
+  openMissions.sort((a, b) => b.bookings.length - a.bookings.length);
 
   return (
     <div className="space-y-8">

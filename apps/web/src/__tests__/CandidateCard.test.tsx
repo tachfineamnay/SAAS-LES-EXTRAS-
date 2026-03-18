@@ -1,9 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { CandidateCard } from "@/components/dashboard/establishment/CandidateCard";
+import { toast } from "sonner";
+
+const mockRefresh = vi.fn();
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn() }),
+  useRouter: () => ({ refresh: (...args: unknown[]) => mockRefresh(...args) }),
 }));
 
 vi.mock("next/link", () => ({
@@ -148,5 +151,53 @@ describe("CandidateCard", () => {
       />,
     );
     expect(screen.getByText(/35/)).toBeInTheDocument();
+  });
+
+  it("appelle toast.info('Candidature refusée.') après un refus réussi", async () => {
+    mockDeclineCandidate.mockResolvedValue({ ok: true });
+    render(
+      <CandidateCard
+        bookingId="booking-decline-1"
+        freelance={defaultFreelance}
+        status="PENDING"
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /décliner/i }));
+    await waitFor(() => {
+      expect(toast.info).toHaveBeenCalledWith("Candidature refusée.");
+    });
+  });
+
+  it("appelle router.refresh() après un refus réussi", async () => {
+    mockDeclineCandidate.mockResolvedValue({ ok: true });
+    render(
+      <CandidateCard
+        bookingId="booking-decline-2"
+        freelance={defaultFreelance}
+        status="PENDING"
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /décliner/i }));
+    await waitFor(() => {
+      expect(mockRefresh).toHaveBeenCalled();
+    });
+  });
+
+  it("affiche toast.error si le refus échoue", async () => {
+    mockDeclineCandidate.mockResolvedValue({ ok: false, error: "Erreur réseau" });
+    render(
+      <CandidateCard
+        bookingId="booking-decline-3"
+        freelance={defaultFreelance}
+        status="PENDING"
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /décliner/i }));
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        "Erreur",
+        expect.objectContaining({ description: "Erreur réseau" }),
+      );
+    });
   });
 });
