@@ -67,3 +67,11 @@ export const messageNotificationTemplate = (senderName: string) => getBaseTempla
   <p>Vous avez reçu un nouveau message de <strong>${senderName}</strong> sur la plateforme Les Extras.</p>
   <p><a href="https://les-extras.com/messaging" class="btn">Voir le message</a></p>
 `);
+
+export const passwordResetTemplate = (resetUrl: string) => getBaseTemplate(`
+  <h2>Réinitialisation de votre mot de passe</h2>
+  <p>Vous avez demandé à réinitialiser le mot de passe de votre compte Les Extras.</p>
+  <p>Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe. Ce lien est valable pendant <strong>1 heure</strong>.</p>
+  <p><a href="${resetUrl}" class="btn">Réinitialiser mon mot de passe</a></p>
+  <p style="margin-top:20px;font-size:13px;color:#888;">Si vous n'avez pas effectué cette demande, ignorez cet email. Votre mot de passe ne sera pas modifié.</p>
+`);

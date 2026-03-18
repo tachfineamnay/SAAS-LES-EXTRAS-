@@ -1,9 +1,11 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
+import { randomBytes, createHash } from "crypto";
 import { JwtService } from "@nestjs/jwt";
 import { UserRole, UserStatus } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
@@ -107,6 +109,50 @@ export class AuthService {
         onboardingStep: user.onboardingStep,
       },
     };
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true },
+    });
+    if (!user) return; // never reveal whether email exists
+
+    const rawToken = randomBytes(32).toString("hex");
+    const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+    const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { resetToken: tokenHash, resetTokenExpiry: expiry },
+    });
+
+    const frontendUrl = process.env.FRONTEND_URL ?? "https://les-extras.com";
+    const resetUrl = `${frontendUrl}/auth/reset-password?token=${rawToken}`;
+    this.mailService
+      .sendPasswordResetEmail(user.email, resetUrl)
+      .catch((e) => console.error("Password reset email failed:", e));
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+    const user = await this.prisma.user.findFirst({
+      where: {
+        resetToken: tokenHash,
+        resetTokenExpiry: { gt: new Date() },
+      },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException("Token invalide ou expiré");
+    }
+
+    const password = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { password, resetToken: null, resetTokenExpiry: null },
+    });
   }
 
   private async signToken(

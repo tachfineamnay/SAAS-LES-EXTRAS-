@@ -8,6 +8,7 @@ import {
   missionCompletedTemplate,
   workshopBookingTemplate,
   messageNotificationTemplate,
+  passwordResetTemplate,
 } from './mail.templates';
 
 @Injectable()
@@ -65,5 +66,9 @@ export class MailService {
 
   async sendMessageNotificationEmail(to: string, senderName: string) {
     await this.sendMail(to, 'Nouveau message reçu', messageNotificationTemplate(senderName));
+  }
+
+  async sendPasswordResetEmail(to: string, resetUrl: string) {
+    await this.sendMail(to, 'Réinitialisation de votre mot de passe', passwordResetTemplate(resetUrl));
   }
 }

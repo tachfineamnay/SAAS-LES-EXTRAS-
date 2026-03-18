@@ -74,3 +74,46 @@ export async function register(prevState: RegisterState, formData: FormData): Pr
     // Redirect to wizard for onboarding (step will be 0 after fresh register)
     redirect("/wizard");
 }
+
+export type ForgotPasswordState = { message?: string; success?: boolean } | undefined;
+
+export async function forgotPassword(
+    prevState: ForgotPasswordState,
+    formData: FormData,
+): Promise<ForgotPasswordState> {
+    const email = formData.get("email");
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+        return { message: "Adresse email invalide." };
+    }
+    try {
+        await apiRequest("/auth/forgot-password", { method: "POST", body: { email } });
+    } catch {
+        // silently ignore — never reveal whether the email exists
+    }
+    return { success: true };
+}
+
+export type ResetPasswordState = { message?: string } | undefined;
+
+export async function resetPasswordAction(
+    prevState: ResetPasswordState,
+    formData: FormData,
+): Promise<ResetPasswordState> {
+    const token = formData.get("token");
+    const password = formData.get("password");
+    if (
+        !token || typeof token !== "string" ||
+        !password || typeof password !== "string"
+    ) {
+        return { message: "Paramètres manquants." };
+    }
+    if (password.length < 8) {
+        return { message: "Le mot de passe doit contenir au moins 8 caractères." };
+    }
+    try {
+        await apiRequest("/auth/reset-password", { method: "POST", body: { token, password } });
+    } catch (error) {
+        return { message: error instanceof Error ? error.message : "Token invalide ou expiré." };
+    }
+    redirect("/login");
+}
