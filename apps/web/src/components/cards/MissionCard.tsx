@@ -1,10 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { CalendarDays, Clock3, MapPin, Building2, Award, Zap, CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
-import { applyToMission, MissionStatus } from "@/app/actions/marketplace";
+import type { MissionStatus } from "@/app/actions/marketplace";
+import { useUIStore } from "@/lib/stores/useUIStore";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -52,25 +50,13 @@ const moneyFormatter = new Intl.NumberFormat("fr-FR", {
 });
 
 export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
-  const [isPending, startTransition] = useTransition();
-  const router = useRouter();
+  const openApplyModal = useUIStore((s) => s.openApplyModal);
   const dateStart = new Date(mission.dateStart);
   const dateEnd = new Date(mission.dateEnd);
 
   const handleApply = () => {
     if (!isVerified) return;
-
-    startTransition(async () => {
-      try {
-        await applyToMission(mission.id);
-        toast.success("Candidature envoyée !");
-        router.refresh();
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Impossible d'envoyer votre candidature.",
-        );
-      }
-    });
+    openApplyModal(mission.id);
   };
 
   return (
@@ -147,8 +133,8 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
 
       <CardFooter className="pt-3">
         {isVerified ? (
-          <Button className="w-full" onClick={handleApply} disabled={isPending} size="lg">
-            {isPending ? "Envoi..." : "Postuler"}
+          <Button className="w-full" onClick={handleApply} size="lg">
+            Postuler
           </Button>
         ) : (
           <TooltipProvider>

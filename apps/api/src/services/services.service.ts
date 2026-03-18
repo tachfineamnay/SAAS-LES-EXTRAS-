@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { BookingStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateServiceDto } from "./dto/create-service.dto";
@@ -114,6 +114,10 @@ export class ServicesService {
 
     if (!service) {
       throw new NotFoundException("Service not found");
+    }
+
+    if (date < new Date()) {
+      throw new BadRequestException("La date de réservation ne peut pas être dans le passé");
     }
 
     // Check for existing pending booking for same service/client

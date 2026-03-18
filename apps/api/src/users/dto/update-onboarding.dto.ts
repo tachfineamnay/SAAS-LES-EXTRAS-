@@ -45,10 +45,6 @@ export class UpdateOnboardingDto {
     @IsString({ each: true })
     skills?: string[];
 
-    @IsOptional()
-    @IsString()
-    diplomaUrl?: string;
-
     // ── Localisation ──────────────────────────────────────────────
     @IsOptional()
     @IsString()
@@ -86,5 +82,8 @@ export class UpdateOnboardingDto {
     isAvailable?: boolean;
 
     // ── Documents (reference URL apres upload) ──────────────────────
+    @IsOptional()
+    @IsString()
+    diplomaUrl?: string;
 }
 

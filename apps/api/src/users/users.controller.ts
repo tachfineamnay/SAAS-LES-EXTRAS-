@@ -56,6 +56,14 @@ export class UsersController {
                 },
             }),
             limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+            fileFilter: (req, file, cb) => {
+                const allowed = ["image/jpeg", "image/png", "application/pdf"];
+                if (allowed.includes(file.mimetype)) {
+                    cb(null, true);
+                } else {
+                    cb(new BadRequestException("Type de fichier non autorisé. Seuls PDF, JPG et PNG sont acceptés."), false);
+                }
+            },
         }),
     )
     uploadDiploma(

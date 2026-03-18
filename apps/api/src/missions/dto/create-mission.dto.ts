@@ -45,6 +45,8 @@ export class CreateMissionDto {
   @MinLength(2)
   address!: string;
 
+  // isRenfort is accepted for API compatibility but not persisted;
+  // all ReliefMission records are renforts by definition.
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => value === true || value === "true")

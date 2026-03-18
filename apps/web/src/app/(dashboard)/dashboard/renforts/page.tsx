@@ -141,7 +141,7 @@ export default async function SosDashboardPage() {
                           bookingId={booking.id}
                           freelance={booking.freelance}
                           status={booking.status}
-                          motivation={booking.motivation}
+                          motivation={booking.message}
                           proposedRate={booking.proposedRate}
                         />
                       ))}

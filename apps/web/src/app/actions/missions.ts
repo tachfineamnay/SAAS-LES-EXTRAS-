@@ -58,6 +58,7 @@ export async function acceptCandidate(bookingId: string): Promise<{ ok: boolean;
 
         revalidatePath("/dashboard");
         revalidatePath("/dashboard/renforts");
+        revalidatePath("/marketplace");
         return { ok: true };
     } catch (error) {
         console.error("acceptCandidate error", error);
@@ -78,6 +79,7 @@ export async function declineCandidate(bookingId: string): Promise<{ ok: boolean
 
         revalidatePath("/dashboard");
         revalidatePath("/dashboard/renforts");
+        revalidatePath("/marketplace");
         return { ok: true };
     } catch (error) {
         console.error("declineCandidate error", error);

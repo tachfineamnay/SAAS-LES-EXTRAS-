@@ -61,6 +61,13 @@ export async function deleteSession() {
     cookieStore.delete(SESSION_COOKIE_NAME);
 }
 
+/**
+ * Returns the role for ESTABLISHMENT or FREELANCE users only.
+ * Returns null for ADMIN (ADMIN sessions are handled via the admin cookie, not
+ * the front session; this helper is intentionally scoped to front users only).
+ * NOTE: this function is currently unused — prefer reading role directly from
+ * getSession() to avoid silent null returns for other roles.
+ */
 export async function getUserRole(): Promise<UserRole | null> {
     const session = await getSession();
     const role = session?.user.role;

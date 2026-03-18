@@ -16,8 +16,12 @@ export class InvoicesController {
     }
 
     @Get(':id/download')
-    async downloadInvoice(@Param('id') id: string, @Res() res: Response) {
-        const pdfBuffer = await this.invoicesService.generateInvoicePdf(id);
+    async downloadInvoice(
+        @CurrentUser() user: AuthenticatedUser,
+        @Param('id') id: string,
+        @Res() res: Response,
+    ) {
+        const pdfBuffer = await this.invoicesService.generateInvoicePdf(id, user);
 
         res.set({
             'Content-Type': 'application/pdf',

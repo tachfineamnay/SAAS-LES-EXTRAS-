@@ -34,13 +34,8 @@ export async function middleware(request: NextRequest) {
   const isHealthPath = pathname === "/health";
   const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");
   const isAdminLoginPath = pathname === "/admin/login";
-  const isAdminAuthApiPath = pathname.startsWith("/api/admin-auth/");
 
   if (isHealthPath) {
-    return NextResponse.next();
-  }
-
-  if (isAdminAuthApiPath) {
     return NextResponse.next();
   }
 

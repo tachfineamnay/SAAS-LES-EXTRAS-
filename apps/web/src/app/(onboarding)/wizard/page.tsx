@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { EstablishmentFlow } from "@/components/onboarding/EstablishmentFlow";
 import { FreelanceFlow } from "@/components/onboarding/FreelanceFlow";
 import { getSession } from "@/lib/session";
+import { MAX_STEP_BY_ROLE } from "@/lib/constants";
 
 export default async function WizardPage() {
     const session = await getSession();
@@ -14,7 +15,7 @@ export default async function WizardPage() {
     }
 
     // Si l'onboarding est déjà terminé, renvoyer vers l'espace correspondant
-    const maxStep = role === "FREELANCE" ? 4 : 3;
+    const maxStep = MAX_STEP_BY_ROLE[role as keyof typeof MAX_STEP_BY_ROLE] ?? 3;
     if (onboardingStep >= maxStep) {
         redirect(role === "FREELANCE" ? "/marketplace" : "/dashboard");
     }

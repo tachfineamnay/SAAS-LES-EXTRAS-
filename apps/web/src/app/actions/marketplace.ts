@@ -252,6 +252,7 @@ export async function getMyAteliers(token?: string): Promise<MesAtelierItem[]> {
   }
 }
 
+/** @deprecated Stub returning empty data — use getAvailableMissions() or getMarketplaceCatalogue() instead. */
 export async function getMarketplaceData(token?: string): Promise<MarketplaceData> {
   return { missions: [], services: [], isDegraded: false };
 }

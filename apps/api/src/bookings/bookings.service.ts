@@ -309,10 +309,12 @@ export class BookingsService {
       }
 
       if (user.role === UserRole.FREELANCE) {
+        // A freelance can only withdraw their own application, not cancel the whole mission
         const freelanceBooking = await this.prisma.booking.findFirst({
           where: {
             reliefMissionId: input.lineId,
             freelanceId: user.id,
+            status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
           },
           select: { id: true },
         });
@@ -320,8 +322,16 @@ export class BookingsService {
         if (!freelanceBooking) {
           throw new ForbiddenException("You cannot cancel this mission");
         }
+
+        await this.prisma.booking.update({
+          where: { id: freelanceBooking.id },
+          data: { status: BookingStatus.CANCELLED },
+        });
+
+        return { ok: true };
       }
 
+      // ESTABLISHMENT: cancel the whole mission and all pending/confirmed bookings
       await this.prisma.$transaction([
         this.prisma.reliefMission.update({
           where: { id: input.lineId },

@@ -3,7 +3,7 @@ import { BookingsService } from './bookings.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { MailService } from '../mail/mail.service';
-import { BookingStatus, ReliefMissionStatus, UserRole } from '@prisma/client';
+import { BookingStatus, ReliefMissionStatus, UserRole, UserStatus } from '@prisma/client';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 
 describe('BookingsService', () => {
@@ -62,7 +62,7 @@ describe('BookingsService', () => {
 
   describe('completeBooking', () => {
     it('should complete a confirmed booking and its relief mission', async () => {
-      const user = { id: 'est-1', email: 'est@est.com', role: UserRole.ESTABLISHMENT };
+      const user = { id: 'est-1', email: 'est@est.com', role: UserRole.ESTABLISHMENT, status: UserStatus.VERIFIED, onboardingStep: 3 };
       const booking = {
         id: 'booking-1',
         status: BookingStatus.CONFIRMED,
@@ -89,7 +89,7 @@ describe('BookingsService', () => {
     });
 
     it('should throw BadRequest if booking is not CONFIRMED', async () => {
-      const user = { id: 'est-1', email: 'est@est.com', role: UserRole.ESTABLISHMENT };
+      const user = { id: 'est-1', email: 'est@est.com', role: UserRole.ESTABLISHMENT, status: UserStatus.VERIFIED, onboardingStep: 3 };
       const booking = {
         id: 'booking-1',
         status: BookingStatus.PENDING,
@@ -102,7 +102,7 @@ describe('BookingsService', () => {
     });
 
     it('should throw Forbidden if user is not the establishment owner', async () => {
-      const user = { id: 'other-user', email: 'other@est.com', role: UserRole.ESTABLISHMENT };
+      const user = { id: 'other-user', email: 'other@est.com', role: UserRole.ESTABLISHMENT, status: UserStatus.VERIFIED, onboardingStep: 3 };
       const booking = {
         id: 'booking-1',
         status: BookingStatus.CONFIRMED,
@@ -118,7 +118,7 @@ describe('BookingsService', () => {
 
   describe('markPaymentSettled', () => {
     it('should mark a completed booking as PAID', async () => {
-      const user = { id: 'est-1', email: 'est@est.com', role: UserRole.ESTABLISHMENT };
+      const user = { id: 'est-1', email: 'est@est.com', role: UserRole.ESTABLISHMENT, status: UserStatus.VERIFIED, onboardingStep: 3 };
       const booking = {
         id: 'booking-1',
         status: BookingStatus.COMPLETED,
@@ -139,7 +139,7 @@ describe('BookingsService', () => {
     });
 
     it('should throw Forbidden if user is not the establishment', async () => {
-      const user = { id: 'free-1', email: 'free@est.com', role: UserRole.FREELANCE };
+      const user = { id: 'free-1', email: 'free@est.com', role: UserRole.FREELANCE, status: UserStatus.VERIFIED, onboardingStep: 4 };
       const booking = {
         id: 'booking-1',
         status: BookingStatus.COMPLETED,
@@ -152,7 +152,7 @@ describe('BookingsService', () => {
     });
 
     it('should throw BadRequest if booking is not COMPLETED', async () => {
-      const user = { id: 'est-1', email: 'est@est.com', role: UserRole.ESTABLISHMENT };
+      const user = { id: 'est-1', email: 'est@est.com', role: UserRole.ESTABLISHMENT, status: UserStatus.VERIFIED, onboardingStep: 3 };
       const booking = {
         id: 'booking-1',
         status: BookingStatus.CONFIRMED, // Not completed yet
@@ -166,8 +166,8 @@ describe('BookingsService', () => {
   });
 
   describe('cancelBookingLine — lineType BOOKING', () => {
-    const estUser = { id: 'est-1', email: 'est@test.com', role: UserRole.ESTABLISHMENT };
-    const freeUser = { id: 'free-1', email: 'free@test.com', role: UserRole.FREELANCE };
+    const estUser = { id: 'est-1', email: 'est@test.com', role: UserRole.ESTABLISHMENT, status: UserStatus.VERIFIED, onboardingStep: 3 };
+    const freeUser = { id: 'free-1', email: 'free@test.com', role: UserRole.FREELANCE, status: UserStatus.VERIFIED, onboardingStep: 4 };
 
     it('annule le booking PENDING et retourne { ok: true }', async () => {
       const booking = {

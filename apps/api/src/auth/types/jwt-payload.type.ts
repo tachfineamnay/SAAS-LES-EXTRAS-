@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { UserRole, UserStatus } from "@prisma/client";
 
 export type JwtPayload = {
   email: string;
@@ -11,4 +11,6 @@ export type AuthenticatedUser = {
   id: string;
   email: string;
   role: UserRole;
+  status: UserStatus;
+  onboardingStep: number;
 };

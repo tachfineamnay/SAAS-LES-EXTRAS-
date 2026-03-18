@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import PDFDocument from 'pdfkit';
 import { AuthenticatedUser } from '../auth/types/jwt-payload.type';
@@ -55,14 +55,12 @@ export class InvoicesService {
         });
     }
 
-    async generateInvoicePdf(invoiceId: string): Promise<Buffer> {
-        // ... (existing implementation with tweaks if needed)
-        // For brevity preserving existing PDF logic but ensuring safety
+    async generateInvoicePdf(invoiceId: string, user: AuthenticatedUser): Promise<Buffer> {
         const invoice = await this.prisma.invoice.findFirst({
             where: {
                 OR: [
                     { id: invoiceId },
-                    { bookingId: invoiceId } // handling both just in case
+                    { bookingId: invoiceId }
                 ]
             },
             include: {
@@ -78,6 +76,17 @@ export class InvoicesService {
         });
 
         if (!invoice) throw new NotFoundException('Invoice not found');
+
+        const { booking } = invoice;
+        const isOwner =
+            booking.establishmentId === user.id ||
+            booking.freelanceId === user.id ||
+            booking.service?.ownerId === user.id;
+
+        if (!isOwner) {
+            throw new ForbiddenException('Access denied');
+        }
+
         return this.createPdf(invoice);
     }
 

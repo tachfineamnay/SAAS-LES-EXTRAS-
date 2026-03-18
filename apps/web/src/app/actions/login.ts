@@ -68,9 +68,14 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
 
     // If onboarding not completed, send back to wizard
     const role = response.user.role as "ESTABLISHMENT" | "FREELANCE" | "ADMIN";
-    
+
+    // Admin accounts must authenticate via Le Desk (APP_RUNTIME=desk), not through
+    // the front-user login page. Reject here to prevent an ADMIN from landing on
+    // the front dashboard with a mismatched session.
     if (role === "ADMIN") {
-        redirect("/dashboard");
+        return {
+            message: "Accès refusé. Les comptes administrateurs se connectent via Le Desk.",
+        };
     }
 
     const maxStep = role === "FREELANCE" ? 4 : 3;

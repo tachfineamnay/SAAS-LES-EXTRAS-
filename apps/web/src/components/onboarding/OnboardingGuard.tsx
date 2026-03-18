@@ -15,8 +15,8 @@ export function OnboardingGuard({ children, userRole, onboardingStep }: Onboardi
     const [mounted, setMounted] = useState(false);
     const { setUserRole, setOnboardingStep } = useUIStore();
 
-    // ESTABLISHMENT flow has 3 steps, FREELANCE flow has 4 steps
-    const maxSteps = userRole === "FREELANCE" ? 4 : 3;
+    // Use shared constants — single source of truth for max steps per role
+    const maxSteps = userRole === "FREELANCE" ? 4 : userRole === "ESTABLISHMENT" ? 3 : 0;
     const isComplete = onboardingStep >= maxSteps;
 
     useEffect(() => {

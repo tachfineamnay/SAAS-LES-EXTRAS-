@@ -1,9 +1,11 @@
 import "./instrument";
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import { NestExpressApplication } from "@nestjs/platform-express";
 import { HttpAdapterHost } from "@nestjs/core";
 import { SentryGlobalFilter } from "@sentry/nestjs/setup";
 import helmet from "helmet";
+import { join } from "path";
 import { AppModule } from "./app.module";
 
 const DEFAULT_CORS_ORIGINS = [
@@ -28,7 +30,7 @@ function parseCorsOrigins(): string[] {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const allowedOrigins = parseCorsOrigins();
 
   app.enableCors({
@@ -59,6 +61,8 @@ async function bootstrap() {
     }),
   );
   app.useGlobalFilters(new SentryGlobalFilter(app.get(HttpAdapterHost)));
+  // Serve uploaded files (diplomas, etc.) at /uploads/* — in production replace with S3/CDN
+  app.useStaticAssets(join(process.cwd(), "uploads"), { prefix: "/uploads" });
   await app.listen(process.env.PORT ?? 3001);
 }
 
