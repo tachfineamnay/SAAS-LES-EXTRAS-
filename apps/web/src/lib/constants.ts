@@ -1,5 +1,5 @@
 export const MAX_STEP_BY_ROLE = {
-    FREELANCE: 4,
-    ESTABLISHMENT: 3,
+    FREELANCE: 2,
+    ESTABLISHMENT: 2,
     ADMIN: 0,
 } as const;

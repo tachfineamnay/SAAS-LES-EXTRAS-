@@ -1,58 +1,31 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { StepLayout } from "./StepLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { saveOnboardingStep, completeOnboarding, type OnboardingData, uploadDiploma } from "@/app/actions/onboarding";
+import { saveOnboardingStep, completeOnboarding, type OnboardingData } from "@/app/actions/onboarding";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
 
 export function FreelanceFlow({ currentStep }: { currentStep: number }) {
     const [step, setStep] = useState(currentStep === 0 ? 1 : currentStep);
     const [isPending, startTransition] = useTransition();
+    const router = useRouter();
+    const totalSteps = 2;
 
-    // State for form fields
+    // Step 1 — Identité
     const [jobTitle, setJobTitle] = useState("");
     const [bio, setBio] = useState("");
-    const [skills, setSkills] = useState<string[]>([]);
-    const [currentSkill, setCurrentSkill] = useState("");
-    const [diplomaFile, setDiplomaFile] = useState<File | null>(null);
+
+    // Step 2 — Localisation
     const [address, setAddress] = useState("");
-
-    const router = useRouter();
-    const totalSteps = 4;
-
-    const STORAGE_KEY = "lesextras_wizard_fre";
-
-    // ── Restaurer depuis sessionStorage au montage ───────────────
-    useEffect(() => {
-        try {
-            const raw = sessionStorage.getItem(STORAGE_KEY);
-            if (!raw) return;
-            const saved = JSON.parse(raw) as Record<string, string | string[]>;
-            if (saved.jobTitle && typeof saved.jobTitle === "string") setJobTitle(saved.jobTitle);
-            if (saved.bio && typeof saved.bio === "string") setBio(saved.bio);
-            if (Array.isArray(saved.skills)) setSkills(saved.skills as string[]);
-            if (saved.address && typeof saved.address === "string") setAddress(saved.address);
-        } catch {
-            // sessionStorage peut être indisponible
-        }
-    }, []);
-
-    // ── Persister dans sessionStorage à chaque changement ────────
-    useEffect(() => {
-        try {
-            sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ jobTitle, bio, skills, address }));
-        } catch {
-            // silently ignore
-        }
-    }, [jobTitle, bio, skills, address]);
+    const [city, setCity] = useState("");
+    const [zipCode, setZipCode] = useState("");
+    const [phone, setPhone] = useState("");
 
     const handleBack = () => setStep((s) => Math.max(1, s - 1));
 
@@ -62,44 +35,24 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
                 let data: OnboardingData = {};
 
                 if (step === 1) {
-                    if (!jobTitle) throw new Error("Veuillez renseigner votre métier.");
-                    data = { jobTitle };
+                    if (!jobTitle) { toast.error("Veuillez sélectionner votre métier."); return; }
+                    if (!bio || bio.length < 10) { toast.error("Veuillez écrire une courte bio (10 caractères min)."); return; }
+                    data = { jobTitle, bio };
                 } else if (step === 2) {
-                    if (!bio) throw new Error("Veuillez écrire une courte bio.");
-                    data = { bio, skills };
-                } else if (step === 3) {
-                    if (diplomaFile) {
-                        const formData = new FormData();
-                        formData.append("file", diplomaFile);
-                        const uploadResult = await uploadDiploma(formData);
-                        if (uploadResult.error) {
-                            toast.error(uploadResult.error);
-                            return;
-                        }
-                        data = { diplomaUrl: uploadResult.url };
-                    }
-                    // Si pas de fichier, on passe l'étape (diplôme optionnel)
-                } else if (step === 4) {
-                    if (!address) throw new Error("Veuillez renseigner votre adresse.");
-                    data = { address };
+                    if (!address) { toast.error("Veuillez renseigner votre adresse."); return; }
+                    if (!city) { toast.error("Veuillez renseigner votre ville."); return; }
+                    data = { address, city, zipCode, phone };
                 }
 
                 const saveResult = await saveOnboardingStep(step, data);
-                if (saveResult.error) {
-                    toast.error(saveResult.error);
-                    return;
-                }
+                if (saveResult.error) { toast.error(saveResult.error); return; }
 
                 if (step < totalSteps) {
                     setStep(step + 1);
                 } else {
                     const completeResult = await completeOnboarding();
-                    if (completeResult.error) {
-                        toast.error(completeResult.error);
-                        return;
-                    }
-                    try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
-                    toast.success("Profil complété ! En attente de validation.");
+                    if (completeResult.error) { toast.error(completeResult.error); return; }
+                    toast.success("Profil complété ! Bienvenue sur Les-Extras.");
                     router.push("/marketplace");
                     router.refresh();
                 }
@@ -109,31 +62,15 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
         });
     };
 
-    const addSkill = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter" && currentSkill.trim()) {
-            e.preventDefault();
-            if (!skills.includes(currentSkill.trim())) {
-                setSkills([...skills, currentSkill.trim()]);
-            }
-            setCurrentSkill("");
-        }
-    };
-
-    const removeSkill = (skill: string) => {
-        setSkills(skills.filter(s => s !== skill));
-    };
-
     const renderStepContent = () => {
         switch (step) {
             case 1:
                 return (
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="jobTitle">Intitulé de votre poste</Label>
+                            <Label>Votre métier <span className="text-destructive">*</span></Label>
                             <Select onValueChange={setJobTitle} value={jobTitle}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Sélectionnez votre métier" />
-                                </SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Sélectionnez votre métier" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Educateur Spécialisé">Éducateur Spécialisé (ES)</SelectItem>
                                     <SelectItem value="Moniteur Educateur">Moniteur Éducateur (ME)</SelectItem>
@@ -143,85 +80,40 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
                                 </SelectContent>
                             </Select>
                         </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="bio">Présentez-vous en quelques mots <span className="text-destructive">*</span></Label>
+                            <Textarea
+                                id="bio"
+                                placeholder="Votre expérience, vos spécialités, ce qui vous motive..."
+                                value={bio}
+                                onChange={(e) => setBio(e.target.value)}
+                                rows={4}
+                            />
+                        </div>
                     </div>
                 );
             case 2:
                 return (
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="bio">À propos de vous</Label>
-                            <Textarea
-                                id="bio"
-                                placeholder="Décrivez votre expérience, vos atouts..."
-                                value={bio}
-                                onChange={(e) => setBio(e.target.value)}
-                                rows={4}
-                            />
+                            <Label htmlFor="address">Adresse <span className="text-destructive">*</span></Label>
+                            <Input id="address" placeholder="10 rue de la République" value={address} onChange={(e) => setAddress(e.target.value)} />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="skills">Compétences (Appuyez sur Entrée)</Label>
-                            <Input
-                                id="skills"
-                                placeholder="Ex: Gestion de conflit, Autisme, Permis B..."
-                                value={currentSkill}
-                                onChange={(e) => setCurrentSkill(e.target.value)}
-                                onKeyDown={addSkill}
-                            />
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {skills.map(skill => (
-                                    <Badge key={skill} variant="secondary" className="gap-1">
-                                        {skill}
-                                        <button onClick={() => removeSkill(skill)} className="ml-1 hover:text-destructive" aria-label={`Retirer la compétence ${skill}`}>
-                                            <X className="h-3 w-3" />
-                                        </button>
-                                    </Badge>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                );
-            case 3:
-                return (
-                    <div className="space-y-4">
-                        <div className="rounded-lg border border-dashed p-8 text-center hover:bg-muted/50 transition-colors">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <p className="text-sm font-medium">Diplôme principal</p>
-                                <p className="text-xs text-muted-foreground">PDF, JPG ou PNG (Max 5Mo)</p>
-                                <Input
-                                    type="file"
-                                    accept=".pdf,.jpg,.jpeg,.png"
-                                    onChange={(e) => setDiplomaFile(e.target.files?.[0] || null)}
-                                    className="max-w-xs mx-auto mt-4"
-                                />
+                                <Label htmlFor="zipCode">Code postal</Label>
+                                <Input id="zipCode" placeholder="75001" value={zipCode} onChange={(e) => setZipCode(e.target.value)} maxLength={5} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="city">Ville <span className="text-destructive">*</span></Label>
+                                <Input id="city" placeholder="Paris" value={city} onChange={(e) => setCity(e.target.value)} />
                             </div>
                         </div>
-                        <p className="text-xs text-muted-foreground text-center">
-                            Ce document est nécessaire pour valider votre statut de Freelance.
-                            <br />
-                            <span
-                                className="text-primary cursor-pointer underline"
-                                onClick={() => { setDiplomaFile(null); handleNext(); }}
-                            >
-                                Passer cette étape (vous pourrez l&apos;ajouter plus tard)
-                            </span>
-                        </p>
-                    </div>
-                );
-            case 4:
-                return (
-                    <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="address">Adresse postale complète</Label>
-                            <Input
-                                id="address"
-                                placeholder="10 rue de la Liberté, 75001 Paris"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                Sert au calcul des frais kilométriques lors des missions.
-                            </p>
+                            <Label htmlFor="phone">Téléphone</Label>
+                            <Input id="phone" type="tel" placeholder="06 12 34 56 78" value={phone} onChange={(e) => setPhone(e.target.value)} />
                         </div>
+                        <p className="text-xs text-muted-foreground">Sert au calcul des frais kilométriques et à vous contacter.</p>
                     </div>
                 );
             default:
@@ -233,36 +125,15 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
         <StepLayout
             currentStep={step}
             totalSteps={totalSteps}
-            title={
-                step === 1 ? "Identité Professionnelle" :
-                    step === 2 ? "Expertise & Bio" :
-                        step === 3 ? "Documents Justificatifs" :
-                            "Localisation"
-            }
-            description={
-                step === 1 ? "Dites-nous qui vous êtes." :
-                    step === 2 ? "Mettez en avant vos atouts." :
-                        step === 3 ? "Prouvez votre qualification." :
-                            "Pour des missions proches de chez vous."
-            }
+            title={step === 1 ? "Votre Profil" : "Localisation & Contact"}
+            description={step === 1 ? "Dites-nous qui vous êtes." : "Pour des missions proches de chez vous."}
         >
             <div className="space-y-6">
                 {renderStepContent()}
-
                 <div className="flex justify-between pt-4">
-                    <Button
-                        variant="ghost"
-                        onClick={handleBack}
-                        disabled={isPending || step === 1}
-                    >
-                        Retour
-                    </Button>
+                    <Button variant="ghost" onClick={handleBack} disabled={isPending || step === 1}>Retour</Button>
                     <Button onClick={handleNext} disabled={isPending}>
-                        {isPending
-                            ? "Enregistrement…"
-                            : step === totalSteps
-                              ? "Terminer"
-                              : "Continuer"}
+                        {isPending ? "Enregistrement…" : step < totalSteps ? "Continuer" : "Terminer"}
                     </Button>
                 </div>
             </div>
