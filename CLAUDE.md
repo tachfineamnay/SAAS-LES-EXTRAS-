@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-> Mis à jour le 17 mars 2026 — État réel du projet.
+> Mis à jour le 19 mars 2026 — État réel du projet.
 
 ---
 
@@ -21,8 +21,8 @@ Deux piliers :
 2. **Ateliers** — catalogue de services proposés par des freelances aux établissements
 
 **Vocabulaire obligatoire** : `FREELANCE` / `ESTABLISHMENT` (jamais talent/client/candidat/formateur).  
-**Mode** : Light only, pas de dark mode.  
-**Design system** : Direction « Quietly Bold » — teal profond + terracotta + ivoire chaud (voir `PHASE2_DESIGN_SYSTEM.md`).
+**Mode** : **Dark-first** — `[data-theme="dark"]` sur `<html>`. Tokens clairs conservés dans `:root`, tokens sombres dans `[data-theme="dark"]`.  
+**Design system** : Direction « Quietly Bold After Dark » — surfaces teal-noir (`rgba(13,44,52,.72)`), glassmorphism, coral UNIQUEMENT pour urgences/badges Urgent/boutons Postuler, teal `#0A6870` pour toutes les actions primaires (voir `PHASE2_DESIGN_SYSTEM.md`).
 
 ---
 
@@ -34,7 +34,7 @@ Deux piliers :
 │   ├── api/          # NestJS + Prisma — API REST (port 3001)
 │   └── web/          # Next.js 14 App Router — Front + Desk (port 3000)
 ├── scripts/          # verify-system.ts, validate-build.ts
-├── .agent/skills/    # Skills de contexte (nestjs-api, nextjs-frontend, prisma-schema…)
+├── .agent/skills/    # Skills de contexte (nestjs-api, nextjs-frontend, prisma-schema, design-system…)
 ├── turbo.json
 └── pnpm-workspace.yaml
 ```
@@ -155,6 +155,7 @@ src/app/
 ├── (onboarding)/     # /welcome, /wizard
 ├── (admin)/          # /admin/** — interface admin
 ├── (admin-auth)/     # /admin/login
+├── v2/               # ✨ Nouvelle landing page dark-glass (19 mars 2026)
 ├── ateliers/[id]     # Fiche atelier publique
 ├── freelances/[id]   # Fiche freelance publique
 └── etablissements/   # Page publique établissements
@@ -248,6 +249,7 @@ DEMO_USER_PASSWORD=password123
 | Phase 3 — Backend completion | `PHASE3_BACKEND_COMPLETION.md` | ✅ Livré |
 | Phase 4 — UX Flows | `PHASE4_UX_FLOWS.md` + `PHASE4A_UX_PLAN.md` | ✅ Livré |
 | Phase 6 — QA / Tests / Release | `PHASE6_QA_TESTS_RELEASE.md` | 🚧 En cours |
+| Dark mode + Landing V2 | `apps/web/src/app/v2/page.tsx` | ✅ Livré (19 mars 2026) |
 
 ---
 
