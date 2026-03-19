@@ -41,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${plusJakartaSans.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="fr" data-theme="dark" className={`${plusJakartaSans.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="font-[family-name:var(--font-body)]">
         {children}
         <Toaster position="top-center" richColors />

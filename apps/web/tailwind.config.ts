@@ -1,7 +1,8 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  // Pas de darkMode — light only
+  // Dark mode via data-theme attribute
+  darkMode: ["selector", '[data-theme="dark"]'],
   content: [
     "./src/pages/**/*.{ts,tsx}",
     "./src/components/**/*.{ts,tsx}",
@@ -244,6 +245,11 @@ const config: Config = {
         "glass":    "0 8px 32px hsla(0,0%,0%,0.05), inset 0 1px 0 0 hsla(0,0%,100%,0.4)",
         "glass-lg": "0 12px 48px hsla(0,0%,0%,0.07), inset 0 1px 0 0 hsla(0,0%,100%,0.5)",
         "glass-sm": "0 4px 16px hsla(0,0%,0%,0.03), inset 0 1px 0 0 hsla(0,0%,100%,0.3)",
+        /* Dark mode glass shadows */
+        "dark-glass":    "0 4px 24px rgba(0,0,0,0.3), 0 1px 4px rgba(0,0,0,0.2), inset 0 1px 0 0 rgba(255,255,255,0.05)",
+        "dark-glass-lg": "0 8px 40px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.25), inset 0 1px 0 0 rgba(255,255,255,0.08)",
+        "dark-glow-teal":  "0 0 0 1px hsla(185,84%,24%,0.3), 0 4px 24px hsla(185,84%,24%,0.2), 0 12px 48px hsla(185,84%,24%,0.1)",
+        "dark-glow-coral": "0 0 0 1px hsla(14,65%,52%,0.3), 0 4px 24px hsla(14,65%,52%,0.2)",
       },
       animation: {
         "fade-up":        "fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both",
@@ -260,6 +266,8 @@ const config: Config = {
         "border-flow":    "border-flow 4s ease infinite",
         "count-up":       "count-up 0.4s cubic-bezier(0.22,1,0.36,1) both",
         "ripple":         "ripple-expand 0.6s ease forwards",
+        "oscillate":     "oscillate 5s ease-in-out infinite",
+        "shimmer-sweep": "shimmer-sweep 4s ease-in-out infinite",
       },
     },
   },
