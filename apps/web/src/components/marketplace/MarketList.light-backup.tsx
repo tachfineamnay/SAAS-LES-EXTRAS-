@@ -64,9 +64,9 @@ export function MarketList({
       )}
 
       {isDegraded && (
-        <div className="rounded-lg border border-[hsl(var(--amber)/0.25)] bg-[hsl(var(--amber)/0.08)] p-4">
-          <p className="text-sm font-medium text-[hsl(var(--amber))]">Mode Dégradé</p>
-          <p className="text-sm text-[hsl(var(--amber)/0.8)] mt-1">
+        <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+          <p className="text-sm font-medium text-amber-700">Mode Dégradé</p>
+          <p className="text-sm text-amber-600 mt-1">
             {degradedReason ??
               "Données temporairement indisponibles, veuillez réessayer dans quelques instants."}
           </p>

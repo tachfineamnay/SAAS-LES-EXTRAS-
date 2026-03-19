@@ -100,7 +100,7 @@ export default function LoginPage() {
             </motion.div>
 
             {/* Right — form */}
-            <div className="flex flex-1 items-center justify-center p-6 sm:p-10 bg-background">
+            <div className="flex flex-1 items-center justify-center p-6 sm:p-10 bg-white">
                 <motion.div
                     className="w-full max-w-sm space-y-8"
                     initial={{ opacity: 0, y: 20 }}

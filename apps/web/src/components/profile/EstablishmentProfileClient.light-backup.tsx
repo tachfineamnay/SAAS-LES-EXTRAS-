@@ -159,12 +159,15 @@ export function EstablishmentProfileClient({ initialData, stats }: Establishment
       {/* ── HERO BANNER ── */}
       <motion.div variants={itemFadeUp} className="relative overflow-hidden rounded-2xl">
         <div className="h-36 bg-gradient-to-br from-[hsl(var(--coral))] via-[hsl(var(--coral)/0.8)] to-[hsl(var(--sand)/0.7)]" />
-        <div className="absolute inset-0 dot-mesh opacity-30" />
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+          backgroundSize: "16px 16px",
+        }} />
 
         <div className="relative -mt-16 px-6 pb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
             {/* Logo */}
-            <div className="h-28 w-28 rounded-2xl glass-panel dark-card-shadow border-2 border-[rgba(255,255,255,0.10)] flex items-center justify-center">
+            <div className="h-28 w-28 rounded-2xl bg-white shadow-lg border-4 border-white flex items-center justify-center">
               <div className="text-center">
                 <Building2 className="h-8 w-8 mx-auto text-[hsl(var(--coral))]" />
                 <span className="text-sm font-bold text-[hsl(var(--coral))] font-[family-name:var(--font-display)] mt-1 block">

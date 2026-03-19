@@ -22,10 +22,12 @@ function useHeaderStyle(
   borderOpacity?: MotionValue<number>
 ): MotionStyle | undefined {
   // Hooks must be called unconditionally — pass fallback values when not scroll-linked
-  const bg = useMotionTemplate`rgba(7, 19, 22, ${headerOpacity ?? 0.8})`;
-  const border = useMotionTemplate`rgba(255, 255, 255, calc(${borderOpacity ?? 0.7} * 0.08))`;
+  const bg = useMotionTemplate`hsla(0, 0%, 100%, ${headerOpacity ?? 0.8})`;
+  const border = useMotionTemplate`hsla(36, 18%, 89%, ${borderOpacity ?? 0.7})`;
 
   if (!headerOpacity) return undefined;
+  // Type assertion is safe: useMotionTemplate returns MotionValue<string>,
+  // which is assignable to MotionStyle properties
   return {
     background: bg,
     borderBottomColor: border,
@@ -43,8 +45,8 @@ export function Header({ onOpenMobileSidebar, headerOpacity, borderOpacity }: He
   return (
     <motion.header
       className={cn(
-        "sticky top-0 z-40 border-b glass-nav",
-        !dynamicStyle && "glass-nav"
+        "sticky top-0 z-40 backdrop-blur-md border-b",
+        !dynamicStyle && "bg-white/80 backdrop-blur-md border-border/70"
       )}
       style={dynamicStyle}
     >
@@ -89,7 +91,7 @@ export function Header({ onOpenMobileSidebar, headerOpacity, borderOpacity }: He
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[hsl(var(--coral))] ring-2 ring-[hsl(var(--background))]"
+                  className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[hsl(var(--coral))] ring-2 ring-white"
                   aria-hidden="true"
                 />
               </Button>

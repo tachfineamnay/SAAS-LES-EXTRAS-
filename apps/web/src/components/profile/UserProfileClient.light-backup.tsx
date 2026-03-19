@@ -120,7 +120,7 @@ function StatTile({ icon: Icon, label, value, color }: {
   color: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl glass-panel-dense px-4 py-3">
+    <div className="flex items-center gap-3 rounded-xl bg-white/70 border border-border/50 px-4 py-3">
       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${color}`}>
         <Icon className="h-4.5 w-4.5" />
       </div>
@@ -210,7 +210,10 @@ export function UserProfileClient({ initialData, userRole, userEmail }: UserProf
         <div className="h-36 bg-gradient-to-br from-[hsl(var(--teal))] via-[hsl(var(--teal)/0.8)] to-[hsl(var(--emerald)/0.6)]" />
 
         {/* Dot pattern overlay */}
-        <div className="absolute inset-0 dot-mesh opacity-30" />
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+          backgroundSize: "16px 16px",
+        }} />
 
         {/* Profile card overlay */}
         <div className="relative -mt-16 px-6 pb-6">
@@ -442,7 +445,7 @@ export function UserProfileClient({ initialData, userRole, userEmail }: UserProf
                             {(vals.skills || []).map((s, i) => (
                               <Badge key={i} variant="teal" className="pr-1 gap-1">
                                 {s}
-                                <button type="button" onClick={() => removeSkill(s)} className="ml-0.5 hover:text-destructive" aria-label={`Supprimer ${s}`}>
+                                <button type="button" onClick={() => removeSkill(s)} className="ml-0.5 hover:text-destructive">
                                   <X className="h-3 w-3" />
                                 </button>
                               </Badge>

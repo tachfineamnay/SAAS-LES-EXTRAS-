@@ -79,8 +79,8 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
                                             className={cn(
                                                 "gap-1 text-xs",
                                                 mission.shift === "NUIT"
-                                                    ? "border-[hsl(var(--primary)/0.4)] text-[hsl(var(--primary))]"
-                                                    : "border-[hsl(var(--amber)/0.5)] text-[hsl(var(--amber))]"
+                                                    ? "border-indigo-400 text-indigo-600"
+                                                    : "border-amber-400 text-amber-600"
                                             )}
                                         >
                                             {mission.shift === "NUIT" ? (

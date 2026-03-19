@@ -95,7 +95,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
               {publicLabels.map((label) => (
                 <span
                   key={label}
-                  className="inline-flex items-center px-2 py-0.5 rounded-full bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] text-[10px] font-medium border border-[hsl(var(--primary)/0.20)]"
+                  className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-medium border border-blue-100"
                 >
                   {label}
                 </span>

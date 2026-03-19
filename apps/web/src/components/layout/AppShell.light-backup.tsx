@@ -71,10 +71,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative flex h-screen w-full flex-col bg-background font-sans text-foreground antialiased md:flex-row overflow-hidden">
-      {/* Ambient background — dark glow */}
+      {/* Ambient background — subtle top gradient */}
       <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
-        <div className="absolute top-0 left-0 right-0 h-80 bg-gradient-to-b from-[hsl(var(--primary)/0.08)] via-transparent to-transparent" />
-        <div className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full bg-[hsl(var(--primary)/0.04)] blur-3xl" />
+        <div className="absolute top-0 left-0 right-0 h-80 bg-gradient-to-b from-[hsl(var(--teal-light)/0.3)] via-background to-background" />
       </div>
 
       <Sidebar isMobileOpen={isMobileOpen} onMobileOpenChange={setMobileOpen} />

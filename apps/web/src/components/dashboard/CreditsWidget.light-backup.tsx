@@ -72,7 +72,7 @@ export function CreditsWidget({ credits }: CreditsWidgetProps) {
 
     return (
         <div className="space-y-4">
-            <GlassCard variant={credits === 0 ? "glass" : "interactive"} className={credits === 0 ? "border-[hsl(var(--destructive)/0.6)]" : ""}>
+            <GlassCard variant={credits === 0 ? "glass" : "interactive"} className={credits === 0 ? "border-red-500" : ""}>
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium">Crédits Recrutement</span>
@@ -122,7 +122,7 @@ export function CreditsWidget({ credits }: CreditsWidgetProps) {
                                         <ul className="space-y-2 mb-6 flex-1">
                                             {pack.features.map((feature, i) => (
                                                 <li key={i} className="text-xs flex items-center text-muted-foreground">
-                                                    <Check className="h-3 w-3 mr-2 text-[hsl(var(--emerald))]" />
+                                                    <Check className="h-3 w-3 mr-2 text-green-500" />
                                                     {feature}
                                                 </li>
                                             ))}

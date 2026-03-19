@@ -86,8 +86,8 @@ function NavLink({
           "transition-all duration-200 group min-h-[44px]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--teal)/0.5)]",
           isActive
-            ? "bg-[hsl(var(--teal)/0.15)] text-[hsl(var(--teal))] font-semibold shadow-[0_0_12px_hsl(var(--teal)/0.15)]"
-            : "text-muted-foreground hover:bg-[hsl(var(--teal)/0.08)] hover:text-foreground"
+            ? "bg-[hsl(var(--color-teal-50))] text-[hsl(var(--color-teal-700))] font-semibold shadow-[0_0_12px_hsl(var(--teal)/0.10)]"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
         )}
         aria-current={isActive ? "page" : undefined}
       >
@@ -105,8 +105,8 @@ function NavLink({
           className={cn(
             "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors duration-200",
             isActive
-              ? "bg-[hsl(var(--teal)/0.15)] text-[hsl(var(--teal))]"
-              : "bg-[hsl(var(--teal)/0.06)] text-muted-foreground group-hover:bg-[hsl(var(--teal)/0.12)] group-hover:text-[hsl(var(--teal))]"
+              ? "bg-[hsl(var(--teal)/0.15)] text-[hsl(var(--color-teal-500))]"
+              : "bg-muted text-muted-foreground group-hover:bg-[hsl(var(--color-teal-50))] group-hover:text-[hsl(var(--color-teal-500))]"
           )}
         >
           <Icon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -151,9 +151,9 @@ function SidebarContent({
     .sort((a, b) => b.length - a.length)[0];
 
   return (
-    <div className="flex h-full flex-col glass-nav border-r border-[rgba(255,255,255,0.06)]">
+    <div className="flex h-full flex-col bg-background border-r border-border">
       {/* Logo zone */}
-      <div className="px-4 py-5 border-b border-[rgba(255,255,255,0.06)]">
+      <div className="px-4 py-5 border-b border-border/40">
         <div className="flex items-center gap-2.5">
           {/* Logo blocs inspiré du logo ADEPA */}
           <div className="relative h-8 w-8 shrink-0">

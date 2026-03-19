@@ -124,7 +124,7 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
             <MapPin className="h-4 w-4 text-primary/70" />
             <span className="truncate max-w-[140px]">{mission.address.split(',')[0]}</span>
           </div>
-          <div className="text-lg font-bold text-[hsl(var(--emerald))] tabular-nums">
+          <div className="text-lg font-bold text-emerald-600 tabular-nums">
             {moneyFormatter.format(mission.hourlyRate)}
             <span className="text-xs font-normal text-muted-foreground ml-1">/ h</span>
           </div>
