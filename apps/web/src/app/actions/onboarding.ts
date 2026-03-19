@@ -22,17 +22,21 @@ export type OnboardingData = {
     zipCode?: string;
 }
 
-export async function saveOnboardingStep(step: number, data: OnboardingData) {
+export async function saveOnboardingStep(step: number, data: OnboardingData): Promise<{ error?: string }> {
     const session = await getSession();
     if (!session) {
-        throw new Error("Unauthorized");
+        return { error: "Session expirée. Veuillez vous reconnecter." };
     }
 
-    await apiRequest(`/users/me/onboarding`, {
-        method: "PATCH",
-        body: { step, ...data },
-        token: session.token,
-    });
+    try {
+        await apiRequest(`/users/me/onboarding`, {
+            method: "PATCH",
+            body: { step, ...data },
+            token: session.token,
+        });
+    } catch (error) {
+        return { error: error instanceof Error ? error.message : "Erreur lors de la sauvegarde." };
+    }
 
     // Update local session
     session.user.onboardingStep = step;
@@ -40,18 +44,23 @@ export async function saveOnboardingStep(step: number, data: OnboardingData) {
 
     revalidatePath("/dashboard");
     revalidatePath("/marketplace");
+    return {};
 }
 
-export async function completeOnboarding() {
+export async function completeOnboarding(): Promise<{ error?: string }> {
     const session = await getSession();
     if (!session) {
-        throw new Error("Unauthorized");
+        return { error: "Session expirée. Veuillez vous reconnecter." };
     }
 
-    await apiRequest(`/users/me/onboarding/complete`, {
-        method: "POST",
-        token: session.token,
-    });
+    try {
+        await apiRequest(`/users/me/onboarding/complete`, {
+            method: "POST",
+            token: session.token,
+        });
+    } catch (error) {
+        return { error: error instanceof Error ? error.message : "Erreur lors de la finalisation." };
+    }
 
     // Update local session to completed state based on role
     const userRole = session.user.role as keyof typeof MAX_STEP_BY_ROLE;
@@ -62,6 +71,7 @@ export async function completeOnboarding() {
 
     revalidatePath("/dashboard");
     revalidatePath("/marketplace");
+    return {};
 }
 
 export async function uploadDiploma(formData: FormData): Promise<{ url: string }> {

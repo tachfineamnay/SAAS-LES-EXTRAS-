@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -41,7 +42,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className={`${plusJakartaSans.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="font-[family-name:var(--font-body)]">{children}</body>
+      <body className="font-[family-name:var(--font-body)]">
+        {children}
+        <Toaster position="top-center" richColors />
+      </body>
     </html>
   );
 }

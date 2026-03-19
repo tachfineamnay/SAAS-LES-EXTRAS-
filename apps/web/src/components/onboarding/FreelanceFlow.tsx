@@ -80,12 +80,20 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
                     data = { address };
                 }
 
-                await saveOnboardingStep(step, data);
+                const saveResult = await saveOnboardingStep(step, data);
+                if (saveResult.error) {
+                    toast.error(saveResult.error);
+                    return;
+                }
 
                 if (step < totalSteps) {
                     setStep(step + 1);
                 } else {
-                    await completeOnboarding();
+                    const completeResult = await completeOnboarding();
+                    if (completeResult.error) {
+                        toast.error(completeResult.error);
+                        return;
+                    }
                     try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
                     toast.success("Profil complété ! En attente de validation.");
                     router.push("/marketplace");
