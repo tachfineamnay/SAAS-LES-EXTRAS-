@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUIStore } from "@/lib/stores/useUIStore";
+import { MAX_STEP_BY_ROLE } from "@/lib/constants";
 
 type OnboardingGuardProps = {
     children: React.ReactNode;
@@ -15,8 +16,7 @@ export function OnboardingGuard({ children, userRole, onboardingStep }: Onboardi
     const [mounted, setMounted] = useState(false);
     const { setUserRole, setOnboardingStep } = useUIStore();
 
-    // Use shared constants — single source of truth for max steps per role
-    const maxSteps = userRole === "FREELANCE" ? 4 : userRole === "ESTABLISHMENT" ? 3 : 0;
+    const maxSteps = MAX_STEP_BY_ROLE[userRole as keyof typeof MAX_STEP_BY_ROLE] ?? 0;
     const isComplete = onboardingStep >= maxSteps;
 
     useEffect(() => {

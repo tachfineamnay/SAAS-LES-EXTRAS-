@@ -3,7 +3,7 @@
 import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Loader2, Mail, Lock, ArrowRight, Users, Sparkles } from "lucide-react";
+import { Loader2, Mail, Lock, ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -87,7 +87,7 @@ export default function LoginPage() {
                         <blockquote className="space-y-2">
                             <div className="flex gap-0.5">
                                 {[...Array(5)].map((_, i) => (
-                                    <Sparkles key={i} className="h-3.5 w-3.5 text-yellow-300" />
+                                    <Star key={i} className="h-3.5 w-3.5 text-yellow-300 fill-yellow-300" />
                                 ))}
                             </div>
                             <p className="text-sm text-white/85 italic leading-relaxed">
@@ -134,7 +134,6 @@ export default function LoginPage() {
                                     type="email"
                                     placeholder="votre@email.com"
                                     required
-                                    defaultValue="directeur@mecs-avenir.fr"
                                     className="pl-9"
                                     aria-invalid={!!state?.errors?.email}
                                     aria-describedby={state?.errors?.email ? "email-error" : undefined}
@@ -161,7 +160,6 @@ export default function LoginPage() {
                                     name="password"
                                     type="password"
                                     required
-                                    defaultValue="password123"
                                     className="pl-9"
                                     aria-invalid={!!state?.errors?.password}
                                     aria-describedby={state?.errors?.password ? "password-error" : undefined}
@@ -194,24 +192,6 @@ export default function LoginPage() {
                             S'inscrire gratuitement
                         </Link>
                     </p>
-
-                    {/* Demo zone */}
-                    <motion.div
-                        className="rounded-2xl bg-[hsl(var(--teal-light))] border border-[hsl(var(--teal)/0.15)] p-4 space-y-2"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                    >
-                        <div className="flex items-center gap-1.5">
-                            <Users className="h-3.5 w-3.5 text-[hsl(var(--teal))]" aria-hidden="true" />
-                            <p className="text-xs font-bold text-[hsl(var(--teal))] uppercase tracking-wide">Comptes démo</p>
-                        </div>
-                        <div className="space-y-1 text-xs text-muted-foreground">
-                            <p><span className="text-foreground font-medium">Établissement :</span> directeur@mecs-avenir.fr</p>
-                            <p><span className="text-foreground font-medium">Freelance :</span> karim.educ@gmail.com</p>
-                            <p><span className="text-foreground font-medium">Mot de passe :</span> password123</p>
-                        </div>
-                    </motion.div>
                 </motion.div>
             </div>
         </div>

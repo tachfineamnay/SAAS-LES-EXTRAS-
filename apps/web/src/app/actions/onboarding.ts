@@ -64,7 +64,7 @@ export async function completeOnboarding(): Promise<{ error?: string }> {
 
     // Update local session to completed state based on role
     const userRole = session.user.role as keyof typeof MAX_STEP_BY_ROLE;
-    const maxStep = MAX_STEP_BY_ROLE[userRole] || 4;
+    const maxStep = MAX_STEP_BY_ROLE[userRole] || 2;
     
     session.user.onboardingStep = maxStep;
     await createSession(session);

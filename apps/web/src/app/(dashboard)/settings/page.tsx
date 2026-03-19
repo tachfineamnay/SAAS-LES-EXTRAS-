@@ -31,6 +31,7 @@ import {
   GlassCardHeader,
 } from "@/components/ui/glass-card";
 import { toast } from "sonner";
+import { logout } from "@/app/actions/logout";
 import { containerVariants, itemFadeUp, SPRING_SOFT } from "@/lib/motion";
 
 /* ────────── types ────────── */
@@ -101,9 +102,7 @@ export default function SettingsPage() {
 
   const handleLogout = () => {
     startTransition(async () => {
-      // Clear session cookie
-      document.cookie = "lesextras_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      window.location.href = "/login";
+      await logout();
     });
   };
 

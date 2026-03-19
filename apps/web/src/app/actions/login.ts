@@ -5,6 +5,7 @@ import { apiRequest } from "@/lib/api";
 import { createSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { UserRole } from "@/lib/stores/useUIStore";
+import { MAX_STEP_BY_ROLE } from "@/lib/constants";
 
 const LoginSchema = z.object({
     email: z.string().email({ message: "Email invalide" }),
@@ -78,7 +79,7 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
         };
     }
 
-    const maxStep = role === "FREELANCE" ? 4 : 3;
+    const maxStep = MAX_STEP_BY_ROLE[role as keyof typeof MAX_STEP_BY_ROLE] ?? 2;
     if (response.user.onboardingStep < maxStep) {
         redirect("/wizard");
     }

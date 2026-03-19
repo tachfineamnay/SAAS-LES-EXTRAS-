@@ -3,9 +3,25 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 const ADMIN_SESSION_COOKIE = "lesextras_admin_token";
+const FRONT_SESSION_COOKIE = "lesextras_session";
 const FRONT_RUNTIME = "front";
 const DESK_RUNTIME = "desk";
 type AppRuntime = typeof FRONT_RUNTIME | typeof DESK_RUNTIME;
+
+/** Routes that require an authenticated front-user session */
+const PROTECTED_PREFIXES = [
+  "/dashboard",
+  "/wizard",
+  "/settings",
+  "/marketplace",
+  "/missions",
+  "/bookings",
+  "/account",
+  "/messages",
+];
+
+/** Routes that guests can access (login, register, password reset) */
+const AUTH_PAGES = ["/login", "/register", "/auth/forgot-password", "/auth/reset-password"];
 
 function getAppRuntime(): AppRuntime {
   const runtime = (process.env.APP_RUNTIME ?? FRONT_RUNTIME).toLowerCase();
@@ -28,6 +44,10 @@ async function hasValidAdminSession(request: NextRequest): Promise<boolean> {
   }
 }
 
+function hasSessionCookie(request: NextRequest): boolean {
+  return !!request.cookies.get(FRONT_SESSION_COOKIE)?.value;
+}
+
 export async function middleware(request: NextRequest) {
   const runtime = getAppRuntime();
   const pathname = request.nextUrl.pathname;
@@ -39,14 +59,37 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // ── Front runtime ──────────────────────────────────────────────
   if (runtime === FRONT_RUNTIME) {
+    // Block admin routes on the front runtime
     if (isAdminPath) {
       return NextResponse.redirect(new URL("/marketplace", request.url));
+    }
+
+    const isProtected = PROTECTED_PREFIXES.some(
+      (prefix) => pathname === prefix || pathname.startsWith(prefix + "/"),
+    );
+    const isAuthPage = AUTH_PAGES.some(
+      (page) => pathname === page || pathname.startsWith(page + "/"),
+    );
+    const hasSession = hasSessionCookie(request);
+
+    // Redirect unauthenticated users away from protected pages
+    if (isProtected && !hasSession) {
+      const url = new URL("/login", request.url);
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
+    }
+
+    // Redirect authenticated users away from auth pages (login/register)
+    if (isAuthPage && hasSession) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
     return NextResponse.next();
   }
 
+  // ── Desk runtime (admin) ───────────────────────────────────────
   if (pathname === "/") {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
