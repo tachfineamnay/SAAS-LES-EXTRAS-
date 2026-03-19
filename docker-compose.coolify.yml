@@ -13,6 +13,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    networks:
+      - internal
 
   api:
     build:
@@ -30,6 +32,23 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-lesextras}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lesextras}?schema=public
     expose:
       - "3001"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.routers.lesextras-api-http.entrypoints=http"
+      - "traefik.http.routers.lesextras-api-http.rule=Host(`api.les-extras.com`)"
+      - "traefik.http.routers.lesextras-api-http.middlewares=redirect-to-https"
+      - "traefik.http.routers.lesextras-api-http.service=lesextras-api"
+      - "traefik.http.routers.lesextras-api-https.entrypoints=https"
+      - "traefik.http.routers.lesextras-api-https.rule=Host(`api.les-extras.com`)"
+      - "traefik.http.routers.lesextras-api-https.tls=true"
+      - "traefik.http.routers.lesextras-api-https.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.lesextras-api-https.middlewares=gzip"
+      - "traefik.http.routers.lesextras-api-https.service=lesextras-api"
+      - "traefik.http.services.lesextras-api.loadbalancer.server.port=3001"
+    networks:
+      - internal
+      - coolify
 
   web:
     build:
@@ -48,6 +67,29 @@ services:
       DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:-LesExtrasDemo!2026}
     expose:
       - "3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.routers.lesextras-web-http.entrypoints=http"
+      - "traefik.http.routers.lesextras-web-http.rule=Host(`les-extras.com`) || Host(`www.les-extras.com`) || Host(`desk.les-extras.com`)"
+      - "traefik.http.routers.lesextras-web-http.middlewares=redirect-to-https"
+      - "traefik.http.routers.lesextras-web-http.service=lesextras-web"
+      - "traefik.http.routers.lesextras-web-https.entrypoints=https"
+      - "traefik.http.routers.lesextras-web-https.rule=Host(`les-extras.com`) || Host(`www.les-extras.com`) || Host(`desk.les-extras.com`)"
+      - "traefik.http.routers.lesextras-web-https.tls=true"
+      - "traefik.http.routers.lesextras-web-https.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.lesextras-web-https.middlewares=gzip"
+      - "traefik.http.routers.lesextras-web-https.service=lesextras-web"
+      - "traefik.http.services.lesextras-web.loadbalancer.server.port=3000"
+    networks:
+      - internal
+      - coolify
+
+networks:
+  internal:
+    driver: bridge
+  coolify:
+    external: true
 
 volumes:
   postgres_data:
