@@ -68,13 +68,17 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
                     if (!bio) throw new Error("Veuillez écrire une courte bio.");
                     data = { bio, skills };
                 } else if (step === 3) {
-                    if (!diplomaFile) throw new Error("Veuillez envoyer votre diplôme principal.");
-                    
-                    const formData = new FormData();
-                    formData.append("file", diplomaFile);
-                    
-                    const { url } = await uploadDiploma(formData);
-                    data = { diplomaUrl: url };
+                    if (diplomaFile) {
+                        const formData = new FormData();
+                        formData.append("file", diplomaFile);
+                        const uploadResult = await uploadDiploma(formData);
+                        if (uploadResult.error) {
+                            toast.error(uploadResult.error);
+                            return;
+                        }
+                        data = { diplomaUrl: uploadResult.url };
+                    }
+                    // Si pas de fichier, on passe l'étape (diplôme optionnel)
                 } else if (step === 4) {
                     if (!address) throw new Error("Veuillez renseigner votre adresse.");
                     data = { address };
@@ -193,6 +197,13 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
                         </div>
                         <p className="text-xs text-muted-foreground text-center">
                             Ce document est nécessaire pour valider votre statut de Freelance.
+                            <br />
+                            <span
+                                className="text-primary cursor-pointer underline"
+                                onClick={() => { setDiplomaFile(null); handleNext(); }}
+                            >
+                                Passer cette étape (vous pourrez l&apos;ajouter plus tard)
+                            </span>
                         </p>
                     </div>
                 );

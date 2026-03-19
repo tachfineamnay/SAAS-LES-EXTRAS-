@@ -74,29 +74,34 @@ export async function completeOnboarding(): Promise<{ error?: string }> {
     return {};
 }
 
-export async function uploadDiploma(formData: FormData): Promise<{ url: string }> {
+export async function uploadDiploma(formData: FormData): Promise<{ url?: string; error?: string }> {
     const session = await getSession();
     if (!session) {
-        throw new Error("Unauthorized");
+        return { error: "Session expirée. Veuillez vous reconnecter." };
     }
 
     const { getApiBaseUrl } = await import("@/lib/api");
     const url = `${getApiBaseUrl()}/users/me/diploma`;
 
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${session.token}`,
-        },
-        body: formData,
-    });
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${session.token}`,
+            },
+            body: formData,
+        });
 
-    if (!response.ok) {
-        throw new Error("Erreur lors de l'upload du diplôme");
+        if (!response.ok) {
+            const text = await response.text().catch(() => "");
+            return { error: `Upload échoué (${response.status})${text ? ": " + text : ""}` };
+        }
+
+        const data = await response.json() as { url: string };
+        return { url: data.url };
+    } catch (error) {
+        return { error: error instanceof Error ? error.message : "Erreur réseau lors de l'upload." };
     }
-
-    const data = await response.json();
-    return data;
 }
 
 export const updateProfile = saveOnboardingStep;
