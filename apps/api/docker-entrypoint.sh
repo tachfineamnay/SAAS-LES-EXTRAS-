@@ -8,13 +8,14 @@ fi
 
 echo "Waiting for database and running migrations..."
 
-# Resolve any previously failed migrations so migrate deploy can re-apply them
-echo "Checking for failed migrations..."
-npx prisma migrate resolve --rolled-back "20260303221500_add_missing_tables_and_columns" --schema prisma/schema.prisma 2>/dev/null || true
-npx prisma migrate resolve --rolled-back "20260316000001_fix_profile_skills_default" --schema prisma/schema.prisma 2>/dev/null || true
-
 attempts=0
-until npx prisma migrate deploy --schema prisma/schema.prisma; do
+until (
+  # Resolve any previously failed migrations before each attempt so P3009 is cleared once the DB is reachable
+  npx prisma migrate resolve --rolled-back "20260216211200_add_cancelled_statuses_and_scheduled_at" --schema prisma/schema.prisma 2>/dev/null || true
+  npx prisma migrate resolve --rolled-back "20260303221500_add_missing_tables_and_columns" --schema prisma/schema.prisma 2>/dev/null || true
+  npx prisma migrate resolve --rolled-back "20260316000001_fix_profile_skills_default" --schema prisma/schema.prisma 2>/dev/null || true
+  npx prisma migrate deploy --schema prisma/schema.prisma
+); do
   attempts=$((attempts + 1))
   if [ "$attempts" -ge 20 ]; then
     echo "Prisma migrate failed after $attempts attempts."
