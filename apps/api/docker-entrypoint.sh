@@ -6,6 +6,8 @@ if [ -z "${DATABASE_URL}" ]; then
   exit 1
 fi
 
-# Migration handled by Coolify pre-deployment command
+echo "Running database migrations..."
+npx prisma migrate deploy --schema prisma/schema.prisma
+
 echo "Starting API..."
 exec node dist/main.js
