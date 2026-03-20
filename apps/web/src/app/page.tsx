@@ -13,6 +13,7 @@ import {
   Check, Quote, ChevronRight, Building2, UserCheck, Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 /* constants */
 const DISPLAY = "font-[family-name:var(--font-display)]";
@@ -384,8 +385,10 @@ export default function HomePage() {
 
       {/* ── Background layers ── */}
       <div className="pointer-events-none fixed inset-0 z-0 dot-mesh" aria-hidden="true" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-grid-lines" aria-hidden="true" />
       <div className="pointer-events-none fixed inset-0 z-0 glow-ambient-teal" aria-hidden="true" />
       <div className="pointer-events-none fixed inset-0 z-0 glow-ambient-coral" aria-hidden="true" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-grain" aria-hidden="true" />
       <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
         <Blob className="absolute -top-40 right-[5%] w-[700px] h-[700px] rounded-full bg-gradient-to-br from-[hsl(var(--teal)/0.12)] to-transparent blur-3xl" d={0} />
         <Blob className="absolute top-[55%] -left-40 w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-[hsl(var(--violet)/0.08)] to-transparent blur-3xl" d={7} />
@@ -399,8 +402,8 @@ export default function HomePage() {
         {/* ══════════ NAVBAR ══════════ */}
         <motion.header initial={{ y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.05 }}
-          className={`fixed top-0 z-50 w-full transition-shadow duration-300 ${scrolled ? "shadow-lg shadow-black/20" : ""}`}>
-          <nav className="glass-nav">
+          className={`fixed top-0 z-50 w-full transition-shadow duration-300`}>
+          <nav className={`glass-nav ${scrolled ? "scrolled" : ""}`}>
             <div className="mx-auto max-w-7xl px-4 sm:px-6 flex h-16 items-center justify-between">
               <Link href="/" className="shrink-0">
                 <Image src="/logo-adepa.png" alt="ADEPA Les Extras" width={110} height={36}
@@ -422,6 +425,7 @@ export default function HomePage() {
                 ))}
               </div>
               <div className="flex items-center gap-2">
+                <ThemeSwitcher />
                 <Button asChild variant="ghost" size="sm" className="text-sm font-semibold hidden sm:inline-flex text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--foreground))]">
                   <Link href="/login">Connexion</Link>
                 </Button>
