@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 import { StepLayout } from "./StepLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,11 +67,15 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
         switch (step) {
             case 1:
                 return (
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                         <div className="space-y-2">
-                            <Label>Votre métier <span className="text-destructive">*</span></Label>
+                            <Label>
+                                Votre métier <span className="text-[hsl(var(--coral))]">*</span>
+                            </Label>
                             <Select onValueChange={setJobTitle} value={jobTitle}>
-                                <SelectTrigger><SelectValue placeholder="Sélectionnez votre métier" /></SelectTrigger>
+                                <SelectTrigger className="h-11 rounded-xl">
+                                    <SelectValue placeholder="Sélectionnez votre métier" />
+                                </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Educateur Spécialisé">Éducateur Spécialisé (ES)</SelectItem>
                                     <SelectItem value="Moniteur Educateur">Moniteur Éducateur (ME)</SelectItem>
@@ -81,39 +86,77 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="bio">Présentez-vous en quelques mots <span className="text-destructive">*</span></Label>
+                            <Label htmlFor="bio">
+                                Présentez-vous en quelques mots <span className="text-[hsl(var(--coral))]">*</span>
+                            </Label>
                             <Textarea
                                 id="bio"
+                                className="rounded-xl resize-none"
                                 placeholder="Votre expérience, vos spécialités, ce qui vous motive..."
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value)}
                                 rows={4}
                             />
+                            <p className="text-xs text-[hsl(var(--text-tertiary))]">
+                                {bio.length}/500 caractères · 10 minimum
+                            </p>
                         </div>
                     </div>
                 );
             case 2:
                 return (
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                         <div className="space-y-2">
-                            <Label htmlFor="address">Adresse <span className="text-destructive">*</span></Label>
-                            <Input id="address" placeholder="10 rue de la République" value={address} onChange={(e) => setAddress(e.target.value)} />
+                            <Label htmlFor="address">
+                                Adresse <span className="text-[hsl(var(--coral))]">*</span>
+                            </Label>
+                            <Input
+                                id="address"
+                                className="h-11 rounded-xl"
+                                placeholder="10 rue de la République"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                            />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="zipCode">Code postal</Label>
-                                <Input id="zipCode" placeholder="75001" value={zipCode} onChange={(e) => setZipCode(e.target.value)} maxLength={5} />
+                                <Input
+                                    id="zipCode"
+                                    className="h-11 rounded-xl"
+                                    placeholder="75001"
+                                    value={zipCode}
+                                    onChange={(e) => setZipCode(e.target.value)}
+                                    maxLength={5}
+                                />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="city">Ville <span className="text-destructive">*</span></Label>
-                                <Input id="city" placeholder="Paris" value={city} onChange={(e) => setCity(e.target.value)} />
+                                <Label htmlFor="city">
+                                    Ville <span className="text-[hsl(var(--coral))]">*</span>
+                                </Label>
+                                <Input
+                                    id="city"
+                                    className="h-11 rounded-xl"
+                                    placeholder="Paris"
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                />
                             </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="phone">Téléphone</Label>
-                            <Input id="phone" type="tel" placeholder="06 12 34 56 78" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                            <Input
+                                id="phone"
+                                type="tel"
+                                className="h-11 rounded-xl"
+                                placeholder="06 12 34 56 78"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                            />
+                            <p className="text-xs text-[hsl(var(--text-tertiary))]">
+                                Sert au calcul des frais kilométriques et à vous contacter.
+                            </p>
                         </div>
-                        <p className="text-xs text-muted-foreground">Sert au calcul des frais kilométriques et à vous contacter.</p>
                     </div>
                 );
             default:
@@ -127,13 +170,28 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
             totalSteps={totalSteps}
             title={step === 1 ? "Votre Profil" : "Localisation & Contact"}
             description={step === 1 ? "Dites-nous qui vous êtes." : "Pour des missions proches de chez vous."}
+            stepLabels={["Profil", "Localisation"]}
         >
             <div className="space-y-6">
                 {renderStepContent()}
-                <div className="flex justify-between pt-4">
-                    <Button variant="ghost" onClick={handleBack} disabled={isPending || step === 1}>Retour</Button>
-                    <Button onClick={handleNext} disabled={isPending}>
+                <div className="flex items-center justify-between border-t border-[hsl(var(--border))] pt-6">
+                    <Button
+                        variant="ghost"
+                        onClick={handleBack}
+                        disabled={isPending || step === 1}
+                        className="gap-2"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        Retour
+                    </Button>
+                    <Button
+                        variant="coral"
+                        onClick={handleNext}
+                        disabled={isPending}
+                        className="gap-2"
+                    >
                         {isPending ? "Enregistrement…" : step < totalSteps ? "Continuer" : "Terminer"}
+                        {!isPending && <ArrowRight className="h-4 w-4" />}
                     </Button>
                 </div>
             </div>

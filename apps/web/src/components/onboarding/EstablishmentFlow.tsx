@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 import { StepLayout } from "./StepLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,24 +90,33 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
         switch (step) {
             case 1:
                 return (
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                         <div className="space-y-2">
-                            <Label htmlFor="name">Nom de l&apos;établissement <span className="text-destructive">*</span></Label>
+                            <Label htmlFor="name">
+                                Nom de l&apos;établissement <span className="text-[hsl(var(--coral))]">*</span>
+                            </Label>
                             <Input
                                 id="name"
+                                className="h-11 rounded-xl"
                                 placeholder="Ex: MECS Les Érables"
                                 value={establishmentName}
                                 onChange={(e) => setEstablishmentName(e.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="type">Type de structure <span className="text-destructive">*</span></Label>
+                            <Label htmlFor="type">
+                                Type de structure <span className="text-[hsl(var(--coral))]">*</span>
+                            </Label>
                             <Select onValueChange={setEstablishmentType} value={establishmentType}>
-                                <SelectTrigger><SelectValue placeholder="Sélectionnez le type" /></SelectTrigger>
+                                <SelectTrigger className="h-11 rounded-xl">
+                                    <SelectValue placeholder="Sélectionnez le type" />
+                                </SelectTrigger>
                                 <SelectContent>
                                     {Object.entries(ESTABLISHMENT_TYPES).map(([group, types]) => (
                                         <SelectGroup key={group}>
-                                            <SelectLabel>{group}</SelectLabel>
+                                            <SelectLabel className="uppercase text-xs tracking-wider text-[hsl(var(--text-tertiary))]">
+                                                {group}
+                                            </SelectLabel>
                                             {types.map((t) => (
                                                 <SelectItem key={t} value={t}>{t}</SelectItem>
                                             ))}
@@ -120,28 +130,68 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
 
             case 2:
                 return (
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                         <div className="space-y-2">
-                            <Label htmlFor="address">Adresse <span className="text-destructive">*</span></Label>
-                            <Input id="address" placeholder="10 rue de la République" value={address} onChange={(e) => setAddress(e.target.value)} />
+                            <Label htmlFor="address">
+                                Adresse <span className="text-[hsl(var(--coral))]">*</span>
+                            </Label>
+                            <Input
+                                id="address"
+                                className="h-11 rounded-xl"
+                                placeholder="10 rue de la République"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                            />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="postal">Code postal</Label>
-                                <Input id="postal" placeholder="75001" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength={5} />
+                                <Input
+                                    id="postal"
+                                    className="h-11 rounded-xl"
+                                    placeholder="75001"
+                                    value={postalCode}
+                                    onChange={(e) => setPostalCode(e.target.value)}
+                                    maxLength={5}
+                                />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="city">Ville <span className="text-destructive">*</span></Label>
-                                <Input id="city" placeholder="Paris" value={city} onChange={(e) => setCity(e.target.value)} />
+                                <Label htmlFor="city">
+                                    Ville <span className="text-[hsl(var(--coral))]">*</span>
+                                </Label>
+                                <Input
+                                    id="city"
+                                    className="h-11 rounded-xl"
+                                    placeholder="Paris"
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                />
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="contact">Nom du Responsable <span className="text-destructive">*</span></Label>
-                            <Input id="contact" placeholder="Jean Dupont" value={contactName} onChange={(e) => setContactName(e.target.value)} />
+                            <Label htmlFor="contact">
+                                Nom du Responsable <span className="text-[hsl(var(--coral))]">*</span>
+                            </Label>
+                            <Input
+                                id="contact"
+                                className="h-11 rounded-xl"
+                                placeholder="Jean Dupont"
+                                value={contactName}
+                                onChange={(e) => setContactName(e.target.value)}
+                            />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="phone">Téléphone <span className="text-destructive">*</span></Label>
-                            <Input id="phone" type="tel" placeholder="06 12 34 56 78" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                            <Label htmlFor="phone">
+                                Téléphone <span className="text-[hsl(var(--coral))]">*</span>
+                            </Label>
+                            <Input
+                                id="phone"
+                                type="tel"
+                                className="h-11 rounded-xl"
+                                placeholder="06 12 34 56 78"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                            />
                         </div>
                     </div>
                 );
@@ -157,13 +207,28 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
             totalSteps={totalSteps}
             title={step === 1 ? "Votre Structure" : "Adresse & Contact"}
             description={step === 1 ? "Identifiez votre établissement." : "Pour les factures et échanges avec les intervenants."}
+            stepLabels={["Structure", "Contact"]}
         >
             <div className="space-y-6">
                 {renderStepContent()}
-                <div className="flex justify-between pt-4">
-                    <Button variant="ghost" onClick={handleBack} disabled={isPending || step === 1}>Retour</Button>
-                    <Button onClick={handleNext} disabled={isPending}>
+                <div className="flex items-center justify-between border-t border-[hsl(var(--border))] pt-6">
+                    <Button
+                        variant="ghost"
+                        onClick={handleBack}
+                        disabled={isPending || step === 1}
+                        className="gap-2"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        Retour
+                    </Button>
+                    <Button
+                        variant="coral"
+                        onClick={handleNext}
+                        disabled={isPending}
+                        className="gap-2"
+                    >
                         {isPending ? "Enregistrement…" : step < totalSteps ? "Continuer" : "Valider mon profil"}
+                        {!isPending && <ArrowRight className="h-4 w-4" />}
                     </Button>
                 </div>
             </div>
