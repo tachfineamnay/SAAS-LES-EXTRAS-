@@ -13,6 +13,7 @@ import {
   CalendarDays,
   Mail,
   Building2,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ import {
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { cn } from "@/lib/utils";
 import { EASE_SNAPPY, SPRING_STIFF, itemSlideLeft, containerVariants } from "@/lib/motion";
+import { logout } from "@/app/actions/logout";
 
 const ESTABLISHMENT_LINKS = [
   { href: "/dashboard",          label: "Tableau de bord", icon: LayoutDashboard },
@@ -213,6 +215,25 @@ function SidebarContent({
             onClick={onNavigate}
           />
         ))}
+      </div>
+
+      {/* Déconnexion */}
+      <div className="px-3 pb-2">
+        <form action={logout}>
+          <button
+            type="submit"
+            className={cn(
+              "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
+              "transition-all duration-200 group min-h-[44px]",
+              "text-muted-foreground hover:bg-[hsl(var(--coral)/0.08)] hover:text-[hsl(var(--coral))]"
+            )}
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--coral)/0.06)] text-muted-foreground group-hover:bg-[hsl(var(--coral)/0.12)] group-hover:text-[hsl(var(--coral))] transition-colors duration-200">
+              <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
+            </span>
+            <span className="text-[13px]">Déconnexion</span>
+          </button>
+        </form>
       </div>
 
       {/* Version tag */}
