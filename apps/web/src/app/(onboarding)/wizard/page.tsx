@@ -20,13 +20,9 @@ export default async function WizardPage() {
         redirect(role === "FREELANCE" ? "/marketplace" : "/dashboard");
     }
 
-    return (
-        <div className="min-h-screen flex items-start justify-center pt-16 px-4">
-            {role === "ESTABLISHMENT" ? (
-                <EstablishmentFlow currentStep={onboardingStep} />
-            ) : (
-                <FreelanceFlow currentStep={onboardingStep} />
-            )}
-        </div>
+    return role === "ESTABLISHMENT" ? (
+        <EstablishmentFlow currentStep={onboardingStep} />
+    ) : (
+        <FreelanceFlow currentStep={onboardingStep} />
     );
 }

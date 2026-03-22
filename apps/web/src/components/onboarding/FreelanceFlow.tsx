@@ -2,10 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ArrowLeft } from "lucide-react";
-import { StepLayout } from "./StepLayout";
+import { ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import { OnboardingSplitLayout } from "./OnboardingSplitLayout";
+import { OnboardingStepper } from "./OnboardingStepper";
+import { OnboardingFormCard } from "./OnboardingFormCard";
+import { OnboardingContextPanel, FREELANCE_CONTEXT_STEPS } from "./OnboardingContextPanel";
+import { ValidatedField } from "./ValidatedField";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { saveOnboardingStep, completeOnboarding, type OnboardingData } from "@/app/actions/onboarding";
@@ -15,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export function FreelanceFlow({ currentStep }: { currentStep: number }) {
     const [step, setStep] = useState(currentStep === 0 ? 1 : currentStep);
     const [isPending, startTransition] = useTransition();
+    const [showSuccess, setShowSuccess] = useState(false);
     const router = useRouter();
     const totalSteps = 2;
 
@@ -53,9 +57,11 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
                 } else {
                     const completeResult = await completeOnboarding();
                     if (completeResult.error) { toast.error(completeResult.error); return; }
-                    toast.success("Profil complété ! Bienvenue sur Les-Extras.");
-                    router.push("/marketplace");
-                    router.refresh();
+                    setShowSuccess(true);
+                    setTimeout(() => {
+                        router.push("/marketplace");
+                        router.refresh();
+                    }, 1800);
                 }
             } catch (error) {
                 toast.error(error instanceof Error ? error.message : "Une erreur est survenue.");
@@ -63,14 +69,57 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
         });
     };
 
+    if (showSuccess) {
+        return (
+            <OnboardingSplitLayout
+                leftPanel={
+                    <OnboardingContextPanel
+                        currentStep={step}
+                        steps={FREELANCE_CONTEXT_STEPS}
+                    />
+                }
+                rightPanel={
+                    <div className="flex flex-col items-center justify-center gap-6 text-center">
+                        <div className="success-ring-glow rounded-full p-6">
+                            <svg className="success-ring-anim h-20 w-20" viewBox="0 0 52 52">
+                                <circle
+                                    cx="26" cy="26" r="25"
+                                    fill="none"
+                                    stroke="hsl(var(--teal))"
+                                    strokeWidth="2"
+                                />
+                                <polyline
+                                    points="16,26 23,33 36,20"
+                                    fill="none"
+                                    stroke="hsl(var(--teal))"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            </svg>
+                        </div>
+                        <div className="space-y-2">
+                            <h2 className="text-2xl font-bold text-[hsl(var(--text-primary))]">
+                                Profil complété !
+                            </h2>
+                            <p className="text-[hsl(var(--text-secondary))]">
+                                Bienvenue sur Les-Extras. Redirection…
+                            </p>
+                        </div>
+                    </div>
+                }
+            />
+        );
+    }
+
     const renderStepContent = () => {
         switch (step) {
             case 1:
                 return (
-                    <div className="space-y-5">
+                    <>
                         <div className="space-y-2">
                             <Label>
-                                Votre métier <span className="text-[hsl(var(--coral))]">*</span>
+                                Votre métier <span className="ml-0.5 text-[hsl(var(--coral))]">*</span>
                             </Label>
                             <Select onValueChange={setJobTitle} value={jobTitle}>
                                 <SelectTrigger className="h-11 rounded-xl">
@@ -87,7 +136,7 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="bio">
-                                Présentez-vous en quelques mots <span className="text-[hsl(var(--coral))]">*</span>
+                                Présentez-vous en quelques mots <span className="ml-0.5 text-[hsl(var(--coral))]">*</span>
                             </Label>
                             <Textarea
                                 id="bio"
@@ -101,63 +150,51 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
                                 {bio.length}/500 caractères · 10 minimum
                             </p>
                         </div>
-                    </div>
+                    </>
                 );
             case 2:
                 return (
-                    <div className="space-y-5">
-                        <div className="space-y-2">
-                            <Label htmlFor="address">
-                                Adresse <span className="text-[hsl(var(--coral))]">*</span>
-                            </Label>
-                            <Input
-                                id="address"
-                                className="h-11 rounded-xl"
-                                placeholder="10 rue de la République"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                            />
-                        </div>
+                    <>
+                        <ValidatedField
+                            id="address"
+                            label="Adresse"
+                            required
+                            value={address}
+                            onChange={setAddress}
+                            validate={(v) => (!v ? "L'adresse est requise" : null)}
+                            placeholder="10 rue de la République"
+                        />
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="zipCode">Code postal</Label>
-                                <Input
-                                    id="zipCode"
-                                    className="h-11 rounded-xl"
-                                    placeholder="75001"
-                                    value={zipCode}
-                                    onChange={(e) => setZipCode(e.target.value)}
-                                    maxLength={5}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="city">
-                                    Ville <span className="text-[hsl(var(--coral))]">*</span>
-                                </Label>
-                                <Input
-                                    id="city"
-                                    className="h-11 rounded-xl"
-                                    placeholder="Paris"
-                                    value={city}
-                                    onChange={(e) => setCity(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="phone">Téléphone</Label>
-                            <Input
-                                id="phone"
-                                type="tel"
-                                className="h-11 rounded-xl"
-                                placeholder="06 12 34 56 78"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
+                            <ValidatedField
+                                id="zipCode"
+                                label="Code postal"
+                                value={zipCode}
+                                onChange={setZipCode}
+                                placeholder="75001"
+                                maxLength={5}
                             />
-                            <p className="text-xs text-[hsl(var(--text-tertiary))]">
-                                Sert au calcul des frais kilométriques et à vous contacter.
-                            </p>
+                            <ValidatedField
+                                id="city"
+                                label="Ville"
+                                required
+                                value={city}
+                                onChange={setCity}
+                                validate={(v) => (!v ? "La ville est requise" : null)}
+                                placeholder="Paris"
+                            />
                         </div>
-                    </div>
+                        <ValidatedField
+                            id="phone"
+                            label="Téléphone"
+                            type="tel"
+                            value={phone}
+                            onChange={setPhone}
+                            placeholder="06 12 34 56 78"
+                        />
+                        <p className="text-xs text-[hsl(var(--text-tertiary))] -mt-2">
+                            Sert au calcul des frais kilométriques et à vous contacter.
+                        </p>
+                    </>
                 );
             default:
                 return null;
@@ -165,37 +202,64 @@ export function FreelanceFlow({ currentStep }: { currentStep: number }) {
     };
 
     return (
-        <StepLayout
-            currentStep={step}
-            totalSteps={totalSteps}
-            title={step === 1 ? "Votre Profil" : "Localisation & Contact"}
-            description={step === 1 ? "Dites-nous qui vous êtes." : "Pour des missions proches de chez vous."}
-            stepLabels={["Profil", "Localisation"]}
-        >
-            <div className="space-y-6">
-                {renderStepContent()}
-                <div className="flex items-center justify-between border-t border-[hsl(var(--border))] pt-6">
-                    <Button
-                        variant="ghost"
-                        onClick={handleBack}
-                        disabled={isPending || step === 1}
-                        className="gap-2"
+        <OnboardingSplitLayout
+            leftPanel={
+                <OnboardingContextPanel
+                    currentStep={step}
+                    steps={FREELANCE_CONTEXT_STEPS}
+                />
+            }
+            rightPanel={
+                <div className="w-full max-w-lg space-y-8">
+                    <OnboardingStepper
+                        currentStep={step}
+                        totalSteps={totalSteps}
+                        labels={["Profil", "Localisation"]}
+                    />
+                    <OnboardingFormCard
+                        stepKey={step}
+                        eyebrow={`Étape ${step} sur ${totalSteps}`}
+                        title={step === 1 ? "Votre Profil" : "Localisation & Contact"}
+                        description={
+                            step === 1
+                                ? "Dites-nous qui vous êtes."
+                                : "Pour des missions proches de chez vous."
+                        }
+                        footer={
+                            <div className="flex items-center justify-between">
+                                <Button
+                                    variant="ghost"
+                                    onClick={handleBack}
+                                    disabled={isPending || step === 1}
+                                    className="gap-2"
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                    Retour
+                                </Button>
+                                <Button
+                                    variant="coral"
+                                    onClick={handleNext}
+                                    disabled={isPending}
+                                    className="gap-2"
+                                >
+                                    {isPending ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Enregistrement…
+                                        </>
+                                    ) : step < totalSteps ? (
+                                        <>Continuer <ArrowRight className="h-4 w-4" /></>
+                                    ) : (
+                                        <>Terminer <ArrowRight className="h-4 w-4" /></>
+                                    )}
+                                </Button>
+                            </div>
+                        }
                     >
-                        <ArrowLeft className="h-4 w-4" />
-                        Retour
-                    </Button>
-                    <Button
-                        variant="coral"
-                        onClick={handleNext}
-                        disabled={isPending}
-                        className="gap-2"
-                    >
-                        {isPending ? "Enregistrement…" : step < totalSteps ? "Continuer" : "Terminer"}
-                        {!isPending && <ArrowRight className="h-4 w-4" />}
-                    </Button>
+                        {renderStepContent()}
+                    </OnboardingFormCard>
                 </div>
-            </div>
-        </StepLayout>
+            }
+        />
     );
 }
-

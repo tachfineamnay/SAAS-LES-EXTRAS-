@@ -899,6 +899,102 @@
   100% { box-shadow: 0 0 0 0   hsl(var(--teal) / 0); }
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   ONBOARDING V2 — Split-Layout Utilities
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes onboarding-dot-drift {
+  0%, 100% { opacity: 0.5; transform: translateY(0); }
+  50%      { opacity: 1;   transform: translateY(-2px); }
+}
+
+@keyframes field-shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(5px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(3px); }
+}
+
+@keyframes success-ring-draw {
+  0%   { stroke-dashoffset: 157; opacity: 0; }
+  40%  { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@keyframes success-check-draw {
+  0%   { stroke-dashoffset: 36; opacity: 0; }
+  50%  { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@keyframes success-glow {
+  0%   { box-shadow: 0 0 0 0 hsl(var(--teal) / 0.3); }
+  50%  { box-shadow: 0 0 40px 10px hsl(var(--teal) / 0.15); }
+  100% { box-shadow: 0 0 0 0 hsl(var(--teal) / 0); }
+}
+
+@layer utilities {
+  /* ─── ONBOARDING DOT GRID — animated background ─── */
+  .onboarding-dots {
+    background-image: radial-gradient(hsl(var(--teal) / 0.18) 1px, transparent 1px);
+    background-size: 30px 30px;
+    animation: onboarding-dot-drift 6s ease-in-out infinite;
+  }
+  [data-theme="dark"] .onboarding-dots {
+    background-image: radial-gradient(hsl(var(--teal) / 0.08) 1.2px, transparent 1.2px);
+    background-size: 32px 32px;
+  }
+
+  /* ─── LIGHT SHAFT — diagonal glow ─── */
+  .onboarding-shaft {
+    background: linear-gradient(
+      125deg,
+      transparent 30%,
+      hsl(var(--teal) / 0.04) 45%,
+      hsl(var(--teal) / 0.08) 50%,
+      hsl(var(--teal) / 0.04) 55%,
+      transparent 70%
+    );
+  }
+  [data-theme="dark"] .onboarding-shaft {
+    background: linear-gradient(
+      125deg,
+      transparent 30%,
+      hsl(185 84% 24% / 0.06) 45%,
+      hsl(185 84% 24% / 0.12) 50%,
+      hsl(185 84% 24% / 0.06) 55%,
+      transparent 70%
+    );
+  }
+
+  /* ─── STEP PULSE — active stepper glow ─── */
+  .step-pulse {
+    box-shadow: 0 0 0 0 hsl(var(--teal) / 0.4);
+    animation: pulse-ring-teal 2s ease-out infinite;
+  }
+
+  /* ─── FIELD SHAKE — validation error ─── */
+  .field-shake {
+    animation: field-shake 0.4s ease-out;
+  }
+
+  /* ─── SUCCESS RING — completion animation ─── */
+  .success-ring-anim circle {
+    stroke-dasharray: 157;
+    stroke-dashoffset: 157;
+    animation: success-ring-draw 0.8s ease-out 0.2s forwards;
+  }
+  .success-ring-anim polyline {
+    stroke-dasharray: 36;
+    stroke-dashoffset: 36;
+    animation: success-check-draw 0.4s ease-out 0.7s forwards;
+  }
+  .success-ring-glow {
+    animation: success-glow 1.5s ease-out 0.4s;
+  }
+}
+
 /* ─── REDUCED MOTION ─── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

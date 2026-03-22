@@ -2,10 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ArrowLeft } from "lucide-react";
-import { StepLayout } from "./StepLayout";
+import { ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import { OnboardingSplitLayout } from "./OnboardingSplitLayout";
+import { OnboardingStepper } from "./OnboardingStepper";
+import { OnboardingFormCard } from "./OnboardingFormCard";
+import { OnboardingContextPanel, ESTABLISHMENT_CONTEXT_STEPS } from "./OnboardingContextPanel";
+import { ValidatedField } from "./ValidatedField";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
     saveOnboardingStep,
@@ -36,6 +39,7 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
     const router = useRouter();
     const [step, setStep] = useState(currentStep === 0 ? 1 : currentStep);
     const [isPending, startTransition] = useTransition();
+    const [showSuccess, setShowSuccess] = useState(false);
     const totalSteps = 2;
 
     // Step 1 — Identité structure
@@ -76,9 +80,11 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                 } else {
                     const completeResult = await completeOnboarding();
                     if (completeResult.error) { toast.error(completeResult.error); return; }
-                    toast.success("Établissement configuré ! Bienvenue sur Les-Extras.");
-                    router.push("/dashboard");
-                    router.refresh();
+                    setShowSuccess(true);
+                    setTimeout(() => {
+                        router.push("/dashboard");
+                        router.refresh();
+                    }, 1800);
                 }
             } catch (error) {
                 toast.error(error instanceof Error ? error.message : "Une erreur est survenue.");
@@ -86,26 +92,66 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
         });
     };
 
+    if (showSuccess) {
+        return (
+            <OnboardingSplitLayout
+                leftPanel={
+                    <OnboardingContextPanel
+                        currentStep={step}
+                        steps={ESTABLISHMENT_CONTEXT_STEPS}
+                    />
+                }
+                rightPanel={
+                    <div className="flex flex-col items-center justify-center gap-6 text-center">
+                        <div className="success-ring-glow rounded-full p-6">
+                            <svg className="success-ring-anim h-20 w-20" viewBox="0 0 52 52">
+                                <circle
+                                    cx="26" cy="26" r="25"
+                                    fill="none"
+                                    stroke="hsl(var(--teal))"
+                                    strokeWidth="2"
+                                />
+                                <polyline
+                                    points="16,26 23,33 36,20"
+                                    fill="none"
+                                    stroke="hsl(var(--teal))"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            </svg>
+                        </div>
+                        <div className="space-y-2">
+                            <h2 className="text-2xl font-bold text-[hsl(var(--text-primary))]">
+                                Établissement configuré !
+                            </h2>
+                            <p className="text-[hsl(var(--text-secondary))]">
+                                Bienvenue sur Les-Extras. Redirection…
+                            </p>
+                        </div>
+                    </div>
+                }
+            />
+        );
+    }
+
     const renderStepContent = () => {
         switch (step) {
             case 1:
                 return (
-                    <div className="space-y-5">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">
-                                Nom de l&apos;établissement <span className="text-[hsl(var(--coral))]">*</span>
-                            </Label>
-                            <Input
-                                id="name"
-                                className="h-11 rounded-xl"
-                                placeholder="Ex: MECS Les Érables"
-                                value={establishmentName}
-                                onChange={(e) => setEstablishmentName(e.target.value)}
-                            />
-                        </div>
+                    <>
+                        <ValidatedField
+                            id="name"
+                            label="Nom de l'établissement"
+                            required
+                            value={establishmentName}
+                            onChange={setEstablishmentName}
+                            validate={(v) => (!v ? "Le nom est requis" : null)}
+                            placeholder="Ex: MECS Les Érables"
+                        />
                         <div className="space-y-2">
                             <Label htmlFor="type">
-                                Type de structure <span className="text-[hsl(var(--coral))]">*</span>
+                                Type de structure <span className="ml-0.5 text-[hsl(var(--coral))]">*</span>
                             </Label>
                             <Select onValueChange={setEstablishmentType} value={establishmentType}>
                                 <SelectTrigger className="h-11 rounded-xl">
@@ -125,75 +171,60 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
                                 </SelectContent>
                             </Select>
                         </div>
-                    </div>
+                    </>
                 );
 
             case 2:
                 return (
-                    <div className="space-y-5">
-                        <div className="space-y-2">
-                            <Label htmlFor="address">
-                                Adresse <span className="text-[hsl(var(--coral))]">*</span>
-                            </Label>
-                            <Input
-                                id="address"
-                                className="h-11 rounded-xl"
-                                placeholder="10 rue de la République"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                            />
-                        </div>
+                    <>
+                        <ValidatedField
+                            id="address"
+                            label="Adresse"
+                            required
+                            value={address}
+                            onChange={setAddress}
+                            validate={(v) => (!v ? "L'adresse est requise" : null)}
+                            placeholder="10 rue de la République"
+                        />
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="postal">Code postal</Label>
-                                <Input
-                                    id="postal"
-                                    className="h-11 rounded-xl"
-                                    placeholder="75001"
-                                    value={postalCode}
-                                    onChange={(e) => setPostalCode(e.target.value)}
-                                    maxLength={5}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="city">
-                                    Ville <span className="text-[hsl(var(--coral))]">*</span>
-                                </Label>
-                                <Input
-                                    id="city"
-                                    className="h-11 rounded-xl"
-                                    placeholder="Paris"
-                                    value={city}
-                                    onChange={(e) => setCity(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="contact">
-                                Nom du Responsable <span className="text-[hsl(var(--coral))]">*</span>
-                            </Label>
-                            <Input
-                                id="contact"
-                                className="h-11 rounded-xl"
-                                placeholder="Jean Dupont"
-                                value={contactName}
-                                onChange={(e) => setContactName(e.target.value)}
+                            <ValidatedField
+                                id="postal"
+                                label="Code postal"
+                                value={postalCode}
+                                onChange={setPostalCode}
+                                placeholder="75001"
+                                maxLength={5}
+                            />
+                            <ValidatedField
+                                id="city"
+                                label="Ville"
+                                required
+                                value={city}
+                                onChange={setCity}
+                                validate={(v) => (!v ? "La ville est requise" : null)}
+                                placeholder="Paris"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="phone">
-                                Téléphone <span className="text-[hsl(var(--coral))]">*</span>
-                            </Label>
-                            <Input
-                                id="phone"
-                                type="tel"
-                                className="h-11 rounded-xl"
-                                placeholder="06 12 34 56 78"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                            />
-                        </div>
-                    </div>
+                        <ValidatedField
+                            id="contact"
+                            label="Nom du Responsable"
+                            required
+                            value={contactName}
+                            onChange={setContactName}
+                            validate={(v) => (!v ? "Le nom est requis" : null)}
+                            placeholder="Jean Dupont"
+                        />
+                        <ValidatedField
+                            id="phone"
+                            label="Téléphone"
+                            required
+                            type="tel"
+                            value={phone}
+                            onChange={setPhone}
+                            validate={(v) => (!v ? "Le téléphone est requis" : null)}
+                            placeholder="06 12 34 56 78"
+                        />
+                    </>
                 );
 
             default:
@@ -202,36 +233,64 @@ export function EstablishmentFlow({ currentStep }: { currentStep: number }) {
     };
 
     return (
-        <StepLayout
-            currentStep={step}
-            totalSteps={totalSteps}
-            title={step === 1 ? "Votre Structure" : "Adresse & Contact"}
-            description={step === 1 ? "Identifiez votre établissement." : "Pour les factures et échanges avec les intervenants."}
-            stepLabels={["Structure", "Contact"]}
-        >
-            <div className="space-y-6">
-                {renderStepContent()}
-                <div className="flex items-center justify-between border-t border-[hsl(var(--border))] pt-6">
-                    <Button
-                        variant="ghost"
-                        onClick={handleBack}
-                        disabled={isPending || step === 1}
-                        className="gap-2"
+        <OnboardingSplitLayout
+            leftPanel={
+                <OnboardingContextPanel
+                    currentStep={step}
+                    steps={ESTABLISHMENT_CONTEXT_STEPS}
+                />
+            }
+            rightPanel={
+                <div className="w-full max-w-lg space-y-8">
+                    <OnboardingStepper
+                        currentStep={step}
+                        totalSteps={totalSteps}
+                        labels={["Structure", "Contact"]}
+                    />
+                    <OnboardingFormCard
+                        stepKey={step}
+                        eyebrow={`Étape ${step} sur ${totalSteps}`}
+                        title={step === 1 ? "Votre Structure" : "Adresse & Contact"}
+                        description={
+                            step === 1
+                                ? "Identifiez votre établissement."
+                                : "Pour les factures et échanges avec les intervenants."
+                        }
+                        footer={
+                            <div className="flex items-center justify-between">
+                                <Button
+                                    variant="ghost"
+                                    onClick={handleBack}
+                                    disabled={isPending || step === 1}
+                                    className="gap-2"
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                    Retour
+                                </Button>
+                                <Button
+                                    variant="coral"
+                                    onClick={handleNext}
+                                    disabled={isPending}
+                                    className="gap-2"
+                                >
+                                    {isPending ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Enregistrement…
+                                        </>
+                                    ) : step < totalSteps ? (
+                                        <>Continuer <ArrowRight className="h-4 w-4" /></>
+                                    ) : (
+                                        <>Valider mon profil <ArrowRight className="h-4 w-4" /></>
+                                    )}
+                                </Button>
+                            </div>
+                        }
                     >
-                        <ArrowLeft className="h-4 w-4" />
-                        Retour
-                    </Button>
-                    <Button
-                        variant="coral"
-                        onClick={handleNext}
-                        disabled={isPending}
-                        className="gap-2"
-                    >
-                        {isPending ? "Enregistrement…" : step < totalSteps ? "Continuer" : "Valider mon profil"}
-                        {!isPending && <ArrowRight className="h-4 w-4" />}
-                    </Button>
+                        {renderStepContent()}
+                    </OnboardingFormCard>
                 </div>
-            </div>
-        </StepLayout>
+            }
+        />
     );
 }
