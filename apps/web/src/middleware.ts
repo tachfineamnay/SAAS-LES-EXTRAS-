@@ -18,6 +18,7 @@ const PROTECTED_PREFIXES = [
   "/bookings",
   "/account",
   "/messages",
+  "/freelances",
 ];
 
 /** Routes that guests can access (login, register, password reset) */
