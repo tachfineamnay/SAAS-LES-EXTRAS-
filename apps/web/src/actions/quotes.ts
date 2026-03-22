@@ -1,6 +1,7 @@
 "use server";
 
 import { getSession } from "@/lib/session";
+import { apiRequest } from "@/lib/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -20,18 +21,11 @@ export interface SerializedQuote {
 }
 
 export async function getQuotes(token: string): Promise<SerializedQuote[]> {
-    const res = await fetch(`${API_URL}/quotes`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-        next: { tags: ["quotes"] },
+    // TODO: /api/quotes endpoint not yet implemented; fetchSafe in the dashboard handles the resulting error gracefully.
+    return apiRequest<SerializedQuote[]>("/quotes", {
+        method: "GET",
+        token,
     });
-
-    if (!res.ok) {
-        throw new Error(`Quotes API responded with ${res.status}`);
-    }
-
-    return (await res.json()) as SerializedQuote[];
 }
 
 export async function acceptQuote(quoteId: string) {

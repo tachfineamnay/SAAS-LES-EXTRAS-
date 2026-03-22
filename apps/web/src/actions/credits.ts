@@ -54,20 +54,7 @@ export async function buyPack(packType: PackType): Promise<{ ok: true } | { erro
 }
 
 export async function getCredits(): Promise<number> {
-    const session = await getSession();
-    if (!session) return 0;
-
-    try {
-        // We fetch the profile to get credits.
-        // In a real app we'd likely have a specific endpoint or use Prisma directly if safe.
-        // For MVP we use the profile endpoint.
-        const profile = await apiRequest<any>("/users/me/profile", {
-            method: "GET",
-            token: session.token
-        });
-        return profile?.availableCredits || 0;
-    } catch (e) {
-        console.error("Failed to fetch credits", e);
-        return 0;
-    }
+    // TODO: Credits feature not yet implemented on the API.
+    // The /users/me/profile endpoint does not exist; returning 0 until a real credits system is built.
+    return 0;
 }

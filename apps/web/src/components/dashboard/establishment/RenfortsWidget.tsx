@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, Clock, Users, MapPin, Sun, Moon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +58,12 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
                     (b) => b.status === "PENDING"
                 ).length ?? 0;
 
+                const startDate = new Date(mission.dateStart);
+                const endDate = new Date(mission.dateEnd);
+                const dateDisplay = isValid(startDate) ? format(startDate, "dd MMM", { locale: fr }) : "–";
+                const startTime = isValid(startDate) ? format(startDate, "HH:mm") : "–";
+                const endTime = isValid(endDate) ? format(endDate, "HH:mm") : "–";
+
                 return (
                     <Link
                         key={mission.id}
@@ -95,13 +101,13 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
                                 <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                                     <span className="flex items-center gap-1">
                                         <Calendar className="h-3 w-3" />
-                                        {format(new Date(mission.dateStart), "dd MMM", { locale: fr })}
+                                        {dateDisplay}
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <Clock className="h-3 w-3" />
-                                        {format(new Date(mission.dateStart), "HH:mm")}
+                                        {startTime}
                                         {" – "}
-                                        {format(new Date(mission.dateEnd), "HH:mm")}
+                                        {endTime}
                                     </span>
                                     {mission.city && (
                                         <span className="flex items-center gap-1">

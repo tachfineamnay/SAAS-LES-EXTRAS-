@@ -43,7 +43,7 @@ export function QuoteListWidget({ quotes, error }: { quotes: SerializedQuote[]; 
                     <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
                             <CardTitle className="text-base font-semibold">
-                                {quote.freelance.profile?.firstName} {quote.freelance.profile?.lastName}
+                                {quote.freelance?.profile?.firstName} {quote.freelance?.profile?.lastName}
                             </CardTitle>
                             <Badge>{quote.amount} €</Badge>
                         </div>

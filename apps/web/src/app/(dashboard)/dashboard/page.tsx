@@ -12,7 +12,7 @@ import { getReviewsByTarget } from "@/app/actions/reviews";
 import { getEstablishmentMissions, getAvailableMissions } from "@/app/actions/missions";
 import type { EstablishmentMission } from "@/app/actions/missions";
 import { fetchSafe } from "@/lib/widget-result";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMetierLabel } from "@/lib/sos-config";
 import type { MatchingMission } from "@/components/dashboard/MatchingMissionsWidget";
@@ -317,7 +317,7 @@ export default async function DashboardPage() {
         title: m.metier ? getMetierLabel(m.metier) : m.title,
         establishment: m.establishment?.profile?.companyName ?? "Établissement",
         city: m.city ?? m.establishment?.profile?.city ?? "",
-        dates: m.dateStart ? format(new Date(m.dateStart), "dd MMM", { locale: fr }) : undefined,
+        dates: m.dateStart && isValid(new Date(m.dateStart)) ? format(new Date(m.dateStart), "dd MMM", { locale: fr }) : undefined,
         hours: m.shift === "NUIT" ? "Nuit" : m.shift === "JOUR" ? "Jour" : undefined,
         rate: `${m.hourlyRate}\u00a0€/h`,
         urgent: m.isUrgent ?? false,

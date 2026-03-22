@@ -1,8 +1,7 @@
 "use server";
 
 import { getSession } from "@/lib/session";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import { apiRequest } from "@/lib/api";
 
 export interface SerializedInvoice {
     id: string;
@@ -25,16 +24,8 @@ export async function getInvoices(): Promise<SerializedInvoice[]> {
     const session = await getSession();
     if (!session) return [];
 
-    const res = await fetch(`${API_URL}/invoices`, {
-        headers: {
-            Authorization: `Bearer ${session.token}`,
-        },
-        next: { tags: ["invoices"] },
+    return apiRequest<SerializedInvoice[]>("/invoices", {
+        method: "GET",
+        token: session.token,
     });
-
-    if (!res.ok) {
-        throw new Error(`Invoices API responded with ${res.status}`);
-    }
-
-    return (await res.json()) as SerializedInvoice[];
 }
