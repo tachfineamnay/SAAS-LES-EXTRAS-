@@ -115,7 +115,7 @@ export function ReviewModal({
                                             "h-8 w-8 transition-colors",
                                             active
                                                 ? "text-amber-400 fill-amber-400"
-                                                : "text-gray-300",
+                                                : "text-muted-foreground",
                                         )}
                                     />
                                 </button>

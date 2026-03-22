@@ -212,16 +212,16 @@ export function PublishModal() {
               <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors shrink-0 ${
                   i < step
-                    ? "bg-blue-600 text-white"
+                    ? "bg-primary text-primary-foreground"
                     : i === step
-                    ? "bg-blue-100 text-blue-700 border-2 border-blue-600"
-                    : "bg-gray-100 text-gray-400"
+                    ? "bg-[hsl(var(--color-teal-100))] text-[hsl(var(--color-teal-700))] border-2 border-primary"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 {i < step ? <Check className="w-3.5 h-3.5" /> : i + 1}
               </div>
               {i < STEPS.length - 1 && (
-                <div className={`h-0.5 flex-1 mx-1 ${i < step ? "bg-blue-600" : "bg-gray-200"}`} />
+                <div className={`h-0.5 flex-1 mx-1 ${i < step ? "bg-primary" : "bg-border"}`} />
               )}
             </div>
           ))}
@@ -252,8 +252,8 @@ export function PublishModal() {
                           onClick={() => form.setValue("type", t)}
                           className={`p-3 rounded-xl border-2 text-sm font-medium transition-colors ${
                             values.type === t
-                              ? "border-blue-600 bg-blue-50 text-blue-700"
-                              : "border-gray-200 hover:border-gray-300"
+                              ? "border-primary bg-[hsl(var(--color-teal-50))] text-[hsl(var(--color-teal-700))]"
+                              : "border-border hover:border-muted-foreground/30"
                           }`}
                         >
                           {t === "WORKSHOP" ? "🎨 Atelier" : "📚 Formation"}
@@ -274,8 +274,8 @@ export function PublishModal() {
                             onClick={() => form.setValue("category", cat.id)}
                             className={`flex items-center gap-2 p-2.5 rounded-lg border text-sm transition-colors text-left ${
                               values.category === cat.id
-                                ? "border-blue-600 bg-blue-50 text-blue-700"
-                                : "border-gray-200 hover:border-gray-300"
+                                ? "border-primary bg-[hsl(var(--color-teal-50))] text-[hsl(var(--color-teal-700))]"
+                                : "border-border hover:border-muted-foreground/30"
                             }`}
                           >
                             <Icon className="w-4 h-4 shrink-0" />
@@ -323,7 +323,7 @@ export function PublishModal() {
               {/* ── Étape 2: Sections pédagogiques ── */}
               {step === 2 && (
                 <>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Ces sections sont optionnelles mais rassurent les établissements.
                   </p>
                   <div className="space-y-2">
@@ -364,7 +364,7 @@ export function PublishModal() {
                       <Label htmlFor="pub-dur">Durée</Label>
                       <select
                         id="pub-dur"
-                        className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+                        className="w-full border rounded-md px-3 py-2 text-sm bg-background"
                         value={values.durationMinutes}
                         onChange={(e) => form.setValue("durationMinutes", Number(e.target.value))}
                       >
@@ -405,8 +405,8 @@ export function PublishModal() {
                             }}
                             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                               selected
-                                ? "bg-blue-600 text-white border-blue-600"
-                                : "border-gray-300 text-gray-600 hover:border-gray-400"
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "border-border text-muted-foreground hover:border-muted-foreground/50"
                             }`}
                           >
                             {p.label}
@@ -441,22 +441,22 @@ export function PublishModal() {
                         onClick={() => form.setValue("pricingType", opt.id)}
                         className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-colors ${
                           values.pricingType === opt.id
-                            ? "border-blue-600 bg-blue-50"
-                            : "border-gray-200 hover:border-gray-300"
+                            ? "border-primary bg-[hsl(var(--color-teal-50))]"
+                            : "border-border hover:border-muted-foreground/30"
                         }`}
                       >
                         <div
                           className={`mt-0.5 w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center ${
-                            values.pricingType === opt.id ? "border-blue-600" : "border-gray-300"
+                            values.pricingType === opt.id ? "border-primary" : "border-border"
                           }`}
                         >
                           {values.pricingType === opt.id && (
-                            <div className="w-2 h-2 rounded-full bg-blue-600" />
+                            <div className="w-2 h-2 rounded-full bg-primary" />
                           )}
                         </div>
                         <div>
                           <p className="font-medium text-sm">{opt.label}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">{opt.description}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{opt.description}</p>
                         </div>
                       </button>
                     ))}
@@ -494,7 +494,7 @@ export function PublishModal() {
                   )}
 
                   {values.pricingType === "QUOTE" && (
-                    <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
+                    <div className="rounded-lg bg-[hsl(var(--color-amber-50))] border border-[hsl(var(--color-amber-200)/0.4)] p-4 text-sm text-[hsl(var(--color-amber-700))]">
                       Le tarif sera défini après échange avec l&apos;établissement. Vous recevrez une demande et pourrez rédiger votre devis directement dans l&apos;application.
                     </div>
                   )}
@@ -507,7 +507,7 @@ export function PublishModal() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <Label>Créneaux disponibles</Label>
-                      <span className="text-xs text-gray-500">{slotFields.length}/{MAX_SERVICE_SLOTS}</span>
+                      <span className="text-xs text-muted-foreground">{slotFields.length}/{MAX_SERVICE_SLOTS}</span>
                     </div>
 
                     {slotFields.map((field, i) => (
@@ -563,20 +563,20 @@ export function PublishModal() {
                   </div>
 
                   {/* Mini récap */}
-                  <div className="rounded-xl bg-gray-50 border p-4 space-y-2 text-sm">
-                    <p className="font-semibold text-gray-700">Récap</p>
-                    <div className="grid grid-cols-2 gap-1 text-gray-600">
-                      <span className="text-gray-400">Type</span>
+                  <div className="rounded-xl bg-[hsl(var(--surface-2))] border p-4 space-y-2 text-sm">
+                    <p className="font-semibold text-foreground">Récap</p>
+                    <div className="grid grid-cols-2 gap-1 text-muted-foreground">
+                      <span className="text-muted-foreground/70">Type</span>
                       <span>{values.type === "WORKSHOP" ? "Atelier" : "Formation"}</span>
-                      <span className="text-gray-400">Catégorie</span>
+                      <span className="text-muted-foreground/70">Catégorie</span>
                       <span>{getCategoryLabel(values.category)}</span>
-                      <span className="text-gray-400">Durée</span>
+                      <span className="text-muted-foreground/70">Durée</span>
                       <span>{formatDuration(values.durationMinutes)}</span>
-                      <span className="text-gray-400">Capacité</span>
+                      <span className="text-muted-foreground/70">Capacité</span>
                       <span>{values.capacity} pers.</span>
-                      <span className="text-gray-400">Public</span>
+                      <span className="text-muted-foreground/70">Public</span>
                       <span className="truncate">{getPublicCibleLabels(values.publicCible ?? []).join(", ") || "—"}</span>
-                      <span className="text-gray-400">Tarif</span>
+                      <span className="text-muted-foreground/70">Tarif</span>
                       <span>
                         {values.pricingType === "QUOTE"
                           ? "Sur devis"
@@ -584,7 +584,7 @@ export function PublishModal() {
                           ? `${values.pricePerParticipant ?? 0} €/pers.`
                           : `${values.price ?? 0} € HT`}
                       </span>
-                      <span className="text-gray-400">Créneaux</span>
+                      <span className="text-muted-foreground/70">Créneaux</span>
                       <span>{slotFields.length} créneau{slotFields.length > 1 ? "x" : ""}</span>
                     </div>
                   </div>
@@ -609,7 +609,7 @@ export function PublishModal() {
               <Button
                 type="submit"
                 disabled={isPending}
-                className="bg-blue-600 text-white hover:bg-blue-700 gap-2"
+                className="gap-2"
               >
                 {isPending ? "Publication..." : `Publier ${values.type === "WORKSHOP" ? "l'atelier" : "la formation"}`}
               </Button>
@@ -617,7 +617,7 @@ export function PublishModal() {
               <Button
                 type="button"
                 onClick={goNext}
-                className="bg-blue-600 text-white hover:bg-blue-700 gap-1"
+                className="gap-1"
               >
                 Suivant <ChevronRight className="w-4 h-4" />
               </Button>

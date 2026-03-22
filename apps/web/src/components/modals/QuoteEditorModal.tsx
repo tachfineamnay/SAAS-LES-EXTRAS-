@@ -102,9 +102,9 @@ export function QuoteEditorModal() {
 
         {/* Client request recap */}
         {quote?.booking && (
-          <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm space-y-1.5">
-            <p className="font-medium text-blue-800 text-xs uppercase tracking-wide">Demande de {establishmentName}</p>
-            <div className="flex flex-wrap gap-3 text-blue-700">
+          <div className="rounded-lg bg-[hsl(var(--color-teal-50))] border border-[hsl(var(--color-teal-200))] p-3 text-sm space-y-1.5">
+            <p className="font-medium text-[hsl(var(--color-teal-700))] text-xs uppercase tracking-wide">Demande de {establishmentName}</p>
+            <div className="flex flex-wrap gap-3 text-[hsl(var(--teal-text))]">
               {quote.booking.scheduledAt && (
                 <span className="flex items-center gap-1 text-xs">
                   <CalendarDays className="w-3.5 h-3.5" />
@@ -119,7 +119,7 @@ export function QuoteEditorModal() {
               )}
             </div>
             {quote.booking.message && (
-              <p className="flex items-start gap-1 text-xs text-blue-600">
+              <p className="flex items-start gap-1 text-xs text-[hsl(var(--teal-text))]">
                 <MessageSquare className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                 {quote.booking.message}
               </p>
@@ -130,7 +130,7 @@ export function QuoteEditorModal() {
         <div className="space-y-4 py-1">
           <div className="space-y-2">
             <Label htmlFor="qe-amount" className="flex items-center gap-2">
-              <Euro className="w-4 h-4 text-green-600" />
+              <Euro className="w-4 h-4 text-primary" />
               Montant du devis (€ HT)
             </Label>
             <Input
@@ -146,7 +146,7 @@ export function QuoteEditorModal() {
 
           <div className="space-y-2">
             <Label htmlFor="qe-desc" className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-green-600" />
+              <FileText className="w-4 h-4 text-primary" />
               Description du devis
             </Label>
             <Textarea
@@ -161,7 +161,7 @@ export function QuoteEditorModal() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="qe-start" className="flex items-center gap-2 text-xs">
-                <CalendarDays className="w-3.5 h-3.5 text-green-600" />
+                <CalendarDays className="w-3.5 h-3.5 text-primary" />
                 Date de début
               </Label>
               <Input
@@ -173,7 +173,7 @@ export function QuoteEditorModal() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="qe-end" className="flex items-center gap-2 text-xs">
-                <CalendarDays className="w-3.5 h-3.5 text-green-600" />
+                <CalendarDays className="w-3.5 h-3.5 text-primary" />
                 Date de fin
               </Label>
               <Input
@@ -191,7 +191,6 @@ export function QuoteEditorModal() {
           <Button
             onClick={onSubmit}
             disabled={isPending}
-            className="bg-green-600 text-white hover:bg-green-700"
           >
             {isPending ? "Envoi…" : "Envoyer le devis au client"}
           </Button>

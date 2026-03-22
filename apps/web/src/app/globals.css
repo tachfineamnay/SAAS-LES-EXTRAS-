@@ -141,6 +141,7 @@
 
     /* Teal aliases */
     --teal:        var(--color-teal-500);
+    --teal-text:   var(--color-teal-500);
     --teal-light:  var(--color-teal-100);
     --teal-mid:    var(--color-teal-400);
     --teal-dim:    var(--color-teal-700);
@@ -293,8 +294,8 @@
     --destructive-foreground: 0 0% 100%;
 
     /* ─────────────────── UI Chrome ─────────────── */
-    --border:         185 20% 16%;
-    --input:          185 25% 14%;
+    --border:         185 20% 22%;
+    --input:          185 25% 20%;
     --ring:           185 84% 24%;
 
     /* ─── Override semantic tokens for dark ─── */
@@ -316,6 +317,48 @@
 
     --brand-renfort-bg:  14  30% 12%;
     --brand-atelier-bg:  258 30% 12%;
+
+    /* ─── Dark overrides for primitive -50/-100/-200/-700 tokens ─── */
+    --color-teal-50:     185 40% 12%;
+    --color-teal-100:    185 35% 16%;
+    --color-teal-200:    185 35% 22%;
+    --color-teal-700:    170 55% 55%;
+
+    --color-coral-50:    14 30% 12%;
+    --color-coral-100:   14 28% 16%;
+    --color-coral-200:   14 30% 22%;
+    --color-coral-700:   14 60% 58%;
+
+    --color-violet-50:   258 25% 14%;
+    --color-violet-100:  258 22% 18%;
+    --color-violet-700:  258 55% 65%;
+
+    --color-sand-50:     32 25% 12%;
+    --color-sand-100:    32 22% 16%;
+    --color-sand-700:    32 65% 58%;
+
+    --color-emerald-50:  145 30% 10%;
+    --color-emerald-100: 145 28% 14%;
+    --color-emerald-700: 145 50% 52%;
+
+    --color-amber-50:    38 30% 10%;
+    --color-amber-100:   38 28% 14%;
+    --color-amber-700:   38 75% 58%;
+
+    --color-red-50:      0 30% 12%;
+    --color-red-100:     0 28% 16%;
+    --color-red-700:     0 65% 58%;
+
+    --color-navy-50:     220 15% 12%;
+    --color-navy-100:    220 14% 16%;
+    --color-navy-500:    220 15% 65%;
+
+    --color-cream:       190 20% 8%;
+    --color-gray-100:    190 10% 14%;
+    --color-gray-400:    220 9% 60%;
+
+    /* ─── Teal text (brighter for readability on dark surfaces) ─── */
+    --teal-text:         170 60% 50%;
 
     /* ─── Dark semantic aliases ─── */
     --teal-light:  185 40% 14%;
@@ -624,20 +667,20 @@
   }
 
   .glass-nav {
-    background: rgba(244, 250, 251, 0.82);
+    background: rgba(244, 250, 251, var(--nav-alpha, 0.82));
     -webkit-backdrop-filter: blur(32px) saturate(2);
     backdrop-filter: blur(32px) saturate(2);
-    border-bottom: 1px solid rgba(13, 128, 136, 0.08);
+    border-bottom: 1px solid rgba(13, 128, 136, calc(var(--nav-border-alpha, 0.7) * 0.08));
     transition: box-shadow 0.3s ease;
   }
   .glass-nav.scrolled {
     box-shadow: 0 1px 0 rgba(13, 128, 136, 0.06), 0 2px 8px rgba(9, 56, 64, 0.07), 0 1px 3px rgba(9, 56, 64, 0.05);
   }
   [data-theme="dark"] .glass-nav {
-    background: rgba(7, 19, 22, 0.80);
+    background: rgba(7, 19, 22, var(--nav-alpha, 0.80));
     -webkit-backdrop-filter: blur(24px) saturate(1.6);
     backdrop-filter: blur(24px) saturate(1.6);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, calc(var(--nav-border-alpha, 0.7) * 0.08));
   }
   [data-theme="dark"] .glass-nav.scrolled {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);

@@ -427,7 +427,7 @@ function StepProfil({
                     className={cn(
                       "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm text-left transition-colors",
                       selected
-                        ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))] font-medium"
+                        ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.15)] text-[hsl(var(--teal-text))] font-medium"
                         : "border-border hover:border-[hsl(var(--teal)/0.3)] hover:bg-muted"
                     )}
                   >
@@ -457,7 +457,7 @@ function StepProfil({
               className={cn(
                 "flex-1 rounded-lg border py-2 text-sm font-medium transition-colors",
                 diplomaRequired === opt.value
-                  ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))]"
+                  ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.15)] text-[hsl(var(--teal-text))]"
                   : "border-border hover:border-[hsl(var(--teal)/0.3)]"
               )}
             >
@@ -484,7 +484,7 @@ function StepProfil({
                 className={cn(
                   "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                   active
-                    ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))]"
+                    ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.15)] text-[hsl(var(--teal-text))]"
                     : "border-border hover:border-[hsl(var(--teal)/0.3)] hover:bg-muted"
                 )}
               >
@@ -558,7 +558,7 @@ function StepContext({
                 className={cn(
                   "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                   active
-                    ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))]"
+                    ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.15)] text-[hsl(var(--teal-text))]"
                     : "border-border hover:border-[hsl(var(--teal)/0.3)] hover:bg-muted"
                 )}
               >
@@ -738,7 +738,7 @@ function StepRemuneration({
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 rounded-lg border py-3 text-sm font-medium transition-colors",
                 shift === s
-                  ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))]"
+                  ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.15)] text-[hsl(var(--teal-text))]"
                   : "border-border hover:border-[hsl(var(--teal)/0.3)]"
               )}
             >
@@ -753,7 +753,7 @@ function StepRemuneration({
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <Label className="text-sm font-semibold">Taux horaire brut</Label>
-          <span className="text-lg font-bold text-[hsl(var(--teal))]">{hourlyRate} €/h</span>
+          <span className="text-lg font-bold text-[hsl(var(--teal-text))]">{hourlyRate} €/h</span>
         </div>
         <input
           type="range"
@@ -788,7 +788,7 @@ function StepRemuneration({
                 className={cn(
                   "flex items-center gap-3 rounded-lg border px-3 py-2 text-sm text-left transition-colors",
                   active
-                    ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.10)] text-[hsl(var(--teal))] font-medium"
+                    ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.15)] text-[hsl(var(--teal-text))] font-medium"
                     : "border-border hover:border-[hsl(var(--teal)/0.3)] hover:bg-muted"
                 )}
               >

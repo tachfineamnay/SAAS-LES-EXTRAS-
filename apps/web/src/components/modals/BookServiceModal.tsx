@@ -118,12 +118,12 @@ export function BookServiceModal() {
             <div key={label} className="flex items-center flex-1">
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-colors shrink-0 ${
-                  i < step ? "bg-blue-600 text-white" : i === step ? "bg-blue-100 text-blue-700 border-2 border-blue-600" : "bg-gray-100 text-gray-400"
+                  i < step ? "bg-primary text-primary-foreground" : i === step ? "bg-[hsl(var(--color-teal-100))] text-[hsl(var(--color-teal-700))] border-2 border-primary" : "bg-muted text-muted-foreground"
                 }`}
               >
                 {i < step ? <Check className="w-3 h-3" /> : i + 1}
               </div>
-              {i < 2 && <div className={`h-0.5 flex-1 mx-1 ${i < step ? "bg-blue-600" : "bg-gray-200"}`} />}
+              {i < 2 && <div className={`h-0.5 flex-1 mx-1 ${i < step ? "bg-primary" : "bg-border"}`} />}
             </div>
           ))}
         </div>
@@ -133,7 +133,7 @@ export function BookServiceModal() {
           {step === 0 && (
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-blue-600" />
+                <CalendarDays className="w-4 h-4 text-primary" />
                 Choisissez un créneau disponible
               </Label>
               {slots.length === 0 ? (
@@ -160,7 +160,7 @@ export function BookServiceModal() {
                         type="button"
                         onClick={() => setSelectedSlot(slot)}
                         className={`flex items-center justify-between p-3 rounded-lg border-2 text-sm transition-colors text-left ${
-                          active ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300"
+                          active ? "border-primary bg-[hsl(var(--color-teal-50))]" : "border-border hover:border-muted-foreground/30"
                         }`}
                       >
                         <div>
@@ -170,7 +170,7 @@ export function BookServiceModal() {
                             {service?.durationMinutes && ` (${formatDuration(service.durationMinutes)})`}
                           </p>
                         </div>
-                        {active && <Check className="w-4 h-4 text-blue-600 shrink-0" />}
+                        {active && <Check className="w-4 h-4 text-primary shrink-0" />}
                       </button>
                     );
                   })}
@@ -184,7 +184,7 @@ export function BookServiceModal() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="nb-part" className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-blue-600" />
+                  <Users className="w-4 h-4 text-primary" />
                   Nombre de participants
                 </Label>
                 <Input
@@ -201,7 +201,7 @@ export function BookServiceModal() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="book-msg" className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-blue-600" />
+                  <MessageSquare className="w-4 h-4 text-primary" />
                   Message (optionnel)
                 </Label>
                 <Textarea
@@ -217,15 +217,15 @@ export function BookServiceModal() {
 
           {/* Step 2: recap */}
           {step === 2 && (selectedSlot || manualDate) && (
-            <div className="rounded-xl bg-gray-50 border p-4 space-y-3 text-sm">
-              <p className="font-semibold text-gray-700">Récapitulatif de votre demande</p>
-              <div className="space-y-1.5 text-gray-600">
+            <div className="rounded-xl bg-[hsl(var(--surface-2))] border p-4 space-y-3 text-sm">
+              <p className="font-semibold text-foreground">Récapitulatif de votre demande</p>
+              <div className="space-y-1.5 text-muted-foreground">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Atelier</span>
+                  <span className="text-muted-foreground">Atelier</span>
                   <span className="font-medium text-right max-w-[60%] truncate">{service?.title}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Date</span>
+                  <span className="text-muted-foreground">Date</span>
                   <span>
                     {selectedSlot ? (
                       <>
@@ -242,13 +242,13 @@ export function BookServiceModal() {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Participants</span>
+                  <span className="text-muted-foreground">Participants</span>
                   <span>{nbParticipants}</span>
                 </div>
                 {service?.pricingType !== "QUOTE" && (
                   <div className="flex justify-between font-semibold text-base pt-1 border-t">
                     <span>Total estimé</span>
-                    <span className="text-blue-700">
+                    <span className="text-[hsl(var(--teal-text))]">
                       {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(totalPrice)} HT
                     </span>
                   </div>
@@ -270,11 +270,11 @@ export function BookServiceModal() {
           </Button>
 
           {step < 2 ? (
-            <Button onClick={goNext} className="bg-blue-600 text-white hover:bg-blue-700 gap-1">
+            <Button onClick={goNext} className="gap-1">
               Suivant <ChevronRight className="w-4 h-4" />
             </Button>
           ) : (
-            <Button onClick={onSubmit} disabled={isPending} className="bg-blue-600 text-white hover:bg-blue-700">
+            <Button onClick={onSubmit} disabled={isPending}>
               {isPending ? "Envoi…" : "Envoyer la demande"}
             </Button>
           )}

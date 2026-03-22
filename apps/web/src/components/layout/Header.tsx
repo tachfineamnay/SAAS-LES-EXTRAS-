@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu, Siren, Bell, ChevronDown } from "lucide-react";
-import { motion, type MotionValue, useMotionTemplate, type MotionStyle } from "framer-motion";
+import { motion, type MotionValue, type MotionStyle } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,14 +21,11 @@ function useHeaderStyle(
   headerOpacity?: MotionValue<number>,
   borderOpacity?: MotionValue<number>
 ): MotionStyle | undefined {
-  // Hooks must be called unconditionally — pass fallback values when not scroll-linked
-  const bg = useMotionTemplate`rgba(7, 19, 22, ${headerOpacity ?? 0.8})`;
-  const border = useMotionTemplate`rgba(255, 255, 255, calc(${borderOpacity ?? 0.7} * 0.08))`;
-
   if (!headerOpacity) return undefined;
+  // Pass scroll-linked alpha as CSS custom props consumed by .glass-nav in globals.css
   return {
-    background: bg,
-    borderBottomColor: border,
+    '--nav-alpha': headerOpacity,
+    '--nav-border-alpha': borderOpacity,
   } as unknown as MotionStyle;
 }
 
