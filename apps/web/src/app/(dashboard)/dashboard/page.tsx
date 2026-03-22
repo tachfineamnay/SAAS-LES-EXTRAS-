@@ -76,7 +76,7 @@ export default async function DashboardPage() {
     let missionsError: string | null = null;
     if (userRole === "ESTABLISHMENT") {
         const missionsResult = await fetchSafe<EstablishmentMission[]>(
-            () => getEstablishmentMissions(),
+            () => getEstablishmentMissions(token),
             [],
             "Renforts",
         );

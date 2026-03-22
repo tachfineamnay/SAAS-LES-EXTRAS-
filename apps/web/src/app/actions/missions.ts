@@ -87,13 +87,13 @@ export async function declineCandidate(bookingId: string): Promise<{ ok: boolean
     }
 }
 
-export async function getEstablishmentMissions() {
-    const session = await getSession();
-    if (!session) return [];
+export async function getEstablishmentMissions(token?: string) {
+    const resolvedToken = token ?? (await getSession())?.token;
+    if (!resolvedToken) return [];
 
     const missions = await apiRequest("/missions/managed", {
         method: "GET",
-        token: session.token,
+        token: resolvedToken,
     });
     return Array.isArray(missions) ? (missions as EstablishmentMission[]) : [];
 }

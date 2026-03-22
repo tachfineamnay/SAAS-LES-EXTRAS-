@@ -47,6 +47,7 @@ export async function apiRequest<T>(
       ...(options.body ? { "Content-Type": "application/json" } : {}),
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
+    signal: AbortSignal.timeout(10_000),
   });
 
   const text = await response.text();
