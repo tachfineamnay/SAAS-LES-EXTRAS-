@@ -88,7 +88,7 @@ export class MissionsService {
       where.AND = [{ dateStart: { lte: dayEnd } }, { dateEnd: { gte: dayStart } }];
     }
 
-    return this.prisma.reliefMission.findMany({
+    const missions = await this.prisma.reliefMission.findMany({
       where,
       orderBy: {
         dateStart: "asc",
@@ -101,6 +101,7 @@ export class MissionsService {
         },
       },
     });
+    return missions.map((m: any) => ({ ...m, isRenfort: true as const }));
   }
 
   async apply(missionId: string, freelanceId: string, dto: ApplyMissionDto = {}) {
@@ -148,7 +149,7 @@ export class MissionsService {
   }
 
   async getManagedMissions(establishmentId: string) {
-    return this.prisma.reliefMission.findMany({
+    const missions = await this.prisma.reliefMission.findMany({
       where: {
         establishmentId,
         // No status filter: returns full history (OPEN, ASSIGNED, COMPLETED, CANCELLED)
@@ -167,5 +168,23 @@ export class MissionsService {
         }
       }
     });
+    return missions.map((m: any) => ({ ...m, isRenfort: true as const }));
+  }
+
+  async getMission(id: string) {
+    const mission = await this.prisma.reliefMission.findUnique({
+      where: { id },
+      include: {
+        establishment: {
+          include: {
+            profile: true,
+          },
+        },
+      },
+    });
+    if (!mission) {
+      throw new NotFoundException("Mission not found");
+    }
+    return { ...mission, isRenfort: true as const };
   }
 }

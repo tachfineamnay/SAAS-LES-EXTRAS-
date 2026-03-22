@@ -198,6 +198,21 @@ export async function getAvailableMissions(token?: string): Promise<SerializedMi
   }
 }
 
+export async function getAvailableMission(id: string, token?: string): Promise<SerializedMission | null> {
+  const activeToken = token || (await getSession())?.token;
+  if (!activeToken) return null;
+
+  try {
+    return await apiRequest<SerializedMission>(`/missions/${id}`, {
+      method: "GET",
+      token: activeToken,
+    });
+  } catch (error) {
+    console.error("getAvailableMission error", error);
+    return null;
+  }
+}
+
 export async function getFreelances(token?: string): Promise<SerializedFreelance[]> {
   const activeToken = token || (await getSession())?.token;
   if (!activeToken) return [];
@@ -330,22 +345,6 @@ export async function createServiceFromPublish(input: CreateServiceInput): Promi
   revalidatePath(atelierInvalidationPaths.bookings);
   revalidatePath(atelierInvalidationPaths.dashboard);
   revalidatePath(atelierInvalidationPaths.mesAteliers);
-  return { ok: true };
-}
-
-export async function applyToMission(missionId: string): Promise<{ ok: true }> {
-  if (!missionId) throw new Error("Mission manquante.");
-
-  const session = await getSession();
-  if (!session) throw new Error("Non connecté");
-
-  await apiRequest(`/missions/${missionId}/apply`, {
-    method: "POST",
-    token: session.token,
-  });
-
-  revalidatePath("/marketplace");
-  revalidatePath("/bookings");
   return { ok: true };
 }
 

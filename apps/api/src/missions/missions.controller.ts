@@ -38,6 +38,13 @@ export class MissionsController {
     return this.missionsService.getManagedMissions(user.id);
   }
 
+  @Get(":missionId")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.FREELANCE)
+  getMission(@Param("missionId") id: string) {
+    return this.missionsService.getMission(id);
+  }
+
   @Post(":missionId/apply")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.FREELANCE)

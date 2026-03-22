@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   ArrowLeft,
@@ -15,7 +15,7 @@ import {
   Users,
   Sparkles,
 } from "lucide-react";
-import { getAvailableMissions } from "@/app/actions/marketplace";
+import { getAvailableMission } from "@/app/actions/marketplace";
 import { getSession } from "@/lib/session";
 import { getMetierById } from "@/lib/sos-config";
 import { Badge } from "@/components/ui/badge";
@@ -33,8 +33,7 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
   if (!session) redirect("/login");
   if (session.user.role !== "FREELANCE") redirect("/marketplace");
 
-  const missions = await getAvailableMissions(session.token);
-  const mission = missions.find((m) => m.id === params.id);
+  const mission = await getAvailableMission(params.id, session.token);
   if (!mission) notFound();
 
   const metier = mission.metier ? getMetierById(mission.metier) : null;
@@ -53,9 +52,15 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
       ? mission.slots
       : [
           {
-            date: format(new Date(mission.dateStart), "yyyy-MM-dd"),
-            heureDebut: format(new Date(mission.dateStart), "HH:mm"),
-            heureFin: format(new Date(mission.dateEnd), "HH:mm"),
+            date: isValid(new Date(mission.dateStart))
+              ? format(new Date(mission.dateStart), "yyyy-MM-dd")
+              : new Date().toISOString().slice(0, 10),
+            heureDebut: isValid(new Date(mission.dateStart))
+              ? format(new Date(mission.dateStart), "HH:mm")
+              : "00:00",
+            heureFin: isValid(new Date(mission.dateEnd))
+              ? format(new Date(mission.dateEnd), "HH:mm")
+              : "00:00",
           },
         ];
 

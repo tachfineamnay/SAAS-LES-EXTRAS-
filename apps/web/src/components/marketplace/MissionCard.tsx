@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Calendar, Euro, MapPin, Building2, Sun, Moon, Clock, Loader2, Zap } from "lucide-react";
 import { SerializedMission } from "@/app/actions/marketplace";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMetierById } from "@/lib/sos-config";
-import { useUIStore } from "@/lib/stores/useUIStore";
 
 interface MissionCardProps {
   mission: SerializedMission;
@@ -36,9 +35,15 @@ export function MissionCard({ mission, onApply }: MissionCardProps) {
       ? mission.slots
       : [
           {
-            date: format(new Date(mission.dateStart), "yyyy-MM-dd"),
-            heureDebut: format(new Date(mission.dateStart), "HH:mm"),
-            heureFin: format(new Date(mission.dateEnd), "HH:mm"),
+            date: isValid(new Date(mission.dateStart))
+              ? format(new Date(mission.dateStart), "yyyy-MM-dd")
+              : new Date().toISOString().slice(0, 10),
+            heureDebut: isValid(new Date(mission.dateStart))
+              ? format(new Date(mission.dateStart), "HH:mm")
+              : "00:00",
+            heureFin: isValid(new Date(mission.dateEnd))
+              ? format(new Date(mission.dateEnd), "HH:mm")
+              : "00:00",
           },
         ];
 
