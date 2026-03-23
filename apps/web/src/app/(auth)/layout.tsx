@@ -1,11 +1,6 @@
-import type { Metadata } from "next";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 
-export const metadata: Metadata = {
-    title: "Onboarding - Les Extras",
-};
-
-export default function OnboardingLayout({
+export default function AuthLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;

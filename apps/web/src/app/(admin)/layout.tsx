@@ -5,6 +5,7 @@ import { LogOut, Menu } from "lucide-react";
 import { adminLogout } from "@/app/actions/admin-auth";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { Button } from "@/components/ui/button";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 export default function AdminLayout({
   children,
@@ -47,12 +48,15 @@ export default function AdminLayout({
                 </div>
               </div>
 
-              <form action={adminLogout}>
-                <Button type="submit" variant="ghost" size="sm" className="gap-1.5">
-                  <LogOut className="h-4 w-4" />
-                  Déconnexion
-                </Button>
-              </form>
+              <div className="flex items-center gap-2">
+                <ThemeSwitcher />
+                <form action={adminLogout}>
+                  <Button type="submit" variant="ghost" size="sm" className="gap-1.5">
+                    <LogOut className="h-4 w-4" />
+                    Déconnexion
+                  </Button>
+                </form>
+              </div>
             </div>
           </header>
 

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useUIStore, type UserRole } from "@/lib/stores/useUIStore";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { cn } from "@/lib/utils";
 
 /** Human-readable labels for breadcrumbs */
@@ -129,6 +130,9 @@ export function Header({ onOpenMobileSidebar, headerOpacity, borderOpacity }: He
 
         {/* Right */}
         <div className="flex items-center gap-2">
+
+          {/* Theme toggle */}
+          <ThemeSwitcher />
 
           {/* Notifications */}
           <DropdownMenu>
