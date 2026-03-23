@@ -1,13 +1,67 @@
 "use client";
 
-import { Menu, Siren, Bell, ChevronDown } from "lucide-react";
+import { Menu, Siren, Bell, ChevronDown, ChevronRight } from "lucide-react";
 import { motion, type MotionValue, type MotionStyle } from "framer-motion";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useUIStore, type UserRole } from "@/lib/stores/useUIStore";
 import { cn } from "@/lib/utils";
+
+/** Human-readable labels for breadcrumbs */
+const BREADCRUMB_LABELS: Record<string, string> = {
+  dashboard: "Tableau de bord",
+  marketplace: "Marketplace",
+  bookings: "Agenda",
+  account: "Mon Profil",
+  settings: "Paramètres",
+  inbox: "Messagerie",
+  packs: "Crédits",
+  renforts: "Mes Renforts",
+  ateliers: "Ateliers",
+  finance: "Finance",
+  reservations: "Réservations",
+  establishment: "Établissement",
+  missions: "Missions",
+  services: "Services",
+};
+
+function Breadcrumbs() {
+  const pathname = usePathname();
+  const segments = pathname.split("/").filter(Boolean);
+
+  if (segments.length === 0) return null;
+
+  const crumbs = segments.map((seg, i) => {
+    const href = "/" + segments.slice(0, i + 1).join("/");
+    const label = BREADCRUMB_LABELS[seg] || seg.charAt(0).toUpperCase() + seg.slice(1);
+    const isLast = i === segments.length - 1;
+    return { href, label, isLast };
+  });
+
+  return (
+    <nav aria-label="Fil d'Ariane" className="hidden md:flex items-center gap-1 text-xs text-muted-foreground">
+      {crumbs.map((crumb, i) => (
+        <span key={crumb.href} className="flex items-center gap-1">
+          {i > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground/50" aria-hidden="true" />}
+          {crumb.isLast ? (
+            <span className="font-medium text-foreground">{crumb.label}</span>
+          ) : (
+            <Link
+              href={crumb.href}
+              className="hover:text-foreground transition-colors"
+            >
+              {crumb.label}
+            </Link>
+          )}
+        </span>
+      ))}
+    </nav>
+  );
+}
 
 type HeaderProps = {
   onOpenMobileSidebar: () => void;
@@ -68,6 +122,9 @@ export function Header({ onOpenMobileSidebar, headerOpacity, borderOpacity }: He
             </div>
             <span className="text-sm font-bold font-[family-name:var(--font-display)]">Les Extras</span>
           </div>
+
+          {/* Desktop breadcrumbs */}
+          <Breadcrumbs />
         </div>
 
         {/* Right */}

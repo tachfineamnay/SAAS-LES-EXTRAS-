@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import {
   motion, useScroll, useTransform, useMotionValue, useSpring, useInView,
 } from "framer-motion";
+import { PublicNavbar } from "@/components/layout/PublicNavbar";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 import { useRef, useState, useEffect, useCallback } from "react";
 import {
   ArrowRight, CheckCircle, Star, Zap,
@@ -13,7 +14,6 @@ import {
   Check, Quote, ChevronRight, Building2, UserCheck, Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeSwitcher } from "@/components/theme-switcher";
 
 /* constants */
 const DISPLAY = "font-[family-name:var(--font-display)]";
@@ -370,13 +370,7 @@ export default function HomePage() {
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 160]);
   const heroO = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
 
-  /* Navbar scroll shadow */
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 24);
-    window.addEventListener("scroll", handler, { passive: true });
-    return () => window.removeEventListener("scroll", handler);
-  }, []);
+  /* Navbar scroll shadow — now handled by PublicNavbar */
 
   return (
     <div className="relative min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] overflow-x-hidden">
@@ -400,42 +394,7 @@ export default function HomePage() {
 
       <div className="relative z-10">
         {/* ══════════ NAVBAR ══════════ */}
-        <motion.header initial={{ y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.05 }}
-          className={`fixed top-0 z-50 w-full transition-shadow duration-300`}>
-          <nav className={`glass-nav ${scrolled ? "scrolled" : ""}`}>
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 flex h-16 items-center justify-between">
-              <Link href="/" className="shrink-0">
-                <Image src="/logo-adepa.png" alt="ADEPA Les Extras" width={110} height={36}
-                  className="h-8 w-auto object-contain" priority />
-              </Link>
-              <div className="hidden md:flex items-center gap-7">
-                {[
-                  { l: "Renfort", h: "#renfort" },
-                  { l: "Ateliers", h: "#ateliers" },
-                  { l: "Établissements", h: "#etablissements" },
-                  { l: "Freelances", h: "#freelances" },
-                  { l: "Tarifs", h: "#tarifs" },
-                ].map(n => (
-                  <Link key={n.l} href={n.h}
-                    className="text-sm font-medium text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--foreground))] transition-colors relative group">
-                    {n.l}
-                    <span className="absolute -bottom-0.5 left-0 w-0 h-[1.5px] rounded-full bg-[hsl(var(--teal))] group-hover:w-full transition-all duration-300" />
-                  </Link>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <ThemeSwitcher />
-                <Button asChild variant="ghost" size="sm" className="text-sm font-semibold hidden sm:inline-flex text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--foreground))]">
-                  <Link href="/login">Connexion</Link>
-                </Button>
-                <Button asChild size="sm" variant="coral">
-                  <Link href="/register">Commencer <ArrowRight className="ml-1.5 h-3.5 w-3.5" /></Link>
-                </Button>
-              </div>
-            </div>
-          </nav>
-        </motion.header>
+        <PublicNavbar />
 
 
         <main>
@@ -896,32 +855,7 @@ export default function HomePage() {
         </main>
 
         {/* ══════════ FOOTER ══════════ */}
-        <footer className="border-t border-[hsl(var(--border))] py-10 px-6">
-          <div className="mx-auto max-w-7xl">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              <Link href="/" className="shrink-0">
-                <Image src="/logo-adepa.png" alt="ADEPA Les Extras" width={90} height={30}
-                  className="h-6 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity" />
-              </Link>
-              <p className={`${MONO} text-[11px] text-[hsl(var(--text-tertiary))]`}>
-                © {new Date().getFullYear()} ADEPA Les Extras · Tous droits réservés
-              </p>
-              <div className="flex items-center gap-6">
-                {[
-                  { l: "CGU", h: "/terms" },
-                  { l: "Confidentialité", h: "/privacy" },
-                  { l: "Mentions légales", h: "/terms" },
-                  { l: "Contact", h: "mailto:contact@lesextras.fr" },
-                ].map(link => (
-                  <Link key={link.l} href={link.h}
-                    className={`text-xs text-[hsl(var(--text-tertiary))] hover:text-[hsl(var(--foreground))] transition-colors`}>
-                    {link.l}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        </footer>
+        <PublicFooter />
       </div>
     </div>
   );
