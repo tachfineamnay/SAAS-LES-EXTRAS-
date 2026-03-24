@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { OnboardingGuard } from "@/components/onboarding/OnboardingGuard";
-import { getSession } from "@/lib/session";
+import { getSession, deleteSession } from "@/lib/session";
+import { apiRequest, UnauthorizedError } from "@/lib/api";
 import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
@@ -12,6 +13,17 @@ export default async function DashboardLayout({
 
   if (!session) {
     redirect("/login");
+  }
+
+  // Vérifie que le token API est encore valide (peut expirer indépendamment du cookie Next.js)
+  try {
+    await apiRequest("/users/me", { token: session.token, cache: "no-store" });
+  } catch (e) {
+    if (e instanceof UnauthorizedError) {
+      await deleteSession();
+      redirect("/login");
+    }
+    // Toute autre erreur réseau n'invalide pas la session
   }
 
   const onboardingStep = session.user.onboardingStep ?? 0;

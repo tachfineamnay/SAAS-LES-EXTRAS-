@@ -1,3 +1,15 @@
+/**
+ * Thrown when the API returns 401 Unauthorized.
+ * Caught by the dashboard layout to clear the stale session and redirect to /login.
+ */
+export class UnauthorizedError extends Error {
+  readonly status = 401;
+  constructor() {
+    super("Session expirée — veuillez vous reconnecter.");
+    this.name = "UnauthorizedError";
+  }
+}
+
 type ApiRequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   token?: string;
@@ -58,6 +70,10 @@ export async function apiRequest<T>(
     } catch {
       payload = text;
     }
+  }
+
+  if (response.status === 401) {
+    throw new UnauthorizedError();
   }
 
   if (!response.ok) {
