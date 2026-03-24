@@ -91,6 +91,8 @@ export class ServicesService {
         objectives: dto.objectives,
         methodology: dto.methodology,
         evaluation: dto.evaluation,
+        imageUrl: dto.imageUrl,
+        scheduleInfo: dto.scheduleInfo,
         ownerId,
       },
     });

@@ -244,6 +244,8 @@ model Service {
   objectives          String?     @db.Text
   methodology         String?     @db.Text
   evaluation          String?     @db.Text
+  imageUrl            String?
+  scheduleInfo        String?
 
   status ServiceStatus @default(ACTIVE)
 

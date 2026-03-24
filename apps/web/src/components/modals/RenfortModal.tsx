@@ -74,6 +74,7 @@ const renfortSchema = z.object({
   slots: z.array(slotSchema).min(1, "Ajoutez au moins un créneau").max(MAX_SLOTS),
   hasTransmissions: z.boolean(),
   transmissionTime: z.string().optional(),
+  dateFinMission: z.string().optional(),
   // Step 3 — Rémunération
   shift: z.enum(["JOUR", "NUIT"]),
   hourlyRate: z.number().min(HOURLY_RATE_MIN).max(HOURLY_RATE_MAX),
@@ -138,6 +139,7 @@ export function RenfortModal() {
       slots: [{ date: "", heureDebut: "", heureFin: "" }],
       hasTransmissions: false,
       transmissionTime: "",
+      dateFinMission: "",
       shift: "JOUR",
       hourlyRate: HOURLY_RATE_DEFAULT,
       perks: [],
@@ -182,7 +184,10 @@ export function RenfortModal() {
       const first = data.slots[0];
       if (!first) throw new Error("Au moins un créneau est requis");
       const dateStart = new Date(`${first.date}T${first.heureDebut}`);
-      const dateEnd = new Date(`${first.date}T${first.heureFin}`);
+      const dateEnd =
+        data.dateFinMission && data.dateFinMission > first.date
+          ? new Date(`${data.dateFinMission}T23:59`)
+          : new Date(`${first.date}T${first.heureFin}`);
 
       await createMissionFromRenfort({
         title: getMetierLabel(data.metier),
@@ -307,6 +312,8 @@ export function RenfortModal() {
                   onTransmissionsChange={(v) => form.setValue("hasTransmissions", v)}
                   transmissionTime={values.transmissionTime ?? ""}
                   onTransmissionTimeChange={(v) => form.setValue("transmissionTime", v)}
+                  dateFinMission={values.dateFinMission ?? ""}
+                  onDateFinChange={(v) => form.setValue("dateFinMission", v)}
                 />
               )}
 
@@ -610,6 +617,7 @@ function StepPlanification({
   fields, errors, register, onAdd, onRemove,
   hasTransmissions, onTransmissionsChange,
   transmissionTime, onTransmissionTimeChange,
+  dateFinMission, onDateFinChange,
 }: {
   fields: { id: string }[];
   errors: any;
@@ -620,6 +628,8 @@ function StepPlanification({
   onTransmissionsChange: (v: boolean) => void;
   transmissionTime: string;
   onTransmissionTimeChange: (v: string) => void;
+  dateFinMission: string;
+  onDateFinChange: (v: string) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -673,6 +683,22 @@ function StepPlanification({
             <Plus className="h-4 w-4" /> Ajouter un créneau
           </Button>
         )}
+      </div>
+
+      {/* Date de fin de mission (multi-jours) */}
+      <div className="space-y-2">
+        <Label htmlFor="dateFinMission" className="text-sm font-semibold">
+          Date de fin de mission{" "}
+          <span className="text-muted-foreground font-normal">(multi-jours, optionnel)</span>
+        </Label>
+        <Input
+          id="dateFinMission"
+          type="date"
+          value={dateFinMission}
+          min={new Date().toISOString().split("T")[0]}
+          onChange={(e) => onDateFinChange(e.target.value)}
+        />
+        <p className="text-xs text-muted-foreground">Laissez vide si la mission tient en un seul jour.</p>
       </div>
 
       {/* Transmissions */}

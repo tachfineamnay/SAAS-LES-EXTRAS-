@@ -28,6 +28,8 @@ export type SerializedService = {
   methodology: string | null;
   evaluation: string | null;
   slots: ServiceSlot[] | null;
+  imageUrl?: string | null;
+  scheduleInfo?: string | null;
   owner?: {
     id: string;
     profile?: {
@@ -95,6 +97,8 @@ type CreateServiceInput = {
   methodology?: string;
   evaluation?: string;
   slots?: ServiceSlot[];
+  imageUrl?: string;
+  scheduleInfo?: string;
 };
 
 export type SerializedMission = {

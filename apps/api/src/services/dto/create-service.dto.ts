@@ -92,4 +92,12 @@ export class CreateServiceDto {
   @IsOptional()
   @IsString()
   evaluation?: string;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  scheduleInfo?: string;
 }

@@ -26,7 +26,13 @@ export class MissionsService {
       const starts = dto.slots.map((s) => new Date(`${s.date}T${s.heureDebut}`).getTime());
       const ends = dto.slots.map((s) => new Date(`${s.date}T${s.heureFin}`).getTime());
       dateStartStr = new Date(Math.min(...starts)).toISOString();
-      dateEndStr = new Date(Math.max(...ends)).toISOString();
+      const calculatedEnd = new Date(Math.max(...ends));
+      const explicitEnd = new Date(dto.dateEnd);
+      // Preserve explicit dateEnd if it extends beyond the last slot (multi-day mission)
+      dateEndStr =
+        !isNaN(explicitEnd.getTime()) && explicitEnd > calculatedEnd
+          ? dto.dateEnd
+          : calculatedEnd.toISOString();
     }
 
     const dateStart = new Date(dateStartStr);

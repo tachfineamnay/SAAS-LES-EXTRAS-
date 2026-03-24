@@ -14,6 +14,7 @@ import {
   Mail,
   Building2,
   LogOut,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,10 +38,11 @@ const ESTABLISHMENT_LINKS = [
 ];
 
 const FREELANCE_LINKS = [
-  { href: "/dashboard",      label: "Tableau de bord",   icon: LayoutDashboard },
-  { href: "/marketplace",    label: "Offres de Renforts", icon: ShoppingBag },
-  { href: "/bookings",       label: "Mon Agenda",         icon: CalendarDays },
-  { href: "/dashboard/inbox", label: "Messagerie",        icon: Mail },
+  { href: "/dashboard",          label: "Tableau de bord",   icon: LayoutDashboard },
+  { href: "/marketplace",        label: "Offres de Renforts", icon: ShoppingBag },
+  { href: "/bookings",           label: "Mon Agenda",         icon: CalendarDays },
+  { href: "/dashboard/ateliers", label: "Mes ateliers",       icon: BookOpen },
+  { href: "/dashboard/inbox",    label: "Messagerie",         icon: Mail },
 ];
 
 const BOTTOM_LINKS = [

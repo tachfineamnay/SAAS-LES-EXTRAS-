@@ -36,11 +36,11 @@ import {
 
 const slotSchema = z
   .object({
-    date: z.string().min(1, "Date requise"),
+    date: z.string(),
     heureDebut: z.string().min(1, "Heure de début requise"),
     heureFin: z.string().min(1, "Heure de fin requise"),
   })
-  .refine((s) => s.heureFin > s.heureDebut, {
+  .refine((s) => !s.heureDebut || !s.heureFin || s.heureFin > s.heureDebut, {
     message: "L'heure de fin doit être après l'heure de début",
     path: ["heureFin"],
   });
@@ -51,6 +51,7 @@ const publishSchema = z
     category: z.string().min(1, "Sélectionnez une catégorie"),
     title: z.string().min(3, "Titre trop court (min 3 caractères)"),
     description: z.string().min(20, "Description trop courte (min 20 caractères)"),
+    imageUrl: z.string().optional(),
     objectives: z.string().optional(),
     methodology: z.string().optional(),
     evaluation: z.string().optional(),
@@ -61,7 +62,8 @@ const publishSchema = z
     pricingType: z.enum(["SESSION", "PER_PARTICIPANT", "QUOTE"]),
     price: z.number().min(0).optional(),
     pricePerParticipant: z.number().min(0).optional(),
-    slots: z.array(slotSchema).min(1, "Ajoutez au moins un créneau").max(MAX_SERVICE_SLOTS),
+    slots: z.array(slotSchema).max(MAX_SERVICE_SLOTS).default([]),
+    scheduleInfo: z.string().optional(),
   })
   .refine(
     (d) => {
@@ -69,10 +71,15 @@ const publishSchema = z
       if (d.pricingType === "PER_PARTICIPANT") return (d.pricePerParticipant ?? 0) > 0;
       return true; // QUOTE has no price required
     },
-    {
-      message: "Veuillez saisir un tarif",
-      path: ["price"],
+    { message: "Veuillez saisir un tarif", path: ["price"] },
+  )
+  .refine(
+    (d) => {
+      const hasDatedSlot = d.slots.some((s) => s.date && s.date.length > 0);
+      const hasScheduleInfo = (d.scheduleInfo ?? "").trim().length > 0;
+      return hasDatedSlot || hasScheduleInfo;
     },
+    { message: "Ajoutez au moins un créneau daté ou décrivez votre planning", path: ["scheduleInfo"] },
   );
 
 type PublishForm = z.infer<typeof publishSchema>;
@@ -86,13 +93,28 @@ const STEP_FIELDS: Record<StepIndex, (keyof PublishForm)[]> = {
   2: ["objectives", "methodology", "evaluation"],
   3: ["durationMinutes", "capacity", "publicCible", "materials"],
   4: ["pricingType", "price", "pricePerParticipant"],
-  5: ["slots"],
+  5: ["scheduleInfo"],
 };
 
 const slideVariants = {
   enter: (dir: number) => ({ x: dir > 0 ? 300 : -300, opacity: 0 }),
   center: { x: 0, opacity: 1 },
   exit: (dir: number) => ({ x: dir < 0 ? 300 : -300, opacity: 0 }),
+};
+
+const DAYS_OF_WEEK = [
+  { id: "lu", label: "Lu" },
+  { id: "ma", label: "Ma" },
+  { id: "me", label: "Me" },
+  { id: "je", label: "Je" },
+  { id: "ve", label: "Ve" },
+  { id: "sa", label: "Sa" },
+  { id: "di", label: "Di" },
+];
+
+const DAY_LABELS: Record<string, string> = {
+  lu: "Lundi", ma: "Mardi", me: "Mercredi", je: "Jeudi",
+  ve: "Vendredi", sa: "Samedi", di: "Dimanche",
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -103,6 +125,10 @@ export function PublishModal() {
   const openPublishModal = useUIStore((s) => s.openPublishModal);
   const closePublishModal = useUIStore((s) => s.closePublishModal);
   const [isPending, startTransition] = useTransition();
+  const [scheduleMode, setScheduleMode] = useState<"specific" | "weekly" | "free">("specific");
+  const [weeklyDays, setWeeklyDays] = useState<string[]>([]);
+  const [weeklyStart, setWeeklyStart] = useState("09:00");
+  const [weeklyEnd, setWeeklyEnd] = useState("11:00");
 
   const form = useForm<PublishForm>({
     resolver: zodResolver(publishSchema),
@@ -122,6 +148,8 @@ export function PublishModal() {
       price: undefined,
       pricePerParticipant: undefined,
       slots: [{ date: "", heureDebut: "09:00", heureFin: "11:00" }],
+      imageUrl: "",
+      scheduleInfo: "",
     },
   });
 
@@ -129,6 +157,15 @@ export function PublishModal() {
     control: form.control,
     name: "slots",
   });
+
+  function updateWeeklySchedule(days: string[], start: string, end: string) {
+    if (days.length > 0) {
+      const dayNames = days.map((d) => DAY_LABELS[d] ?? d).join(", ");
+      form.setValue("scheduleInfo", `${dayNames} de ${start} à ${end}`);
+    } else {
+      form.setValue("scheduleInfo", "");
+    }
+  }
 
   const [step, setStep] = useFormStep();
   const [dir, setDir] = useDir();
@@ -151,6 +188,10 @@ export function PublishModal() {
     setTimeout(() => {
       form.reset();
       setStep(0);
+      setScheduleMode("specific");
+      setWeeklyDays([]);
+      setWeeklyStart("09:00");
+      setWeeklyEnd("11:00");
     }, 300);
   };
 
@@ -172,7 +213,9 @@ export function PublishModal() {
           objectives: data.objectives || undefined,
           methodology: data.methodology || undefined,
           evaluation: data.evaluation || undefined,
-          slots: data.slots,
+          imageUrl: data.imageUrl || undefined,
+          scheduleInfo: data.scheduleInfo || undefined,
+          slots: data.slots.filter((s) => s.date && s.date.length > 0),
         });
         toast.success(data.type === "WORKSHOP" ? "Atelier publié avec succès !" : "Formation publiée avec succès !");
         handleClose();
@@ -291,15 +334,21 @@ export function PublishModal() {
                 </>
               )}
 
-              {/* ── Étape 1: Titre + Description ── */}
+              {/* ── Étape 1: Titre + Description + Image ── */}
               {step === 1 && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="pub-title">Titre de l&apos;atelier</Label>
+                    <Label htmlFor="pub-title">
+                      Titre de {values.type === "TRAINING" ? "la formation" : "l'atelier"}
+                    </Label>
                     <Input
                       id="pub-title"
                       {...form.register("title")}
-                      placeholder="Ex : Atelier gestion des émotions pour adolescents"
+                      placeholder={
+                        values.type === "TRAINING"
+                          ? "Ex : Formation gestion des émotions pour professionnels"
+                          : "Ex : Atelier gestion des émotions pour adolescents"
+                      }
                     />
                     {form.formState.errors.title && (
                       <p className="text-xs text-red-500">{form.formState.errors.title.message}</p>
@@ -310,12 +359,24 @@ export function PublishModal() {
                     <Textarea
                       id="pub-desc"
                       {...form.register("description")}
-                      placeholder="Présentez votre atelier en quelques phrases..."
-                      rows={5}
+                      placeholder={`Présentez votre ${values.type === "TRAINING" ? "formation" : "atelier"} en quelques phrases...`}
+                      rows={4}
                     />
                     {form.formState.errors.description && (
                       <p className="text-xs text-red-500">{form.formState.errors.description.message}</p>
                     )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pub-img">
+                      Image de couverture{" "}
+                      <span className="text-muted-foreground font-normal">(URL, optionnel)</span>
+                    </Label>
+                    <Input
+                      id="pub-img"
+                      type="url"
+                      {...form.register("imageUrl")}
+                      placeholder="https://..."
+                    />
                   </div>
                 </>
               )}
@@ -364,6 +425,7 @@ export function PublishModal() {
                       <Label htmlFor="pub-dur">Durée</Label>
                       <select
                         id="pub-dur"
+                        title="Durée de l'atelier"
                         className="w-full border rounded-md px-3 py-2 text-sm bg-background"
                         value={values.durationMinutes}
                         onChange={(e) => form.setValue("durationMinutes", Number(e.target.value))}
@@ -504,63 +566,154 @@ export function PublishModal() {
               {/* ── Étape 5: Créneaux + Récap ── */}
               {step === 5 && (
                 <>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label>Créneaux disponibles</Label>
-                      <span className="text-xs text-muted-foreground">{slotFields.length}/{MAX_SERVICE_SLOTS}</span>
+                  {/* Mode selector */}
+                  <div className="space-y-2">
+                    <Label>Mode de planification</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["specific", "weekly", "free"] as const).map((mode) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => {
+                            setScheduleMode(mode);
+                            form.setValue("scheduleInfo", "");
+                            if (mode === "weekly") setWeeklyDays([]);
+                          }}
+                          className={`p-2.5 rounded-xl border-2 text-xs font-medium transition-colors ${
+                            scheduleMode === mode
+                              ? "border-primary bg-[hsl(var(--color-teal-50))] text-[hsl(var(--color-teal-700))]"
+                              : "border-border hover:border-muted-foreground/30"
+                          }`}
+                        >
+                          {mode === "specific" ? "📅 Dates précises" : mode === "weekly" ? "🔁 Planning hebdo" : "✏️ Description libre"}
+                        </button>
+                      ))}
                     </div>
-
-                    {slotFields.map((field, i) => (
-                      <div key={field.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-start">
-                        <Input
-                          type="date"
-                          {...form.register(`slots.${i}.date`)}
-                          min={new Date().toISOString().split("T")[0]}
-                        />
-                        <Input
-                          type="time"
-                          className="w-24"
-                          {...form.register(`slots.${i}.heureDebut`)}
-                        />
-                        <Input
-                          type="time"
-                          className="w-24"
-                          {...form.register(`slots.${i}.heureFin`)}
-                        />
-                        {slotFields.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeSlot(i)}
-                            className="text-red-400 hover:text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-
-                    {slotFields.length < MAX_SERVICE_SLOTS && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => appendSlot({ date: "", heureDebut: "09:00", heureFin: "11:00" })}
-                        className="gap-2"
-                      >
-                        <Plus className="w-4 h-4" /> Ajouter un créneau
-                      </Button>
-                    )}
-
-                    {form.formState.errors.slots && (
-                      <p className="text-xs text-red-500">
-                        {typeof form.formState.errors.slots === "object" && "message" in form.formState.errors.slots
-                          ? (form.formState.errors.slots as { message: string }).message
-                          : "Vérifiez vos créneaux"}
-                      </p>
-                    )}
                   </div>
+
+                  {/* Specific mode */}
+                  {scheduleMode === "specific" && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">Créneaux disponibles</span>
+                        <span className="text-xs text-muted-foreground">{slotFields.length}/{MAX_SERVICE_SLOTS}</span>
+                      </div>
+                      {slotFields.map((field, i) => (
+                        <div key={field.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-start">
+                          <Input
+                            type="date"
+                            {...form.register(`slots.${i}.date`)}
+                            min={new Date().toISOString().split("T")[0]}
+                          />
+                          <Input type="time" className="w-24" {...form.register(`slots.${i}.heureDebut`)} />
+                          <Input type="time" className="w-24" {...form.register(`slots.${i}.heureFin`)} />
+                          {slotFields.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeSlot(i)}
+                              className="text-red-400 hover:text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                      {slotFields.length < MAX_SERVICE_SLOTS && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => appendSlot({ date: "", heureDebut: "09:00", heureFin: "11:00" })}
+                          className="gap-2"
+                        >
+                          <Plus className="w-4 h-4" /> Ajouter un créneau
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Weekly mode */}
+                  {scheduleMode === "weekly" && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm">Jours de la semaine</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {DAYS_OF_WEEK.map((d) => {
+                            const active = weeklyDays.includes(d.id);
+                            return (
+                              <button
+                                key={d.id}
+                                type="button"
+                                onClick={() => {
+                                  const next = active
+                                    ? weeklyDays.filter((x) => x !== d.id)
+                                    : [...weeklyDays, d.id];
+                                  setWeeklyDays(next);
+                                  updateWeeklySchedule(next, weeklyStart, weeklyEnd);
+                                }}
+                                className={`h-9 w-9 rounded-lg border text-xs font-semibold transition-colors ${
+                                  active
+                                    ? "border-primary bg-primary text-primary-foreground"
+                                    : "border-border hover:border-primary/50"
+                                }`}
+                              >
+                                {d.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Heure de début</Label>
+                          <Input
+                            type="time"
+                            value={weeklyStart}
+                            onChange={(e) => {
+                              setWeeklyStart(e.target.value);
+                              updateWeeklySchedule(weeklyDays, e.target.value, weeklyEnd);
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Heure de fin</Label>
+                          <Input
+                            type="time"
+                            value={weeklyEnd}
+                            onChange={(e) => {
+                              setWeeklyEnd(e.target.value);
+                              updateWeeklySchedule(weeklyDays, weeklyStart, e.target.value);
+                            }}
+                          />
+                        </div>
+                      </div>
+                      {values.scheduleInfo && (
+                        <div className="rounded-lg bg-primary/5 border border-primary/20 px-4 py-2 text-sm text-primary">
+                          📅 {values.scheduleInfo}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Free mode */}
+                  {scheduleMode === "free" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="pub-schedule">Décrivez vos disponibilités</Label>
+                      <Textarea
+                        id="pub-schedule"
+                        value={values.scheduleInfo ?? ""}
+                        onChange={(e) => form.setValue("scheduleInfo", e.target.value)}
+                        placeholder="Ex : Disponible toutes les vacances scolaires, sur rendez-vous…"
+                        rows={3}
+                      />
+                    </div>
+                  )}
+
+                  {form.formState.errors.scheduleInfo && (
+                    <p className="text-xs text-red-500">{form.formState.errors.scheduleInfo.message}</p>
+                  )}
 
                   {/* Mini récap */}
                   <div className="rounded-xl bg-[hsl(var(--surface-2))] border p-4 space-y-2 text-sm">
@@ -584,8 +737,12 @@ export function PublishModal() {
                           ? `${values.pricePerParticipant ?? 0} €/pers.`
                           : `${values.price ?? 0} € HT`}
                       </span>
-                      <span className="text-muted-foreground/70">Créneaux</span>
-                      <span>{slotFields.length} créneau{slotFields.length > 1 ? "x" : ""}</span>
+                      <span className="text-muted-foreground/70">Planning</span>
+                      <span className="truncate">
+                        {values.scheduleInfo
+                          ? values.scheduleInfo
+                          : `${values.slots.filter((s) => s.date).length} créneau(x)`}
+                      </span>
                     </div>
                   </div>
                 </>

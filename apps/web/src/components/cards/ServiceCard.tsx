@@ -47,6 +47,15 @@ export function ServiceCard({ service }: ServiceCardProps) {
   return (
     <Link href={`/marketplace/services/${service.id}`} className="block h-full group">
       <Card className="flex h-full flex-col border border-border/60 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md overflow-hidden">
+        {service.imageUrl && (
+          <div className="relative h-32 overflow-hidden">
+            <img
+              src={service.imageUrl}
+              alt={service.title}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          </div>
+        )}
         <CardHeader className="p-4 pb-2 space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant={service.type === "WORKSHOP" ? "info" : "default"} className="font-medium">
@@ -75,12 +84,17 @@ export function ServiceCard({ service }: ServiceCardProps) {
               <Users className="h-3 w-3" />
               Max {service.capacity}
             </span>
-            {slotCount > 0 && (
+            {service.scheduleInfo ? (
+              <span className="flex items-center gap-1">
+                <CalendarDays className="h-3 w-3" />
+                <span className="truncate max-w-[140px]">{service.scheduleInfo}</span>
+              </span>
+            ) : slotCount > 0 ? (
               <span className="flex items-center gap-1">
                 <CalendarDays className="h-3 w-3" />
                 {slotCount} créneau{slotCount > 1 ? "x" : ""}
               </span>
-            )}
+            ) : null}
           </div>
         </CardHeader>
 
