@@ -217,7 +217,7 @@ export function UserProfileClient({ initialData, userRole, userEmail }: UserProf
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
             {/* Avatar */}
             <div className="relative group">
-              <div className="h-28 w-28 rounded-2xl bg-white shadow-lg border-4 border-white flex items-center justify-center overflow-hidden">
+              <div className="h-28 w-28 rounded-2xl glass-panel dark-card-shadow border-2 border-[rgba(255,255,255,0.10)] flex items-center justify-center overflow-hidden">
                 {initialData.avatar ? (
                   <img src={initialData.avatar} alt="Avatar" className="h-full w-full object-cover" />
                 ) : (
@@ -227,7 +227,7 @@ export function UserProfileClient({ initialData, userRole, userEmail }: UserProf
                 )}
               </div>
               {/* Status dot */}
-              <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-[hsl(var(--emerald))] border-2 border-white" />
+              <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-[hsl(var(--emerald))] border-2 border-[hsl(var(--background))]" />
             </div>
 
             {/* Name & meta */}
