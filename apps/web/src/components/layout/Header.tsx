@@ -6,9 +6,8 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useUIStore, type UserRole } from "@/lib/stores/useUIStore";
+import { useUIStore } from "@/lib/stores/useUIStore";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { cn } from "@/lib/utils";
 
@@ -86,7 +85,6 @@ function useHeaderStyle(
 
 export function Header({ onOpenMobileSidebar, headerOpacity, borderOpacity }: HeaderProps) {
   const userRole = useUIStore((state) => state.userRole);
-  const setUserRole = useUIStore((state) => state.setUserRole);
   const openRenfortModal = useUIStore((state) => state.openRenfortModal);
   const openPublishModal = useUIStore((state) => state.openPublishModal);
 
@@ -184,17 +182,6 @@ export function Header({ onOpenMobileSidebar, headerOpacity, borderOpacity }: He
           >
             {userRole === "ESTABLISHMENT" ? "🏥 Établissement" : "👤 Freelance"}
           </Badge>
-
-          {/* Demo role switcher */}
-          <Select value={userRole || undefined} onValueChange={(v) => setUserRole(v as UserRole)}>
-            <SelectTrigger className="w-[120px] h-9 text-xs rounded-xl">
-              <SelectValue placeholder="Rôle" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="ESTABLISHMENT">Établissement</SelectItem>
-              <SelectItem value="FREELANCE">Freelance</SelectItem>
-            </SelectContent>
-          </Select>
 
           {/* Primary CTA */}
           {userRole === "ESTABLISHMENT" ? (
