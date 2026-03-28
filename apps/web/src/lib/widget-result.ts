@@ -28,9 +28,13 @@ export async function fetchSafe<T>(
     const data = await fn();
     return { data, error: null };
   } catch (e) {
-    // 401 = token API expiré → on propage pour que le layout redirige vers /login
-    if (e instanceof UnauthorizedError) throw e;
-    console.error(`[dashboard] ${label}:`, e);
-    return { data: fallback, error: `${label} indisponible pour le moment.` };
+    const isAuth = e instanceof UnauthorizedError;
+    console.error(`[dashboard] ${label}:`, isAuth ? "401 Unauthorized" : e);
+    return {
+      data: fallback,
+      error: isAuth
+        ? "Session expirée — reconnectez-vous."
+        : `${label} indisponible pour le moment.`,
+    };
   }
 }

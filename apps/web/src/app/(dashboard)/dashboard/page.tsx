@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/session";
+import { getSession, deleteSession } from "@/lib/session";
 import { getBookingsPageData } from "@/app/actions/bookings";
 import type { BookingsPageData } from "@/app/actions/bookings";
-import { getQuotes } from "@/actions/quotes";
 import type { SerializedQuote } from "@/actions/quotes";
 import { getInvoices } from "@/actions/finance";
 import type { SerializedInvoice } from "@/actions/finance";
@@ -11,6 +10,7 @@ import { getReviewsByTarget } from "@/app/actions/reviews";
 import { getEstablishmentMissions, getAvailableMissions } from "@/app/actions/missions";
 import type { EstablishmentMission } from "@/app/actions/missions";
 import { fetchSafe } from "@/lib/widget-result";
+import { UnauthorizedError } from "@/lib/api";
 import { format, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMetierLabel } from "@/lib/sos-config";
@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 // ─── Data fetching helpers ──────────────────────────────────────
 
 async function fetchEstablishmentData(token: string) {
-    const [bookingsResult, missionsResult, quotesResult, invoicesResult, credits] =
+    const [bookingsResult, missionsResult, invoicesResult, creditsResult] =
         await Promise.all([
             fetchSafe<BookingsPageData>(
                 () => getBookingsPageData(token),
@@ -36,18 +36,20 @@ async function fetchEstablishmentData(token: string) {
                 [],
                 "Renforts",
             ),
-            fetchSafe<SerializedQuote[]>(
-                () => getQuotes(token),
-                [],
-                "Propositions",
-            ),
             fetchSafe<SerializedInvoice[]>(
                 () => getInvoices(),
                 [],
                 "Factures",
             ),
-            getCredits().catch(() => 0),
+            fetchSafe<number>(
+                () => getCredits(),
+                0,
+                "Crédits",
+            ),
         ]);
+
+    // Quotes endpoint not yet implemented — use empty placeholder
+    const quotesResult = { data: [] as SerializedQuote[], error: null };
 
     const lines = bookingsResult.data?.lines ?? [];
     const missions = missionsResult.data;
@@ -74,7 +76,7 @@ async function fetchEstablishmentData(token: string) {
         quotesError: quotesResult.error,
         invoices: invoicesResult.data ?? [],
         invoicesError: invoicesResult.error,
-        availableCredits: credits,
+        availableCredits: creditsResult.data,
         pendingCandidatures,
         awaitingPaymentBookings,
         completedBookings,
@@ -171,11 +173,19 @@ export default async function DashboardPage() {
     const { role: userRole } = session.user;
     const { token } = session;
 
-    if (userRole === "ESTABLISHMENT") {
-        const data = await fetchEstablishmentData(token);
-        return <EstablishmentDashboard {...data} />;
-    }
+    try {
+        if (userRole === "ESTABLISHMENT") {
+            const data = await fetchEstablishmentData(token);
+            return <EstablishmentDashboard {...data} />;
+        }
 
-    const data = await fetchFreelanceData(token, session.user.id);
-    return <FreelanceDashboard {...data} />;
+        const data = await fetchFreelanceData(token, session.user.id);
+        return <FreelanceDashboard {...data} />;
+    } catch (e) {
+        if (e instanceof UnauthorizedError) {
+            await deleteSession();
+            redirect("/login");
+        }
+        throw e;
+    }
 }
