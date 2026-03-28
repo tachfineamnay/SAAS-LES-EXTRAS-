@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { format, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
