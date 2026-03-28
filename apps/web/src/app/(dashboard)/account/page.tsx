@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { apiRequest } from "@/lib/api";
 import { UserProfileClient } from "@/components/profile/UserProfileClient";
 
 export default async function AccountPage() {
@@ -10,11 +10,12 @@ export default async function AccountPage() {
     redirect("/login");
   }
 
-  let profile = null;
+  let profile: Record<string, any> | null = null;
   try {
-    profile = await prisma.profile.findUnique({
-      where: { userId: session.user.id },
+    const me = await apiRequest<{ profile: Record<string, any> }>("/users/me", {
+      token: session.token,
     });
+    profile = me.profile ?? null;
   } catch (error) {
     console.error("Failed to load profile:", error);
   }
@@ -33,7 +34,7 @@ export default async function AccountPage() {
     tvaNumber: profile?.tvaNumber || "",
     skills: profile?.skills || [],
     availableCredits: 0,
-    createdAt: profile?.createdAt?.toISOString() || new Date().toISOString(),
+    createdAt: profile?.createdAt ?? new Date().toISOString(),
   };
 
   return (

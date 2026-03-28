@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { apiRequest } from "@/lib/api";
 import { EstablishmentProfileClient } from "@/components/profile/EstablishmentProfileClient";
 
 export default async function EstablishmentPage() {
@@ -10,31 +10,14 @@ export default async function EstablishmentPage() {
     redirect("/login");
   }
 
-  let profile = null;
+  let profile: Record<string, any> | null = null;
   try {
-    profile = await prisma.profile.findUnique({
-      where: { userId: session.user.id },
+    const me = await apiRequest<{ profile: Record<string, any> }>("/users/me", {
+      token: session.token,
     });
+    profile = me.profile ?? null;
   } catch (error) {
     console.error("Failed to load establishment profile:", error);
-  }
-
-  let totalMissions = 0;
-  let activeBookings = 0;
-  try {
-    const results = await Promise.all([
-      prisma.reliefMission.count({ where: { establishmentId: session.user.id } }),
-      prisma.booking.count({
-        where: {
-          establishmentId: session.user.id,
-          status: { in: ["PENDING", "CONFIRMED"] },
-        },
-      }),
-    ]);
-    totalMissions = results[0];
-    activeBookings = results[1];
-  } catch (error) {
-    console.error("Failed to load establishment stats:", error);
   }
 
   const initialData = {
@@ -47,12 +30,12 @@ export default async function EstablishmentPage() {
     siret: profile?.siret || "",
     tvaNumber: profile?.tvaNumber || "",
     bio: profile?.bio || "",
-    createdAt: profile?.createdAt?.toISOString() || new Date().toISOString(),
+    createdAt: profile?.createdAt ?? new Date().toISOString(),
   };
 
   const stats = {
-    totalMissions,
-    activeBookings,
+    totalMissions: 0,
+    activeBookings: 0,
     availableCredits: 0,
   };
 

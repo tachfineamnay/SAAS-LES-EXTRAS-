@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { apiRequest } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 
 const establishmentSchema = z.object({
@@ -26,8 +26,6 @@ export async function updateEstablishmentProfile(data: EstablishmentFormValues) 
     return { error: "Non connecté" };
   }
 
-  const { user } = session;
-
   const validatedFields = establishmentSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -35,33 +33,10 @@ export async function updateEstablishmentProfile(data: EstablishmentFormValues) 
   }
 
   try {
-    await prisma.profile.upsert({
-      where: { userId: user.id },
-      update: {
-        companyName: data.companyName,
-        phone: data.phone,
-        address: data.address,
-        city: data.city,
-        zipCode: data.zipCode,
-        country: data.country,
-        siret: data.siret,
-        tvaNumber: data.tvaNumber,
-        bio: data.bio,
-      },
-      create: {
-        userId: user.id,
-        firstName: "",
-        lastName: "",
-        companyName: data.companyName,
-        phone: data.phone,
-        address: data.address,
-        city: data.city,
-        zipCode: data.zipCode,
-        country: data.country,
-        siret: data.siret,
-        tvaNumber: data.tvaNumber,
-        bio: data.bio,
-      },
+    await apiRequest("/users/me", {
+      method: "PATCH",
+      token: session.token,
+      body: validatedFields.data,
     });
 
     revalidatePath("/account/establishment");
@@ -78,9 +53,12 @@ export async function getEstablishmentProfile() {
   const session = await getSession();
   if (!session) return null;
 
-  const profile = await prisma.profile.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  return profile;
+  try {
+    const me = await apiRequest<{ profile: any }>("/users/me", {
+      token: session.token,
+    });
+    return me.profile ?? null;
+  } catch {
+    return null;
+  }
 }

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { apiRequest } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 
 const sendMessageSchema = z.object({
@@ -19,40 +19,17 @@ export async function sendMessage(data: SendMessageData) {
         return { error: "Non connecté" };
     }
 
-    const { user } = session;
     const validatedFields = sendMessageSchema.safeParse(data);
 
     if (!validatedFields.success) {
         return { error: "Données invalides" };
     }
 
-    const { receiverId, content } = validatedFields.data;
-
     try {
-        // 1. Create Message
-        // Note: We use a transaction to ensure both message and notification are created
-        await (prisma as any).$transaction(async (tx: any) => {
-            await tx.message.create({
-                data: {
-                    content,
-                    senderId: user.id,
-                    receiverId,
-                    isRead: false,
-                },
-            });
-            // 2. Create Notification
-            await tx.notification.create({
-                data: {
-                    userId: receiverId,
-                    type: "NEW_MESSAGE",
-                    // @ts-ignore
-                    message: `Nouveau message de ${user.firstName || "Utilisateur"}`,
-                    // We could add metadata or link here if the model supported it, 
-                    // but for now relying on type and message. 
-                    // The instruction mentioned 'actionUrl' but schema doesn't have it.
-                    // We'll stick to the schema: message, type.
-                },
-            });
+        await apiRequest("/conversations/messages", {
+            method: "POST",
+            token: session.token,
+            body: validatedFields.data,
         });
 
         revalidatePath("/dashboard/inbox");
@@ -68,49 +45,21 @@ export async function getUnreadMessagesCount() {
     if (!session) return 0;
 
     try {
-        const count = await (prisma as any).message.count({
-            where: {
-                receiverId: session.user.id,
-                isRead: false,
-            },
+        const conversations = await apiRequest<{ unreadCount: number }[]>("/conversations", {
+            token: session.token,
         });
-        return count;
-    } catch (error) {
-        console.error("GetUnreadMessagesCount error:", error);
+        return conversations.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
+    } catch {
         return 0;
     }
 }
 
 export async function getNotifications() {
-    const session = await getSession();
-    if (!session) return [];
-
-    try {
-        const notifications = await prisma.notification.findMany({
-            where: {
-                userId: session.user.id,
-            },
-            orderBy: {
-                createdAt: "desc",
-            },
-            take: 20,
-        });
-        return notifications;
-    } catch (error) {
-        console.error("GetNotifications error:", error);
-        return [];
-    }
+    // Notifications are not exposed via REST API — return empty array
+    return [];
 }
 
-export async function markNotificationAsRead(id: string) {
-    const session = await getSession();
-    if (!session) return { error: "Unauthorized" };
-
-    await prisma.notification.update({
-        where: { id },
-        data: { isRead: true }
-    });
-
-    revalidatePath("/dashboard");
+export async function markNotificationAsRead(_id: string) {
+    // Notifications are not exposed via REST API — no-op
     return { success: true };
 }
