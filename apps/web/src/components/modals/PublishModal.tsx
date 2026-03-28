@@ -62,7 +62,7 @@ const publishSchema = z
     pricingType: z.enum(["SESSION", "PER_PARTICIPANT", "QUOTE"]),
     price: z.number().min(0).optional(),
     pricePerParticipant: z.number().min(0).optional(),
-    slots: z.array(slotSchema).max(MAX_SERVICE_SLOTS).default([]),
+    slots: z.array(slotSchema).max(MAX_SERVICE_SLOTS),
     scheduleInfo: z.string().optional(),
   })
   .refine(
