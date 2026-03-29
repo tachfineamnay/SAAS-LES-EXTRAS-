@@ -49,9 +49,27 @@ enum PricingType {
 
 enum BookingStatus {
   PENDING
+  QUOTE_SENT
+  QUOTE_ACCEPTED
   CONFIRMED
+  IN_PROGRESS
   COMPLETED
+  AWAITING_PAYMENT
+  PAID
   CANCELLED
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  REVISED
+}
+
+enum MessageType {
+  USER
+  SYSTEM
 }
 
 enum PaymentStatus {
@@ -103,6 +121,7 @@ model User {
   reviewsAuthored       Review[]        @relation("ReviewsAuthored")
   reviewsReceived       Review[]        @relation("ReviewsReceived")
   documents             Document[]
+  issuedQuotes          Quote[]         @relation("QuoteIssuer")
 }
 
 model Profile {
@@ -138,26 +157,31 @@ model Conversation {
   id             String   @id @default(cuid())
   participantAId String
   participantBId String
+  bookingId      String?  @unique
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   participantAUser User      @relation("ConversationParticipantA", fields: [participantAId], references: [id], onDelete: Cascade)
   participantBUser User      @relation("ConversationParticipantB", fields: [participantBId], references: [id], onDelete: Cascade)
+  booking          Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
   messages         Message[]
 
   @@unique([participantAId, participantBId])
   @@index([participantAId])
   @@index([participantBId])
+  @@index([bookingId])
 }
 
 model Message {
-  id             String   @id @default(cuid())
+  id             String      @id @default(cuid())
   content        String
   senderId       String
   receiverId     String
   conversationId String
-  isRead         Boolean  @default(false)
-  createdAt      DateTime @default(now())
+  isRead         Boolean     @default(false)
+  type           MessageType @default(USER)
+  metadata       Json?
+  createdAt      DateTime    @default(now())
 
   sender       User          @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
   receiver     User          @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
@@ -285,12 +309,14 @@ model Booking {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  establishment User           @relation("EstablishmentBookings", fields: [establishmentId], references: [id], onDelete: Restrict)
-  freelance     User?          @relation("FreelanceBookings", fields: [freelanceId], references: [id], onDelete: SetNull)
-  reliefMission ReliefMission? @relation(fields: [reliefMissionId], references: [id], onDelete: SetNull)
-  service       Service?       @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  invoice       Invoice?
-  reviews       Review[]
+  establishment  User           @relation("EstablishmentBookings", fields: [establishmentId], references: [id], onDelete: Restrict)
+  freelance      User?          @relation("FreelanceBookings", fields: [freelanceId], references: [id], onDelete: SetNull)
+  reliefMission  ReliefMission? @relation(fields: [reliefMissionId], references: [id], onDelete: SetNull)
+  service        Service?       @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  invoice        Invoice?
+  reviews        Review[]
+  quotes         Quote[]
+  conversation   Conversation?
 
   @@index([establishmentId])
   @@index([freelanceId])
@@ -335,6 +361,52 @@ model Review {
   @@unique([bookingId, authorId])
   @@index([targetId])
   @@index([authorId])
+}
+
+// ─────────────────────────────────────────────
+// DEVIS (Quote)
+// ─────────────────────────────────────────────
+
+model Quote {
+  id          String      @id @default(cuid())
+  bookingId   String
+  issuedBy    String
+  status      QuoteStatus @default(DRAFT)
+
+  subtotalHT  Float
+  vatRate     Float       @default(0.20)
+  vatAmount   Float
+  totalTTC    Float
+
+  validUntil  DateTime?
+  conditions  String?     @db.Text
+  notes       String?     @db.Text
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  acceptedAt  DateTime?
+  rejectedAt  DateTime?
+
+  booking     Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  issuer      User        @relation("QuoteIssuer", fields: [issuedBy], references: [id], onDelete: Cascade)
+  lines       QuoteLine[]
+
+  @@index([bookingId])
+  @@index([issuedBy])
+}
+
+model QuoteLine {
+  id          String @id @default(cuid())
+  quoteId     String
+  description String
+  quantity    Float
+  unitPrice   Float
+  unit        String @default("heure")
+  totalHT     Float
+
+  quote       Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
 }
 
 // ─────────────────────────────────────────────

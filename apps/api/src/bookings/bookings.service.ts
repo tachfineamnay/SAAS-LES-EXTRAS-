@@ -15,6 +15,8 @@ import {
   BookingLineStatus,
   BookingLineType,
   BookingsPageData,
+  OrderTrackerData,
+  TimelineEvent,
 } from "./types/bookings.types";
 import { NotificationsService } from "../notifications/notifications.service";
 import { MailService } from "../mail/mail.service";
@@ -922,5 +924,270 @@ export class BookingsService {
     }
 
     return { ok: true };
+  }
+
+  // ── Order Tracker ──
+
+  async getOrderTracker(
+    bookingId: string,
+    user: AuthenticatedUser,
+  ): Promise<OrderTrackerData> {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        establishment: {
+          include: { profile: true },
+        },
+        freelance: {
+          include: { profile: true },
+        },
+        reliefMission: true,
+        service: true,
+        invoice: true,
+        quotes: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            lines: true,
+            issuer: { include: { profile: true } },
+          },
+        },
+        conversation: {
+          include: {
+            messages: {
+              orderBy: { createdAt: "asc" },
+              select: {
+                id: true,
+                content: true,
+                senderId: true,
+                type: true,
+                metadata: true,
+                createdAt: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException("Booking not found");
+    }
+
+    // Access control: only the two parties
+    const isEstablishment = booking.establishmentId === user.id;
+    const isFreelance = booking.freelanceId === user.id;
+    if (!isEstablishment && !isFreelance) {
+      throw new ForbiddenException("You cannot view this order");
+    }
+
+    // Build participants
+    const establishment = this.toParticipant(booking.establishment, "ESTABLISHMENT");
+    const freelance = booking.freelance
+      ? this.toParticipant(booking.freelance, "FREELANCE")
+      : { id: "", email: "", role: "FREELANCE" };
+
+    // Build quotes
+    const quotes = booking.quotes.map((q) => {
+      const issuerProfile = q.issuer.profile;
+      const issuerName = issuerProfile
+        ? `${issuerProfile.firstName} ${issuerProfile.lastName}`.trim()
+        : q.issuer.email;
+      return {
+        id: q.id,
+        status: q.status,
+        subtotalHT: q.subtotalHT,
+        vatRate: q.vatRate,
+        vatAmount: q.vatAmount,
+        totalTTC: q.totalTTC,
+        validUntil: q.validUntil?.toISOString(),
+        conditions: q.conditions ?? undefined,
+        notes: q.notes ?? undefined,
+        createdAt: q.createdAt.toISOString(),
+        acceptedAt: q.acceptedAt?.toISOString(),
+        rejectedAt: q.rejectedAt?.toISOString(),
+        issuer: { id: q.issuedBy, name: issuerName },
+        lines: q.lines.map((l) => ({
+          id: l.id,
+          description: l.description,
+          quantity: l.quantity,
+          unitPrice: l.unitPrice,
+          unit: l.unit,
+          totalHT: l.totalHT,
+        })),
+      };
+    });
+
+    // Build conversation
+    const conversation = booking.conversation
+      ? {
+          id: booking.conversation.id,
+          messages: booking.conversation.messages.map((m) => ({
+            id: m.id,
+            content: m.content,
+            senderId: m.senderId,
+            type: m.type,
+            metadata: m.metadata ?? undefined,
+            createdAt: m.createdAt.toISOString(),
+          })),
+        }
+      : undefined;
+
+    // Build invoice
+    const invoice = booking.invoice
+      ? {
+          id: booking.invoice.id,
+          amount: booking.invoice.amount,
+          status: booking.invoice.status,
+          invoiceNumber: booking.invoice.invoiceNumber ?? undefined,
+          createdAt: booking.invoice.createdAt.toISOString(),
+        }
+      : undefined;
+
+    // Build mission/service
+    const mission = booking.reliefMission
+      ? {
+          id: booking.reliefMission.id,
+          title: booking.reliefMission.title,
+          dateStart: booking.reliefMission.dateStart.toISOString(),
+          dateEnd: booking.reliefMission.dateEnd.toISOString(),
+          address: booking.reliefMission.address,
+          hourlyRate: booking.reliefMission.hourlyRate,
+          shift: booking.reliefMission.shift ?? undefined,
+          description: booking.reliefMission.description ?? undefined,
+        }
+      : undefined;
+
+    const service = booking.service
+      ? {
+          id: booking.service.id,
+          title: booking.service.title,
+          description: booking.service.description ?? undefined,
+          price: booking.service.price,
+          durationMinutes: booking.service.durationMinutes,
+          pricingType: booking.service.pricingType,
+          pricePerParticipant: booking.service.pricePerParticipant ?? undefined,
+        }
+      : undefined;
+
+    // Build timeline
+    const timeline = this.buildTimeline(booking, quotes);
+
+    return {
+      booking: {
+        id: booking.id,
+        status: booking.status,
+        paymentStatus: booking.paymentStatus,
+        message: booking.message ?? undefined,
+        scheduledAt: booking.scheduledAt.toISOString(),
+        nbParticipants: booking.nbParticipants ?? undefined,
+        createdAt: booking.createdAt.toISOString(),
+      },
+      mission,
+      service,
+      freelance,
+      establishment,
+      conversation,
+      quotes,
+      timeline,
+      invoice,
+    };
+  }
+
+  private toParticipant(
+    user: { id: string; email: string; profile?: { firstName: string; lastName: string; companyName?: string | null; avatar?: string | null; phone?: string | null } | null },
+    role: string,
+  ) {
+    return {
+      id: user.id,
+      email: user.email,
+      role,
+      firstName: user.profile?.firstName,
+      lastName: user.profile?.lastName,
+      companyName: user.profile?.companyName ?? undefined,
+      avatar: user.profile?.avatar ?? undefined,
+      phone: user.profile?.phone ?? undefined,
+    };
+  }
+
+  private buildTimeline(
+    booking: { createdAt: Date; status: string; invoice?: { createdAt: Date } | null },
+    quotes: { id: string; status: string; createdAt: string; acceptedAt?: string; rejectedAt?: string; issuer: { id: string; name: string } }[],
+  ): TimelineEvent[] {
+    const events: TimelineEvent[] = [];
+
+    // 1. Booking created
+    events.push({
+      id: "tl-created",
+      type: "CREATED",
+      label: "Commande créée",
+      timestamp: booking.createdAt.toISOString(),
+    });
+
+    // 2. Quote events (oldest first → reverse since quotes are desc)
+    const sortedQuotes = [...quotes].reverse();
+    for (const q of sortedQuotes) {
+      events.push({
+        id: `tl-quote-sent-${q.id}`,
+        type: "QUOTE_SENT",
+        label: "Devis envoyé",
+        actor: { id: q.issuer.id, name: q.issuer.name, role: "FREELANCE" },
+        timestamp: q.createdAt,
+      });
+
+      if (q.status === "ACCEPTED" && q.acceptedAt) {
+        events.push({
+          id: `tl-quote-accepted-${q.id}`,
+          type: "QUOTE_ACCEPTED",
+          label: "Devis accepté",
+          timestamp: q.acceptedAt,
+        });
+      }
+
+      if (q.status === "REJECTED" && q.rejectedAt) {
+        events.push({
+          id: `tl-quote-rejected-${q.id}`,
+          type: "QUOTE_REJECTED",
+          label: "Devis refusé",
+          timestamp: q.rejectedAt,
+        });
+      }
+    }
+
+    // 3. Status-derived events (only add if booking reached that status)
+    const statusOrder: { status: string; type: TimelineEvent["type"]; label: string }[] = [
+      { status: "CONFIRMED", type: "CONFIRMED", label: "Confirmé" },
+      { status: "IN_PROGRESS", type: "IN_PROGRESS", label: "En cours" },
+      { status: "COMPLETED", type: "COMPLETED", label: "Terminé" },
+      { status: "PAID", type: "PAID", label: "Payé" },
+      { status: "CANCELLED", type: "CANCELLED", label: "Annulé" },
+    ];
+
+    for (const s of statusOrder) {
+      if (booking.status === s.status) {
+        // Current status — push only the current and all "before" statuses that logically preceded it
+        events.push({
+          id: `tl-status-${s.status}`,
+          type: s.type,
+          label: s.label,
+          timestamp: new Date().toISOString(), // approximation — we don't track status change dates on the booking
+        });
+        break;
+      }
+    }
+
+    // 4. Invoice generated
+    if (booking.invoice) {
+      events.push({
+        id: "tl-invoice",
+        type: "INVOICE_GENERATED",
+        label: "Facture générée",
+        timestamp: booking.invoice.createdAt.toISOString(),
+      });
+    }
+
+    // Sort by timestamp
+    events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    return events;
   }
 }

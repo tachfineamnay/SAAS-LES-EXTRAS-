@@ -3,6 +3,7 @@ import { ConversationsService } from './conversations.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { MailService } from '../mail/mail.service';
+import { EventsService } from '../events/events.service';
 
 const mockPrismaService = {
   conversation: {
@@ -36,6 +37,13 @@ describe('ConversationsService', () => {
           useValue: { 
             sendMessageNotificationEmail: jest.fn().mockResolvedValue(undefined) 
           } 
+        },
+        {
+          provide: EventsService,
+          useValue: {
+            emit: jest.fn(),
+            emitToMany: jest.fn(),
+          },
         },
       ],
     }).compile();

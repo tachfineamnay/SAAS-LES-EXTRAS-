@@ -68,4 +68,12 @@ export class BookingsController {
   ) {
     return this.bookingsService.markPaymentSettled(dto.bookingId, user);
   }
+
+  @Get(":id/order")
+  getOrderTracker(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.bookingsService.getOrderTracker(id, user);
+  }
 }

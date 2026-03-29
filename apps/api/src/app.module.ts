@@ -18,6 +18,8 @@ import { UsersModule } from "./users/users.module";
 import { ReviewsModule } from './reviews/reviews.module';
 import { ConversationsModule } from './conversations/conversations.module';
 import { MailModule } from './mail/mail.module';
+import { QuotesModule } from './quotes/quotes.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -51,6 +53,8 @@ import { MailModule } from './mail/mail.module';
     ReviewsModule,
     ConversationsModule,
     MailModule,
+    QuotesModule,
+    EventsModule,
   ],
   controllers: [HealthController],
   providers: [

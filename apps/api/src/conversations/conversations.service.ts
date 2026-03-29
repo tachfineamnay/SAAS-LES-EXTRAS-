@@ -2,12 +2,14 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { SendMessageDto } from './dto/conversations.dto';
 import { MailService } from '../mail/mail.service';
+import { EventsService } from '../events/events.service';
 
 @Injectable()
 export class ConversationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
+    private readonly events: EventsService,
   ) {}
 
   async findAllForUser(userId: string) {
@@ -150,7 +152,28 @@ export class ConversationsService {
       }
     }
 
+    // Emit SSE event for real-time updates
+    this.emitMessageEvent(conversation.id, senderId, receiverId).catch(() => {});
+
     return message;
+  }
+
+  /**
+   * Emit SSE MESSAGE_NEW event if the conversation is linked to a booking.
+   */
+  private async emitMessageEvent(conversationId: string, senderId: string, receiverId: string) {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { bookingId: true },
+    });
+    if (conversation?.bookingId) {
+      this.events.emitToMany([senderId, receiverId], {
+        type: 'MESSAGE_NEW',
+        bookingId: conversation.bookingId,
+        payload: { conversationId },
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 
   async markAsRead(conversationId: string, userId: string) {
