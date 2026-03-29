@@ -8,11 +8,15 @@ export type DashboardRole = "ESTABLISHMENT" | "FREELANCE";
 export type BookingLineType = "MISSION" | "SERVICE_BOOKING";
 export type BookingLineStatus =
   | "PENDING"
+  | "QUOTE_SENT"
+  | "QUOTE_ACCEPTED"
   | "CONFIRMED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "AWAITING_PAYMENT"
   | "PAID"
   | "CANCELLED"
   | "ASSIGNED"
-  | "COMPLETED"
   | "COMPLETED_AWAITING_PAYMENT";
 
 export type BookingLine = {
@@ -26,6 +30,9 @@ export type BookingLine = {
   contactEmail: string;
   relatedBookingId?: string;
   invoiceUrl?: string;
+  title?: string;
+  amount?: number;
+  hasReview?: boolean;
 };
 
 export type BookingsPageData = {

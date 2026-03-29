@@ -20,6 +20,8 @@ import {
   CalendarDays,
   MessageSquare,
   Plus,
+  Star,
+  Download,
 } from "lucide-react";
 import Link from "next/link";
 import type {
@@ -35,7 +37,13 @@ import {
 } from "@/app/actions/orders";
 import { QuoteCard } from "./QuoteCard";
 import { QuoteFormModal } from "./QuoteFormModal";
+import { ReviewModal } from "@/components/modals/ReviewModal";
+import { createReview } from "@/app/actions/reviews";
 import { useOrderSSE, type OrderSSEEvent } from "@/lib/hooks/useOrderSSE";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
+
+const REVIEWABLE_STATUSES = new Set(["COMPLETED", "AWAITING_PAYMENT", "PAID"]);
 
 // ── Status config ──
 
@@ -62,6 +70,7 @@ const TIMELINE_ICONS: Record<string, React.ReactNode> = {
   INVOICE_GENERATED: <FileText className="h-4 w-4" />,
   PAID: <CheckCircle2 className="h-4 w-4" />,
   CANCELLED: <XCircle className="h-4 w-4" />,
+  REVIEW_SUBMITTED: <Star className="h-4 w-4" />,
 };
 
 // ── Props ──
@@ -84,10 +93,11 @@ export function OrderTrackerClient({
   const [data, setData] = useState(initialData);
   const [draft, setDraft] = useState("");
   const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [isPending, startTransition] = useTransition();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { booking, mission, service, freelance, establishment, conversation, quotes, timeline, invoice } = data;
+  const { booking, mission, service, freelance, establishment, conversation, quotes, timeline, invoice, review } = data;
 
   // SSE — real-time updates
   const handleSSE = useCallback((event: OrderSSEEvent) => {
@@ -245,6 +255,49 @@ export function OrderTrackerClient({
       );
     }
 
+    // Review CTA for completed orders
+    if (REVIEWABLE_STATUSES.has(booking.status) && !review) {
+      actions.push(
+        <Button
+          key="leave-review"
+          onClick={() => setShowReviewModal(true)}
+          className="w-full bg-[hsl(var(--coral))] hover:bg-[hsl(var(--coral))]/90 text-white"
+        >
+          <Star className="mr-2 h-4 w-4" />
+          Laisser un avis
+        </Button>,
+      );
+    }
+
+    // Invoice download
+    if (invoice) {
+      actions.push(
+        <Button
+          key="download-invoice"
+          variant="outline"
+          className="w-full"
+          onClick={async () => {
+            try {
+              const resp = await fetch(`${API_BASE}/invoices/${encodeURIComponent(invoice.id)}/download`, {
+                headers: { Authorization: `Bearer ${apiToken}` },
+              });
+              if (!resp.ok) return;
+              const blob = await resp.blob();
+              const blobUrl = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = blobUrl;
+              a.download = `facture-${invoice.invoiceNumber ?? invoice.id.substring(0, 8)}.pdf`;
+              a.click();
+              URL.revokeObjectURL(blobUrl);
+            } catch { /* ignore */ }
+          }}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Télécharger la facture
+        </Button>,
+      );
+    }
+
     if (actions.length === 0) return null;
 
     return <div className="space-y-2">{actions}</div>;
@@ -356,6 +409,7 @@ export function OrderTrackerClient({
             onAccept={() => handleAcceptQuote(q.id)}
             onReject={() => handleRejectQuote(q.id)}
             isPending={isPending}
+            apiToken={apiToken}
           />
         ))}
       </div>
@@ -370,7 +424,7 @@ export function OrderTrackerClient({
         {/* Header */}
         <div className="flex items-center gap-3">
           <Link
-            href="/bookings"
+            href="/orders"
             className="flex h-8 w-8 items-center justify-center rounded-lg border bg-background hover:bg-muted transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -491,11 +545,37 @@ export function OrderTrackerClient({
           onClose={() => setShowQuoteForm(false)}
           onSuccess={() => {
             setShowQuoteForm(false);
-            // Trigger page refresh via revalidation
             window.location.reload();
           }}
         />
       )}
+
+      <ReviewModal
+        open={showReviewModal}
+        onOpenChange={setShowReviewModal}
+        targetName={counterpart.firstName ? `${counterpart.firstName} ${counterpart.lastName ?? ""}`.trim() : counterpart.email}
+        context={title}
+        reviewerSide={currentUserRole === "ESTABLISHMENT" ? "establishment" : "freelance"}
+        onSubmit={(reviewData) => {
+          const roleType = currentUserRole === "ESTABLISHMENT"
+            ? "ESTABLISHMENT_TO_FREELANCE" as const
+            : "FREELANCE_TO_ESTABLISHMENT" as const;
+          const comment = [reviewData.text.trim(), reviewData.tags.length > 0 ? `Tags: ${reviewData.tags.join(", ")}` : ""].filter(Boolean).join("\n\n") || undefined;
+
+          startTransition(async () => {
+            const result = await createReview({
+              bookingId: booking.id,
+              rating: reviewData.rating,
+              comment,
+              type: roleType,
+            });
+            if (!("error" in result)) {
+              setShowReviewModal(false);
+              window.location.reload();
+            }
+          });
+        }}
+      />
     </>
   );
 }

@@ -108,6 +108,12 @@ export type OrderTrackerData = {
   quotes: OrderQuote[];
   timeline: TimelineEvent[];
   invoice?: OrderInvoice;
+  review?: {
+    id: string;
+    rating: number;
+    comment?: string;
+    createdAt: string;
+  };
 };
 
 // ── Actions ──

@@ -115,7 +115,10 @@ export class BookingsService {
           },
           select: {
             id: true,
+            title: true,
             dateStart: true,
+            dateEnd: true,
+            hourlyRate: true,
             address: true,
             status: true,
             bookings: {
@@ -129,6 +132,14 @@ export class BookingsService {
                   select: {
                     email: true,
                   },
+                },
+                reviews: {
+                  where: { authorId: user.id },
+                  select: { id: true },
+                  take: 1,
+                },
+                invoice: {
+                  select: { id: true },
                 },
               },
             },
@@ -155,6 +166,8 @@ export class BookingsService {
             },
             service: {
               select: {
+                title: true,
+                price: true,
                 owner: {
                   select: {
                     email: true,
@@ -162,16 +175,24 @@ export class BookingsService {
                 },
               },
             },
+            reviews: {
+              where: { authorId: user.id },
+              select: { id: true },
+              take: 1,
+            },
+            invoice: {
+              select: { id: true },
+            },
           },
         }),
       ]);
 
       for (const mission of missions) {
-        const interlocutor =
-          mission.bookings.find(
-            (booking) =>
-              booking.status !== BookingStatus.CANCELLED && Boolean(booking.freelance?.email),
-          )?.freelance?.email ?? UNKNOWN_COUNTERPART;
+        const activeBooking = mission.bookings.find(
+          (booking) =>
+            booking.status !== BookingStatus.CANCELLED && Boolean(booking.freelance?.email),
+        );
+        const interlocutor = activeBooking?.freelance?.email ?? UNKNOWN_COUNTERPART;
 
         lines.push({
           lineId: mission.id,
@@ -182,10 +203,11 @@ export class BookingsService {
           status: normalizeMissionStatus(mission.status),
           address: mission.address,
           contactEmail: interlocutor,
-          relatedBookingId: mission.bookings.find(
-            (b) =>
-              b.status !== BookingStatus.CANCELLED && Boolean(b.freelance?.email),
-          )?.id,
+          relatedBookingId: activeBooking?.id,
+          title: mission.title,
+          amount: this.calculateMissionAmount(mission.dateStart, mission.dateEnd, mission.hourlyRate),
+          hasReview: (activeBooking?.reviews?.length ?? 0) > 0,
+          invoiceUrl: activeBooking?.invoice ? `/invoices/${activeBooking.invoice.id}/download` : undefined,
         });
       }
 
@@ -203,6 +225,10 @@ export class BookingsService {
           address: SERVICE_ADDRESS_PLACEHOLDER,
           contactEmail: interlocutor,
           relatedBookingId: booking.id,
+          title: booking.service?.title,
+          amount: booking.service?.price,
+          hasReview: (booking.reviews?.length ?? 0) > 0,
+          invoiceUrl: booking.invoice ? `/invoices/${booking.invoice.id}/download` : undefined,
         });
       }
     } else {
@@ -229,7 +255,10 @@ export class BookingsService {
             reliefMission: {
               select: {
                 id: true,
+                title: true,
                 dateStart: true,
+                dateEnd: true,
+                hourlyRate: true,
                 address: true,
                 status: true,
                 establishment: {
@@ -238,6 +267,14 @@ export class BookingsService {
                   },
                 },
               },
+            },
+            reviews: {
+              where: { authorId: user.id },
+              select: { id: true },
+              take: 1,
+            },
+            invoice: {
+              select: { id: true },
             },
           },
         }),
@@ -260,6 +297,20 @@ export class BookingsService {
                 email: true,
               },
             },
+            service: {
+              select: {
+                title: true,
+                price: true,
+              },
+            },
+            reviews: {
+              where: { authorId: user.id },
+              select: { id: true },
+              take: 1,
+            },
+            invoice: {
+              select: { id: true },
+            },
           },
         }),
       ]);
@@ -281,6 +332,10 @@ export class BookingsService {
           address: mb.reliefMission.address,
           contactEmail: interlocutor,
           relatedBookingId: mb.id,
+          title: mb.reliefMission.title,
+          amount: this.calculateMissionAmount(mb.reliefMission.dateStart, mb.reliefMission.dateEnd, mb.reliefMission.hourlyRate),
+          hasReview: (mb.reviews?.length ?? 0) > 0,
+          invoiceUrl: mb.invoice ? `/invoices/${mb.invoice.id}/download` : undefined,
         });
       }
 
@@ -296,6 +351,10 @@ export class BookingsService {
           address: SERVICE_ADDRESS_PLACEHOLDER,
           contactEmail: interlocutor,
           relatedBookingId: booking.id,
+          title: booking.service?.title,
+          amount: booking.service?.price,
+          hasReview: (booking.reviews?.length ?? 0) > 0,
+          invoiceUrl: booking.invoice ? `/invoices/${booking.invoice.id}/download` : undefined,
         });
       }
     }
@@ -944,6 +1003,11 @@ export class BookingsService {
         reliefMission: true,
         service: true,
         invoice: true,
+        reviews: {
+          where: { authorId: user.id },
+          take: 1,
+          select: { id: true, rating: true, comment: true, createdAt: true },
+        },
         quotes: {
           orderBy: { createdAt: "desc" },
           include: {
@@ -1069,8 +1133,19 @@ export class BookingsService {
         }
       : undefined;
 
+    // Build review
+    const userReview = booking.reviews?.[0] ?? null;
+    const review = userReview
+      ? {
+          id: userReview.id,
+          rating: userReview.rating,
+          comment: userReview.comment ?? undefined,
+          createdAt: userReview.createdAt.toISOString(),
+        }
+      : undefined;
+
     // Build timeline
-    const timeline = this.buildTimeline(booking, quotes);
+    const timeline = this.buildTimeline(booking, quotes, userReview);
 
     return {
       booking: {
@@ -1090,6 +1165,7 @@ export class BookingsService {
       quotes,
       timeline,
       invoice,
+      review,
     };
   }
 
@@ -1112,6 +1188,7 @@ export class BookingsService {
   private buildTimeline(
     booking: { createdAt: Date; status: string; invoice?: { createdAt: Date } | null },
     quotes: { id: string; status: string; createdAt: string; acceptedAt?: string; rejectedAt?: string; issuer: { id: string; name: string } }[],
+    review?: { createdAt: Date } | null,
   ): TimelineEvent[] {
     const events: TimelineEvent[] = [];
 
@@ -1182,6 +1259,16 @@ export class BookingsService {
         type: "INVOICE_GENERATED",
         label: "Facture générée",
         timestamp: booking.invoice.createdAt.toISOString(),
+      });
+    }
+
+    // 5. Review submitted
+    if (review) {
+      events.push({
+        id: "tl-review",
+        type: "REVIEW_SUBMITTED",
+        label: "Avis envoyé",
+        timestamp: review.createdAt.toISOString(),
       });
     }
 

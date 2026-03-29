@@ -22,6 +22,10 @@ export type BookingLine = {
   address: string;
   contactEmail: string;
   relatedBookingId?: string;
+  title?: string;
+  amount?: number;
+  hasReview?: boolean;
+  invoiceUrl?: string;
 };
 
 export type BookingsPageData = {
@@ -59,7 +63,8 @@ export type TimelineEventType =
   | "INVOICE_GENERATED"
   | "PAID"
   | "CANCELLED"
-  | "MESSAGE_SYSTEM";
+  | "MESSAGE_SYSTEM"
+  | "REVIEW_SUBMITTED";
 
 export type TimelineActor = {
   id: string;
@@ -170,4 +175,10 @@ export type OrderTrackerData = {
   quotes: OrderQuote[];
   timeline: TimelineEvent[];
   invoice?: OrderInvoice;
+  review?: {
+    id: string;
+    rating: number;
+    comment?: string;
+    createdAt: string;
+  };
 };

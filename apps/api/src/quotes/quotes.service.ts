@@ -10,6 +10,8 @@ import { ConversationsService } from '../conversations/conversations.service';
 import { CreateQuoteDto, RejectQuoteDto } from './dto/quotes.dto';
 import { EventsService } from '../events/events.service';
 import type { OrderEvent } from '../events/events.types';
+import PDFDocument from 'pdfkit';
+import type { AuthenticatedUser } from '../auth/types/jwt-payload.type';
 
 @Injectable()
 export class QuotesService {
@@ -347,5 +349,108 @@ export class QuotesService {
     }
 
     return { lines: [] };
+  }
+
+  /**
+   * Generate a PDF for a quote.
+   */
+  async generateQuotePdf(quoteId: string, user: AuthenticatedUser): Promise<Buffer> {
+    const quote = await this.prisma.quote.findUnique({
+      where: { id: quoteId },
+      include: {
+        lines: true,
+        issuer: { include: { profile: true } },
+        booking: {
+          include: {
+            reliefMission: true,
+            service: true,
+            freelance: { include: { profile: true } },
+            establishment: { include: { profile: true } },
+          },
+        },
+      },
+    });
+
+    if (!quote) throw new NotFoundException('Devis introuvable.');
+
+    const { booking } = quote;
+    const isParty = booking.establishmentId === user.id || booking.freelanceId === user.id;
+    if (!isParty) throw new ForbiddenException('Accès refusé.');
+
+    return new Promise((resolve) => {
+      const doc = new PDFDocument({ size: 'A4', margin: 50 });
+      const buffers: Buffer[] = [];
+
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+
+      // Header
+      doc.fontSize(20).text('DEVIS', { align: 'center' });
+      doc.moveDown();
+
+      const refId = quote.id.substring(0, 8).toUpperCase();
+      doc.fontSize(12).text(`Référence: DEV-${refId}`);
+      doc.text(`Date: ${quote.createdAt.toLocaleDateString('fr-FR')}`);
+      doc.text(`Statut: ${quote.status === 'ACCEPTED' ? 'ACCEPTÉ' : quote.status === 'REJECTED' ? 'REFUSÉ' : 'ENVOYÉ'}`);
+      if (quote.validUntil) {
+        doc.text(`Valide jusqu'au: ${quote.validUntil.toLocaleDateString('fr-FR')}`);
+      }
+      doc.moveDown();
+
+      // Parties
+      const estabProfile = booking.establishment?.profile;
+      const freelanceProfile = booking.freelance?.profile;
+      doc.text(`Client: ${estabProfile ? `${estabProfile.firstName} ${estabProfile.lastName}` : booking.establishment?.email ?? 'N/A'}`);
+      doc.text(`Prestataire: ${freelanceProfile ? `${freelanceProfile.firstName} ${freelanceProfile.lastName}` : booking.freelance?.email ?? 'N/A'}`);
+      doc.moveDown();
+
+      // Subject
+      const title = booking.reliefMission?.title ?? booking.service?.title ?? 'Prestation';
+      doc.text(`Objet: ${title}`);
+      doc.moveDown();
+
+      // Lines table
+      doc.font('Helvetica-Bold');
+      doc.text('Description', 50, doc.y, { width: 220, continued: false });
+      const headerY = doc.y - 14;
+      doc.text('Qté', 280, headerY, { width: 50, align: 'right' });
+      doc.text('P.U.', 340, headerY, { width: 60, align: 'right' });
+      doc.text('Total HT', 410, headerY, { width: 80, align: 'right' });
+      doc.font('Helvetica');
+      doc.moveDown(0.5);
+
+      for (const line of quote.lines) {
+        const lineY = doc.y;
+        doc.text(line.description, 50, lineY, { width: 220 });
+        doc.text(String(line.quantity), 280, lineY, { width: 50, align: 'right' });
+        doc.text(`${line.unitPrice.toFixed(2)} €`, 340, lineY, { width: 60, align: 'right' });
+        doc.text(`${line.totalHT.toFixed(2)} €`, 410, lineY, { width: 80, align: 'right' });
+        doc.moveDown(0.3);
+      }
+
+      doc.moveDown();
+
+      // Totals
+      doc.text(`Sous-total HT: ${quote.subtotalHT.toFixed(2)} €`, { align: 'right' });
+      doc.text(`TVA (${(quote.vatRate * 100).toFixed(0)} %): ${quote.vatAmount.toFixed(2)} €`, { align: 'right' });
+      doc.font('Helvetica-Bold');
+      doc.text(`Total TTC: ${quote.totalTTC.toFixed(2)} €`, { align: 'right' });
+      doc.font('Helvetica');
+
+      // Conditions
+      if (quote.conditions) {
+        doc.moveDown();
+        doc.fontSize(10).text('Conditions:', { underline: true });
+        doc.fontSize(10).text(quote.conditions);
+      }
+
+      if (quote.notes) {
+        doc.moveDown();
+        doc.fontSize(10).text('Notes:', { underline: true });
+        doc.fontSize(10).text(quote.notes);
+      }
+
+      doc.end();
+    });
   }
 }

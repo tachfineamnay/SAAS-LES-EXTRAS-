@@ -6,8 +6,10 @@ import {
   Body,
   Param,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { QuotesService } from './quotes.service';
 import { CreateQuoteDto, RejectQuoteDto } from './dto/quotes.dto';
@@ -51,5 +53,20 @@ export class QuotesController {
     @Param('bookingId') bookingId: string,
   ) {
     return this.quotesService.getQuotePrefill(bookingId, req.user.id);
+  }
+
+  @Get(':id/pdf')
+  async downloadPdf(
+    @Req() req: AuthRequest,
+    @Res() res: Response,
+    @Param('id') id: string,
+  ) {
+    const buffer = await this.quotesService.generateQuotePdf(id, req.user as any);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="devis-${id.substring(0, 8)}.pdf"`,
+      'Content-Length': buffer.length,
+    });
+    res.end(buffer);
   }
 }

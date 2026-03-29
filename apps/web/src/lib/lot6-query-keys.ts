@@ -18,6 +18,7 @@ export const notificationsQueryKeys = {
 
 export const lot6InvalidationPaths = {
   bookings: "/bookings",
+  orders: "/orders",
   dashboard: "/dashboard",
   finance: "/finance",
   inbox: "/dashboard/inbox",

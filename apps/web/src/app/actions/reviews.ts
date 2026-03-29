@@ -74,6 +74,7 @@ export async function createReview(
     });
 
     revalidatePath(lot6InvalidationPaths.bookings);
+    revalidatePath(lot6InvalidationPaths.orders);
     revalidatePath(lot6InvalidationPaths.dashboard);
     revalidatePath(lot6InvalidationPaths.finance);
 

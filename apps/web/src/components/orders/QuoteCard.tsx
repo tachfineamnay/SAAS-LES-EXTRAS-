@@ -5,8 +5,10 @@ import { fr } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, XCircle, FileText } from "lucide-react";
+import { CheckCircle2, XCircle, FileText, Download } from "lucide-react";
 import type { OrderQuote } from "@/app/actions/orders";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
 const QUOTE_STATUS: Record<string, { label: string; variant: "success" | "warning" | "error" | "info" | "quiet" }> = {
   DRAFT: { label: "Brouillon", variant: "quiet" },
@@ -22,6 +24,7 @@ type QuoteCardProps = {
   onAccept: () => void;
   onReject: () => void;
   isPending: boolean;
+  apiToken?: string;
 };
 
 export function QuoteCard({
@@ -30,6 +33,7 @@ export function QuoteCard({
   onAccept,
   onReject,
   isPending,
+  apiToken,
 }: QuoteCardProps) {
   const statusConfig = QUOTE_STATUS[quote.status] ?? { label: quote.status, variant: "quiet" as const };
   const canAct = currentUserRole === "ESTABLISHMENT" && quote.status === "SENT";
@@ -90,29 +94,54 @@ export function QuoteCard({
       )}
 
       {/* Actions */}
-      {canAct && (
-        <div className="flex gap-2 pt-1">
-          <Button
-            size="sm"
-            disabled={isPending}
-            onClick={onAccept}
-            className="flex-1 bg-[hsl(var(--color-teal-500))] hover:bg-[hsl(var(--color-teal-600))] text-white"
-          >
-            <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
-            Accepter
-          </Button>
+      <div className="flex gap-2 pt-1">
+        {apiToken && (
           <Button
             size="sm"
             variant="outline"
-            disabled={isPending}
-            onClick={onReject}
-            className="flex-1"
+            onClick={async () => {
+              try {
+                const url = `${API_BASE}/quotes/${encodeURIComponent(quote.id)}/pdf`;
+                const resp = await fetch(url, { headers: { Authorization: `Bearer ${apiToken}` } });
+                if (!resp.ok) return;
+                const blob = await resp.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = blobUrl;
+                a.download = `devis-${quote.id.substring(0, 8)}.pdf`;
+                a.click();
+                URL.revokeObjectURL(blobUrl);
+              } catch { /* ignore */ }
+            }}
           >
-            <XCircle className="mr-1.5 h-3.5 w-3.5" />
-            Refuser
+            <Download className="mr-1.5 h-3.5 w-3.5" />
+            PDF
           </Button>
-        </div>
-      )}
+        )}
+        {canAct && (
+          <>
+            <Button
+              size="sm"
+              disabled={isPending}
+              onClick={onAccept}
+              className="flex-1 bg-[hsl(var(--color-teal-500))] hover:bg-[hsl(var(--color-teal-600))] text-white"
+            >
+              <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+              Accepter
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isPending}
+              onClick={onReject}
+              className="flex-1"
+            >
+              <XCircle className="mr-1.5 h-3.5 w-3.5" />
+              Refuser
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
