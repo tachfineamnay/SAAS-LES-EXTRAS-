@@ -23,8 +23,8 @@ export const dynamic = "force-dynamic";
 
 // ─── Data fetching helpers ──────────────────────────────────────
 
-async function fetchEstablishmentData(token: string) {
-    const [bookingsResult, missionsResult, invoicesResult, creditsResult] =
+async function fetchEstablishmentData(token: string, userId: string) {
+    const [bookingsResult, missionsResult, invoicesResult, creditsResult, reviewsResult] =
         await Promise.all([
             fetchSafe<BookingsPageData>(
                 () => getBookingsPageData(token),
@@ -46,6 +46,7 @@ async function fetchEstablishmentData(token: string) {
                 0,
                 "Crédits",
             ),
+            fetchReviews(userId, token),
         ]);
 
     // Quotes endpoint not yet implemented — use empty placeholder
@@ -64,10 +65,19 @@ async function fetchEstablishmentData(token: string) {
     const awaitingPaymentBookings = lines.filter(
         (b) => b.status === "COMPLETED_AWAITING_PAYMENT",
     );
+    const confirmedBookings = lines.filter(
+        (b) => b.status === "CONFIRMED" || b.status === "ASSIGNED",
+    );
     const completedBookings = lines.filter(
         (b) => b.status === "COMPLETED" || b.status === "PAID",
     );
     const pendingQuotes = (quotesResult.data ?? []).filter((q) => q.status === "PENDING");
+
+    // Find the next upcoming mission (earliest dateStart among ASSIGNED or OPEN)
+    const sortedMissions = [...activeMissions].sort(
+        (a, b) => new Date(a.dateStart).getTime() - new Date(b.dateStart).getTime(),
+    );
+    const nextMission = sortedMissions[0] ?? null;
 
     return {
         activeMissions,
@@ -79,7 +89,12 @@ async function fetchEstablishmentData(token: string) {
         availableCredits: creditsResult.data,
         pendingCandidatures,
         awaitingPaymentBookings,
+        confirmedBookings,
         completedBookings,
+        bookingsError: bookingsResult.error,
+        nextMission,
+        recentReviews: reviewsResult.data,
+        recentReviewsError: reviewsResult.error,
     };
 }
 
@@ -175,7 +190,7 @@ export default async function DashboardPage() {
 
     try {
         if (userRole === "ESTABLISHMENT") {
-            const data = await fetchEstablishmentData(token);
+            const data = await fetchEstablishmentData(token, session.user.id);
             return <EstablishmentDashboard {...data} />;
         }
 

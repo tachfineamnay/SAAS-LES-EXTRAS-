@@ -1,0 +1,128 @@
+"use client";
+
+import { CheckCircle2, Building2, FileText, MapPin, Siren, ShieldCheck } from "lucide-react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { SPRING_BOUNCY, EASE_PREMIUM, STAGGER_DEFAULT } from "@/lib/motion";
+
+type StepStatus = "COMPLETED" | "PENDING" | "MISSING";
+
+type VerificationStep = {
+    id: string;
+    label: string;
+    icon: React.ReactNode;
+    status: StepStatus;
+};
+
+const STEPS: VerificationStep[] = [
+    {
+        id: "logo",
+        label: "Logo / avatar",
+        icon: <Building2 className="h-4 w-4" />,
+        status: "COMPLETED",
+    },
+    {
+        id: "description",
+        label: "Description de la structure",
+        icon: <FileText className="h-4 w-4" />,
+        status: "COMPLETED",
+    },
+    {
+        id: "siret",
+        label: "SIRET vérifié",
+        icon: <ShieldCheck className="h-4 w-4" />,
+        status: "PENDING",
+    },
+    {
+        id: "coordinates",
+        label: "Coordonnées complètes",
+        icon: <MapPin className="h-4 w-4" />,
+        status: "COMPLETED",
+    },
+    {
+        id: "first-renfort",
+        label: "Premier renfort publié",
+        icon: <Siren className="h-4 w-4" />,
+        status: "MISSING",
+    },
+];
+
+export function EstablishmentChecklistWidget() {
+    const completedCount = STEPS.filter((s) => s.status === "COMPLETED").length;
+    const progress = Math.round((completedCount / STEPS.length) * 100);
+
+    return (
+        <div className="h-full flex flex-col justify-between space-y-4">
+            <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm font-medium">
+                    <span className="text-muted-foreground">Profil établissement</span>
+                    <span>{progress}%</span>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
+                    <motion.div
+                        className="h-full rounded-full bg-gradient-to-r from-[hsl(var(--teal))] to-[hsl(var(--teal)/0.7)]"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        transition={SPRING_BOUNCY}
+                    />
+                </div>
+            </div>
+
+            <motion.div
+                className="space-y-3"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                    hidden: { opacity: 0 },
+                    visible: { opacity: 1, transition: { staggerChildren: STAGGER_DEFAULT } },
+                }}
+            >
+                {STEPS.map((step) => (
+                    <motion.div
+                        key={step.id}
+                        className="flex items-center justify-between group"
+                        variants={{
+                            hidden: { opacity: 0, x: -8 },
+                            visible: { opacity: 1, x: 0, transition: { duration: 0.25, ease: EASE_PREMIUM } },
+                        }}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div
+                                className={cn(
+                                    "flex h-8 w-8 items-center justify-center rounded-full border",
+                                    step.status === "COMPLETED"
+                                        ? "border-[hsl(var(--emerald))] bg-[hsl(var(--color-emerald-50))] text-[hsl(var(--emerald))]"
+                                        : "border-muted bg-background text-muted-foreground",
+                                )}
+                            >
+                                {step.status === "COMPLETED" ? (
+                                    <CheckCircle2 className="h-4 w-4" />
+                                ) : (
+                                    step.icon
+                                )}
+                            </div>
+                            <span
+                                className={cn(
+                                    "text-sm font-medium",
+                                    step.status === "COMPLETED" ? "text-foreground" : "text-muted-foreground",
+                                )}
+                            >
+                                {step.label}
+                            </span>
+                        </div>
+                        {step.status !== "COMPLETED" && (
+                            <Button variant="ghost" size="sm" className="h-7 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                {step.status === "PENDING" ? "En cours" : "Ajouter"}
+                            </Button>
+                        )}
+                    </motion.div>
+                ))}
+            </motion.div>
+
+            <div className="rounded-md bg-[hsl(var(--color-teal-50))] p-3 text-xs text-[hsl(var(--color-teal-700))]">
+                <p>Un profil complet inspire confiance aux freelances et accélère vos recrutements.</p>
+            </div>
+        </div>
+    );
+}

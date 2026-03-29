@@ -3,24 +3,34 @@ import type { EstablishmentMission } from "@/app/actions/missions";
 import type { SerializedQuote } from "@/actions/quotes";
 import type { SerializedInvoice } from "@/actions/finance";
 import type { BookingLine } from "@/app/actions/bookings";
+import type { ReviewItem } from "./FreelanceDashboard";
 import { BentoSection } from "@/components/layout/BentoSection";
 import { EstablishmentKpiGrid } from "@/components/dashboard/EstablishmentKpiGrid";
 import { CreditsWidget } from "@/components/dashboard/CreditsWidget";
 import { QuoteListWidget } from "@/components/dashboard/QuoteListWidget";
+import { BookingListWidget } from "@/components/dashboard/BookingListWidget";
 import { PaymentValidationWidget } from "@/components/dashboard/PaymentValidationWidget";
 import { MissionsToValidateWidget } from "@/components/dashboard/establishment/MissionsToValidateWidget";
 import { EstablishmentInvoicesWidget } from "@/components/dashboard/establishment/EstablishmentInvoicesWidget";
-import { EstablishmentArchivesWidget } from "@/components/dashboard/establishment/EstablishmentArchivesWidget";
 import { RenfortsWidget } from "@/components/dashboard/establishment/RenfortsWidget";
 import { PublishRenfortButton } from "@/components/dashboard/establishment/PublishRenfortButton";
+import { EstablishmentChecklistWidget } from "@/components/dashboard/establishment/EstablishmentChecklistWidget";
+import { NextMissionCard } from "@/components/dashboard/NextMissionCard";
+import { RecentReviewsWidget } from "@/components/dashboard/RecentReviewsWidget";
 import { DashboardWidget } from "./DashboardWidget";
 import {
     DollarSign,
     Users,
     Briefcase,
+    Calendar,
     FileText,
+    ShieldCheck,
     Siren,
+    Star,
+    Sparkles,
 } from "lucide-react";
+import { format, isValid } from "date-fns";
+import { fr } from "date-fns/locale";
 
 export interface EstablishmentDashboardProps {
     activeMissions: EstablishmentMission[];
@@ -32,7 +42,12 @@ export interface EstablishmentDashboardProps {
     availableCredits: number;
     pendingCandidatures: number;
     awaitingPaymentBookings: BookingLine[];
+    confirmedBookings: BookingLine[];
     completedBookings: BookingLine[];
+    bookingsError: string | null;
+    nextMission: EstablishmentMission | null;
+    recentReviews: ReviewItem[];
+    recentReviewsError: string | null;
 }
 
 export function EstablishmentDashboard({
@@ -45,8 +60,26 @@ export function EstablishmentDashboard({
     availableCredits,
     pendingCandidatures,
     awaitingPaymentBookings,
+    confirmedBookings,
     completedBookings,
+    bookingsError,
+    nextMission,
+    recentReviews,
+    recentReviewsError,
 }: EstablishmentDashboardProps) {
+    // Build NextMissionCard data from the closest upcoming mission
+    const nextMissionDate = nextMission?.dateStart
+        ? new Date(nextMission.dateStart)
+        : null;
+    const nextMissionDateDisplay =
+        nextMissionDate && isValid(nextMissionDate)
+            ? format(nextMissionDate, "EEEE d MMMM", { locale: fr })
+            : "Date à confirmer";
+    const nextMissionFreelance =
+        nextMission?.bookings?.find((b) => b.status === "CONFIRMED" || b.status === "ASSIGNED")
+            ? "Freelance assigné"
+            : `${nextMission?.bookings?.filter((b) => b.status === "PENDING").length ?? 0} candidature(s)`;
+
     return (
         <div className="space-y-8">
             {/* Page header */}
@@ -62,8 +95,28 @@ export function EstablishmentDashboard({
                         Vue d&apos;ensemble de vos renforts et opérations.
                     </p>
                 </div>
-                <PublishRenfortButton label="Publier un renfort" />
+                <div className="flex items-center gap-3">
+                    <Link href="/marketplace">
+                        <span className="inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--teal))] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity">
+                            <Sparkles className="h-4 w-4" aria-hidden="true" />
+                            Explorer les ateliers
+                        </span>
+                    </Link>
+                    <PublishRenfortButton label="Publier un renfort" />
+                </div>
             </header>
+
+            {/* Next mission (elevated card) */}
+            {nextMission && (
+                <NextMissionCard
+                    detailsHref="/dashboard/renforts"
+                    title={nextMission.metierLabel ?? nextMission.title}
+                    establishment={nextMissionFreelance}
+                    city={nextMission.city ?? nextMission.address ?? ""}
+                    scheduledAt={nextMission.dateStart}
+                    dateDisplay={nextMissionDateDisplay}
+                />
+            )}
 
             {/* Alert zone */}
             <MissionsToValidateWidget bookings={awaitingPaymentBookings} />
@@ -74,6 +127,7 @@ export function EstablishmentDashboard({
                 ongoingBookings={pendingCandidatures}
                 availableCredits={availableCredits}
                 averageRating={null}
+                completedThisMonth={completedBookings.length}
             />
 
             {/* Main bento */}
@@ -90,8 +144,52 @@ export function EstablishmentDashboard({
                     <RenfortsWidget missions={activeMissions} error={missionsError} />
                 </DashboardWidget>
 
+                {/* Profil & Complétude */}
+                <DashboardWidget
+                    icon={ShieldCheck}
+                    iconColor="emerald"
+                    title="Profil & Complétude"
+                >
+                    <EstablishmentChecklistWidget />
+                </DashboardWidget>
+
+                {/* Agenda — confirmed bookings */}
+                <DashboardWidget
+                    icon={Calendar}
+                    iconColor="teal"
+                    title="Agenda"
+                    subtitle="Missions confirmées à venir"
+                    viewAllHref="/bookings"
+                    wide
+                >
+                    <BookingListWidget
+                        bookings={confirmedBookings}
+                        emptyMessage="Aucune mission confirmée à venir."
+                        viewAllLink="/bookings"
+                        error={bookingsError}
+                    />
+                </DashboardWidget>
+
+                {/* Recent reviews */}
+                <DashboardWidget
+                    icon={Star}
+                    iconColor="amber"
+                    title="Avis des freelances"
+                >
+                    <RecentReviewsWidget
+                        reviews={recentReviews}
+                        error={recentReviewsError}
+                    />
+                </DashboardWidget>
+
                 {/* Credits */}
-                <DashboardWidget icon={DollarSign} iconColor="emerald" title="Mes Crédits">
+                <DashboardWidget
+                    icon={DollarSign}
+                    iconColor="emerald"
+                    title="Mes Crédits"
+                    subtitle="Solde de recrutement"
+                    viewAllHref="/dashboard/packs"
+                >
                     <CreditsWidget credits={availableCredits} />
                 </DashboardWidget>
 
@@ -101,6 +199,7 @@ export function EstablishmentDashboard({
                         icon={DollarSign}
                         iconColor="amber"
                         title="Paiements à valider"
+                        subtitle="Heures à confirmer"
                         wide
                     >
                         <PaymentValidationWidget bookings={awaitingPaymentBookings} />
@@ -108,17 +207,35 @@ export function EstablishmentDashboard({
                 )}
 
                 {/* Invoices */}
-                <DashboardWidget icon={FileText} iconColor="gray" title="Mes Factures" wide>
+                <DashboardWidget
+                    icon={FileText}
+                    iconColor="gray"
+                    title="Mes Factures"
+                    subtitle="Historique de facturation"
+                    viewAllHref="/finance"
+                    wide
+                >
                     <EstablishmentInvoicesWidget invoices={invoices} error={invoicesError} />
                 </DashboardWidget>
 
                 {/* Quotes */}
-                <DashboardWidget icon={FileText} iconColor="teal" title="Propositions">
+                <DashboardWidget
+                    icon={FileText}
+                    iconColor="teal"
+                    title="Propositions"
+                    subtitle="Devis en attente"
+                >
                     <QuoteListWidget quotes={pendingQuotes} error={quotesError} />
                 </DashboardWidget>
 
                 {/* Candidatures */}
-                <DashboardWidget icon={Users} iconColor="coral" title="Candidatures">
+                <DashboardWidget
+                    icon={Users}
+                    iconColor="coral"
+                    title="Candidatures"
+                    subtitle="En attente de décision"
+                    viewAllHref="/dashboard/renforts"
+                >
                     {pendingCandidatures > 0 ? (
                         <div className="space-y-3">
                             <p className="text-3xl font-bold text-[hsl(var(--coral))]">
@@ -147,9 +264,16 @@ export function EstablishmentDashboard({
                     icon={Briefcase}
                     iconColor="gray"
                     title="Historique & Archives"
+                    subtitle="Missions terminées"
+                    viewAllHref="/bookings"
                     wide
                 >
-                    <EstablishmentArchivesWidget bookings={completedBookings} />
+                    <BookingListWidget
+                        bookings={completedBookings}
+                        emptyMessage="Aucune mission archivée."
+                        viewAllLink="/bookings"
+                        error={bookingsError}
+                    />
                 </DashboardWidget>
             </BentoSection>
         </div>
