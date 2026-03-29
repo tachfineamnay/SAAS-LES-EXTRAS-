@@ -28,4 +28,16 @@ export type BookingsPageData = {
 export type BookingDetails = {
   address: string;
   contactEmail: string;
+  contactPhone?: string;
+  contactName?: string;
+  missionTitle?: string;
+  dateStart?: string;
+  dateEnd?: string;
+  shift?: string;
+  hourlyRate?: number;
+  accessInstructions?: string;
+  hasTransmissions?: boolean;
+  transmissionTime?: string;
+  perks?: string[];
+  freelanceAcknowledged?: boolean;
 };

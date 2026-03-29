@@ -53,7 +53,15 @@ export class BookingsController {
     return this.bookingsService.completeBooking(dto.bookingId, user);
   }
 
-  @Post("mark-payment-settled")
+  @Post("acknowledge")
+  acknowledgeBooking(
+    @Body() dto: ActionBookingDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.bookingsService.acknowledgeBooking(dto.bookingId, user);
+  }
+
+  @Post("authorize-payment")
   markPaymentSettled(
     @Body() dto: ActionBookingDto,
     @CurrentUser() user: AuthenticatedUser,

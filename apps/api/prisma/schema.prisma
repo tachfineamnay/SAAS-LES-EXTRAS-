@@ -272,7 +272,8 @@ model Booking {
   scheduledAt   DateTime      @default(now())
 
   // Champs spécifiques aux candidatures (Renfort)
-  proposedRate Float?
+  proposedRate            Float?
+  freelanceAcknowledged   Boolean   @default(false)
 
   // Champs spécifiques aux ateliers
   nbParticipants Int?

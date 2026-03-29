@@ -9,6 +9,8 @@ import {
   workshopBookingTemplate,
   messageNotificationTemplate,
   passwordResetTemplate,
+  candidatureDeclinedTemplate,
+  reviewInvitationTemplate,
 } from './mail.templates';
 
 @Injectable()
@@ -70,5 +72,13 @@ export class MailService {
 
   async sendPasswordResetEmail(to: string, resetUrl: string) {
     await this.sendMail(to, 'Réinitialisation de votre mot de passe', passwordResetTemplate(resetUrl));
+  }
+
+  async sendCandidatureDeclinedEmail(to: string, missionTitle: string, firstName: string) {
+    await this.sendMail(to, 'Candidature non retenue', candidatureDeclinedTemplate(missionTitle, firstName));
+  }
+
+  async sendReviewInvitationEmail(to: string, missionTitle: string) {
+    await this.sendMail(to, 'Donnez votre avis !', reviewInvitationTemplate(missionTitle));
   }
 }

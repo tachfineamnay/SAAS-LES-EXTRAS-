@@ -18,10 +18,13 @@ import {
 } from "./types/bookings.types";
 import { NotificationsService } from "../notifications/notifications.service";
 import { MailService } from "../mail/mail.service";
+import { ConversationsService } from "../conversations/conversations.service";
 import { format } from "date-fns";
+import { differenceInHours } from "date-fns";
 
 const UNKNOWN_COUNTERPART = "À confirmer";
 const SERVICE_ADDRESS_PLACEHOLDER = "Adresse non renseignée";
+const COMMISSION_RATE = 0.15;
 
 const NEXT_STEP_STATUSES = new Set<BookingLineStatus>([
   "PENDING",
@@ -79,7 +82,22 @@ export class BookingsService {
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
     private readonly mailService: MailService,
+    private readonly conversations: ConversationsService,
   ) { }
+
+  private calculateMissionAmount(dateStart: Date, dateEnd: Date, hourlyRate: number): number {
+    const hours = Math.max(differenceInHours(dateEnd, dateStart), 1);
+    const subtotal = hours * hourlyRate;
+    return Math.round(subtotal * (1 + COMMISSION_RATE) * 100) / 100;
+  }
+
+  private async generateInvoiceNumber(): Promise<string> {
+    const now = new Date();
+    const prefix = `LE-${format(now, "yyyyMM")}`;
+    const count = await this.prisma.invoice.count();
+    const seq = String(count + 1).padStart(4, "0");
+    return `${prefix}-${seq}`;
+  }
 
   async getBookingsPageData(user: AuthenticatedUser): Promise<BookingsPageData> {
     const lines: BookingLine[] = [];
@@ -433,9 +451,20 @@ export class BookingsService {
         select: {
           establishmentId: true,
           address: true,
+          title: true,
+          dateStart: true,
+          dateEnd: true,
+          shift: true,
+          hourlyRate: true,
+          exactAddress: true,
+          accessInstructions: true,
+          hasTransmissions: true,
+          transmissionTime: true,
+          perks: true,
           establishment: {
             select: {
               email: true,
+              profile: { select: { firstName: true, lastName: true, phone: true, companyName: true } },
             },
           },
           bookings: {
@@ -443,11 +472,14 @@ export class BookingsService {
               createdAt: "desc",
             },
             select: {
+              id: true,
               status: true,
               freelanceId: true,
+              freelanceAcknowledged: true,
               freelance: {
                 select: {
                   email: true,
+                  profile: { select: { firstName: true, lastName: true, phone: true } },
                 },
               },
             },
@@ -470,18 +502,55 @@ export class BookingsService {
         }
       }
 
+      const confirmedBooking = mission.bookings.find(
+        (booking) =>
+          booking.status !== BookingStatus.CANCELLED && Boolean(booking.freelance?.email),
+      );
+
       const contactEmail =
         user.role === UserRole.ESTABLISHMENT
-          ? (mission.bookings.find(
-            (booking) =>
-              booking.status !== BookingStatus.CANCELLED && Boolean(booking.freelance?.email),
-          )?.freelance?.email ?? UNKNOWN_COUNTERPART)
+          ? (confirmedBooking?.freelance?.email ?? UNKNOWN_COUNTERPART)
           : (mission.establishment.email ?? UNKNOWN_COUNTERPART);
 
-      return {
+      // Check if the freelance is the confirmed one (for terrain info visibility)
+      const isConfirmedFreelance =
+        user.role === UserRole.FREELANCE &&
+        confirmedBooking?.freelanceId === user.id &&
+        confirmedBooking?.status === BookingStatus.CONFIRMED;
+
+      const isEstablishmentOwner = user.role === UserRole.ESTABLISHMENT;
+
+      const details: BookingDetails = {
         address: mission.address,
         contactEmail,
+        missionTitle: mission.title,
+        dateStart: mission.dateStart.toISOString(),
+        dateEnd: mission.dateEnd.toISOString(),
+        shift: mission.shift ?? undefined,
+        hourlyRate: mission.hourlyRate,
       };
+
+      // Expose terrain/contact details only to confirmed parties
+      if (isConfirmedFreelance || isEstablishmentOwner) {
+        const counterProfile = isEstablishmentOwner
+          ? confirmedBooking?.freelance?.profile
+          : mission.establishment.profile;
+
+        details.contactName = counterProfile
+          ? `${counterProfile.firstName ?? ''} ${counterProfile.lastName ?? ''}`.trim()
+          : undefined;
+        details.contactPhone = counterProfile?.phone ?? undefined;
+        details.accessInstructions = mission.accessInstructions ?? undefined;
+        details.hasTransmissions = mission.hasTransmissions ?? undefined;
+        details.transmissionTime = mission.transmissionTime ?? undefined;
+        details.perks = mission.perks;
+      }
+
+      if (isConfirmedFreelance) {
+        details.freelanceAcknowledged = confirmedBooking?.freelanceAcknowledged ?? false;
+      }
+
+      return details;
     }
 
     const booking = await this.prisma.booking.findUnique({
@@ -590,8 +659,8 @@ export class BookingsService {
 
     // Notify Freelance
     if (booking.freelanceId) {
-      const freelance = await this.prisma.user.findUnique({ where: { id: booking.freelanceId } });
-      const establishment = await this.prisma.user.findUnique({ where: { id: booking.establishmentId } });
+      const freelance = await this.prisma.user.findUnique({ where: { id: booking.freelanceId }, include: { profile: true } });
+      const establishment = await this.prisma.user.findUnique({ where: { id: booking.establishmentId }, include: { profile: true } });
       const missionTitle = booking.reliefMission?.title ?? 'Mission';
       
       await this.notifications.create({
@@ -600,11 +669,44 @@ export class BookingsService {
         type: "SUCCESS",
       });
 
-      if (freelance?.email && establishment?.email) {
+      if (freelance?.email && establishment) {
         const missionDateStr = booking.reliefMission?.dateStart ? format(booking.reliefMission.dateStart, "dd/MM/yyyy") : "prochainement";
-        const estabName = establishment.email.split('@')[0];
-        if (freelance.email && estabName) {
-          this.mailService.sendMissionConfirmedEmail(freelance.email, missionDateStr, estabName).catch(e => console.error(e));
+        const estabName = establishment.profile?.companyName ?? establishment.email.split('@').at(0) ?? establishment.email;
+        this.mailService.sendMissionConfirmedEmail(freelance.email, missionDateStr, estabName).catch(e => console.error(e));
+      }
+
+      // Auto-create conversation between freelance and establishment
+      await this.conversations.getOrCreateConversation(booking.freelanceId!, booking.establishmentId);
+    }
+
+    // Notify rejected freelances (for mission bookings only)
+    if (booking.reliefMissionId) {
+      const rejectedBookings = await this.prisma.booking.findMany({
+        where: {
+          reliefMissionId: booking.reliefMissionId,
+          id: { not: bookingId },
+          status: BookingStatus.CANCELLED,
+          freelanceId: { not: null },
+        },
+        include: {
+          freelance: { include: { profile: true } },
+        },
+      });
+
+      const missionTitle = booking.reliefMission?.title ?? 'Mission';
+
+      for (const rejected of rejectedBookings) {
+        if (!rejected.freelanceId) continue;
+
+        await this.notifications.create({
+          userId: rejected.freelanceId,
+          message: `Votre candidature pour la mission "${missionTitle}" n'a pas été retenue.`,
+          type: "WARNING",
+        });
+
+        if (rejected.freelance?.email) {
+          const firstName = rejected.freelance?.profile?.firstName ?? rejected.freelance?.email.split('@').at(0) ?? 'Freelance';
+          this.mailService.sendCandidatureDeclinedEmail(rejected.freelance.email, missionTitle, firstName).catch(e => console.error(e));
         }
       }
     }
@@ -621,6 +723,7 @@ export class BookingsService {
       include: {
         reliefMission: true,
         service: true,
+        invoice: true,
       },
     });
 
@@ -663,7 +766,33 @@ export class BookingsService {
       );
     }
 
+    // Auto-create Invoice if none exists
+    if (!booking.invoice && booking.reliefMission) {
+      const amount = this.calculateMissionAmount(
+        booking.reliefMission.dateStart,
+        booking.reliefMission.dateEnd,
+        booking.reliefMission.hourlyRate,
+      );
+      const invoiceNumber = await this.generateInvoiceNumber();
+
+      transactions.push(
+        this.prisma.invoice.create({
+          data: {
+            bookingId,
+            amount,
+            invoiceNumber,
+            status: "UNPAID",
+          },
+        }),
+      );
+    }
+
     await this.prisma.$transaction(transactions);
+
+    const missionTitle = booking.reliefMission?.title ?? 'Mission';
+    const missionDateStr = booking.reliefMission?.dateStart
+      ? format(booking.reliefMission.dateStart, "dd/MM/yyyy")
+      : "récemment";
 
     // Notify Freelance
     if (booking.freelanceId) {
@@ -671,14 +800,26 @@ export class BookingsService {
 
       await this.notifications.create({
         userId: booking.freelanceId,
-        message: `La mission a été marquée comme terminée. Le paiement manuel sera traité prochainement.`,
+        message: `La mission "${missionTitle}" a été marquée comme terminée. Le paiement sera traité prochainement.`,
         type: "INFO",
       });
 
       if (freelance?.email) {
-        const missionDateStr = booking.reliefMission?.dateStart ? format(booking.reliefMission.dateStart, "dd/MM/yyyy") : "récemment";
         this.mailService.sendMissionCompletedEmail(freelance.email, missionDateStr).catch(e => console.error(e));
+        this.mailService.sendReviewInvitationEmail(freelance.email, missionTitle).catch(e => console.error(e));
       }
+    }
+
+    // Notify Establishment
+    const establishment = await this.prisma.user.findUnique({ where: { id: booking.establishmentId } });
+    await this.notifications.create({
+      userId: booking.establishmentId,
+      message: `La mission "${missionTitle}" est terminée. N'oubliez pas de procéder au paiement.`,
+      type: "INFO",
+    });
+
+    if (establishment?.email) {
+      this.mailService.sendReviewInvitationEmail(establishment.email, missionTitle).catch(e => console.error(e));
     }
 
     return { ok: true };
@@ -693,6 +834,7 @@ export class BookingsService {
       include: {
         reliefMission: true,
         service: true,
+        invoice: true,
       },
     });
 
@@ -716,6 +858,65 @@ export class BookingsService {
       await this.notifications.create({
         userId: booking.freelanceId,
         message: `Le paiement de votre mission a été marqué comme réglé par l'établissement.`,
+        type: "SUCCESS",
+      });
+    }
+
+    // Sync Invoice status to PAID
+    if (booking.invoice) {
+      await this.prisma.invoice.update({
+        where: { id: booking.invoice.id },
+        data: { status: "PAID" },
+      });
+    }
+
+    return { ok: true };
+  }
+
+  async acknowledgeBooking(
+    bookingId: string,
+    user: AuthenticatedUser,
+  ): Promise<{ ok: true }> {
+    if (user.role !== UserRole.FREELANCE) {
+      throw new ForbiddenException("Only a freelance can acknowledge a booking");
+    }
+
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: {
+        id: true,
+        status: true,
+        freelanceId: true,
+        freelanceAcknowledged: true,
+        establishmentId: true,
+        reliefMission: { select: { title: true } },
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException("Booking not found");
+    }
+
+    if (booking.freelanceId !== user.id) {
+      throw new ForbiddenException("This is not your booking");
+    }
+
+    if (booking.status !== BookingStatus.CONFIRMED) {
+      throw new BadRequestException("Booking must be confirmed to acknowledge");
+    }
+
+    // Idempotent — do nothing if already acknowledged
+    if (!booking.freelanceAcknowledged) {
+      await this.prisma.booking.update({
+        where: { id: bookingId },
+        data: { freelanceAcknowledged: true },
+      });
+
+      const missionTitle = booking.reliefMission?.title ?? 'Mission';
+
+      await this.notifications.create({
+        userId: booking.establishmentId,
+        message: `Le freelance a confirmé sa venue pour la mission "${missionTitle}".`,
         type: "SUCCESS",
       });
     }

@@ -36,6 +36,18 @@ export type BookingsPageData = {
 export type BookingDetails = {
   address: string;
   contactEmail: string;
+  contactPhone?: string;
+  contactName?: string;
+  missionTitle?: string;
+  dateStart?: string;
+  dateEnd?: string;
+  shift?: string;
+  hourlyRate?: number;
+  accessInstructions?: string;
+  hasTransmissions?: boolean;
+  transmissionTime?: string;
+  perks?: string[];
+  freelanceAcknowledged?: boolean;
 };
 
 type CancelBookingInput = {
@@ -123,6 +135,22 @@ export async function completeBookingLine(
   if (!session) throw new Error("Non connecté");
 
   await apiRequest<{ ok: true }>("/bookings/complete", {
+    method: "POST",
+    token: session.token,
+    body: input,
+  });
+
+  revalidatePath("/bookings");
+  return { ok: true };
+}
+
+export async function acknowledgeBooking(
+  input: ActionBookingInput,
+): Promise<{ ok: true }> {
+  const session = await getSession();
+  if (!session) throw new Error("Non connecté");
+
+  await apiRequest<{ ok: true }>("/bookings/acknowledge", {
     method: "POST",
     token: session.token,
     body: input,

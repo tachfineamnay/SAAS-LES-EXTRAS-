@@ -75,3 +75,17 @@ export const passwordResetTemplate = (resetUrl: string) => getBaseTemplate(`
   <p><a href="${resetUrl}" class="btn">Réinitialiser mon mot de passe</a></p>
   <p style="margin-top:20px;font-size:13px;color:#888;">Si vous n'avez pas effectué cette demande, ignorez cet email. Votre mot de passe ne sera pas modifié.</p>
 `);
+
+export const candidatureDeclinedTemplate = (missionTitle: string, firstName: string) => getBaseTemplate(`
+  <h2>Bonjour ${firstName},</h2>
+  <p>Malheureusement, votre candidature pour la mission <strong>"${missionTitle}"</strong> n'a pas été retenue.</p>
+  <p>Ne vous découragez pas ! De nouvelles missions sont publiées régulièrement sur la plateforme.</p>
+  <p><a href="https://les-extras.com/marketplace" class="btn">Voir les missions disponibles</a></p>
+`);
+
+export const reviewInvitationTemplate = (missionTitle: string) => getBaseTemplate(`
+  <h2>Mission terminée !</h2>
+  <p>La mission <strong>"${missionTitle}"</strong> est désormais terminée.</p>
+  <p>Votre avis compte ! Prenez un instant pour évaluer votre expérience et aider la communauté.</p>
+  <p><a href="https://les-extras.com/bookings" class="btn">Laisser un avis</a></p>
+`);

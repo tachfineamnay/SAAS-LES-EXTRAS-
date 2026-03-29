@@ -84,24 +84,10 @@ export class ConversationsService {
     });
   }
 
-  async sendMessage(senderId: string, dto: SendMessageDto) {
-    const { receiverId, content } = dto;
-
-    // Check if receiver exists
-    const receiver = await this.prisma.user.findUnique({
-      where: { id: receiverId },
-    });
-    if (!receiver) {
-      throw new NotFoundException('Receiver not found');
-    }
-
-    // Determine participant A and B to respect the unique constraint A < B usually or just consistent
+  async getOrCreateConversation(userAId: string, userBId: string) {
     const [participantAId, participantBId] =
-      senderId < receiverId
-        ? [senderId, receiverId]
-        : [receiverId, senderId];
+      userAId < userBId ? [userAId, userBId] : [userBId, userAId];
 
-    // Find or create conversation
     let conversation = await this.prisma.conversation.findUnique({
       where: {
         participantAId_participantBId: {
@@ -119,6 +105,22 @@ export class ConversationsService {
         },
       });
     }
+
+    return conversation;
+  }
+
+  async sendMessage(senderId: string, dto: SendMessageDto) {
+    const { receiverId, content } = dto;
+
+    // Check if receiver exists
+    const receiver = await this.prisma.user.findUnique({
+      where: { id: receiverId },
+    });
+    if (!receiver) {
+      throw new NotFoundException('Receiver not found');
+    }
+
+    const conversation = await this.getOrCreateConversation(senderId, receiverId);
 
     // Create the message
     const message = await this.prisma.message.create({

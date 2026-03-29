@@ -15,6 +15,7 @@
     "validate:skills": "node --test .agent/skills/ux-arch-2026/extras/tests/skills-json.spec.mjs .agent/skills/ux-arch-2026/extras/tests/env-contract.spec.mjs"
   },
   "devDependencies": {
+    "@jridgewell/sourcemap-codec": "^1.5.5",
     "ts-node": "^10.9.2",
     "turbo": "^2.4.4",
     "typescript": "^5.7.3"
