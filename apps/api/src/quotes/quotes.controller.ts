@@ -16,7 +16,7 @@ interface AuthRequest extends Request {
   user: { id: string; role: string };
 }
 
-@Controller('api/quotes')
+@Controller('quotes')
 @UseGuards(JwtAuthGuard)
 export class QuotesController {
   constructor(private readonly quotesService: QuotesService) {}

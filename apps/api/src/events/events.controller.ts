@@ -20,7 +20,7 @@ interface MessageEvent {
   retry?: number;
 }
 
-@Controller('api/events')
+@Controller('events')
 export class EventsController {
   constructor(
     private readonly eventsService: EventsService,
