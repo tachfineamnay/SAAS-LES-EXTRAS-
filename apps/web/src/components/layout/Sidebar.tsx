@@ -43,7 +43,7 @@ const FREELANCE_LINKS = [
   { href: "/dashboard",          label: "Tableau de bord",   icon: LayoutDashboard },
   { href: "/marketplace",        label: "Offres de Renforts", icon: ShoppingBag },
   { href: "/bookings",           label: "Mon Agenda",         icon: CalendarDays },
-  { href: "/dashboard/ateliers", label: "Mes ateliers",       icon: BookOpen },
+  { href: "/dashboard/ateliers", label: "Mes ateliers et formations", icon: BookOpen },
   { href: "/orders",             label: "Mes Commandes",      icon: Package },
   { href: "/dashboard/inbox",    label: "Messagerie",         icon: Mail },
 ];

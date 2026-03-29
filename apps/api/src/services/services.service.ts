@@ -1,7 +1,8 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { BookingStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateServiceDto } from "./dto/create-service.dto";
+import { UpdateServiceDto } from "./dto/update-service.dto";
 import { MailService } from "../mail/mail.service";
 import { format } from "date-fns";
 
@@ -96,6 +97,60 @@ export class ServicesService {
         ownerId,
       },
     });
+  }
+
+  async updateService(id: string, dto: UpdateServiceDto, ownerId: string) {
+    const service = await this.prisma.service.findUnique({
+      where: { id },
+      select: { ownerId: true },
+    });
+
+    if (!service) throw new NotFoundException("Service not found");
+    if (service.ownerId !== ownerId) throw new ForbiddenException("Not your service");
+
+    return this.prisma.service.update({
+      where: { id },
+      data: {
+        ...(dto.title !== undefined && { title: dto.title }),
+        ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.price !== undefined && { price: dto.price }),
+        ...(dto.capacity !== undefined && { capacity: dto.capacity }),
+        ...(dto.durationMinutes !== undefined && { durationMinutes: dto.durationMinutes }),
+        ...(dto.category !== undefined && { category: dto.category }),
+        ...(dto.type !== undefined && { type: dto.type }),
+        ...(dto.pricingType !== undefined && { pricingType: dto.pricingType }),
+        ...(dto.publicCible !== undefined && { publicCible: dto.publicCible }),
+        ...(dto.slots !== undefined && { slots: dto.slots as any }),
+        ...(dto.pricePerParticipant !== undefined && { pricePerParticipant: dto.pricePerParticipant }),
+        ...(dto.materials !== undefined && { materials: dto.materials }),
+        ...(dto.objectives !== undefined && { objectives: dto.objectives }),
+        ...(dto.methodology !== undefined && { methodology: dto.methodology }),
+        ...(dto.evaluation !== undefined && { evaluation: dto.evaluation }),
+        ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl }),
+        ...(dto.scheduleInfo !== undefined && { scheduleInfo: dto.scheduleInfo }),
+        ...(dto.status !== undefined && { status: dto.status }),
+      },
+    });
+  }
+
+  async deleteService(id: string, ownerId: string) {
+    const service = await this.prisma.service.findUnique({
+      where: { id },
+      select: { ownerId: true, _count: { select: { bookings: true } } },
+    });
+
+    if (!service) throw new NotFoundException("Service not found");
+    if (service.ownerId !== ownerId) throw new ForbiddenException("Not your service");
+
+    // If has bookings, archive instead of hard-delete
+    if (service._count.bookings > 0) {
+      return this.prisma.service.update({
+        where: { id },
+        data: { status: "ARCHIVED" },
+      });
+    }
+
+    return this.prisma.service.delete({ where: { id } });
   }
 
   async bookService(

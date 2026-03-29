@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { UserRole } from "@prisma/client";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { Roles } from "../auth/decorators/roles.decorator";
@@ -6,6 +6,7 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
 import { CreateServiceDto } from "./dto/create-service.dto";
+import { UpdateServiceDto } from "./dto/update-service.dto";
 import { BookServiceDto } from "./dto/book-service.dto";
 import { ServicesService } from "./services.service";
 
@@ -43,6 +44,27 @@ export class ServicesController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.servicesService.createService(dto, user.id);
+  }
+
+  @Patch(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.FREELANCE)
+  updateService(
+    @Param("id") id: string,
+    @Body() dto: UpdateServiceDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.servicesService.updateService(id, dto, user.id);
+  }
+
+  @Delete(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.FREELANCE)
+  deleteService(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.servicesService.deleteService(id, user.id);
   }
 
   @Post(":serviceId/book")

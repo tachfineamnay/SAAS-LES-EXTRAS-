@@ -4,6 +4,19 @@ import { MesAteliersClient } from "@/components/dashboard/MesAteliersClient";
 import type { MesAtelierItem } from "@/app/actions/marketplace";
 import type { BookingLine } from "@/app/actions/bookings";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
+vi.mock("@/app/actions/marketplace", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    updateServiceAction: vi.fn().mockResolvedValue(null),
+    deleteServiceAction: vi.fn().mockResolvedValue(true),
+  };
+});
+
 vi.mock("@/lib/stores/useUIStore", () => ({
   useUIStore: (selector: (s: { openPublishModal: () => void }) => unknown) =>
     selector({ openPublishModal: vi.fn() }),

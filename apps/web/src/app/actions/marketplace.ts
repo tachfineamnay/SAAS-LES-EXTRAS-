@@ -247,8 +247,20 @@ export async function getMarketplaceCatalogue(token?: string) {
   return { services, freelances };
 }
 
+export type MesAtelierBooking = {
+  id: string;
+  status: string;
+  scheduledAt: string | null;
+  nbParticipants: number | null;
+  establishment: {
+    id: string;
+    profile: { firstName: string | null; lastName: string | null; companyName: string | null } | null;
+  };
+};
+
 export type MesAtelierItem = SerializedService & {
-  status: "ACTIVE";
+  status: "ACTIVE" | "DRAFT" | "ARCHIVED";
+  bookings?: MesAtelierBooking[];
 };
 
 export async function getMyAteliers(token?: string): Promise<MesAtelierItem[]> {
@@ -257,17 +269,59 @@ export async function getMyAteliers(token?: string): Promise<MesAtelierItem[]> {
   if (!activeToken || !session) return [];
 
   try {
-    const services = await apiRequest<SerializedService[]>("/services/my", {
+    const services = await apiRequest<(SerializedService & { status?: string })[]>("/services/my", {
       method: "GET",
       token: activeToken,
     });
 
     return services
-      .map((service) => ({ ...service, status: "ACTIVE" as const }))
+      .map((service) => ({
+        ...service,
+        status: (service.status as MesAtelierItem["status"]) || "ACTIVE",
+      }))
       .sort((a, b) => a.title.localeCompare(b.title, "fr"));
   } catch (error) {
     console.error("getMyAteliers error", error);
     return [];
+  }
+}
+
+export async function updateServiceAction(
+  id: string,
+  data: Record<string, unknown>,
+  token?: string,
+): Promise<SerializedService | null> {
+  const activeToken = token || (await getSession())?.token;
+  if (!activeToken) return null;
+
+  try {
+    return await apiRequest<SerializedService>(`/services/${id}`, {
+      method: "PATCH",
+      body: data,
+      token: activeToken,
+    });
+  } catch (error) {
+    console.error("updateService error", error);
+    return null;
+  }
+}
+
+export async function deleteServiceAction(
+  id: string,
+  token?: string,
+): Promise<boolean> {
+  const activeToken = token || (await getSession())?.token;
+  if (!activeToken) return false;
+
+  try {
+    await apiRequest(`/services/${id}`, {
+      method: "DELETE",
+      token: activeToken,
+    });
+    return true;
+  } catch (error) {
+    console.error("deleteService error", error);
+    return false;
   }
 }
 
