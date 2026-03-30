@@ -20,7 +20,10 @@ export class UsersController {
     getMe(@CurrentUser() user: AuthenticatedUser) {
         return this.usersService.getMe(user.id);
     }
-
+    @Get("me/availability")
+    getAvailability(@CurrentUser() user: AuthenticatedUser) {
+        return this.usersService.getAvailability(user.id);
+    }
     @Patch("me")
     updateMe(
         @CurrentUser() user: AuthenticatedUser,

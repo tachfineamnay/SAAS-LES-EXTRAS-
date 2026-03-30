@@ -16,6 +16,7 @@ import {
   Save,
   Star,
   CalendarDays,
+  CalendarCheck,
   Award,
   CheckCircle2,
   Clock,
@@ -25,6 +26,7 @@ import {
   Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Form,
   FormControl,
@@ -59,6 +61,8 @@ const profileSchema = z.object({
   zipCode: z.string().optional(),
   siret: z.string().optional(),
   tvaNumber: z.string().optional(),
+  isAvailable: z.boolean().optional(),
+  availableDays: z.array(z.string()).optional(),
 });
 
 /* ────────────────── Types ────────────────── */
@@ -76,6 +80,8 @@ interface UserProfileClientProps {
     phone: string;
     address: string;
     skills: string[];
+    availableDays: string[];
+    isAvailable: boolean;
     availableCredits: number;
     createdAt: string;
   };
@@ -139,6 +145,8 @@ export function UserProfileClient({ initialData, userRole, userEmail }: UserProf
   const [isEditing, setIsEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [newSkill, setNewSkill] = useState("");
+  const [localAvailable, setLocalAvailable] = useState(initialData.isAvailable);
+  const [localDays, setLocalDays] = useState<string[]>(initialData.availableDays);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -154,6 +162,8 @@ export function UserProfileClient({ initialData, userRole, userEmail }: UserProf
       zipCode: initialData.zipCode,
       siret: initialData.siret,
       tvaNumber: initialData.tvaNumber,
+      isAvailable: initialData.isAvailable,
+      availableDays: initialData.availableDays,
     },
   });
 
@@ -166,7 +176,11 @@ export function UserProfileClient({ initialData, userRole, userEmail }: UserProf
   /* ── Submit ── */
   function onSubmit(data: ProfileFormValues) {
     startTransition(async () => {
-      const result = await updateFreelanceProfile(data);
+      const result = await updateFreelanceProfile({
+        ...data,
+        isAvailable: localAvailable,
+        availableDays: localDays,
+      });
       if (result.error) {
         toast.error(result.error);
       } else {
@@ -473,6 +487,87 @@ export function UserProfileClient({ initialData, userRole, userEmail }: UserProf
                   </GlassCardContent>
                 </GlassCard>
               </motion.div>
+
+              {/* SECTION: DISPONIBILITÉ (Freelance only) */}
+              {userRole === "FREELANCE" && (
+                <motion.div variants={itemFadeUp}>
+                  <GlassCard animate delay={0.15}>
+                    <GlassCardHeader className="pb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[hsl(var(--color-teal-50))] text-[hsl(var(--teal))]">
+                          <CalendarCheck className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <h2 className="text-base font-semibold">Disponibilité</h2>
+                          <p className="text-xs text-muted-foreground">Indiquez vos jours de disponibilité</p>
+                        </div>
+                      </div>
+                    </GlassCardHeader>
+                    <GlassCardContent className="space-y-5">
+                      {/* Global toggle */}
+                      <div className="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-4 py-3">
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-medium">Disponible pour des missions</p>
+                          <p className="text-xs text-muted-foreground">
+                            {localAvailable
+                              ? "Vous apparaissez comme disponible dans le catalogue"
+                              : "Vous n'apparaissez pas comme disponible"}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`relative flex h-2.5 w-2.5 rounded-full ${localAvailable ? "bg-emerald-500" : "bg-red-500"}`}>
+                            {localAvailable && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />}
+                          </span>
+                          {isEditing ? (
+                            <Switch
+                              checked={localAvailable}
+                              onCheckedChange={(checked) => {
+                                setLocalAvailable(checked);
+                                form.setValue("isAvailable", checked);
+                              }}
+                            />
+                          ) : (
+                            <Badge variant={localAvailable ? "teal" : "secondary"}>
+                              {localAvailable ? "Disponible" : "Indisponible"}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Days grid */}
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-3">Jours d&apos;intervention habituels</p>
+                        <div className="flex gap-2">
+                          {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((day) => {
+                            const isActive = localDays.includes(day);
+                            return (
+                              <button
+                                key={day}
+                                type="button"
+                                disabled={!isEditing}
+                                onClick={() => {
+                                  const next = isActive
+                                    ? localDays.filter((d) => d !== day)
+                                    : [...localDays, day];
+                                  setLocalDays(next);
+                                  form.setValue("availableDays", next);
+                                }}
+                                className={`flex h-11 w-11 items-center justify-center rounded-xl text-sm font-medium transition-all ${
+                                  isActive
+                                    ? "bg-[hsl(var(--color-teal-50))] text-[hsl(var(--color-teal-700))] border border-[hsl(var(--teal)/0.3)] shadow-sm"
+                                    : "bg-muted/50 text-muted-foreground border border-transparent"
+                                } ${isEditing ? "cursor-pointer hover:scale-105" : "cursor-default"}`}
+                              >
+                                {day.slice(0, 2)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </GlassCardContent>
+                  </GlassCard>
+                </motion.div>
+              )}
 
               {/* SECTION: COORDONNÉES & ADMINISTRATIF */}
               <motion.div variants={itemFadeUp}>

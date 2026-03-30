@@ -75,6 +75,7 @@ type SeedUser = {
   city?: string;
   zipCode?: string;
   skills?: string[];
+  availableDays?: string[];
   companyName?: string;
   siret?: string;
 };
@@ -181,6 +182,7 @@ const seedUsers: SeedUser[] = [
     city: "Lyon",
     zipCode: "69003",
     skills: ["Protection de l'enfance", "Gestion de crise", "Accompagnement éducatif", "Travail de nuit"],
+    availableDays: ["Lun", "Mar", "Mer", "Jeu", "Ven"],
     siret: "52345678901234",
   },
   {
@@ -199,6 +201,7 @@ const seedUsers: SeedUser[] = [
     city: "Paris",
     zipCode: "75011",
     skills: ["Gestion de crise", "Désescalade", "Formation", "Prévention violence"],
+    availableDays: ["Lun", "Mar", "Jeu", "Ven"],
     siret: "42345678901234",
   },
   {
@@ -217,6 +220,7 @@ const seedUsers: SeedUser[] = [
     city: "Marseille",
     zipCode: "13001",
     skills: ["Cuisine thérapeutique", "Animation", "Médiation", "Autonomie"],
+    availableDays: ["Mar", "Mer", "Jeu", "Sam"],
     siret: "32345678901234",
   },
   {
@@ -235,6 +239,7 @@ const seedUsers: SeedUser[] = [
     city: "Bordeaux",
     zipCode: "33000",
     skills: ["Analyse de pratique", "Supervision", "Psychologie clinique", "Visioconférence"],
+    availableDays: ["Lun", "Mer", "Ven"],
     siret: "22345678901234",
   },
   {
@@ -253,6 +258,7 @@ const seedUsers: SeedUser[] = [
     city: "Nantes",
     zipCode: "44000",
     skills: ["Art-thérapie", "Expression artistique", "Médiation créative", "Peinture"],
+    availableDays: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"],
     siret: "12345678901234",
   },
   {
@@ -271,6 +277,7 @@ const seedUsers: SeedUser[] = [
     city: "Lille",
     zipCode: "59000",
     skills: ["Sport adapté", "Boxe éducative", "Motricité", "Cohésion de groupe"],
+    availableDays: ["Mer", "Sam", "Dim"],
     siret: "11234567890123",
   },
 ];
@@ -380,6 +387,7 @@ async function upsertUsersAndProfiles(): Promise<Map<string, string>> {
         city: seedUser.city,
         zipCode: seedUser.zipCode,
         skills: seedUser.skills ?? [],
+        availableDays: seedUser.availableDays ?? [],
         companyName: seedUser.companyName,
         siret: seedUser.siret,
       },
@@ -394,6 +402,7 @@ async function upsertUsersAndProfiles(): Promise<Map<string, string>> {
         city: seedUser.city,
         zipCode: seedUser.zipCode,
         skills: seedUser.skills ?? [],
+        availableDays: seedUser.availableDays ?? [],
         companyName: seedUser.companyName,
         siret: seedUser.siret,
       },

@@ -83,6 +83,7 @@ export function FicheFreelanceClient({
           isVerified
           trustItems={trustItems}
           skills={profile?.skills ?? []}
+          availableDays={profile?.availableDays ?? []}
           ateliers={ateliers}
           reviews={reviews}
           onChat={() => {

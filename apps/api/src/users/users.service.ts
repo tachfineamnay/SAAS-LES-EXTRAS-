@@ -192,6 +192,45 @@ export class UsersService {
         if (!user) throw new NotFoundException("Freelance introuvable");
         return user;
     }
-}
 
+    /**
+     * Checks if a freelance is currently on a confirmed/assigned mission.
+     */
+    async isCurrentlyBusy(userId: string): Promise<boolean> {
+        const now = new Date();
+        const activeMissionBooking = await this.prisma.booking.findFirst({
+            where: {
+                freelanceId: userId,
+                status: { in: ["CONFIRMED", "IN_PROGRESS"] },
+                reliefMission: {
+                    dateStart: { lte: now },
+                    dateEnd: { gte: now },
+                },
+            },
+        });
+        return !!activeMissionBooking;
+    }
+
+    /**
+     * Returns availability data for the current user.
+     */
+    async getAvailability(userId: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                isAvailable: true,
+                profile: { select: { availableDays: true } },
+            },
+        });
+        if (!user) throw new NotFoundException("Utilisateur introuvable");
+
+        const isCurrentlyBusy = await this.isCurrentlyBusy(userId);
+
+        return {
+            isAvailable: user.isAvailable,
+            availableDays: user.profile?.availableDays ?? [],
+            isCurrentlyBusy,
+        };
+    }
+}
 

@@ -11,11 +11,13 @@ export default async function AccountPage() {
   }
 
   let profile: Record<string, any> | null = null;
+  let isAvailable = false;
   try {
-    const me = await apiRequest<{ profile: Record<string, any> }>("/users/me", {
+    const me = await apiRequest<{ isAvailable: boolean; profile: Record<string, any> }>("/users/me", {
       token: session.token,
     });
     profile = me.profile ?? null;
+    isAvailable = me.isAvailable ?? false;
   } catch (error) {
     console.error("Failed to load profile:", error);
   }
@@ -33,6 +35,8 @@ export default async function AccountPage() {
     siret: profile?.siret || "",
     tvaNumber: profile?.tvaNumber || "",
     skills: profile?.skills || [],
+    availableDays: profile?.availableDays || [],
+    isAvailable,
     availableCredits: 0,
     createdAt: profile?.createdAt ?? new Date().toISOString(),
   };

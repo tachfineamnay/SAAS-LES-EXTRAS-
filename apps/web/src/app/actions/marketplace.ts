@@ -181,6 +181,7 @@ export type SerializedFreelanceDetail = {
     city: string | null;
     skills: string[];
     siret: string | null;
+    availableDays?: string[];
   } | null;
   reviewsReceived: SerializedReview[];
   ownerServices: SerializedService[];

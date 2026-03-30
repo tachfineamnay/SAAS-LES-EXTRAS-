@@ -61,4 +61,9 @@ export class UpdateProfileDto {
     @IsOptional()
     @IsBoolean()
     isAvailable?: boolean;
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    availableDays?: string[];
 }

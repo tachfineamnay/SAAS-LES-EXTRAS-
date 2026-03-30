@@ -15,6 +15,7 @@ import { format, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMetierLabel } from "@/lib/sos-config";
 import type { MatchingMission } from "@/components/dashboard/MatchingMissionsWidget";
+import { getCurrentUser } from "@/app/actions/user";
 import { EstablishmentDashboard } from "./_components/EstablishmentDashboard";
 import { FreelanceDashboard } from "./_components/FreelanceDashboard";
 import type { ReviewItem } from "./_components/FreelanceDashboard";
@@ -99,7 +100,7 @@ async function fetchEstablishmentData(token: string, userId: string) {
 }
 
 async function fetchFreelanceData(token: string, userId: string) {
-    const [bookingsResult, missionsResult, reviewsResult] = await Promise.all([
+    const [bookingsResult, missionsResult, reviewsResult, availabilityResult] = await Promise.all([
         fetchSafe<BookingsPageData>(
             () => getBookingsPageData(token),
             { lines: [], nextStep: null },
@@ -111,6 +112,11 @@ async function fetchFreelanceData(token: string, userId: string) {
             "Missions disponibles",
         ),
         fetchReviews(userId, token),
+        fetchSafe(
+            () => getCurrentUser(),
+            null,
+            "Disponibilité",
+        ),
     ]);
 
     const lines = bookingsResult.data?.lines ?? [];
@@ -146,6 +152,7 @@ async function fetchFreelanceData(token: string, userId: string) {
         nextMission: confirmedBookings[0],
         recentReviews: reviewsResult.data,
         recentReviewsError: reviewsResult.error,
+        isAvailable: availabilityResult.data?.isAvailable ?? false,
     };
 }
 

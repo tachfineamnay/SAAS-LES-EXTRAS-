@@ -19,6 +19,7 @@ export type UserProfile = {
         jobTitle: string | null;
         bio: string | null;
         skills: string[];
+        availableDays?: string[];
         address: string | null;
         city: string | null;
         zipCode: string | null;

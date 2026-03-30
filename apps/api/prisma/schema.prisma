@@ -138,6 +138,7 @@ model Profile {
   zipCode        String?
   country        String?
   skills         String[] @default([])
+  availableDays  String[] @default([])
   diplomaUrl     String?
   companyName    String?
   siret          String?

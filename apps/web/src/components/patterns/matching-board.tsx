@@ -184,6 +184,7 @@ export function MatchingBoard({
                     rating={c.rating}
                     avatarUrl={c.avatarUrl}
                     isVerified={c.isVerified}
+                    isAvailable={c.availabilityConfirmed}
                     badges={c.badges}
                     socialProof={c.socialProof}
                     onViewProfile={() => onPropose?.(c.id)}
