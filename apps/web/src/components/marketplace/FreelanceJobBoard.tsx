@@ -13,11 +13,12 @@ import { useUIStore } from "@/lib/stores/useUIStore";
 
 interface FreelanceJobBoardProps {
   missions: SerializedMission[];
+  hideHeader?: boolean;
 }
 
 type ShiftFilter = "ALL" | "JOUR" | "NUIT";
 
-export function FreelanceJobBoard({ missions }: FreelanceJobBoardProps) {
+export function FreelanceJobBoard({ missions, hideHeader }: FreelanceJobBoardProps) {
   const [search, setSearch] = useState("");
   const [selectedMetier, setSelectedMetier] = useState<string | null>(null);
   const [shiftFilter, setShiftFilter] = useState<ShiftFilter>("ALL");
@@ -65,16 +66,18 @@ export function FreelanceJobBoard({ missions }: FreelanceJobBoardProps) {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <header className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Marketplace
-        </p>
-        <h1 className="font-display text-heading-xl tracking-tight">Missions de renfort</h1>
-        <p className="text-sm text-muted-foreground">
-          {missions.length} mission{missions.length !== 1 ? "s" : ""} disponible
-          {missions.length !== 1 ? "s" : ""}.
-        </p>
-      </header>
+      {!hideHeader && (
+        <header className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Marketplace
+          </p>
+          <h1 className="font-display text-heading-xl tracking-tight">Missions de renfort</h1>
+          <p className="text-sm text-muted-foreground">
+            {missions.length} mission{missions.length !== 1 ? "s" : ""} disponible
+            {missions.length !== 1 ? "s" : ""}.
+          </p>
+        </header>
+      )}
 
       {/* Sticky filter bar */}
       <div className="sticky top-[57px] z-20 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 glass-surface-dense border-y border-border/40 space-y-3">

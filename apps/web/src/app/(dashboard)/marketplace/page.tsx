@@ -1,5 +1,5 @@
 import { getAvailableMissions, getMarketplaceCatalogue } from "@/app/actions/marketplace";
-import { FreelanceJobBoard } from "@/components/marketplace/FreelanceJobBoard";
+import { FreelanceMarketplace } from "@/components/marketplace/FreelanceMarketplace";
 import { EstablishmentCatalogue } from "@/components/marketplace/EstablishmentCatalogue";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
@@ -11,8 +11,11 @@ export default async function MarketplacePage() {
   if (!session) redirect("/login");
 
   if (session.user.role === "FREELANCE") {
-    const missions = await getAvailableMissions(session.token);
-    return <FreelanceJobBoard missions={missions} />;
+    const [missions, { services }] = await Promise.all([
+      getAvailableMissions(session.token),
+      getMarketplaceCatalogue(session.token),
+    ]);
+    return <FreelanceMarketplace missions={missions} services={services} />;
   }
 
   if (session.user.role === "ESTABLISHMENT") {

@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     userRole === "FREELANCE"
       ? [
           { id: "dashboard", label: "Accueil", icon: LayoutDashboard, active: isActive("/dashboard"), onClick: () => router.push("/dashboard") },
-          { id: "marketplace", label: "Missions", icon: ShoppingBag, active: isActive("/marketplace"), onClick: () => router.push("/marketplace") },
+          { id: "marketplace", label: "Marketplace", icon: ShoppingBag, active: isActive("/marketplace"), onClick: () => router.push("/marketplace") },
           { id: "fab", label: "", icon: LayoutDashboard }, // placeholder for FAB slot
           { id: "bookings", label: "Agenda", icon: CalendarDays, active: isActive("/bookings"), onClick: () => router.push("/bookings") },
           { id: "account", label: "Profil", icon: UserRound, active: isActive("/account"), onClick: () => router.push("/account") },
