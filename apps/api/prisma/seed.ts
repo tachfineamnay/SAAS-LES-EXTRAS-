@@ -304,6 +304,13 @@ function parisDateAt(baseParisDay: Date, hour: number, minute: number): Date {
   return fromZonedTime(localParisDateTime, PARIS_TIMEZONE);
 }
 
+function formatDate(baseParisDay: Date): string {
+  const year = baseParisDay.getFullYear();
+  const month = String(baseParisDay.getMonth() + 1).padStart(2, "0");
+  const day = String(baseParisDay.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function getTonightShift(nowUtc = new Date()): { dateStart: Date; dateEnd: Date } {
   let day = parisMidnight(nowUtc);
   let dateStart = parisDateAt(day, 21, 0);
@@ -481,7 +488,7 @@ async function upsertReliefMissions(userIdByEmail: Map<string, string>): Promise
       title: "Moniteur éducateur - Internat MECS",
       description: "Remplacement sur 3 jours au sein du groupe des adolescentes (14-17 ans). Horaires d'internat : 7h-14h ou 14h-22h selon planning.",
       dateStart: parisDateAt(addDays(today, 3), 7, 0),
-      dateEnd: parisDateAt(addDays(today, 5), 22, 0),
+      dateEnd: parisDateAt(addDays(today, 6), 22, 0),
       hourlyRate: 22,
       address: "MECS L'Avenir, 15 rue Jean Jaurès, 69003 Lyon",
       city: "Lyon",
@@ -490,6 +497,11 @@ async function upsertReliefMissions(userIdByEmail: Map<string, string>): Promise
       metier: "Moniteur éducateur",
       requiredSkills: ["Internat", "Adolescentes", "Protection de l'enfance"],
       establishmentType: "MECS",
+      slots: [
+        { date: formatDate(addDays(today, 3)), heureDebut: "07:00", heureFin: "14:00" },
+        { date: formatDate(addDays(today, 5)), heureDebut: "14:00", heureFin: "22:00" },
+        { date: formatDate(addDays(today, 6)), heureDebut: "07:00", heureFin: "14:00" },
+      ],
       establishmentEmail: "directeur@mecs-avenir.fr",
       status: ReliefMissionStatus.OPEN,
     },
@@ -531,6 +543,7 @@ async function upsertReliefMissions(userIdByEmail: Map<string, string>): Promise
         metier: mission.metier,
         requiredSkills: mission.requiredSkills,
         establishmentType: mission.establishmentType,
+        slots: mission.slots ?? null,
         establishmentId,
         status: mission.status,
       },
@@ -548,6 +561,7 @@ async function upsertReliefMissions(userIdByEmail: Map<string, string>): Promise
         metier: mission.metier,
         requiredSkills: mission.requiredSkills,
         establishmentType: mission.establishmentType,
+        slots: mission.slots ?? null,
         establishmentId,
         status: mission.status,
       },

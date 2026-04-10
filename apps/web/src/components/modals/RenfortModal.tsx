@@ -7,6 +7,8 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { Plus, Trash2, Sun, Moon, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { createMissionFromRenfort } from "@/app/actions/marketplace";
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,7 @@ import {
   getMetierLabel,
   type MetierCategory,
 } from "@/lib/sos-config";
+import { getNormalizedMissionSlots, sortMissionSlots, validateMissionSlots } from "@/lib/mission-planning";
 import { cn } from "@/lib/utils";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
@@ -60,42 +63,49 @@ const slotSchema = z
     path: ["heureFin"],
   });
 
-const renfortSchema = z.object({
-  // Step 0 — Profil
-  metier: z.string().min(1, "Veuillez sélectionner un métier"),
-  diplomaRequired: z.boolean(),
-  requiredSkills: z.array(z.string()),
-  // Step 1 — Contexte
-  establishmentType: z.string().min(1, "Type d'établissement requis"),
-  targetPublic: z.array(z.string()).min(1, "Sélectionnez au moins un public"),
-  unitSize: z.string().optional(),
-  description: z.string().optional(),
-  // Step 2 — Planification
-  slots: z.array(slotSchema).min(1, "Ajoutez au moins un créneau").max(MAX_SLOTS),
-  hasTransmissions: z.boolean(),
-  transmissionTime: z.string().optional(),
-  dateFinMission: z.string().optional(),
-  // Step 3 — Rémunération
-  shift: z.enum(["JOUR", "NUIT"]),
-  hourlyRate: z.number().min(HOURLY_RATE_MIN).max(HOURLY_RATE_MAX),
-  perks: z.array(z.string()),
-  // Step 4 — Localisation
-  exactAddress: z.string().min(5, "Adresse complète requise"),
-  zipCode: z.string().min(5, "Code postal requis"),
-  city: z.string().min(2, "Ville requise"),
-  accessInstructions: z.string().optional(),
-}).refine(
-  (data) => {
-    if (data.hasTransmissions) {
-      return !!data.transmissionTime;
+const renfortSchema = z
+  .object({
+    // Step 0 — Profil
+    metier: z.string().min(1, "Veuillez sélectionner un métier"),
+    diplomaRequired: z.boolean(),
+    requiredSkills: z.array(z.string()),
+    // Step 1 — Contexte
+    establishmentType: z.string().min(1, "Type d'établissement requis"),
+    targetPublic: z.array(z.string()).min(1, "Sélectionnez au moins un public"),
+    unitSize: z.string().optional(),
+    description: z.string().optional(),
+    // Step 2 — Planification
+    slots: z.array(slotSchema).min(1, "Ajoutez au moins un créneau").max(MAX_SLOTS),
+    hasTransmissions: z.boolean(),
+    transmissionTime: z.string().optional(),
+    // Step 3 — Rémunération
+    shift: z.enum(["JOUR", "NUIT"]),
+    hourlyRate: z.number().min(HOURLY_RATE_MIN).max(HOURLY_RATE_MAX),
+    perks: z.array(z.string()),
+    // Step 4 — Localisation
+    exactAddress: z.string().min(5, "Adresse complète requise"),
+    zipCode: z.string().min(5, "Code postal requis"),
+    city: z.string().min(2, "Ville requise"),
+    accessInstructions: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.hasTransmissions && !data.transmissionTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Le temps de relève est requis si les transmissions sont activées",
+        path: ["transmissionTime"],
+      });
     }
-    return true;
-  },
-  {
-    message: "Le temps de relève est requis si les transmissions sont activées",
-    path: ["transmissionTime"],
-  }
-);
+
+    const slotIssues = validateMissionSlots(data.slots);
+    for (const issue of slotIssues) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: issue.message,
+        path: ["slots", issue.index, issue.field],
+      });
+    }
+  });
 
 type RenfortForm = z.infer<typeof renfortSchema>;
 
@@ -104,7 +114,7 @@ const STEPS = ["Profil", "Contexte", "Planification", "Rémunération", "Localis
 const STEP_FIELDS: Record<number, (keyof RenfortForm)[]> = {
   0: ["metier"],
   1: ["establishmentType", "targetPublic"],
-  2: ["slots"],
+  2: ["slots", "hasTransmissions", "transmissionTime"],
   3: ["shift", "hourlyRate"],
   4: ["exactAddress", "zipCode", "city"],
   5: [],
@@ -139,7 +149,6 @@ export function RenfortModal() {
       slots: [{ date: "", heureDebut: "", heureFin: "" }],
       hasTransmissions: false,
       transmissionTime: "",
-      dateFinMission: "",
       shift: "JOUR",
       hourlyRate: HOURLY_RATE_DEFAULT,
       perks: [],
@@ -181,23 +190,21 @@ export function RenfortModal() {
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      const first = data.slots[0];
-      if (!first) throw new Error("Au moins un créneau est requis");
-      const dateStart = new Date(`${first.date}T${first.heureDebut}`);
-      const dateEnd =
-        data.dateFinMission && data.dateFinMission > first.date
-          ? new Date(`${data.dateFinMission}T23:59`)
-          : new Date(`${first.date}T${first.heureFin}`);
+      const sortedSlots = sortMissionSlots(data.slots);
+      const normalizedSlots = getNormalizedMissionSlots({ slots: sortedSlots });
+      const first = normalizedSlots[0];
+      const last = normalizedSlots[normalizedSlots.length - 1];
+      if (!first || !last) throw new Error("Au moins un créneau valide est requis.");
 
       await createMissionFromRenfort({
         title: getMetierLabel(data.metier),
-        dateStart: dateStart.toISOString(),
-        dateEnd: dateEnd.toISOString(),
+        dateStart: first.start.toISOString(),
+        dateEnd: last.end.toISOString(),
         address: `${data.exactAddress}, ${data.zipCode} ${data.city}`,
         hourlyRate: data.hourlyRate,
         isRenfort: true,
         metier: data.metier,
-        slots: data.slots,
+        slots: sortedSlots,
         shift: data.shift,
         city: data.city,
         zipCode: data.zipCode,
@@ -215,7 +222,7 @@ export function RenfortModal() {
       });
 
       toast.success("Renfort publié !", {
-        description: `${getMetierLabel(data.metier)} · ${data.slots.length} créneau(x)`,
+        description: `${getMetierLabel(data.metier)} · ${sortedSlots.length} créneau(x)`,
       });
 
       handleClose();
@@ -305,6 +312,7 @@ export function RenfortModal() {
                 <StepPlanification
                   fields={fields}
                   errors={form.formState.errors.slots}
+                  transmissionError={form.formState.errors.transmissionTime?.message}
                   register={form.register}
                   onAdd={() => append({ date: "", heureDebut: "", heureFin: "" })}
                   onRemove={remove}
@@ -312,8 +320,6 @@ export function RenfortModal() {
                   onTransmissionsChange={(v) => form.setValue("hasTransmissions", v)}
                   transmissionTime={values.transmissionTime ?? ""}
                   onTransmissionTimeChange={(v) => form.setValue("transmissionTime", v)}
-                  dateFinMission={values.dateFinMission ?? ""}
-                  onDateFinChange={(v) => form.setValue("dateFinMission", v)}
                 />
               )}
 
@@ -614,13 +620,13 @@ function StepContext({
 // ─── Step 2 — Planification ──────────────────────────────────────────────────
 
 function StepPlanification({
-  fields, errors, register, onAdd, onRemove,
+  fields, errors, transmissionError, register, onAdd, onRemove,
   hasTransmissions, onTransmissionsChange,
   transmissionTime, onTransmissionTimeChange,
-  dateFinMission, onDateFinChange,
 }: {
   fields: { id: string }[];
   errors: any;
+  transmissionError?: string;
   register: any;
   onAdd: () => void;
   onRemove: (i: number) => void;
@@ -628,11 +634,12 @@ function StepPlanification({
   onTransmissionsChange: (v: boolean) => void;
   transmissionTime: string;
   onTransmissionTimeChange: (v: string) => void;
-  dateFinMission: string;
-  onDateFinChange: (v: string) => void;
 }) {
   return (
     <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Renseignez chaque créneau avec sa date et son horaire exact. Une candidature couvrira tous les créneaux publiés.
+      </p>
       {/* Créneaux */}
       <div className="space-y-3">
         {fields.map((field, i) => (
@@ -685,22 +692,6 @@ function StepPlanification({
         )}
       </div>
 
-      {/* Date de fin de mission (multi-jours) */}
-      <div className="space-y-2">
-        <Label htmlFor="dateFinMission" className="text-sm font-semibold">
-          Date de fin de mission{" "}
-          <span className="text-muted-foreground font-normal">(multi-jours, optionnel)</span>
-        </Label>
-        <Input
-          id="dateFinMission"
-          type="date"
-          value={dateFinMission}
-          min={new Date().toISOString().split("T")[0]}
-          onChange={(e) => onDateFinChange(e.target.value)}
-        />
-        <p className="text-xs text-muted-foreground">Laissez vide si la mission tient en un seul jour.</p>
-      </div>
-
       {/* Transmissions */}
       <div className="rounded-lg border p-3 space-y-3">
         <div className="flex items-center justify-between">
@@ -724,6 +715,9 @@ function StepPlanification({
                 ))}
               </SelectContent>
             </Select>
+            {transmissionError && (
+              <p className="text-xs text-destructive">{transmissionError}</p>
+            )}
           </div>
         )}
       </div>
@@ -916,6 +910,7 @@ function StepLocalisation({
 function StepRecap({ values }: { values: RenfortForm }) {
   const metierLabel = getMetierLabel(values.metier);
   const perksMap = Object.fromEntries(PERKS_OPTIONS.map((p) => [p.id, p.label]));
+  const sortedSlots = getNormalizedMissionSlots({ slots: values.slots });
 
   return (
     <div className="space-y-4">
@@ -937,11 +932,11 @@ function StepRecap({ values }: { values: RenfortForm }) {
 
         {/* Planification */}
         <SectionHeader label="Planification" />
-        {values.slots.map((s, i) => (
+        {sortedSlots.map((slot, i) => (
           <Row
-            key={i}
+            key={slot.key}
             label={`Créneau ${i + 1}`}
-            value={`${s.date} · ${s.heureDebut} → ${s.heureFin}`}
+            value={`${format(slot.start, "EEE d MMM yyyy", { locale: fr })} · ${slot.heureDebut} → ${slot.heureFin}`}
           />
         ))}
         {values.hasTransmissions && (

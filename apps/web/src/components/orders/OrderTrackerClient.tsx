@@ -40,6 +40,7 @@ import { QuoteFormModal } from "./QuoteFormModal";
 import { ReviewModal } from "@/components/modals/ReviewModal";
 import { createReview } from "@/app/actions/reviews";
 import { useOrderSSE, type OrderSSEEvent } from "@/lib/hooks/useOrderSSE";
+import { getMissionPlanning } from "@/lib/mission-planning";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
@@ -304,6 +305,8 @@ export function OrderTrackerClient({
   }
 
   function renderInfoPanel() {
+    const missionPlanning = mission ? getMissionPlanning(mission) : null;
+
     return (
       <div className="space-y-3">
         {mission && (
@@ -319,6 +322,18 @@ export function OrderTrackerClient({
                 {mission.shift && <p className="text-muted-foreground">{mission.shift}</p>}
               </div>
             </div>
+            {missionPlanning && missionPlanning.slots.length > 0 && (
+              <div className="flex items-start gap-2 text-sm">
+                <Clock className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                <div className="space-y-1">
+                  {missionPlanning.slots.map((slot) => (
+                    <p key={slot.key} className="text-muted-foreground">
+                      {format(slot.start, "dd MMM yyyy", { locale: fr })} · {slot.heureDebut} – {slot.heureFin}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex items-start gap-2 text-sm">
               <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
               <p>{mission.address}</p>

@@ -61,6 +61,12 @@ export type OrderQuote = {
   lines: OrderQuoteLine[];
 };
 
+export type OrderMissionSlot = {
+  date: string;
+  heureDebut: string;
+  heureFin: string;
+};
+
 export type OrderMission = {
   id: string;
   title: string;
@@ -70,6 +76,7 @@ export type OrderMission = {
   hourlyRate: number;
   shift?: string;
   description?: string;
+  slots?: OrderMissionSlot[];
 };
 
 export type OrderService = {

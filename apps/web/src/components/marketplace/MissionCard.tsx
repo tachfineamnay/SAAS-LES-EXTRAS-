@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Calendar, Euro, MapPin, Building2, Sun, Moon, Clock, Loader2, Zap } from "lucide-react";
+import { Calendar, MapPin, Building2, Sun, Moon, Clock, Zap } from "lucide-react";
 import { SerializedMission } from "@/app/actions/marketplace";
-import { format, isValid } from "date-fns";
+import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMetierById } from "@/lib/sos-config";
+import { getMissionPlanning } from "@/lib/mission-planning";
 
 interface MissionCardProps {
   mission: SerializedMission;
@@ -29,23 +29,7 @@ export function MissionCard({ mission, onApply }: MissionCardProps) {
   const metier = mission.metier ? getMetierById(mission.metier) : null;
   const MetierIcon = metier?.icon;
 
-  // Build slots display (from new structure or fallback to single slot)
-  const slots =
-    mission.slots && Array.isArray(mission.slots) && mission.slots.length > 0
-      ? mission.slots
-      : [
-          {
-            date: isValid(new Date(mission.dateStart))
-              ? format(new Date(mission.dateStart), "yyyy-MM-dd")
-              : new Date().toISOString().slice(0, 10),
-            heureDebut: isValid(new Date(mission.dateStart))
-              ? format(new Date(mission.dateStart), "HH:mm")
-              : "00:00",
-            heureFin: isValid(new Date(mission.dateEnd))
-              ? format(new Date(mission.dateEnd), "HH:mm")
-              : "00:00",
-          },
-        ];
+  const planning = getMissionPlanning(mission);
 
   return (
     <Card className={`flex flex-col h-full hover:shadow-md transition-shadow border-l-[3px] ${
@@ -107,25 +91,22 @@ export function MissionCard({ mission, onApply }: MissionCardProps) {
       <CardContent className="p-4 pt-2 flex-grow space-y-2">
         {/* Créneaux */}
         <div className="space-y-1">
-          {slots.slice(0, 2).map((slot, i) => {
-            const s = slot as { date: string; heureDebut: string; heureFin: string };
+          {planning.visibleSlots.map((slot, i) => {
             return (
               <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-3.5 w-3.5 shrink-0" />
                 <span>
-                  {s.date
-                    ? format(new Date(s.date), "dd MMM", { locale: fr })
-                    : "—"}
+                  {format(slot.start, "dd MMM", { locale: fr })}
                   {" · "}
                   <Clock className="h-3 w-3 inline-block mx-0.5" />
-                  {s.heureDebut} → {s.heureFin}
+                  {slot.heureDebut} → {slot.heureFin}
                 </span>
               </div>
             );
           })}
-          {slots.length > 2 && (
+          {planning.extraCount > 0 && (
             <p className="text-xs text-muted-foreground pl-5">
-              +{slots.length - 2} créneau(x) supplémentaire(s)
+              +{planning.extraCount} créneau(x) supplémentaire(s)
             </p>
           )}
         </div>

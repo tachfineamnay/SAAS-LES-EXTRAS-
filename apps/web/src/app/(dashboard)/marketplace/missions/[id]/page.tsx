@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { format, isValid } from "date-fns";
+import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   ArrowLeft,
@@ -21,6 +21,7 @@ import { getMetierById } from "@/lib/sos-config";
 import { Badge } from "@/components/ui/badge";
 import { MissionApplyButton } from "@/components/marketplace/MissionApplyButton";
 import { Button } from "@/components/ui/button";
+import { getMissionPlanning } from "@/lib/mission-planning";
 
 export const dynamic = "force-dynamic";
 
@@ -47,22 +48,7 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
     mission.address.split(",").pop()?.trim() ||
     "";
 
-  const slots =
-    mission.slots && mission.slots.length > 0
-      ? mission.slots
-      : [
-          {
-            date: isValid(new Date(mission.dateStart))
-              ? format(new Date(mission.dateStart), "yyyy-MM-dd")
-              : new Date().toISOString().slice(0, 10),
-            heureDebut: isValid(new Date(mission.dateStart))
-              ? format(new Date(mission.dateStart), "HH:mm")
-              : "00:00",
-            heureFin: isValid(new Date(mission.dateEnd))
-              ? format(new Date(mission.dateEnd), "HH:mm")
-              : "00:00",
-          },
-        ];
+  const planning = getMissionPlanning(mission);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
@@ -127,24 +113,19 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
           <section aria-labelledby="slots-heading" className="rounded-xl border bg-card p-6 space-y-3">
             <h2 id="slots-heading" className="font-semibold text-base flex items-center gap-2">
               <Calendar className="h-4 w-4 text-primary" aria-hidden="true" />
-              Créneaux ({slots.length})
+              Créneaux ({planning.slots.length})
             </h2>
             <ul className="space-y-2">
-              {slots.map((slot, i) => {
-                const s = slot as { date: string; heureDebut: string; heureFin: string };
-                return (
-                  <li key={i} className="flex items-center gap-3 text-sm">
+              {planning.slots.map((slot) => (
+                  <li key={slot.key} className="flex items-center gap-3 text-sm">
                     <Calendar className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
                     <span>
-                      {s.date
-                        ? format(new Date(s.date), "EEEE d MMMM yyyy", { locale: fr })
-                        : "—"}
+                      {format(slot.start, "EEEE d MMMM yyyy", { locale: fr })}
                     </span>
                     <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground ml-2" aria-hidden="true" />
-                    <span>{s.heureDebut} → {s.heureFin}</span>
+                    <span>{slot.heureDebut} → {slot.heureFin}</span>
                   </li>
-                );
-              })}
+              ))}
             </ul>
           </section>
 
@@ -224,7 +205,7 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
             <div className="text-center">
               <p className="text-3xl font-bold text-primary">{mission.hourlyRate} €/h</p>
               <p className="text-sm text-muted-foreground mt-1">
-                {slots.length} créneau{slots.length > 1 ? "x" : ""}
+                {planning.slots.length} créneau{planning.slots.length > 1 ? "x" : ""}
               </p>
             </div>
             <MissionApplyButton missionId={mission.id} />
@@ -236,7 +217,7 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
               </Link>
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              Votre candidature sera envoyée à {establishmentName}.
+              Votre candidature sera envoyée à {establishmentName} et couvrira l&apos;ensemble des créneaux listés.
             </p>
           </div>
         </aside>

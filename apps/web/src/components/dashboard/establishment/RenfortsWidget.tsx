@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { format, isValid } from "date-fns";
+import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, Clock, Users, MapPin, Sun, Moon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import type { EstablishmentMission } from "@/app/actions/missions";
+import { getMissionPlanning } from "@/lib/mission-planning";
 
 interface RenfortsWidgetProps {
     missions: EstablishmentMission[];
@@ -59,12 +60,7 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
                 const pendingCount = mission.bookings?.filter(
                     (b) => b.status === "PENDING"
                 ).length ?? 0;
-
-                const startDate = new Date(mission.dateStart);
-                const endDate = new Date(mission.dateEnd);
-                const dateDisplay = isValid(startDate) ? format(startDate, "dd MMM", { locale: fr }) : "–";
-                const startTime = isValid(startDate) ? format(startDate, "HH:mm") : "–";
-                const endTime = isValid(endDate) ? format(endDate, "HH:mm") : "–";
+                const planning = getMissionPlanning(mission);
 
                 return (
                     <Link
@@ -101,16 +97,18 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
                                     )}
                                 </div>
                                 <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                                    <span className="flex items-center gap-1">
-                                        <Calendar className="h-3 w-3" />
-                                        {dateDisplay}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <Clock className="h-3 w-3" />
-                                        {startTime}
-                                        {" – "}
-                                        {endTime}
-                                    </span>
+                                    {planning.visibleSlots.map((slot) => (
+                                        <span key={slot.key} className="flex items-center gap-1">
+                                            <Calendar className="h-3 w-3" />
+                                            {format(slot.start, "dd MMM", { locale: fr })} · {slot.heureDebut} – {slot.heureFin}
+                                        </span>
+                                    ))}
+                                    {planning.extraCount > 0 && (
+                                        <span className="flex items-center gap-1">
+                                            <Clock className="h-3 w-3" />
+                                            +{planning.extraCount} créneau(x)
+                                        </span>
+                                    )}
                                     {mission.city && (
                                         <span className="flex items-center gap-1">
                                             <MapPin className="h-3 w-3" />

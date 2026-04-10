@@ -23,6 +23,7 @@ import { MailService } from "../mail/mail.service";
 import { ConversationsService } from "../conversations/conversations.service";
 import { format } from "date-fns";
 import { differenceInHours } from "date-fns";
+import { coerceMissionSlots } from "../missions/mission-slots";
 
 const UNKNOWN_COUNTERPART = "À confirmer";
 const SERVICE_ADDRESS_PLACEHOLDER = "Adresse non renseignée";
@@ -1118,6 +1119,7 @@ export class BookingsService {
           hourlyRate: booking.reliefMission.hourlyRate,
           shift: booking.reliefMission.shift ?? undefined,
           description: booking.reliefMission.description ?? undefined,
+          slots: coerceMissionSlots(booking.reliefMission.slots),
         }
       : undefined;
 

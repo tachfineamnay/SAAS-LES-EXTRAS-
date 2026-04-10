@@ -23,6 +23,11 @@ const mission: SerializedMission = {
   city: "Paris",
   zipCode: "75001",
   isUrgent: false,
+  slots: [
+    { date: "2026-04-03", heureDebut: "08:00", heureFin: "12:00" },
+    { date: "2026-04-05", heureDebut: "14:00", heureFin: "18:00" },
+    { date: "2026-04-06", heureDebut: "09:00", heureFin: "11:00" },
+  ],
   establishment: { profile: { companyName: "EHPAD Les Lilas", city: "Paris", avatar: null } },
 };
 
@@ -59,5 +64,12 @@ describe("MissionCard", () => {
   it("affiche le nom de l'établissement", () => {
     render(<MissionCard mission={mission} />);
     expect(screen.getByText("EHPAD Les Lilas")).toBeInTheDocument();
+  });
+
+  it("affiche les deux premiers créneaux et un résumé du surplus", () => {
+    render(<MissionCard mission={mission} />);
+    expect(screen.getByText(/03 avr/i)).toBeInTheDocument();
+    expect(screen.getByText(/05 avr/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+1 créneau\(x\) supplémentaire\(s\)/i)).toBeInTheDocument();
   });
 });

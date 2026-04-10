@@ -1,12 +1,13 @@
 "use client";
 
-import { CalendarDays, Clock3, MapPin, Building2, Award, Zap, CheckCircle2 } from "lucide-react";
+import { CalendarDays, Clock3, MapPin, Building2, Zap, CheckCircle2 } from "lucide-react";
 import type { MissionStatus } from "@/app/actions/marketplace";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { getMissionPlanning, type MissionSlot } from "@/lib/mission-planning";
 
 import {
   Tooltip,
@@ -29,6 +30,7 @@ export type MissionCardProps = {
     isNetworkMatch?: boolean;
     establishmentName?: string;
     requiredDiploma?: string[];
+    slots?: MissionSlot[] | null;
   };
   isVerified?: boolean;
 };
@@ -51,8 +53,7 @@ const moneyFormatter = new Intl.NumberFormat("fr-FR", {
 
 export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
   const openApplyModal = useUIStore((s) => s.openApplyModal);
-  const dateStart = new Date(mission.dateStart);
-  const dateEnd = new Date(mission.dateEnd);
+  const planning = getMissionPlanning(mission);
 
   const handleApply = () => {
     if (!isVerified) return;
@@ -101,22 +102,27 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
       </CardHeader>
 
       <CardContent className="flex-1 space-y-4 pb-2">
-        {/* Date & Time Grid */}
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="flex flex-col gap-1 p-2 rounded-md bg-muted/40">
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <CalendarDays className="h-3 w-3" /> Date
-            </span>
-            <span className="font-medium">{dateFormatter.format(dateStart)}</span>
-          </div>
-          <div className="flex flex-col gap-1 p-2 rounded-md bg-muted/40">
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock3 className="h-3 w-3" /> Horaire
-            </span>
-            <span className="font-medium">
-              {timeFormatter.format(dateStart)} - {timeFormatter.format(dateEnd)}
-            </span>
-          </div>
+        <div className="space-y-2 text-sm">
+          {planning.visibleSlots.map((slot) => (
+            <div
+              key={slot.key}
+              className="flex items-center justify-between gap-3 rounded-md bg-muted/40 p-2"
+            >
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <CalendarDays className="h-3 w-3" />
+                {dateFormatter.format(slot.start)}
+              </span>
+              <span className="flex items-center gap-1 font-medium">
+                <Clock3 className="h-3 w-3 text-muted-foreground" />
+                {slot.heureDebut} - {slot.heureFin}
+              </span>
+            </div>
+          ))}
+          {planning.extraCount > 0 && (
+            <p className="text-xs text-muted-foreground">
+              +{planning.extraCount} créneau(x) supplémentaire(s)
+            </p>
+          )}
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-dashed">

@@ -13,6 +13,13 @@ import { PrismaService } from "../prisma/prisma.service";
 import { ApplyMissionDto } from "./dto/apply-mission.dto";
 import { CreateMissionDto } from "./dto/create-mission.dto";
 import { FindMissionsQueryDto } from "./dto/find-missions-query.dto";
+import {
+  coerceMissionSlots,
+  missionHasSlotOnDate,
+  normalizeMissionSlots,
+  sortMissionSlots,
+  validateMissionSlots,
+} from "./mission-slots";
 
 @Injectable()
 export class MissionsService {
@@ -21,18 +28,29 @@ export class MissionsService {
   async createMission(dto: CreateMissionDto, establishmentId: string) {
     let dateStartStr = dto.dateStart;
     let dateEndStr = dto.dateEnd;
+    let sortedSlots = dto.slots;
 
-    if (dto.slots && dto.slots.length > 0) {
-      const starts = dto.slots.map((s) => new Date(`${s.date}T${s.heureDebut}`).getTime());
-      const ends = dto.slots.map((s) => new Date(`${s.date}T${s.heureFin}`).getTime());
-      dateStartStr = new Date(Math.min(...starts)).toISOString();
-      const calculatedEnd = new Date(Math.max(...ends));
-      const explicitEnd = new Date(dto.dateEnd);
-      // Preserve explicit dateEnd if it extends beyond the last slot (multi-day mission)
-      dateEndStr =
-        !isNaN(explicitEnd.getTime()) && explicitEnd > calculatedEnd
-          ? dto.dateEnd
-          : calculatedEnd.toISOString();
+    if (dto.slots) {
+      if (dto.slots.length === 0) {
+        throw new BadRequestException("At least one slot is required");
+      }
+
+      const slotIssues = validateMissionSlots(dto.slots);
+      if (slotIssues.length > 0) {
+        throw new BadRequestException(slotIssues[0]?.message ?? "Invalid slots");
+      }
+
+      const normalizedSlots = normalizeMissionSlots(dto.slots);
+      const firstSlot = normalizedSlots[0];
+      const lastSlot = normalizedSlots[normalizedSlots.length - 1];
+
+      if (!firstSlot || !lastSlot) {
+        throw new BadRequestException("Invalid slots");
+      }
+
+      sortedSlots = sortMissionSlots(dto.slots);
+      dateStartStr = firstSlot.start.toISOString();
+      dateEndStr = lastSlot.end.toISOString();
     }
 
     const dateStart = new Date(dateStartStr);
@@ -62,7 +80,7 @@ export class MissionsService {
         establishmentType: dto.establishmentType,
         targetPublic: dto.targetPublic ?? [],
         unitSize: dto.unitSize,
-        slots: dto.slots ? (dto.slots as any) : null,
+        slots: sortedSlots ? (sortedSlots as any) : null,
         diplomaRequired: dto.diplomaRequired ?? false,
         hasTransmissions: dto.hasTransmissions ?? false,
         transmissionTime: dto.transmissionTime,
@@ -83,17 +101,6 @@ export class MissionsService {
       };
     }
 
-    if (filter.date) {
-      const dayStart = new Date(`${filter.date}T00:00:00.000Z`);
-      const dayEnd = new Date(`${filter.date}T23:59:59.999Z`);
-
-      if (Number.isNaN(dayStart.getTime()) || Number.isNaN(dayEnd.getTime())) {
-        throw new BadRequestException("Invalid date");
-      }
-
-      where.AND = [{ dateStart: { lte: dayEnd } }, { dateEnd: { gte: dayStart } }];
-    }
-
     const missions = await this.prisma.reliefMission.findMany({
       where,
       orderBy: {
@@ -107,7 +114,31 @@ export class MissionsService {
         },
       },
     });
-    return missions.map((m: any) => ({ ...m, isRenfort: true as const }));
+
+    const filteredMissions = filter.date
+      ? (() => {
+          const dayStart = new Date(`${filter.date}T00:00:00.000Z`);
+          const dayEnd = new Date(`${filter.date}T23:59:59.999Z`);
+
+          if (Number.isNaN(dayStart.getTime()) || Number.isNaN(dayEnd.getTime())) {
+            throw new BadRequestException("Invalid date");
+          }
+
+          return missions.filter((mission) => {
+            if (missionHasSlotOnDate(mission.slots, filter.date!)) {
+              return true;
+            }
+
+            if (coerceMissionSlots(mission.slots).length > 0) {
+              return false;
+            }
+
+            return mission.dateStart <= dayEnd && mission.dateEnd >= dayStart;
+          });
+        })()
+      : missions;
+
+    return filteredMissions.map((m: any) => ({ ...m, isRenfort: true as const }));
   }
 
   async apply(missionId: string, freelanceId: string, dto: ApplyMissionDto = {}) {

@@ -10,6 +10,7 @@ import { Calendar, Clock, MapPin, Sun, Moon, Siren } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMetierLabel } from "@/lib/sos-config";
+import { getMissionPlanning } from "@/lib/mission-planning";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,7 @@ export default async function SosDashboardPage() {
             const activeCandidacies = mission.bookings.filter(
               (b: any) => b.status !== "CANCELLED",
             );
+            const planning = getMissionPlanning(mission);
             return (
               <GlassCard key={mission.id} className="overflow-hidden">
                 <GlassCardHeader className="border-b border-border/40">
@@ -90,21 +92,20 @@ export default async function SosDashboardPage() {
                       </div>
                       {/* Meta info */}
                       <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>
-                            {format(new Date(mission.dateStart), "dd MMM yyyy", {
-                              locale: fr,
-                            })}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          <span>
-                            {format(new Date(mission.dateStart), "HH:mm")} –{" "}
-                            {format(new Date(mission.dateEnd), "HH:mm")}
-                          </span>
-                        </div>
+                        {planning.visibleSlots.map((slot) => (
+                          <div key={slot.key} className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            <span>
+                              {format(slot.start, "dd MMM yyyy", { locale: fr })} · {slot.heureDebut} – {slot.heureFin}
+                            </span>
+                          </div>
+                        ))}
+                        {planning.extraCount > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span>+{planning.extraCount} créneau(x)</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-1">
                           <MapPin className="h-4 w-4" />
                           <span className="truncate max-w-[200px]">

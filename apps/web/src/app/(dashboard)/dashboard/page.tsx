@@ -11,7 +11,7 @@ import { getEstablishmentMissions, getAvailableMissions } from "@/app/actions/mi
 import type { EstablishmentMission } from "@/app/actions/missions";
 import { fetchSafe } from "@/lib/widget-result";
 import { UnauthorizedError } from "@/lib/api";
-import { format, isValid } from "date-fns";
+import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMetierLabel } from "@/lib/sos-config";
 import type { MatchingMission } from "@/components/dashboard/MatchingMissionsWidget";
@@ -19,6 +19,7 @@ import { getCurrentUser } from "@/app/actions/user";
 import { EstablishmentDashboard } from "./_components/EstablishmentDashboard";
 import { FreelanceDashboard } from "./_components/FreelanceDashboard";
 import type { ReviewItem } from "./_components/FreelanceDashboard";
+import { getMissionPlanning } from "@/lib/mission-planning";
 
 export const dynamic = "force-dynamic";
 
@@ -75,10 +76,18 @@ async function fetchEstablishmentData(token: string, userId: string) {
     const pendingQuotes = (quotesResult.data ?? []).filter((q) => q.status === "PENDING");
 
     // Find the next upcoming mission (earliest dateStart among ASSIGNED or OPEN)
-    const sortedMissions = [...activeMissions].sort(
-        (a, b) => new Date(a.dateStart).getTime() - new Date(b.dateStart).getTime(),
-    );
-    const nextMission = sortedMissions[0] ?? null;
+    const now = new Date();
+    const sortedMissions = [...activeMissions].sort((a, b) => {
+        const leftPlanning = getMissionPlanning(a, now);
+        const rightPlanning = getMissionPlanning(b, now);
+        const leftDate = leftPlanning.nextSlot?.start ?? leftPlanning.firstSlot?.start ?? new Date(a.dateStart);
+        const rightDate = rightPlanning.nextSlot?.start ?? rightPlanning.firstSlot?.start ?? new Date(b.dateStart);
+        return leftDate.getTime() - rightDate.getTime();
+    });
+    const nextMission =
+        sortedMissions.find((mission) => Boolean(getMissionPlanning(mission, now).nextSlot)) ??
+        sortedMissions[0] ??
+        null;
 
     return {
         activeMissions,
@@ -126,19 +135,21 @@ async function fetchFreelanceData(token: string, userId: string) {
 
     const matchingMissions: MatchingMission[] = (missionsResult.data ?? [])
         .slice(0, 3)
-        .map((m) => ({
-            id: m.id,
-            title: m.metier ? getMetierLabel(m.metier) : m.title,
-            establishment: m.establishment?.profile?.companyName ?? "Établissement",
-            city: m.city ?? m.establishment?.profile?.city ?? "",
-            dates:
-                m.dateStart && isValid(new Date(m.dateStart))
-                    ? format(new Date(m.dateStart), "dd MMM", { locale: fr })
-                    : undefined,
-            hours: m.shift === "NUIT" ? "Nuit" : m.shift === "JOUR" ? "Jour" : undefined,
-            rate: `${m.hourlyRate}\u00a0€/h`,
-            urgent: m.isUrgent ?? false,
-        }));
+        .map((m) => {
+            const planning = getMissionPlanning(m);
+            const firstSlot = planning.firstSlot;
+
+            return {
+                id: m.id,
+                title: m.metier ? getMetierLabel(m.metier) : m.title,
+                establishment: m.establishment?.profile?.companyName ?? "Établissement",
+                city: m.city ?? m.establishment?.profile?.city ?? "",
+                dates: firstSlot ? format(firstSlot.start, "dd MMM", { locale: fr }) : undefined,
+                hours: firstSlot ? `${firstSlot.heureDebut} – ${firstSlot.heureFin}` : undefined,
+                rate: `${m.hourlyRate}\u00a0€/h`,
+                urgent: m.isUrgent ?? false,
+            };
+        });
 
     return {
         confirmedBookings,
