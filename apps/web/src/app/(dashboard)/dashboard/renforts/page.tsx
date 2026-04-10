@@ -10,7 +10,7 @@ import { Calendar, Clock, MapPin, Sun, Moon, Siren } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMetierLabel } from "@/lib/sos-config";
-import { getMissionPlanning } from "@/lib/mission-planning";
+import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
 
 export const dynamic = "force-dynamic";
 
@@ -96,14 +96,17 @@ export default async function SosDashboardPage() {
                           <div key={slot.key} className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
                             <span>
-                              {format(slot.start, "dd MMM yyyy", { locale: fr })} · {slot.heureDebut} – {slot.heureFin}
+                              {format(slot.start, "dd MMM yyyy", { locale: fr })} · {slot.heureDebut} –{" "}
+                              {isMissionPlanningLineMultiDay(slot)
+                                ? `${format(slot.end, "dd MMM yyyy", { locale: fr })} ${slot.heureFin}`
+                                : slot.heureFin}
                             </span>
                           </div>
                         ))}
                         {planning.extraCount > 0 && (
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            <span>+{planning.extraCount} créneau(x)</span>
+                            <span>+{planning.extraCount} plage(s)</span>
                           </div>
                         )}
                         <div className="flex items-center gap-1">

@@ -13,6 +13,10 @@ import {
   ValidateNested,
   ValidateIf,
 } from "class-validator";
+import {
+  RENFORT_PUBLICATION_MODES,
+  type RenfortPublicationMode,
+} from "../mission-slots";
 
 export class MissionSlotDto {
   @IsString()
@@ -25,16 +29,43 @@ export class MissionSlotDto {
   heureFin!: string;
 }
 
+export class MissionPlanningLineDto {
+  @IsString()
+  dateStart!: string;
+
+  @IsString()
+  heureDebut!: string;
+
+  @IsString()
+  dateEnd!: string;
+
+  @IsString()
+  heureFin!: string;
+}
+
 export class CreateMissionDto {
   @IsString()
   @MinLength(2)
   title!: string;
 
-  @IsISO8601()
-  dateStart!: string;
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MissionPlanningLineDto)
+  planning?: MissionPlanningLineDto[];
 
+  @IsOptional()
+  @IsString()
+  @IsIn(RENFORT_PUBLICATION_MODES)
+  publicationMode?: RenfortPublicationMode;
+
+  @ValidateIf((o) => !o.planning && !o.slots)
   @IsISO8601()
-  dateEnd!: string;
+  dateStart?: string;
+
+  @ValidateIf((o) => !o.planning && !o.slots)
+  @IsISO8601()
+  dateEnd?: string;
 
   @Type(() => Number)
   @IsNumber()

@@ -89,7 +89,7 @@ export function ApplyMissionModal() {
         <DialogHeader>
           <DialogTitle>Postuler à cette mission</DialogTitle>
           <DialogDescription>
-            Présentez-vous et proposez votre taux horaire. Si plusieurs créneaux sont listés, votre candidature couvrira l&apos;ensemble du planning.
+            Présentez-vous et proposez votre taux horaire. Si plusieurs plages sont listées, votre candidature couvrira l&apos;ensemble du planning.
           </DialogDescription>
         </DialogHeader>
 

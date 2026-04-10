@@ -61,9 +61,10 @@ export type OrderQuote = {
   lines: OrderQuoteLine[];
 };
 
-export type OrderMissionSlot = {
-  date: string;
+export type OrderMissionPlanningLine = {
+  dateStart: string;
   heureDebut: string;
+  dateEnd: string;
   heureFin: string;
 };
 
@@ -76,7 +77,8 @@ export type OrderMission = {
   hourlyRate: number;
   shift?: string;
   description?: string;
-  slots?: OrderMissionSlot[];
+  planning?: OrderMissionPlanningLine[];
+  slots?: OrderMissionPlanningLine[];
 };
 
 export type OrderService = {

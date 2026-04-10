@@ -22,8 +22,11 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { MailService } from "../mail/mail.service";
 import { ConversationsService } from "../conversations/conversations.service";
 import { format } from "date-fns";
-import { differenceInHours } from "date-fns";
-import { coerceMissionSlots } from "../missions/mission-slots";
+import {
+  calculateMissionPlanningHours,
+  coerceMissionPlanning,
+  normalizeMissionPlanning,
+} from "../missions/mission-slots";
 
 const UNKNOWN_COUNTERPART = "À confirmer";
 const SERVICE_ADDRESS_PLACEHOLDER = "Adresse non renseignée";
@@ -88,10 +91,36 @@ export class BookingsService {
     private readonly conversations: ConversationsService,
   ) { }
 
-  private calculateMissionAmount(dateStart: Date, dateEnd: Date, hourlyRate: number): number {
-    const hours = Math.max(differenceInHours(dateEnd, dateStart), 1);
-    const subtotal = hours * hourlyRate;
+  private calculateMissionAmount(
+    source: { dateStart: Date; dateEnd: Date; hourlyRate: number; slots?: unknown },
+  ): number {
+    const hours =
+      calculateMissionPlanningHours(source.slots) ??
+      Math.max(
+        1,
+        Math.round(
+          ((source.dateEnd.getTime() - source.dateStart.getTime()) / (1000 * 60 * 60)) * 100,
+        ) / 100,
+      );
+
+    const subtotal = hours * source.hourlyRate;
     return Math.round(subtotal * (1 + COMMISSION_RATE) * 100) / 100;
+  }
+
+  private getMissionPlanningSummary(
+    source: { dateStart: Date; dateEnd: Date; slots?: unknown },
+    now = new Date(),
+  ) {
+    const planning = normalizeMissionPlanning(coerceMissionPlanning(source.slots));
+    const firstLine = planning[0] ?? null;
+    const nextLine = planning.find((line) => line.start.getTime() >= now.getTime()) ?? null;
+
+    return {
+      planning,
+      firstLine,
+      nextLine,
+      lineDate: nextLine?.start ?? firstLine?.start ?? source.dateStart,
+    };
   }
 
   private async generateInvoiceNumber(): Promise<string> {
@@ -119,6 +148,7 @@ export class BookingsService {
             title: true,
             dateStart: true,
             dateEnd: true,
+            slots: true,
             hourlyRate: true,
             address: true,
             status: true,
@@ -194,11 +224,12 @@ export class BookingsService {
             booking.status !== BookingStatus.CANCELLED && Boolean(booking.freelance?.email),
         );
         const interlocutor = activeBooking?.freelance?.email ?? UNKNOWN_COUNTERPART;
+        const planning = this.getMissionPlanningSummary(mission);
 
         lines.push({
           lineId: mission.id,
           lineType: "MISSION",
-          date: mission.dateStart.toISOString(),
+          date: planning.lineDate.toISOString(),
           typeLabel: "Mission SOS",
           interlocutor,
           status: normalizeMissionStatus(mission.status),
@@ -206,7 +237,7 @@ export class BookingsService {
           contactEmail: interlocutor,
           relatedBookingId: activeBooking?.id,
           title: mission.title,
-          amount: this.calculateMissionAmount(mission.dateStart, mission.dateEnd, mission.hourlyRate),
+          amount: this.calculateMissionAmount(mission),
           hasReview: (activeBooking?.reviews?.length ?? 0) > 0,
           invoiceUrl: activeBooking?.invoice ? `/invoices/${activeBooking.invoice.id}/download` : undefined,
         });
@@ -259,6 +290,7 @@ export class BookingsService {
                 title: true,
                 dateStart: true,
                 dateEnd: true,
+                slots: true,
                 hourlyRate: true,
                 address: true,
                 status: true,
@@ -322,11 +354,12 @@ export class BookingsService {
         }
 
         const interlocutor = mb.reliefMission.establishment.email ?? UNKNOWN_COUNTERPART;
+        const planning = this.getMissionPlanningSummary(mb.reliefMission);
 
         lines.push({
           lineId: mb.reliefMission.id,
           lineType: "MISSION",
-          date: mb.reliefMission.dateStart.toISOString(),
+          date: planning.lineDate.toISOString(),
           typeLabel: "Mission SOS",
           interlocutor,
           status: normalizeMissionStatus(mb.reliefMission.status),
@@ -334,7 +367,7 @@ export class BookingsService {
           contactEmail: interlocutor,
           relatedBookingId: mb.id,
           title: mb.reliefMission.title,
-          amount: this.calculateMissionAmount(mb.reliefMission.dateStart, mb.reliefMission.dateEnd, mb.reliefMission.hourlyRate),
+          amount: this.calculateMissionAmount(mb.reliefMission),
           hasReview: (mb.reviews?.length ?? 0) > 0,
           invoiceUrl: mb.invoice ? `/invoices/${mb.invoice.id}/download` : undefined,
         });
@@ -516,6 +549,7 @@ export class BookingsService {
           title: true,
           dateStart: true,
           dateEnd: true,
+          slots: true,
           shift: true,
           hourlyRate: true,
           exactAddress: true,
@@ -588,6 +622,7 @@ export class BookingsService {
         missionTitle: mission.title,
         dateStart: mission.dateStart.toISOString(),
         dateEnd: mission.dateEnd.toISOString(),
+        planning: coerceMissionPlanning(mission.slots),
         shift: mission.shift ?? undefined,
         hourlyRate: mission.hourlyRate,
       };
@@ -830,11 +865,7 @@ export class BookingsService {
 
     // Auto-create Invoice if none exists
     if (!booking.invoice && booking.reliefMission) {
-      const amount = this.calculateMissionAmount(
-        booking.reliefMission.dateStart,
-        booking.reliefMission.dateEnd,
-        booking.reliefMission.hourlyRate,
-      );
+      const amount = this.calculateMissionAmount(booking.reliefMission);
       const invoiceNumber = await this.generateInvoiceNumber();
 
       transactions.push(
@@ -1119,7 +1150,8 @@ export class BookingsService {
           hourlyRate: booking.reliefMission.hourlyRate,
           shift: booking.reliefMission.shift ?? undefined,
           description: booking.reliefMission.description ?? undefined,
-          slots: coerceMissionSlots(booking.reliefMission.slots),
+          planning: coerceMissionPlanning(booking.reliefMission.slots),
+          slots: coerceMissionPlanning(booking.reliefMission.slots),
         }
       : undefined;
 

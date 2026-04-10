@@ -40,7 +40,7 @@ import { QuoteFormModal } from "./QuoteFormModal";
 import { ReviewModal } from "@/components/modals/ReviewModal";
 import { createReview } from "@/app/actions/reviews";
 import { useOrderSSE, type OrderSSEEvent } from "@/lib/hooks/useOrderSSE";
-import { getMissionPlanning } from "@/lib/mission-planning";
+import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
@@ -328,7 +328,10 @@ export function OrderTrackerClient({
                 <div className="space-y-1">
                   {missionPlanning.slots.map((slot) => (
                     <p key={slot.key} className="text-muted-foreground">
-                      {format(slot.start, "dd MMM yyyy", { locale: fr })} · {slot.heureDebut} – {slot.heureFin}
+                      {format(slot.start, "dd MMM yyyy", { locale: fr })} · {slot.heureDebut} –{" "}
+                      {isMissionPlanningLineMultiDay(slot)
+                        ? `${format(slot.end, "dd MMM yyyy", { locale: fr })} ${slot.heureFin}`
+                        : slot.heureFin}
                     </p>
                   ))}
                 </div>

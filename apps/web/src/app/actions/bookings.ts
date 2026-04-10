@@ -48,6 +48,12 @@ export type BookingDetails = {
   missionTitle?: string;
   dateStart?: string;
   dateEnd?: string;
+  planning?: {
+    dateStart: string;
+    heureDebut: string;
+    dateEnd: string;
+    heureFin: string;
+  }[];
   shift?: string;
   hourlyRate?: number;
   accessInstructions?: string;

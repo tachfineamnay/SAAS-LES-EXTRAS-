@@ -21,7 +21,7 @@ import { getMetierById } from "@/lib/sos-config";
 import { Badge } from "@/components/ui/badge";
 import { MissionApplyButton } from "@/components/marketplace/MissionApplyButton";
 import { Button } from "@/components/ui/button";
-import { getMissionPlanning } from "@/lib/mission-planning";
+import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
 
 export const dynamic = "force-dynamic";
 
@@ -123,7 +123,12 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
                       {format(slot.start, "EEEE d MMMM yyyy", { locale: fr })}
                     </span>
                     <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground ml-2" aria-hidden="true" />
-                    <span>{slot.heureDebut} → {slot.heureFin}</span>
+                    <span>
+                      {slot.heureDebut} →{" "}
+                      {isMissionPlanningLineMultiDay(slot)
+                        ? `${format(slot.end, "EEEE d MMMM yyyy", { locale: fr })} ${slot.heureFin}`
+                        : slot.heureFin}
+                    </span>
                   </li>
               ))}
             </ul>
@@ -205,7 +210,7 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
             <div className="text-center">
               <p className="text-3xl font-bold text-primary">{mission.hourlyRate} €/h</p>
               <p className="text-sm text-muted-foreground mt-1">
-                {planning.slots.length} créneau{planning.slots.length > 1 ? "x" : ""}
+                {planning.slots.length} plage{planning.slots.length > 1 ? "s" : ""}
               </p>
             </div>
             <MissionApplyButton missionId={mission.id} />
@@ -217,7 +222,10 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
               </Link>
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              Votre candidature sera envoyée à {establishmentName} et couvrira l&apos;ensemble des créneaux listés.
+              Votre candidature sera envoyée à {establishmentName} et{" "}
+              {planning.slots.length > 1
+                ? "couvrira l’ensemble du planning listé."
+                : "portera sur cette plage de mission."}
             </p>
           </div>
         </aside>

@@ -7,7 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { getMissionPlanning, type MissionSlot } from "@/lib/mission-planning";
+import {
+  getMissionPlanning,
+  isMissionPlanningLineMultiDay,
+  type MissionPlanningLine,
+} from "@/lib/mission-planning";
 
 import {
   Tooltip,
@@ -30,7 +34,8 @@ export type MissionCardProps = {
     isNetworkMatch?: boolean;
     establishmentName?: string;
     requiredDiploma?: string[];
-    slots?: MissionSlot[] | null;
+    planning?: MissionPlanningLine[] | null;
+    slots?: MissionPlanningLine[] | null;
   };
   isVerified?: boolean;
 };
@@ -114,13 +119,16 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
               </span>
               <span className="flex items-center gap-1 font-medium">
                 <Clock3 className="h-3 w-3 text-muted-foreground" />
-                {slot.heureDebut} - {slot.heureFin}
+                {slot.heureDebut} -{" "}
+                {isMissionPlanningLineMultiDay(slot)
+                  ? `${dateFormatter.format(slot.end)} ${slot.heureFin}`
+                  : slot.heureFin}
               </span>
             </div>
           ))}
           {planning.extraCount > 0 && (
             <p className="text-xs text-muted-foreground">
-              +{planning.extraCount} créneau(x) supplémentaire(s)
+              +{planning.extraCount} plage(s) supplémentaire(s)
             </p>
           )}
         </div>

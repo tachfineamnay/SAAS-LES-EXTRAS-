@@ -22,10 +22,10 @@ const makeMission = (overrides?: Partial<EstablishmentMission>): EstablishmentMi
   shift: "NUIT",
   city: "Paris",
   bookings: [],
-  slots: [
-    { date: "2026-05-01", heureDebut: "08:00", heureFin: "12:00" },
-    { date: "2026-05-03", heureDebut: "14:00", heureFin: "18:00" },
-    { date: "2026-05-04", heureDebut: "09:00", heureFin: "11:00" },
+  planning: [
+    { dateStart: "2026-05-01", heureDebut: "08:00", dateEnd: "2026-05-01", heureFin: "12:00" },
+    { dateStart: "2026-05-03", heureDebut: "14:00", dateEnd: "2026-05-03", heureFin: "18:00" },
+    { dateStart: "2026-05-04", heureDebut: "09:00", dateEnd: "2026-05-04", heureFin: "11:00" },
   ],
   ...overrides,
 });
@@ -71,13 +71,13 @@ describe("RenfortsWidget", () => {
       makeMission({ id: `mission-${i}`, title: `Mission ${i + 1}` }),
     );
     render(<RenfortsWidget missions={missions} />);
-    expect(screen.getByRole("link", { name: /voir tous/i })).toBeInTheDocument();
+    expect(screen.getByText(/voir tous les renforts/i)).toBeInTheDocument();
   });
 
   it("affiche les deux premiers créneaux puis le surplus", () => {
     render(<RenfortsWidget missions={[makeMission()]} />);
     expect(screen.getByText(/01 mai/i)).toBeInTheDocument();
     expect(screen.getByText(/03 mai/i)).toBeInTheDocument();
-    expect(screen.getByText(/\+1 créneau\(x\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+1 plage\(s\)/i)).toBeInTheDocument();
   });
 });

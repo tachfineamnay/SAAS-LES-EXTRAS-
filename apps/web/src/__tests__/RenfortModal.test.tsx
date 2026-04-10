@@ -142,7 +142,25 @@ function toInputDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+async function renderPlanningStep() {
+  useUIStore.setState({
+    isRenfortModalOpen: true,
+    renfortStep: 2,
+    renfortStepDir: 1,
+  });
+
+  const view = render(<RenfortModal />);
+
+  await waitFor(() => {
+    expect(screen.getByText(/renseignez chaque plage avec un vrai début/i)).toBeInTheDocument();
+  });
+
+  return view;
+}
+
 async function reachPlanningStep() {
+  const view = render(<RenfortModal />);
+
   fireEvent.click(screen.getByRole("button", { name: /aide-soignant/i }));
   fireEvent.click(screen.getByRole("button", { name: /suivant/i }));
 
@@ -150,24 +168,29 @@ async function reachPlanningStep() {
     expect(screen.getByText(/type d'établissement/i)).toBeInTheDocument();
   });
 
-  fireEvent.click(screen.getByRole("button", { name: "EHPAD" }));
+  fireEvent.click(screen.getByText("EHPAD"));
   fireEvent.click(screen.getByRole("button", { name: /personnes âgées/i }));
   fireEvent.click(screen.getByRole("button", { name: /suivant/i }));
 
   await waitFor(() => {
-    expect(screen.getByText(/chaque créneau avec sa date/i)).toBeInTheDocument();
+    expect(screen.getByText(/renseignez chaque plage avec un vrai début/i)).toBeInTheDocument();
   });
+
+  return view;
 }
 
 function fillPlanningSlot(
   container: HTMLElement,
   slotIndex: number,
-  values: { date: string; heureDebut: string; heureFin: string },
+  values: { dateStart: string; dateEnd?: string; heureDebut: string; heureFin: string },
 ) {
   const dateInputs = container.querySelectorAll<HTMLInputElement>('input[type="date"]');
   const timeInputs = container.querySelectorAll<HTMLInputElement>('input[type="time"]');
 
-  fireEvent.change(dateInputs[slotIndex]!, { target: { value: values.date } });
+  fireEvent.change(dateInputs[slotIndex * 2]!, { target: { value: values.dateStart } });
+  fireEvent.change(dateInputs[slotIndex * 2 + 1]!, {
+    target: { value: values.dateEnd ?? values.dateStart },
+  });
   fireEvent.change(timeInputs[slotIndex * 2]!, { target: { value: values.heureDebut } });
   fireEvent.change(timeInputs[slotIndex * 2 + 1]!, { target: { value: values.heureFin } });
 }
@@ -209,11 +232,10 @@ describe("RenfortModal", () => {
   });
 
   it("bloque un créneau déjà passé", async () => {
-    const { container } = render(<RenfortModal />);
-    await reachPlanningStep();
+    const { container } = await renderPlanningStep();
 
     fillPlanningSlot(container, 0, {
-      date: toInputDate(addDaysFromNow(-1)),
+      dateStart: toInputDate(addDaysFromNow(-1)),
       heureDebut: "08:00",
       heureFin: "12:00",
     });
@@ -227,18 +249,17 @@ describe("RenfortModal", () => {
   });
 
   it("bloque des créneaux qui se chevauchent", async () => {
-    const { container } = render(<RenfortModal />);
-    await reachPlanningStep();
+    const { container } = await renderPlanningStep();
 
     fillPlanningSlot(container, 0, {
-      date: toInputDate(addDaysFromNow(10)),
+      dateStart: toInputDate(addDaysFromNow(10)),
       heureDebut: "08:00",
       heureFin: "12:00",
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /ajouter un créneau/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ajouter un jour/i }));
     fillPlanningSlot(container, 1, {
-      date: toInputDate(addDaysFromNow(10)),
+      dateStart: toInputDate(addDaysFromNow(10)),
       heureDebut: "11:00",
       heureFin: "14:00",
     });
@@ -246,34 +267,73 @@ describe("RenfortModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /suivant/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/chevauche un autre créneau/i)).toBeInTheDocument();
+      expect(screen.getByText(/chevauche une autre plage/i)).toBeInTheDocument();
     });
     expect(useUIStore.getState().renfortStep).toBe(2);
   });
 
+  it("accepte une plage overnight et soumet le mode multi-jours", async () => {
+    const { container } = await reachPlanningStep();
+    const startDay = addDaysFromNow(14);
+    const endDay = addDaysFromNow(15);
+
+    fireEvent.click(screen.getByRole("button", { name: /créer une mission de plusieurs jours/i }));
+
+    fillPlanningSlot(container, 0, {
+      dateStart: toInputDate(startDay),
+      dateEnd: toInputDate(endDay),
+      heureDebut: "21:00",
+      heureFin: "07:00",
+    });
+
+    await reachRecapStep(container);
+    fireEvent.click(screen.getByRole("button", { name: /publier le sos/i }));
+
+    await waitFor(() => {
+      expect(mockCreateMissionFromRenfort).toHaveBeenCalledWith(
+        expect.objectContaining({
+          publicationMode: "MULTI_DAY_SINGLE_BOOKING",
+          planning: [
+            {
+              dateStart: toInputDate(startDay),
+              heureDebut: "21:00",
+              dateEnd: toInputDate(endDay),
+              heureFin: "07:00",
+            },
+          ],
+          dateStart: new Date(`${toInputDate(startDay)}T21:00`).toISOString(),
+          dateEnd: new Date(`${toInputDate(endDay)}T07:00`).toISOString(),
+        }),
+      );
+    });
+  }, 10000);
+
   it("trie les créneaux dans le récapitulatif et à l'envoi", async () => {
-    const { container } = render(<RenfortModal />);
-    await reachPlanningStep();
+    const { container } = await reachPlanningStep();
     const laterDay = addDaysFromNow(12);
     const earlierDay = addDaysFromNow(10);
 
     fillPlanningSlot(container, 0, {
-      date: toInputDate(laterDay),
+      dateStart: toInputDate(laterDay),
       heureDebut: "14:00",
       heureFin: "18:00",
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /ajouter un créneau/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ajouter un jour/i }));
     fillPlanningSlot(container, 1, {
-      date: toInputDate(earlierDay),
+      dateStart: toInputDate(earlierDay),
       heureDebut: "08:00",
       heureFin: "12:00",
     });
 
     const recapText = await reachRecapStep(container);
 
-    const earlierLabel = format(new Date(`${toInputDate(earlierDay)}T08:00`), "d MMM yyyy", { locale: fr });
-    const laterLabel = format(new Date(`${toInputDate(laterDay)}T14:00`), "d MMM yyyy", { locale: fr });
+    const earlierLabel = format(new Date(`${toInputDate(earlierDay)}T08:00`), "EEE d MMM yyyy", {
+      locale: fr,
+    });
+    const laterLabel = format(new Date(`${toInputDate(laterDay)}T14:00`), "EEE d MMM yyyy", {
+      locale: fr,
+    });
 
     expect(recapText.indexOf(earlierLabel)).toBeLessThan(recapText.indexOf(laterLabel));
 
@@ -282,9 +342,20 @@ describe("RenfortModal", () => {
     await waitFor(() => {
       expect(mockCreateMissionFromRenfort).toHaveBeenCalledWith(
         expect.objectContaining({
-          slots: [
-            { date: toInputDate(earlierDay), heureDebut: "08:00", heureFin: "12:00" },
-            { date: toInputDate(laterDay), heureDebut: "14:00", heureFin: "18:00" },
+          publicationMode: "MULTI_MISSION_BATCH",
+          planning: [
+            {
+              dateStart: toInputDate(earlierDay),
+              heureDebut: "08:00",
+              dateEnd: toInputDate(earlierDay),
+              heureFin: "12:00",
+            },
+            {
+              dateStart: toInputDate(laterDay),
+              heureDebut: "14:00",
+              dateEnd: toInputDate(laterDay),
+              heureFin: "18:00",
+            },
           ],
           dateStart: new Date(`${toInputDate(earlierDay)}T08:00`).toISOString(),
           dateEnd: new Date(`${toInputDate(laterDay)}T18:00`).toISOString(),

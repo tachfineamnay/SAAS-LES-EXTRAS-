@@ -12,6 +12,10 @@ import { EventsService } from '../events/events.service';
 import type { OrderEvent } from '../events/events.types';
 import PDFDocument from 'pdfkit';
 import type { AuthenticatedUser } from '../auth/types/jwt-payload.type';
+import {
+  calculateMissionPlanningHours,
+  coerceMissionPlanning,
+} from '../missions/mission-slots';
 
 @Injectable()
 export class QuotesService {
@@ -299,12 +303,16 @@ export class QuotesService {
     // Relief Mission: hours × hourlyRate
     if (booking.reliefMission) {
       const mission = booking.reliefMission;
-      const hours = Math.max(
-        1,
-        Math.round(
-          (mission.dateEnd.getTime() - mission.dateStart.getTime()) / (1000 * 60 * 60) * 100,
-        ) / 100,
-      );
+      const planning = coerceMissionPlanning(mission.slots);
+      const hours =
+        calculateMissionPlanningHours(planning) ??
+        Math.max(
+          1,
+          Math.round(
+            ((mission.dateEnd.getTime() - mission.dateStart.getTime()) / (1000 * 60 * 60)) * 100,
+          ) / 100,
+        );
+
       return {
         lines: [
           {

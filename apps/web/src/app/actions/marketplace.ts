@@ -5,6 +5,11 @@ import { apiRequest } from "@/lib/api";
 import { getSession } from "@/lib/session";
 import { atelierInvalidationPaths } from "@/lib/atelier-query-keys";
 import type { ServiceSlot } from "@/lib/atelier-config";
+import type {
+  MissionPlanningLine,
+  RenfortPublicationMode,
+} from "@/lib/mission-planning";
+import { getMissionPlanning } from "@/lib/mission-planning";
 
 export type MissionStatus = "OPEN" | "ASSIGNED" | "COMPLETED" | "CANCELLED";
 export type ServiceType = "WORKSHOP" | "TRAINING";
@@ -49,12 +54,6 @@ export type MarketplaceData = {
   degradedReason?: string;
 };
 
-type MissionSlot = {
-  date: string;
-  heureDebut: string;
-  heureFin: string;
-};
-
 type CreateMissionInput = {
   title: string;
   dateStart: string;
@@ -66,7 +65,9 @@ type CreateMissionInput = {
   shift?: "JOUR" | "NUIT";
   city?: string;
   zipCode?: string;
-  slots?: MissionSlot[];
+  planning?: MissionPlanningLine[];
+  publicationMode?: RenfortPublicationMode;
+  slots?: MissionPlanningLine[];
   // SOS Renfort v2
   description?: string;
   establishmentType?: string;
@@ -114,7 +115,8 @@ export type SerializedMission = {
   shift?: string | null;
   city?: string | null;
   zipCode?: string | null;
-  slots?: MissionSlot[] | null;
+  planning?: MissionPlanningLine[] | null;
+  slots?: MissionPlanningLine[] | null;
   // SOS Renfort v2
   description?: string | null;
   establishmentType?: string | null;
@@ -196,7 +198,13 @@ export async function getAvailableMissions(token?: string): Promise<SerializedMi
       method: "GET",
       token: activeToken,
     });
-    return missions.sort((a, b) => new Date(a.dateStart).getTime() - new Date(b.dateStart).getTime());
+    return missions.sort((a, b) => {
+      const left = getMissionPlanning(a);
+      const right = getMissionPlanning(b);
+      const leftDate = left.nextSlot?.start ?? left.firstSlot?.start ?? new Date(a.dateStart);
+      const rightDate = right.nextSlot?.start ?? right.firstSlot?.start ?? new Date(b.dateStart);
+      return leftDate.getTime() - rightDate.getTime();
+    });
   } catch (error) {
     console.error("getAvailableMissions error", error);
     return [];

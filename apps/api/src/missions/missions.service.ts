@@ -14,11 +14,14 @@ import { ApplyMissionDto } from "./dto/apply-mission.dto";
 import { CreateMissionDto } from "./dto/create-mission.dto";
 import { FindMissionsQueryDto } from "./dto/find-missions-query.dto";
 import {
-  coerceMissionSlots,
-  missionHasSlotOnDate,
-  normalizeMissionSlots,
-  sortMissionSlots,
-  validateMissionSlots,
+  coerceMissionPlanning,
+  deriveMissionEnvelopeFromPlanning,
+  missionPlanningOverlapsDate,
+  normalizeMissionPlanning,
+  sortMissionPlanning,
+  validateMissionPlanning,
+  type MissionPlanningLineInput,
+  type RenfortPublicationMode,
 } from "./mission-slots";
 
 @Injectable()
@@ -26,67 +29,80 @@ export class MissionsService {
   constructor(private readonly prisma: PrismaService) { }
 
   async createMission(dto: CreateMissionDto, establishmentId: string) {
-    let dateStartStr = dto.dateStart;
-    let dateEndStr = dto.dateEnd;
-    let sortedSlots = dto.slots;
+    const planning = this.resolveMissionPlanning(dto);
+    const publicationMode = this.resolvePublicationMode(dto, planning);
 
-    if (dto.slots) {
-      if (dto.slots.length === 0) {
-        throw new BadRequestException("At least one slot is required");
+    if (planning.length > 0) {
+      if (publicationMode === "MULTI_MISSION_BATCH") {
+        const createdMissions = await this.prisma.$transaction(
+          planning.map((line) =>
+            this.prisma.reliefMission.create({
+              data: this.buildMissionCreateData({
+                dto,
+                establishmentId,
+                planning: [line],
+                dateStart: new Date(`${line.dateStart}T${line.heureDebut}`),
+                dateEnd: new Date(`${line.dateEnd}T${line.heureFin}`),
+              }),
+            }),
+          ),
+        );
+
+        return {
+          createdMissionIds: createdMissions.map((mission) => mission.id),
+          createdCount: createdMissions.length,
+          publicationMode,
+        };
       }
 
-      const slotIssues = validateMissionSlots(dto.slots);
-      if (slotIssues.length > 0) {
-        throw new BadRequestException(slotIssues[0]?.message ?? "Invalid slots");
+      const envelope = deriveMissionEnvelopeFromPlanning(planning);
+      if (!envelope) {
+        throw new BadRequestException("Invalid planning");
       }
 
-      const normalizedSlots = normalizeMissionSlots(dto.slots);
-      const firstSlot = normalizedSlots[0];
-      const lastSlot = normalizedSlots[normalizedSlots.length - 1];
+      const createdMission = await this.prisma.reliefMission.create({
+        data: this.buildMissionCreateData({
+          dto,
+          establishmentId,
+          planning,
+          dateStart: new Date(envelope.dateStart),
+          dateEnd: new Date(envelope.dateEnd),
+        }),
+      });
 
-      if (!firstSlot || !lastSlot) {
-        throw new BadRequestException("Invalid slots");
-      }
-
-      sortedSlots = sortMissionSlots(dto.slots);
-      dateStartStr = firstSlot.start.toISOString();
-      dateEndStr = lastSlot.end.toISOString();
+      return {
+        createdMissionIds: [createdMission.id],
+        createdCount: 1,
+        publicationMode,
+      };
     }
 
-    const dateStart = new Date(dateStartStr);
-    const dateEnd = new Date(dateEndStr);
+    const dateStart = new Date(dto.dateStart ?? "");
+    const dateEnd = new Date(dto.dateEnd ?? "");
 
-    if (dateEnd <= dateStart) {
+    if (
+      Number.isNaN(dateStart.getTime()) ||
+      Number.isNaN(dateEnd.getTime()) ||
+      dateEnd <= dateStart
+    ) {
       throw new BadRequestException("dateEnd must be after dateStart");
     }
 
-    return this.prisma.reliefMission.create({
-      data: {
-        title: dto.title,
+    const createdMission = await this.prisma.reliefMission.create({
+      data: this.buildMissionCreateData({
+        dto,
+        establishmentId,
+        planning: [],
         dateStart,
         dateEnd,
-        hourlyRate: dto.hourlyRate,
-        address: dto.address,
-        establishmentId,
-        status: ReliefMissionStatus.OPEN,
-        metier: dto.metier,
-        shift: dto.shift,
-        city: dto.city,
-        zipCode: dto.zipCode,
-        description: dto.description,
-        requiredSkills: dto.requiredSkills ?? [],
-        exactAddress: dto.exactAddress,
-        accessInstructions: dto.accessInstructions,
-        establishmentType: dto.establishmentType,
-        targetPublic: dto.targetPublic ?? [],
-        unitSize: dto.unitSize,
-        slots: sortedSlots ? (sortedSlots as any) : null,
-        diplomaRequired: dto.diplomaRequired ?? false,
-        hasTransmissions: dto.hasTransmissions ?? false,
-        transmissionTime: dto.transmissionTime,
-        perks: dto.perks ?? [],
-      },
+      }),
     });
+
+    return {
+      createdMissionIds: [createdMission.id],
+      createdCount: 1,
+      publicationMode: "MULTI_DAY_SINGLE_BOOKING" as RenfortPublicationMode,
+    };
   }
 
   async findAll(filter: FindMissionsQueryDto) {
@@ -125,11 +141,11 @@ export class MissionsService {
           }
 
           return missions.filter((mission) => {
-            if (missionHasSlotOnDate(mission.slots, filter.date!)) {
+            if (missionPlanningOverlapsDate(mission.slots, filter.date!)) {
               return true;
             }
 
-            if (coerceMissionSlots(mission.slots).length > 0) {
+            if (coerceMissionPlanning(mission.slots).length > 0) {
               return false;
             }
 
@@ -138,7 +154,12 @@ export class MissionsService {
         })()
       : missions;
 
-    return filteredMissions.map((m: any) => ({ ...m, isRenfort: true as const }));
+    return filteredMissions
+      .sort(
+        (left, right) =>
+          this.getMissionSortDate(left).getTime() - this.getMissionSortDate(right).getTime(),
+      )
+      .map((mission: any) => this.serializeMission(mission));
   }
 
   async apply(missionId: string, freelanceId: string, dto: ApplyMissionDto = {}) {
@@ -205,7 +226,12 @@ export class MissionsService {
         }
       }
     });
-    return missions.map((m: any) => ({ ...m, isRenfort: true as const }));
+    return missions
+      .sort(
+        (left, right) =>
+          this.getMissionSortDate(left).getTime() - this.getMissionSortDate(right).getTime(),
+      )
+      .map((mission: any) => this.serializeMission(mission));
   }
 
   async getMission(id: string) {
@@ -222,6 +248,98 @@ export class MissionsService {
     if (!mission) {
       throw new NotFoundException("Mission not found");
     }
-    return { ...mission, isRenfort: true as const };
+    return this.serializeMission(mission);
+  }
+
+  private resolveMissionPlanning(dto: CreateMissionDto): MissionPlanningLineInput[] {
+    const rawPlanning = dto.planning ?? coerceMissionPlanning(dto.slots);
+    if (!rawPlanning || rawPlanning.length === 0) {
+      return [];
+    }
+
+    const planning = sortMissionPlanning(rawPlanning);
+    const issues = validateMissionPlanning(planning);
+    if (issues.length > 0) {
+      throw new BadRequestException(issues[0]?.message ?? "Invalid planning");
+    }
+
+    if (normalizeMissionPlanning(planning).length === 0) {
+      throw new BadRequestException("Invalid planning");
+    }
+
+    return planning;
+  }
+
+  private resolvePublicationMode(
+    dto: CreateMissionDto,
+    planning: MissionPlanningLineInput[],
+  ): RenfortPublicationMode {
+    if (dto.publicationMode) {
+      return dto.publicationMode;
+    }
+
+    if (dto.planning && planning.length > 0) {
+      return "MULTI_MISSION_BATCH";
+    }
+
+    return "MULTI_DAY_SINGLE_BOOKING";
+  }
+
+  private buildMissionCreateData(params: {
+    dto: CreateMissionDto;
+    establishmentId: string;
+    planning: MissionPlanningLineInput[];
+    dateStart: Date;
+    dateEnd: Date;
+  }): Prisma.ReliefMissionUncheckedCreateInput {
+    const { dto, establishmentId, planning, dateStart, dateEnd } = params;
+
+    return {
+      title: dto.title,
+      dateStart,
+      dateEnd,
+      hourlyRate: dto.hourlyRate,
+      address: dto.address,
+      establishmentId,
+      status: ReliefMissionStatus.OPEN,
+      metier: dto.metier,
+      shift: dto.shift,
+      city: dto.city,
+      zipCode: dto.zipCode,
+      description: dto.description,
+      requiredSkills: dto.requiredSkills ?? [],
+      exactAddress: dto.exactAddress,
+      accessInstructions: dto.accessInstructions,
+      establishmentType: dto.establishmentType,
+      targetPublic: dto.targetPublic ?? [],
+      unitSize: dto.unitSize,
+      slots: planning.length > 0 ? (planning as any) : null,
+      diplomaRequired: dto.diplomaRequired ?? false,
+      hasTransmissions: dto.hasTransmissions ?? false,
+      transmissionTime: dto.transmissionTime,
+      perks: dto.perks ?? [],
+    };
+  }
+
+  private getMissionSortDate(
+    mission: { dateStart: Date; slots: unknown },
+    now = new Date(),
+  ) {
+    const normalizedPlanning = normalizeMissionPlanning(coerceMissionPlanning(mission.slots));
+    const nextLine = normalizedPlanning.find((line) => line.start.getTime() >= now.getTime());
+    const firstLine = normalizedPlanning[0];
+
+    return nextLine?.start ?? firstLine?.start ?? mission.dateStart;
+  }
+
+  private serializeMission<T extends { slots: unknown }>(mission: T) {
+    const planning = coerceMissionPlanning(mission.slots);
+
+    return {
+      ...mission,
+      planning,
+      slots: planning,
+      isRenfort: true as const,
+    };
   }
 }

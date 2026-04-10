@@ -41,6 +41,7 @@ export type BookingDetails = {
   missionTitle?: string;
   dateStart?: string;
   dateEnd?: string;
+  planning?: OrderMissionPlanningLine[];
   shift?: string;
   hourlyRate?: number;
   accessInstructions?: string;
@@ -136,9 +137,10 @@ export type OrderInvoice = {
   createdAt: string;
 };
 
-export type OrderMissionSlot = {
-  date: string;
+export type OrderMissionPlanningLine = {
+  dateStart: string;
   heureDebut: string;
+  dateEnd: string;
   heureFin: string;
 };
 
@@ -151,7 +153,8 @@ export type OrderMission = {
   hourlyRate: number;
   shift?: string;
   description?: string;
-  slots?: OrderMissionSlot[];
+  planning?: OrderMissionPlanningLine[];
+  slots?: OrderMissionPlanningLine[];
 };
 
 export type OrderService = {

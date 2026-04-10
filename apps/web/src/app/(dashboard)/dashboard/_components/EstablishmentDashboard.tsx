@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
-import { getMissionPlanning } from "@/lib/mission-planning";
+import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
 
 export interface EstablishmentDashboardProps {
     activeMissions: EstablishmentMission[];
@@ -77,7 +77,11 @@ export function EstablishmentDashboard({
             ? format(nextMissionDate, "EEEE d MMMM", { locale: fr })
             : "Date à confirmer";
     const nextMissionTimeRange = nextMissionSlot
-        ? `${nextMissionSlot.heureDebut} – ${nextMissionSlot.heureFin}`
+        ? `${nextMissionSlot.heureDebut} – ${
+            isMissionPlanningLineMultiDay(nextMissionSlot)
+                ? `${format(nextMissionSlot.end, "d MMM", { locale: fr })} ${nextMissionSlot.heureFin}`
+                : nextMissionSlot.heureFin
+        }`
         : undefined;
     const nextMissionFreelance =
         nextMission?.bookings?.find((b) => b.status === "CONFIRMED" || b.status === "ASSIGNED")

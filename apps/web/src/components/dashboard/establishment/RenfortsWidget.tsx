@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import type { EstablishmentMission } from "@/app/actions/missions";
-import { getMissionPlanning } from "@/lib/mission-planning";
+import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
 
 interface RenfortsWidgetProps {
     missions: EstablishmentMission[];
@@ -100,13 +100,16 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
                                     {planning.visibleSlots.map((slot) => (
                                         <span key={slot.key} className="flex items-center gap-1">
                                             <Calendar className="h-3 w-3" />
-                                            {format(slot.start, "dd MMM", { locale: fr })} · {slot.heureDebut} – {slot.heureFin}
+                                            {format(slot.start, "dd MMM", { locale: fr })} · {slot.heureDebut} –{" "}
+                                            {isMissionPlanningLineMultiDay(slot)
+                                                ? `${format(slot.end, "dd MMM", { locale: fr })} ${slot.heureFin}`
+                                                : slot.heureFin}
                                         </span>
                                     ))}
                                     {planning.extraCount > 0 && (
                                         <span className="flex items-center gap-1">
                                             <Clock className="h-3 w-3" />
-                                            +{planning.extraCount} créneau(x)
+                                            +{planning.extraCount} plage(s)
                                         </span>
                                     )}
                                     {mission.city && (

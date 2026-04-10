@@ -9,7 +9,7 @@ import { SerializedMission } from "@/app/actions/marketplace";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMetierById } from "@/lib/sos-config";
-import { getMissionPlanning } from "@/lib/mission-planning";
+import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
 
 interface MissionCardProps {
   mission: SerializedMission;
@@ -99,14 +99,17 @@ export function MissionCard({ mission, onApply }: MissionCardProps) {
                   {format(slot.start, "dd MMM", { locale: fr })}
                   {" · "}
                   <Clock className="h-3 w-3 inline-block mx-0.5" />
-                  {slot.heureDebut} → {slot.heureFin}
+                  {slot.heureDebut} →{" "}
+                  {isMissionPlanningLineMultiDay(slot)
+                    ? `${format(slot.end, "dd MMM", { locale: fr })} ${slot.heureFin}`
+                    : slot.heureFin}
                 </span>
               </div>
             );
           })}
           {planning.extraCount > 0 && (
             <p className="text-xs text-muted-foreground pl-5">
-              +{planning.extraCount} créneau(x) supplémentaire(s)
+              +{planning.extraCount} plage(s) supplémentaire(s)
             </p>
           )}
         </div>

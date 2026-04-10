@@ -90,8 +90,22 @@ describe('BookingsService', () => {
           establishmentId: 'est-1',
           title: 'Mission Test',
           dateStart: new Date('2026-03-20T08:00:00Z'),
-          dateEnd: new Date('2026-03-20T16:00:00Z'),
+          dateEnd: new Date('2026-03-22T12:00:00Z'),
           hourlyRate: 25,
+          slots: [
+            {
+              dateStart: '2026-03-20',
+              heureDebut: '08:00',
+              dateEnd: '2026-03-20',
+              heureFin: '12:00',
+            },
+            {
+              dateStart: '2026-03-22',
+              heureDebut: '08:00',
+              dateEnd: '2026-03-22',
+              heureFin: '12:00',
+            },
+          ],
         },
         invoice: null,
       };
@@ -106,6 +120,13 @@ describe('BookingsService', () => {
       await service.completeBooking('booking-1', user);
 
       expect(mockPrisma.$transaction).toHaveBeenCalled();
+      expect(mockPrisma.invoice.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            amount: 230,
+          }),
+        }),
+      );
       // Should notify both freelance and establishment
       expect(mockNotifications.create).toHaveBeenCalledTimes(2);
     });

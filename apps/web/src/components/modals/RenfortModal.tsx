@@ -47,20 +47,24 @@ import {
   getMetierLabel,
   type MetierCategory,
 } from "@/lib/sos-config";
-import { getNormalizedMissionSlots, sortMissionSlots, validateMissionSlots } from "@/lib/mission-planning";
+import {
+  deriveMissionEnvelopeFromPlanning,
+  getNormalizedMissionPlanning,
+  sortMissionPlanning,
+  validateMissionPlanning,
+  type MissionPlanningLine,
+  type RenfortPublicationMode,
+} from "@/lib/mission-planning";
 import { cn } from "@/lib/utils";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
-const slotSchema = z
+const planningLineSchema = z
   .object({
-    date: z.string().min(1, "Date requise"),
+    dateStart: z.string().min(1, "Date de début requise"),
     heureDebut: z.string().min(1, "Heure de début requise"),
+    dateEnd: z.string().min(1, "Date de fin requise"),
     heureFin: z.string().min(1, "Heure de fin requise"),
-  })
-  .refine((s) => s.heureFin > s.heureDebut, {
-    message: "L'heure de fin doit être après l'heure de début",
-    path: ["heureFin"],
   });
 
 const renfortSchema = z
@@ -75,7 +79,8 @@ const renfortSchema = z
     unitSize: z.string().optional(),
     description: z.string().optional(),
     // Step 2 — Planification
-    slots: z.array(slotSchema).min(1, "Ajoutez au moins un créneau").max(MAX_SLOTS),
+    publicationMode: z.enum(["MULTI_MISSION_BATCH", "MULTI_DAY_SINGLE_BOOKING"]),
+    planning: z.array(planningLineSchema).min(1, "Ajoutez au moins une plage").max(MAX_SLOTS),
     hasTransmissions: z.boolean(),
     transmissionTime: z.string().optional(),
     // Step 3 — Rémunération
@@ -97,12 +102,12 @@ const renfortSchema = z
       });
     }
 
-    const slotIssues = validateMissionSlots(data.slots);
-    for (const issue of slotIssues) {
+    const planningIssues = validateMissionPlanning(data.planning);
+    for (const issue of planningIssues) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: issue.message,
-        path: ["slots", issue.index, issue.field],
+        path: ["planning", issue.index, issue.field],
       });
     }
   });
@@ -114,7 +119,7 @@ const STEPS = ["Profil", "Contexte", "Planification", "Rémunération", "Localis
 const STEP_FIELDS: Record<number, (keyof RenfortForm)[]> = {
   0: ["metier"],
   1: ["establishmentType", "targetPublic"],
-  2: ["slots", "hasTransmissions", "transmissionTime"],
+  2: ["publicationMode", "planning", "hasTransmissions", "transmissionTime"],
   3: ["shift", "hourlyRate"],
   4: ["exactAddress", "zipCode", "city"],
   5: [],
@@ -146,7 +151,8 @@ export function RenfortModal() {
       targetPublic: [],
       unitSize: "",
       description: "",
-      slots: [{ date: "", heureDebut: "", heureFin: "" }],
+      publicationMode: "MULTI_MISSION_BATCH",
+      planning: [{ dateStart: "", heureDebut: "", dateEnd: "", heureFin: "" }],
       hasTransmissions: false,
       transmissionTime: "",
       shift: "JOUR",
@@ -161,7 +167,7 @@ export function RenfortModal() {
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: "slots",
+    name: "planning",
   });
 
   const step = useUIStore((state) => state.renfortStep) ?? 0;
@@ -190,21 +196,21 @@ export function RenfortModal() {
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      const sortedSlots = sortMissionSlots(data.slots);
-      const normalizedSlots = getNormalizedMissionSlots({ slots: sortedSlots });
-      const first = normalizedSlots[0];
-      const last = normalizedSlots[normalizedSlots.length - 1];
-      if (!first || !last) throw new Error("Au moins un créneau valide est requis.");
+      const sortedPlanning = sortMissionPlanning(data.planning);
+      const envelope = deriveMissionEnvelopeFromPlanning(sortedPlanning);
+      if (!envelope) throw new Error("Au moins une plage valide est requise.");
 
       await createMissionFromRenfort({
         title: getMetierLabel(data.metier),
-        dateStart: first.start.toISOString(),
-        dateEnd: last.end.toISOString(),
+        dateStart: envelope.dateStart,
+        dateEnd: envelope.dateEnd,
         address: `${data.exactAddress}, ${data.zipCode} ${data.city}`,
         hourlyRate: data.hourlyRate,
         isRenfort: true,
         metier: data.metier,
-        slots: sortedSlots,
+        publicationMode: data.publicationMode,
+        planning: sortedPlanning,
+        slots: sortedPlanning,
         shift: data.shift,
         city: data.city,
         zipCode: data.zipCode,
@@ -222,7 +228,10 @@ export function RenfortModal() {
       });
 
       toast.success("Renfort publié !", {
-        description: `${getMetierLabel(data.metier)} · ${sortedSlots.length} créneau(x)`,
+        description:
+          data.publicationMode === "MULTI_MISSION_BATCH"
+            ? `${getMetierLabel(data.metier)} · ${sortedPlanning.length} mission(s)`
+            : `${getMetierLabel(data.metier)} · 1 mission sur ${sortedPlanning.length} plage(s)`,
       });
 
       handleClose();
@@ -310,11 +319,53 @@ export function RenfortModal() {
 
               {step === 2 && (
                 <StepPlanification
+                  publicationMode={values.publicationMode}
+                  onPublicationModeChange={(v) =>
+                    form.setValue("publicationMode", v, { shouldValidate: true })
+                  }
                   fields={fields}
-                  errors={form.formState.errors.slots}
+                  errors={form.formState.errors.planning}
                   transmissionError={form.formState.errors.transmissionTime?.message}
                   register={form.register}
-                  onAdd={() => append({ date: "", heureDebut: "", heureFin: "" })}
+                  onAdd={() => {
+                    const currentPlanning = form.getValues("planning");
+                    const lastLine = currentPlanning[currentPlanning.length - 1];
+                    if (!lastLine) {
+                      append({ dateStart: "", heureDebut: "", dateEnd: "", heureFin: "" });
+                      return;
+                    }
+
+                    const nextStartDate = lastLine.dateStart
+                      ? new Date(`${lastLine.dateStart}T12:00:00`)
+                      : null;
+                    const nextEndDate = lastLine.dateEnd
+                      ? new Date(`${lastLine.dateEnd}T12:00:00`)
+                      : null;
+
+                    if (
+                      nextStartDate &&
+                      nextEndDate &&
+                      !Number.isNaN(nextStartDate.getTime()) &&
+                      !Number.isNaN(nextEndDate.getTime())
+                    ) {
+                      nextStartDate.setDate(nextStartDate.getDate() + 1);
+                      nextEndDate.setDate(nextEndDate.getDate() + 1);
+                      append({
+                        dateStart: format(nextStartDate, "yyyy-MM-dd"),
+                        heureDebut: lastLine.heureDebut,
+                        dateEnd: format(nextEndDate, "yyyy-MM-dd"),
+                        heureFin: lastLine.heureFin,
+                      });
+                      return;
+                    }
+
+                    append({
+                      dateStart: "",
+                      heureDebut: lastLine.heureDebut,
+                      dateEnd: "",
+                      heureFin: lastLine.heureFin,
+                    });
+                  }}
                   onRemove={remove}
                   hasTransmissions={values.hasTransmissions}
                   onTransmissionsChange={(v) => form.setValue("hasTransmissions", v)}
@@ -620,10 +671,14 @@ function StepContext({
 // ─── Step 2 — Planification ──────────────────────────────────────────────────
 
 function StepPlanification({
+  publicationMode,
+  onPublicationModeChange,
   fields, errors, transmissionError, register, onAdd, onRemove,
   hasTransmissions, onTransmissionsChange,
   transmissionTime, onTransmissionTimeChange,
 }: {
+  publicationMode: RenfortPublicationMode;
+  onPublicationModeChange: (value: RenfortPublicationMode) => void;
   fields: { id: string }[];
   errors: any;
   transmissionError?: string;
@@ -638,58 +693,129 @@ function StepPlanification({
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Renseignez chaque créneau avec sa date et son horaire exact. Une candidature couvrira tous les créneaux publiés.
+        Renseignez chaque plage avec un vrai début et une vraie fin. Une plage peut traverser minuit.
       </p>
+
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">Mode de publication</Label>
+        <div className="grid grid-cols-1 gap-2">
+          <button
+            type="button"
+            onClick={() => onPublicationModeChange("MULTI_MISSION_BATCH")}
+            className={cn(
+              "rounded-lg border px-3 py-3 text-left transition-colors",
+              publicationMode === "MULTI_MISSION_BATCH"
+                ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.15)]"
+                : "border-border hover:border-[hsl(var(--teal)/0.3)] hover:bg-muted",
+            )}
+          >
+            <p className="text-sm font-medium">Créer plusieurs missions d&apos;un jour</p>
+            <p className="text-xs text-muted-foreground">
+              Chaque ligne devient une mission indépendante, avec son propre remplaçant possible.
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => onPublicationModeChange("MULTI_DAY_SINGLE_BOOKING")}
+            className={cn(
+              "rounded-lg border px-3 py-3 text-left transition-colors",
+              publicationMode === "MULTI_DAY_SINGLE_BOOKING"
+                ? "border-[hsl(var(--teal)/0.3)] bg-[hsl(var(--teal)/0.15)]"
+                : "border-border hover:border-[hsl(var(--teal)/0.3)] hover:bg-muted",
+            )}
+          >
+            <p className="text-sm font-medium">Créer une mission de plusieurs jours</p>
+            <p className="text-xs text-muted-foreground">
+              Un seul remplaçant couvrira l&apos;ensemble des lignes de planning.
+            </p>
+          </button>
+        </div>
+      </div>
+
       {/* Créneaux */}
       <div className="space-y-3">
         {fields.map((field, i) => (
           <div key={field.id} className="rounded-lg border p-3 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Créneau {i + 1}</span>
+              <span className="text-sm font-medium text-muted-foreground">Plage {i + 1}</span>
               {fields.length > 1 && (
                 <button
                   type="button"
                   onClick={() => onRemove(i)}
-                  aria-label="Supprimer ce créneau"
+                  aria-label="Supprimer cette plage"
                   className="text-destructive hover:opacity-75 transition-opacity"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-3 space-y-1">
-                <Label className="text-xs">Date</Label>
-                <Input type="date" {...register(`slots.${i}.date`)} />
-                {errors?.[i]?.date && (
-                  <p className="text-xs text-destructive">{errors[i].date.message}</p>
-                )}
-              </div>
-              <div className="col-span-3 grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label className="text-xs">Début</Label>
-                  <Input type="time" {...register(`slots.${i}.heureDebut`)} />
-                  {errors?.[i]?.heureDebut && (
-                    <p className="text-xs text-destructive">{errors[i].heureDebut.message}</p>
-                  )}
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="space-y-2 rounded-lg border border-dashed p-3">
+                <Label className="text-xs font-semibold">Début</Label>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Date</Label>
+                    <Input type="date" {...register(`planning.${i}.dateStart`)} />
+                    {errors?.[i]?.dateStart && (
+                      <p className="text-xs text-destructive">{errors[i].dateStart.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Heure</Label>
+                    <Input type="time" {...register(`planning.${i}.heureDebut`)} />
+                    {errors?.[i]?.heureDebut && (
+                      <p className="text-xs text-destructive">{errors[i].heureDebut.message}</p>
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Fin</Label>
-                  <Input type="time" {...register(`slots.${i}.heureFin`)} />
-                  {errors?.[i]?.heureFin && (
-                    <p className="text-xs text-destructive">{errors[i].heureFin.message}</p>
-                  )}
+              </div>
+              <div className="space-y-2 rounded-lg border border-dashed p-3">
+                <Label className="text-xs font-semibold">Fin</Label>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Date</Label>
+                    <Input type="date" {...register(`planning.${i}.dateEnd`)} />
+                    {errors?.[i]?.dateEnd && (
+                      <p className="text-xs text-destructive">{errors[i].dateEnd.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Heure</Label>
+                    <Input type="time" {...register(`planning.${i}.heureFin`)} />
+                    {errors?.[i]?.heureFin && (
+                      <p className="text-xs text-destructive">{errors[i].heureFin.message}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
+            {errors?.[i]?.root?.message && (
+              <p className="text-xs text-destructive">{errors[i].root.message}</p>
+            )}
+            {errors?.[i]?.message && (
+              <p className="text-xs text-destructive">{errors[i].message}</p>
+            )}
           </div>
         ))}
 
         {fields.length < MAX_SLOTS && (
           <Button type="button" variant="outline" size="sm" onClick={onAdd} className="w-full gap-2">
-            <Plus className="h-4 w-4" /> Ajouter un créneau
+            <Plus className="h-4 w-4" /> Ajouter un jour
           </Button>
         )}
+      </div>
+
+      <div className="rounded-lg border p-3 bg-muted/20">
+        <p className="text-sm font-medium">
+          {publicationMode === "MULTI_MISSION_BATCH"
+            ? `${fields.length} mission(s) seront créées.`
+            : "Une seule mission sera créée pour tout le planning."}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {publicationMode === "MULTI_MISSION_BATCH"
+            ? "Chaque mission pourra être attribuée séparément."
+            : "Une seule candidature couvrira toutes les lignes ci-dessus."}
+        </p>
       </div>
 
       {/* Transmissions */}
@@ -910,7 +1036,7 @@ function StepLocalisation({
 function StepRecap({ values }: { values: RenfortForm }) {
   const metierLabel = getMetierLabel(values.metier);
   const perksMap = Object.fromEntries(PERKS_OPTIONS.map((p) => [p.id, p.label]));
-  const sortedSlots = getNormalizedMissionSlots({ slots: values.slots });
+  const sortedPlanning = getNormalizedMissionPlanning({ planning: values.planning });
 
   return (
     <div className="space-y-4">
@@ -932,11 +1058,19 @@ function StepRecap({ values }: { values: RenfortForm }) {
 
         {/* Planification */}
         <SectionHeader label="Planification" />
-        {sortedSlots.map((slot, i) => (
+        <Row
+          label="Publication"
+          value={
+            values.publicationMode === "MULTI_MISSION_BATCH"
+              ? `${values.planning.length} mission(s) indépendantes`
+              : "1 mission multi-jours"
+          }
+        />
+        {sortedPlanning.map((line, i) => (
           <Row
-            key={slot.key}
-            label={`Créneau ${i + 1}`}
-            value={`${format(slot.start, "EEE d MMM yyyy", { locale: fr })} · ${slot.heureDebut} → ${slot.heureFin}`}
+            key={line.key}
+            label={`Plage ${i + 1}`}
+            value={`${format(line.start, "EEE d MMM yyyy", { locale: fr })} ${line.heureDebut} → ${format(line.end, "EEE d MMM yyyy", { locale: fr })} ${line.heureFin}`}
           />
         ))}
         {values.hasTransmissions && (
