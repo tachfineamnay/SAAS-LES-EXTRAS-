@@ -5,8 +5,6 @@ import { BookServiceModal } from "@/components/modals/BookServiceModal";
 const mockCloseBookServiceModal = vi.fn();
 const mockRefresh = vi.fn();
 const mockToastSuccess = vi.fn();
-const mockToastError = vi.fn();
-const mockToastInfo = vi.fn();
 const mockGetService = vi.fn();
 const mockBookService = vi.fn();
 
@@ -30,8 +28,6 @@ vi.mock("next/navigation", () => ({
 vi.mock("sonner", () => ({
   toast: {
     success: (...args: unknown[]) => mockToastSuccess(...args),
-    error: (...args: unknown[]) => mockToastError(...args),
-    info: (...args: unknown[]) => mockToastInfo(...args),
   },
 }));
 
@@ -43,6 +39,10 @@ vi.mock("@/app/actions/marketplace", () => ({
 describe("BookServiceModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+
     mockGetService.mockResolvedValue({
       id: "service-1",
       title: "Atelier test",
@@ -51,7 +51,7 @@ describe("BookServiceModal", () => {
       pricePerParticipant: null,
       durationMinutes: 120,
       capacity: 10,
-      slots: [{ date: "2026-04-10", heureDebut: "09:00", heureFin: "11:00" }],
+      slots: [{ date: futureDate, heureDebut: "09:00", heureFin: "11:00" }],
     });
     mockBookService.mockResolvedValue({ ok: true });
   });
@@ -69,7 +69,7 @@ describe("BookServiceModal", () => {
 
     const slotButton = screen
       .getAllByRole("button")
-      .find((btn) => btn.textContent?.includes("09:00"));
+      .find((button) => button.textContent?.includes("09:00"));
     expect(slotButton).toBeTruthy();
     fireEvent.click(slotButton!);
 
@@ -89,9 +89,9 @@ describe("BookServiceModal", () => {
     });
   });
 
-  it("réservation refusée (doublon) : affiche toast.info", async () => {
+  it("réservation refusée (doublon) : affiche un message lisible sans fermer la modale", async () => {
     mockBookService.mockResolvedValue({
-      error: "Vous avez déjà une demande en cours pour cet atelier.",
+      error: "Vous avez déjà une demande active pour cet atelier.",
     });
 
     render(<BookServiceModal />);
@@ -102,7 +102,7 @@ describe("BookServiceModal", () => {
 
     const slotButton = screen
       .getAllByRole("button")
-      .find((btn) => btn.textContent?.includes("09:00"));
+      .find((button) => button.textContent?.includes("09:00"));
     fireEvent.click(slotButton!);
 
     fireEvent.click(screen.getByRole("button", { name: /suivant/i }));
@@ -110,8 +110,37 @@ describe("BookServiceModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /envoyer la demande/i }));
 
     await waitFor(() => {
-      expect(mockToastInfo).toHaveBeenCalled();
-      expect(mockCloseBookServiceModal).toHaveBeenCalled();
+      expect(
+        screen.getByText("Vous avez déjà une demande active pour cet atelier."),
+      ).toBeInTheDocument();
+    });
+    expect(mockCloseBookServiceModal).not.toHaveBeenCalled();
+  });
+
+  it("réservation refusée (erreur métier) : affiche le message dans la modale", async () => {
+    mockBookService.mockResolvedValue({
+      error: "Cet atelier n'est plus disponible à la réservation.",
+    });
+
+    render(<BookServiceModal />);
+
+    await waitFor(() => {
+      expect(mockGetService).toHaveBeenCalled();
+    });
+
+    const slotButton = screen
+      .getAllByRole("button")
+      .find((button) => button.textContent?.includes("09:00"));
+    fireEvent.click(slotButton!);
+
+    fireEvent.click(screen.getByRole("button", { name: /suivant/i }));
+    fireEvent.click(screen.getByRole("button", { name: /suivant/i }));
+    fireEvent.click(screen.getByRole("button", { name: /envoyer la demande/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Cet atelier n'est plus disponible à la réservation."),
+      ).toBeInTheDocument();
     });
   });
 });

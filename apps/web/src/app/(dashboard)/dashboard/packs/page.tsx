@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { buyPack } from "@/actions/credits";
+import { buyPack, type PackType } from "@/actions/credits";
 import { Button } from "@/components/ui/button";
 import { Check, Star } from "lucide-react";
 
@@ -57,12 +57,11 @@ const PACKS = [
 export default function PacksPage() {
     const [isPending, startTransition] = useTransition();
 
-    const handleBuyPack = (packId: string, packName: string, price: number) => {
+    const handleBuyPack = (packId: PackType, packName: string, price: number) => {
         if (confirm(`Confirmer l'achat du pack '${packName}' pour ${price}€ ?`)) {
             startTransition(async () => {
-                // @ts-ignore
                 const result = await buyPack(packId);
-                if ('error' in result) {
+                if ("error" in result) {
                     toast.error(result.error);
                 } else {
                     toast.success(`Pack ${packName} acheté avec succès !`);

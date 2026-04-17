@@ -26,6 +26,7 @@ export type UserProfile = {
         phone: string | null;
         siret: string | null;
         tvaNumber: string | null;
+        availableCredits: number;
     } | null;
 };
 

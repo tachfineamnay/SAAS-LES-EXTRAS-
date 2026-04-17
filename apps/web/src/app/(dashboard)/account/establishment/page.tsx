@@ -12,7 +12,7 @@ export default async function EstablishmentPage() {
 
   let profile: Record<string, any> | null = null;
   try {
-    const me = await apiRequest<{ profile: Record<string, any> }>("/users/me", {
+    const me = await apiRequest<{ profile: Record<string, any> | null }>("/users/me", {
       token: session.token,
     });
     profile = me.profile ?? null;
@@ -36,7 +36,7 @@ export default async function EstablishmentPage() {
   const stats = {
     totalMissions: 0,
     activeBookings: 0,
-    availableCredits: 0,
+    availableCredits: profile?.availableCredits ?? 0,
   };
 
   return (

@@ -4,6 +4,13 @@ import { PrismaService } from "../prisma/prisma.service";
 import { UpdateOnboardingDto } from "./dto/update-onboarding.dto";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
 import { MAX_STEP_BY_ROLE } from "../common/constants";
+import { BuyCreditsDto, CreditPackType } from "./dto/buy-credits.dto";
+
+const CREDIT_PACKS: Record<CreditPackType, { amount: number; credits: number }> = {
+    [CreditPackType.STARTER]: { amount: 150, credits: 1 },
+    [CreditPackType.PRO]: { amount: 400, credits: 3 },
+    [CreditPackType.ENTERPRISE]: { amount: 600, credits: 5 },
+};
 
 @Injectable()
 export class UsersService {
@@ -102,6 +109,77 @@ export class UsersService {
         });
         if (!user) throw new NotFoundException("Utilisateur introuvable");
         return user;
+    }
+
+    async getCredits(userId: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                profile: {
+                    select: {
+                        availableCredits: true,
+                    },
+                },
+            },
+        });
+
+        if (!user) {
+            throw new NotFoundException("Utilisateur introuvable");
+        }
+
+        return {
+            availableCredits: user.profile?.availableCredits ?? 0,
+        };
+    }
+
+    async buyCredits(userId: string, dto: BuyCreditsDto) {
+        const pack = CREDIT_PACKS[dto.packType];
+
+        if (!pack) {
+            throw new BadRequestException("Pack de crédits invalide.");
+        }
+
+        return this.prisma.$transaction(async (tx) => {
+            const user = await tx.user.findUnique({
+                where: { id: userId },
+                select: { id: true },
+            });
+
+            if (!user) {
+                throw new NotFoundException("Utilisateur introuvable");
+            }
+
+            await tx.packPurchase.create({
+                data: {
+                    establishmentId: userId,
+                    amount: pack.amount,
+                    creditsAdded: pack.credits,
+                },
+            });
+
+            const profile = await tx.profile.upsert({
+                where: { userId },
+                create: {
+                    userId,
+                    firstName: "",
+                    lastName: "",
+                    skills: [],
+                    availableCredits: pack.credits,
+                },
+                update: {
+                    availableCredits: {
+                        increment: pack.credits,
+                    },
+                },
+                select: {
+                    availableCredits: true,
+                },
+            });
+
+            return {
+                availableCredits: profile.availableCredits,
+            };
+        });
     }
 
     /**

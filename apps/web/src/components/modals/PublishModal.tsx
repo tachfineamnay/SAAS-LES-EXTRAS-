@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { type FieldErrors, useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -65,22 +65,33 @@ const publishSchema = z
     slots: z.array(slotSchema).max(MAX_SERVICE_SLOTS),
     scheduleInfo: z.string().optional(),
   })
-  .refine(
-    (d) => {
-      if (d.pricingType === "SESSION") return (d.price ?? 0) > 0;
-      if (d.pricingType === "PER_PARTICIPANT") return (d.pricePerParticipant ?? 0) > 0;
-      return true; // QUOTE has no price required
-    },
-    { message: "Veuillez saisir un tarif", path: ["price"] },
-  )
-  .refine(
-    (d) => {
-      const hasDatedSlot = d.slots.some((s) => s.date && s.date.length > 0);
-      const hasScheduleInfo = (d.scheduleInfo ?? "").trim().length > 0;
-      return hasDatedSlot || hasScheduleInfo;
-    },
-    { message: "Ajoutez au moins un créneau daté ou décrivez votre planning", path: ["scheduleInfo"] },
-  );
+  .superRefine((data, ctx) => {
+    if (data.pricingType === "SESSION" && (data.price ?? 0) <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Veuillez saisir un tarif",
+        path: ["price"],
+      });
+    }
+
+    if (data.pricingType === "PER_PARTICIPANT" && (data.pricePerParticipant ?? 0) <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Veuillez saisir un tarif par participant",
+        path: ["pricePerParticipant"],
+      });
+    }
+
+    const hasDatedSlot = data.slots.some((slot) => slot.date && slot.date.length > 0);
+    const hasScheduleInfo = (data.scheduleInfo ?? "").trim().length > 0;
+    if (!hasDatedSlot && !hasScheduleInfo) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Ajoutez au moins un créneau daté ou décrivez votre planning",
+        path: ["scheduleInfo"],
+      });
+    }
+  });
 
 type PublishForm = z.infer<typeof publishSchema>;
 
@@ -93,7 +104,7 @@ const STEP_FIELDS: Record<StepIndex, (keyof PublishForm)[]> = {
   2: ["objectives", "methodology", "evaluation"],
   3: ["durationMinutes", "capacity", "publicCible", "materials"],
   4: ["pricingType", "price", "pricePerParticipant"],
-  5: ["scheduleInfo"],
+  5: ["scheduleInfo", "slots"],
 };
 
 const slideVariants = {
@@ -117,6 +128,100 @@ const DAY_LABELS: Record<string, string> = {
   ve: "Vendredi", sa: "Samedi", di: "Dimanche",
 };
 
+function collectStepErrorMessages(step: StepIndex, errors: FieldErrors<PublishForm>): string[] {
+  const messages: string[] = [];
+  const pushMessage = (value: unknown) => {
+    if (typeof value === "string" && value.trim().length > 0 && !messages.includes(value)) {
+      messages.push(value);
+    }
+  };
+
+  if (step === 0) {
+    pushMessage(errors.type?.message);
+    pushMessage(errors.category?.message);
+  }
+
+  if (step === 1) {
+    pushMessage(errors.title?.message);
+    pushMessage(errors.description?.message);
+  }
+
+  if (step === 3) {
+    pushMessage(errors.capacity?.message);
+    pushMessage(errors.publicCible?.message);
+  }
+
+  if (step === 4) {
+    pushMessage(errors.price?.message);
+    pushMessage(errors.pricePerParticipant?.message);
+  }
+
+  if (step === 5) {
+    pushMessage(errors.scheduleInfo?.message);
+    const slotErrors = Array.isArray(errors.slots) ? errors.slots : [];
+    slotErrors.forEach((slotError) => {
+      pushMessage(slotError?.date?.message);
+      pushMessage(slotError?.heureDebut?.message);
+      pushMessage(slotError?.heureFin?.message);
+    });
+  }
+
+  return messages;
+}
+
+function focusPublishStepError(step: StepIndex, errors: FieldErrors<PublishForm>) {
+  const selectors: string[] = [];
+
+  if (step === 0) {
+    if (errors.type) selectors.push('[data-field="type"] button');
+    if (errors.category) selectors.push('[data-field="category"] button');
+  }
+
+  if (step === 1) {
+    if (errors.title) selectors.push("#pub-title");
+    if (errors.description) selectors.push("#pub-desc");
+  }
+
+  if (step === 3) {
+    if (errors.capacity) selectors.push("#pub-cap");
+    if (errors.publicCible) selectors.push('[data-field="publicCible"] button');
+  }
+
+  if (step === 4) {
+    if (errors.price) selectors.push("#pub-price");
+    if (errors.pricePerParticipant) selectors.push("#pub-ppp");
+    if (errors.pricingType) selectors.push('[data-field="pricingType"] button');
+  }
+
+  if (step === 5) {
+    const slotErrors = Array.isArray(errors.slots) ? errors.slots : [];
+    const firstSlotIndex = slotErrors.findIndex((slotError) =>
+      Boolean(slotError?.date || slotError?.heureDebut || slotError?.heureFin),
+    );
+
+    if (firstSlotIndex >= 0) {
+      const slotError = slotErrors[firstSlotIndex];
+      if (slotError?.date) selectors.push(`input[name="slots.${firstSlotIndex}.date"]`);
+      if (slotError?.heureDebut) selectors.push(`input[name="slots.${firstSlotIndex}.heureDebut"]`);
+      if (slotError?.heureFin) selectors.push(`input[name="slots.${firstSlotIndex}.heureFin"]`);
+    }
+
+    if (errors.scheduleInfo) {
+      selectors.push('[data-field="scheduleMode"] button');
+      selectors.push("#pub-schedule");
+      selectors.push('input[name="slots.0.date"]');
+    }
+  }
+
+  const target = selectors
+    .map((selector) => document.querySelector<HTMLElement>(selector))
+    .find(Boolean);
+
+  if (target) {
+    requestAnimationFrame(() => target.focus());
+  }
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function PublishModal() {
@@ -125,6 +230,7 @@ export function PublishModal() {
   const openPublishModal = useUIStore((s) => s.openPublishModal);
   const closePublishModal = useUIStore((s) => s.closePublishModal);
   const [isPending, startTransition] = useTransition();
+  const [stepErrors, setStepErrors] = useState<string[]>([]);
   const [scheduleMode, setScheduleMode] = useState<"specific" | "weekly" | "free">("specific");
   const [weeklyDays, setWeeklyDays] = useState<string[]>([]);
   const [weeklyStart, setWeeklyStart] = useState("09:00");
@@ -161,9 +267,9 @@ export function PublishModal() {
   function updateWeeklySchedule(days: string[], start: string, end: string) {
     if (days.length > 0) {
       const dayNames = days.map((d) => DAY_LABELS[d] ?? d).join(", ");
-      form.setValue("scheduleInfo", `${dayNames} de ${start} à ${end}`);
+      form.setValue("scheduleInfo", `${dayNames} de ${start} à ${end}`, { shouldValidate: true });
     } else {
-      form.setValue("scheduleInfo", "");
+      form.setValue("scheduleInfo", "", { shouldValidate: true });
     }
   }
 
@@ -173,12 +279,22 @@ export function PublishModal() {
   const goNext = async () => {
     const fields = STEP_FIELDS[step];
     const valid = await form.trigger(fields);
-    if (!valid) return;
+    if (!valid) {
+      const messages = collectStepErrorMessages(step, form.formState.errors);
+      setStepErrors(
+        messages.length > 0 ? messages : ["Complétez les champs requis avant de continuer."],
+      );
+      focusPublishStepError(step, form.formState.errors);
+      return;
+    }
+
+    setStepErrors([]);
     setDir(1);
     setStep((s) => (Math.min(s + 1, STEPS.length - 1) as StepIndex));
   };
 
   const goPrev = () => {
+    setStepErrors([]);
     setDir(-1);
     setStep((s) => (Math.max(s - 1, 0) as StepIndex));
   };
@@ -192,10 +308,12 @@ export function PublishModal() {
       setWeeklyDays([]);
       setWeeklyStart("09:00");
       setWeeklyEnd("11:00");
+      setStepErrors([]);
     }, 300);
   };
 
   const onSubmit = form.handleSubmit((data) => {
+    setStepErrors([]);
     startTransition(async () => {
       try {
         await createServiceFromPublish({
@@ -225,6 +343,12 @@ export function PublishModal() {
         toast.error(error instanceof Error ? error.message : "Impossible de publier l'offre.");
       }
     });
+  }, () => {
+    const messages = collectStepErrorMessages(step, form.formState.errors);
+    setStepErrors(
+      messages.length > 0 ? messages : ["Corrigez les champs signalés avant de publier."],
+    );
+    focusPublishStepError(step, form.formState.errors);
   });
 
   const values = form.watch();
@@ -271,6 +395,17 @@ export function PublishModal() {
         </div>
 
         <form onSubmit={onSubmit} className="relative overflow-hidden">
+          {stepErrors.length > 0 && (
+            <div
+              className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              role="alert"
+            >
+              {stepErrors.map((message) => (
+                <p key={message}>{message}</p>
+              ))}
+            </div>
+          )}
+
           <AnimatePresence custom={dir} mode="wait">
             <motion.div
               key={step}
@@ -287,12 +422,12 @@ export function PublishModal() {
                 <>
                   <div className="space-y-2">
                     <Label>Type d&apos;offre</Label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3" data-field="type">
                       {(["WORKSHOP", "TRAINING"] as const).map((t) => (
                         <button
                           key={t}
                           type="button"
-                          onClick={() => form.setValue("type", t)}
+                          onClick={() => form.setValue("type", t, { shouldValidate: true })}
                           className={`p-3 rounded-xl border-2 text-sm font-medium transition-colors ${
                             values.type === t
                               ? "border-primary bg-[hsl(var(--color-teal-50))] text-[hsl(var(--color-teal-700))]"
@@ -307,14 +442,14 @@ export function PublishModal() {
 
                   <div className="space-y-2">
                     <Label>Catégorie</Label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2" data-field="category">
                       {ATELIER_CATEGORIES.map((cat) => {
                         const Icon = cat.icon;
                         return (
                           <button
                             key={cat.id}
                             type="button"
-                            onClick={() => form.setValue("category", cat.id)}
+                            onClick={() => form.setValue("category", cat.id, { shouldValidate: true })}
                             className={`flex items-center gap-2 p-2.5 rounded-lg border text-sm transition-colors text-left ${
                               values.category === cat.id
                                 ? "border-primary bg-[hsl(var(--color-teal-50))] text-[hsl(var(--color-teal-700))]"
@@ -451,7 +586,7 @@ export function PublishModal() {
 
                   <div className="space-y-2">
                     <Label>Public cible</Label>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2" data-field="publicCible">
                       {PUBLIC_CIBLE_OPTIONS.map((p) => {
                         const selected = values.publicCible?.includes(p.id);
                         return (
@@ -463,6 +598,7 @@ export function PublishModal() {
                               form.setValue(
                                 "publicCible",
                                 selected ? current.filter((x) => x !== p.id) : [...current, p.id],
+                                { shouldValidate: true },
                               );
                             }}
                             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
@@ -495,12 +631,12 @@ export function PublishModal() {
               {/* ── Étape 4: Tarification ── */}
               {step === 4 && (
                 <>
-                  <div className="space-y-3">
+                  <div className="space-y-3" data-field="pricingType">
                     {PRICING_TYPE_OPTIONS.map((opt) => (
                       <button
                         key={opt.id}
                         type="button"
-                        onClick={() => form.setValue("pricingType", opt.id)}
+                        onClick={() => form.setValue("pricingType", opt.id, { shouldValidate: true })}
                         className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-colors ${
                           values.pricingType === opt.id
                             ? "border-primary bg-[hsl(var(--color-teal-50))]"
@@ -552,6 +688,9 @@ export function PublishModal() {
                         {...form.register("pricePerParticipant", { valueAsNumber: true })}
                         placeholder="Ex : 25"
                       />
+                      {form.formState.errors.pricePerParticipant && (
+                        <p className="text-xs text-red-500">{form.formState.errors.pricePerParticipant.message}</p>
+                      )}
                     </div>
                   )}
 
@@ -569,14 +708,14 @@ export function PublishModal() {
                   {/* Mode selector */}
                   <div className="space-y-2">
                     <Label>Mode de planification</Label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-2" data-field="scheduleMode">
                       {(["specific", "weekly", "free"] as const).map((mode) => (
                         <button
                           key={mode}
                           type="button"
                           onClick={() => {
                             setScheduleMode(mode);
-                            form.setValue("scheduleInfo", "");
+                            form.setValue("scheduleInfo", "", { shouldValidate: true });
                             if (mode === "weekly") setWeeklyDays([]);
                           }}
                           className={`p-2.5 rounded-xl border-2 text-xs font-medium transition-colors ${
@@ -599,24 +738,42 @@ export function PublishModal() {
                         <span className="text-xs text-muted-foreground">{slotFields.length}/{MAX_SERVICE_SLOTS}</span>
                       </div>
                       {slotFields.map((field, i) => (
-                        <div key={field.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-start">
-                          <Input
-                            type="date"
-                            {...form.register(`slots.${i}.date`)}
-                            min={new Date().toISOString().split("T")[0]}
-                          />
-                          <Input type="time" className="w-24" {...form.register(`slots.${i}.heureDebut`)} />
-                          <Input type="time" className="w-24" {...form.register(`slots.${i}.heureFin`)} />
-                          {slotFields.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeSlot(i)}
-                              className="text-red-400 hover:text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                        <div key={field.id} className="space-y-2">
+                          <div className="grid grid-cols-[1fr_auto_auto_auto] items-start gap-2">
+                            <Input
+                              type="date"
+                              {...form.register(`slots.${i}.date`)}
+                              min={new Date().toISOString().split("T")[0]}
+                            />
+                            <Input type="time" className="w-24" {...form.register(`slots.${i}.heureDebut`)} />
+                            <Input type="time" className="w-24" {...form.register(`slots.${i}.heureFin`)} />
+                            {slotFields.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeSlot(i)}
+                                className="text-red-400 hover:text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+
+                          {(form.formState.errors.slots?.[i]?.date ||
+                            form.formState.errors.slots?.[i]?.heureDebut ||
+                            form.formState.errors.slots?.[i]?.heureFin) && (
+                            <div className="space-y-1">
+                              {form.formState.errors.slots?.[i]?.date && (
+                                <p className="text-xs text-red-500">{form.formState.errors.slots[i]?.date?.message}</p>
+                              )}
+                              {form.formState.errors.slots?.[i]?.heureDebut && (
+                                <p className="text-xs text-red-500">{form.formState.errors.slots[i]?.heureDebut?.message}</p>
+                              )}
+                              {form.formState.errors.slots?.[i]?.heureFin && (
+                                <p className="text-xs text-red-500">{form.formState.errors.slots[i]?.heureFin?.message}</p>
+                              )}
+                            </div>
                           )}
                         </div>
                       ))}
@@ -704,7 +861,7 @@ export function PublishModal() {
                       <Textarea
                         id="pub-schedule"
                         value={values.scheduleInfo ?? ""}
-                        onChange={(e) => form.setValue("scheduleInfo", e.target.value)}
+                        onChange={(e) => form.setValue("scheduleInfo", e.target.value, { shouldValidate: true })}
                         placeholder="Ex : Disponible toutes les vacances scolaires, sur rendez-vous…"
                         rows={3}
                       />

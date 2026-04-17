@@ -415,6 +415,25 @@ export async function createServiceFromPublish(input: CreateServiceInput): Promi
   return { ok: true };
 }
 
+function getServiceBookingErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return "Erreur lors de la réservation";
+  }
+
+  const message = error.message.trim();
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes("already") || normalized.includes("déjà")) {
+    return "Vous avez déjà une demande active pour cet atelier.";
+  }
+
+  if (normalized.includes("service not found")) {
+    return "Atelier introuvable.";
+  }
+
+  return message || "Erreur lors de la réservation";
+}
+
 export async function bookService(
   serviceId: string,
   date: Date,
@@ -443,11 +462,6 @@ export async function bookService(
     revalidatePath(atelierInvalidationPaths.mesAteliers);
     return { ok: true };
   } catch (error) {
-    if (error instanceof Error && error.message.toLowerCase().includes("déjà")) {
-      return { error: "Vous avez déjà une demande en cours pour cet atelier." };
-    }
-    return {
-      error: error instanceof Error ? error.message : "Erreur lors de la réservation",
-    };
+    return { error: getServiceBookingErrorMessage(error) };
   }
 }

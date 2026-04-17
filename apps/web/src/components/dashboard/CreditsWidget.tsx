@@ -3,8 +3,8 @@
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Coins, Plus } from "lucide-react";
-import { useTransition } from "react";
-import { buyPack } from "@/actions/credits";
+import { useEffect, useState, useTransition } from "react";
+import { buyPack, type PackType } from "@/actions/credits";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { AnimatedNumber } from "@/components/ui/animated-number";
@@ -18,7 +18,6 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Check } from "lucide-react";
-import { useState } from "react";
 
 interface CreditsWidgetProps {
     credits: number;
@@ -54,15 +53,20 @@ const PACKS = [
 export function CreditsWidget({ credits }: CreditsWidgetProps) {
     const [open, setOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
+    const [displayCredits, setDisplayCredits] = useState(credits);
 
-    const handleBuyPack = (packId: string, packName: string, price: number) => {
+    useEffect(() => {
+        setDisplayCredits(credits);
+    }, [credits]);
+
+    const handleBuyPack = (packId: PackType, packName: string, price: number) => {
         if (confirm(`Confirmer l'achat du pack '${packName}' pour ${price}€ ?`)) {
             startTransition(async () => {
-                // @ts-ignore
                 const result = await buyPack(packId);
-                if ('error' in result) {
+                if ("error" in result) {
                     toast.error(result.error);
                 } else {
+                    setDisplayCredits(result.availableCredits);
                     toast.success(`Pack ${packName} acheté avec succès !`);
                     setOpen(false);
                 }
@@ -72,13 +76,13 @@ export function CreditsWidget({ credits }: CreditsWidgetProps) {
 
     return (
         <div className="space-y-4">
-            <GlassCard variant={credits === 0 ? "glass" : "interactive"} className={credits === 0 ? "border-[hsl(var(--destructive)/0.6)]" : ""}>
+            <GlassCard variant={displayCredits === 0 ? "glass" : "interactive"} className={displayCredits === 0 ? "border-[hsl(var(--destructive)/0.6)]" : ""}>
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium">Crédits Recrutement</span>
                         <Coins className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <AnimatedNumber value={credits} className="text-2xl font-bold" />
+                    <AnimatedNumber value={displayCredits} className="text-2xl font-bold" />
                     <p className="text-xs text-muted-foreground mt-1">
                         Mises en relation disponibles
                     </p>
@@ -144,7 +148,7 @@ export function CreditsWidget({ credits }: CreditsWidgetProps) {
                 </div>
             </GlassCard>
 
-            {credits === 0 && (
+            {displayCredits === 0 && (
                 <Alert variant="destructive">
                     <Coins className="h-4 w-4" />
                     <AlertTitle>Solde épuisé</AlertTitle>

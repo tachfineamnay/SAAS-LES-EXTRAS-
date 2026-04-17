@@ -1,10 +1,14 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from "@nestjs/common";
+import { UserRole } from "@prisma/client";
+import { Roles } from "../auth/decorators/roles.decorator";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
 import { extname } from "path";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
 import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
+import { BuyCreditsDto } from "./dto/buy-credits.dto";
 import { UpdateOnboardingDto } from "./dto/update-onboarding.dto";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
 import { UsersService } from "./users.service";
@@ -30,6 +34,23 @@ export class UsersController {
         @Body() dto: UpdateProfileDto,
     ) {
         return this.usersService.updateMe(user.id, dto);
+    }
+
+    @Get("me/credits")
+    @UseGuards(RolesGuard)
+    @Roles(UserRole.ESTABLISHMENT)
+    getCredits(@CurrentUser() user: AuthenticatedUser) {
+        return this.usersService.getCredits(user.id);
+    }
+
+    @Post("me/credits/buy")
+    @UseGuards(RolesGuard)
+    @Roles(UserRole.ESTABLISHMENT)
+    buyCredits(
+        @CurrentUser() user: AuthenticatedUser,
+        @Body() dto: BuyCreditsDto,
+    ) {
+        return this.usersService.buyCredits(user.id, dto);
     }
 
     // ── Onboarding ─────────────────────────────────────────────────

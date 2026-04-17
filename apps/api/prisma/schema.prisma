@@ -122,6 +122,7 @@ model User {
   reviewsReceived       Review[]        @relation("ReviewsReceived")
   documents             Document[]
   issuedQuotes          Quote[]         @relation("QuoteIssuer")
+  packPurchases         PackPurchase[]  @relation("EstablishmentPackPurchases")
 }
 
 model Profile {
@@ -143,6 +144,7 @@ model Profile {
   companyName    String?
   siret          String?
   tvaNumber      String?
+  availableCredits Int    @default(0)
   onboardingStep Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -206,6 +208,18 @@ model Notification {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PackPurchase {
+  id              String   @id @default(cuid())
+  establishmentId String
+  amount          Float
+  creditsAdded    Int
+  createdAt       DateTime @default(now())
+
+  establishment User @relation("EstablishmentPackPurchases", fields: [establishmentId], references: [id], onDelete: Restrict)
+
+  @@index([establishmentId])
 }
 
 // ─────────────────────────────────────────────

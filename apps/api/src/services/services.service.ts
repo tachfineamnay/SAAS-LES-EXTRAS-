@@ -6,6 +6,14 @@ import { UpdateServiceDto } from "./dto/update-service.dto";
 import { MailService } from "../mail/mail.service";
 import { format } from "date-fns";
 
+const ACTIVE_SERVICE_BOOKING_STATUSES: BookingStatus[] = [
+  BookingStatus.PENDING,
+  BookingStatus.QUOTE_SENT,
+  BookingStatus.QUOTE_ACCEPTED,
+  BookingStatus.CONFIRMED,
+  BookingStatus.IN_PROGRESS,
+];
+
 @Injectable()
 export class ServicesService {
   constructor(
@@ -160,35 +168,54 @@ export class ServicesService {
     message?: string,
     nbParticipants?: number,
   ) {
+    const normalizedParticipants = nbParticipants ?? 1;
     const service = await this.prisma.service.findUnique({
       where: { id: serviceId },
       select: {
         id: true,
         title: true,
         ownerId: true,
+        status: true,
+        capacity: true,
       },
     });
 
     if (!service) {
-      throw new NotFoundException("Service not found");
+      throw new NotFoundException("Atelier introuvable.");
+    }
+
+    if (service.status !== "ACTIVE") {
+      throw new BadRequestException("Cet atelier n'est plus disponible à la réservation.");
     }
 
     if (date < new Date()) {
-      throw new BadRequestException("La date de réservation ne peut pas être dans le passé");
+      throw new BadRequestException("La date de réservation ne peut pas être dans le passé.");
     }
 
-    // Check for existing pending booking for same service/client
+    if (!Number.isInteger(normalizedParticipants) || normalizedParticipants < 1) {
+      throw new BadRequestException("Le nombre de participants doit être supérieur ou égal à 1.");
+    }
+
+    if (normalizedParticipants > service.capacity) {
+      throw new BadRequestException(
+        `Le nombre de participants ne peut pas dépasser la capacité maximale (${service.capacity}).`,
+      );
+    }
+
+    // Block duplicate requests while a booking is still active for this service.
     const existingBooking = await this.prisma.booking.findFirst({
       where: {
         serviceId,
         establishmentId,
-        status: BookingStatus.PENDING,
+        status: {
+          in: ACTIVE_SERVICE_BOOKING_STATUSES,
+        },
       },
       select: { id: true },
     });
 
     if (existingBooking) {
-      throw new ConflictException("Une demande est déjà en cours pour ce service");
+      throw new ConflictException("Vous avez déjà une demande active pour cet atelier.");
     }
 
     const booking = await this.prisma.booking.create({
@@ -199,7 +226,7 @@ export class ServicesService {
         serviceId: service.id,
         scheduledAt: date,
         message,
-        nbParticipants,
+        nbParticipants: normalizedParticipants,
       },
     });
 
