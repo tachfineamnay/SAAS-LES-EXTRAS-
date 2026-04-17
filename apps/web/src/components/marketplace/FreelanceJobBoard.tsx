@@ -9,7 +9,7 @@ import { Search, Briefcase, Sun, Moon, X } from "lucide-react";
 import { METIERS } from "@/lib/sos-config";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useUIStore } from "@/lib/stores/useUIStore";
+import { useApplyToMission } from "@/lib/hooks/useApplyToMission";
 
 interface FreelanceJobBoardProps {
   missions: SerializedMission[];
@@ -22,7 +22,7 @@ export function FreelanceJobBoard({ missions, hideHeader }: FreelanceJobBoardPro
   const [search, setSearch] = useState("");
   const [selectedMetier, setSelectedMetier] = useState<string | null>(null);
   const [shiftFilter, setShiftFilter] = useState<ShiftFilter>("ALL");
-  const openApplyModal = useUIStore((state) => state.openApplyModal);
+  const { apply, isPending, hasApplied } = useApplyToMission();
 
   // Sort by newest first
   const sortedMissions = useMemo(
@@ -166,7 +166,9 @@ export function FreelanceJobBoard({ missions, hideHeader }: FreelanceJobBoardPro
             <MissionCard
               key={mission.id}
               mission={mission}
-              onApply={(m) => openApplyModal(m.id)}
+              onApply={(m) => apply(m.id)}
+              isPending={isPending}
+              hasApplied={hasApplied(mission.id)}
             />
           ))}
         </div>

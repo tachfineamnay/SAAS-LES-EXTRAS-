@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ApplyMissionModal } from "@/components/modals/ApplyMissionModal";
 import { PublishModal } from "@/components/modals/PublishModal";
 import { RenfortModal } from "@/components/modals/RenfortModal";
 import { BookServiceModal } from "@/components/modals/BookServiceModal";
@@ -90,7 +89,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       <RenfortModalWrapper />
       <PublishModal />
-      <ApplyMissionModal />
       <BookServiceModal />
       <QuoteRequestModal />
       <QuoteEditorModal />

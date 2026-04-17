@@ -3,11 +3,6 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { MissionCard } from "@/components/marketplace/MissionCard";
 import type { SerializedMission } from "@/app/actions/marketplace";
 
-vi.mock("@/lib/stores/useUIStore", () => ({
-  useUIStore: (selector: (s: { openApplyModal: (id: string) => void }) => unknown) =>
-    selector({ openApplyModal: vi.fn() }),
-}));
-
 // Minimal mock mission data
 const mission: SerializedMission = {
   id: "mission-99",
@@ -64,6 +59,20 @@ describe("MissionCard", () => {
   it("affiche le nom de l'établissement", () => {
     render(<MissionCard mission={mission} />);
     expect(screen.getByText("EHPAD Les Lilas")).toBeInTheDocument();
+  });
+
+  it("affiche l'état 'Candidature envoyée' quand hasApplied est true", () => {
+    render(<MissionCard mission={mission} hasApplied />);
+    expect(
+      screen.getByRole("button", { name: /candidature envoyée/i }),
+    ).toBeDisabled();
+  });
+
+  it("n'appelle pas onApply si hasApplied est true", () => {
+    const onApply = vi.fn();
+    render(<MissionCard mission={mission} hasApplied onApply={onApply} />);
+    fireEvent.click(screen.getByRole("button"));
+    expect(onApply).not.toHaveBeenCalled();
   });
 
   it("affiche les deux premiers créneaux et un résumé du surplus", () => {

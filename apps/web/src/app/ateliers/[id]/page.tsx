@@ -79,18 +79,37 @@ export default async function FicheAtelierPage({
               <h1 className="text-heading-xl mb-2">{service.title}</h1>
               <div className="flex flex-wrap items-center gap-3 text-body-sm">
                 {/* Owner */}
-                <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage
-                      src={ownerProfile?.avatar ?? ""}
-                      alt={ownerName}
-                    />
-                    <AvatarFallback className="text-xs bg-[hsl(var(--color-violet-100))] text-[hsl(var(--violet))]">
-                      {ownerInitials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span>par {ownerName}</span>
-                </div>
+                {owner?.id ? (
+                  <Link
+                    href={`/freelances/${owner.id}`}
+                    className="flex items-center gap-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--teal))] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                    aria-label={`Voir le profil de ${ownerName}`}
+                  >
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage
+                        src={ownerProfile?.avatar ?? ""}
+                        alt={ownerName}
+                      />
+                      <AvatarFallback className="text-xs bg-[hsl(var(--color-violet-100))] text-[hsl(var(--violet))]">
+                        {ownerInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>par {ownerName}</span>
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage
+                        src={ownerProfile?.avatar ?? ""}
+                        alt={ownerName}
+                      />
+                      <AvatarFallback className="text-xs bg-[hsl(var(--color-violet-100))] text-[hsl(var(--violet))]">
+                        {ownerInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>par {ownerName}</span>
+                  </div>
+                )}
 
                 {/* Category */}
                 {service.category && (

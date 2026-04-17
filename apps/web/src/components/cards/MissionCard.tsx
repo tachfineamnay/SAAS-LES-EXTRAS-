@@ -1,8 +1,8 @@
 "use client";
 
-import { CalendarDays, Clock3, MapPin, Building2, Zap, CheckCircle2 } from "lucide-react";
+import { CalendarDays, Clock3, MapPin, Building2, Zap, CheckCircle2, Loader2 } from "lucide-react";
 import type { MissionStatus } from "@/app/actions/marketplace";
-import { useUIStore } from "@/lib/stores/useUIStore";
+import { useApplyToMission } from "@/lib/hooks/useApplyToMission";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -57,12 +57,13 @@ const moneyFormatter = new Intl.NumberFormat("fr-FR", {
 });
 
 export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
-  const openApplyModal = useUIStore((s) => s.openApplyModal);
+  const { apply, isPending, hasApplied } = useApplyToMission();
   const planning = getMissionPlanning(mission);
+  const applied = hasApplied(mission.id);
 
   const handleApply = () => {
-    if (!isVerified) return;
-    openApplyModal(mission.id);
+    if (!isVerified || applied || isPending) return;
+    apply(mission.id);
   };
 
   return (
@@ -147,8 +148,26 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
 
       <CardFooter className="pt-3">
         {isVerified ? (
-          <Button className="w-full" onClick={handleApply} size="lg">
-            Postuler
+          <Button
+            className="w-full gap-2"
+            onClick={handleApply}
+            size="lg"
+            disabled={isPending || applied}
+            variant={applied ? "secondary" : "default"}
+          >
+            {applied ? (
+              <>
+                <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                Candidature envoyée
+              </>
+            ) : isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                Envoi…
+              </>
+            ) : (
+              "Postuler"
+            )}
           </Button>
         ) : (
           <TooltipProvider>

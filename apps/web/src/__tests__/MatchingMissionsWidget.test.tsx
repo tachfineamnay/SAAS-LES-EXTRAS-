@@ -1,13 +1,21 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MatchingMissionsWidget } from "@/components/dashboard/MatchingMissionsWidget";
 import type { MatchingMission } from "@/components/dashboard/MatchingMissionsWidget";
 
-const mockOpenApplyModal = vi.fn();
+const mockApplyToMission = vi.fn();
+const mockRefresh = vi.fn();
 
-vi.mock("@/lib/stores/useUIStore", () => ({
-  useUIStore: (selector: (s: { openApplyModal: (id: string) => void }) => unknown) =>
-    selector({ openApplyModal: mockOpenApplyModal }),
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: mockRefresh }),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
+}));
+
+vi.mock("@/app/actions/missions", () => ({
+  applyToMission: (...args: unknown[]) => mockApplyToMission(...args),
 }));
 
 const missions: MatchingMission[] = [
@@ -17,6 +25,11 @@ const missions: MatchingMission[] = [
 ];
 
 describe("MatchingMissionsWidget", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockApplyToMission.mockResolvedValue({ ok: true });
+  });
+
   it("affiche les missions passées en props", () => {
     render(<MatchingMissionsWidget missions={missions} />);
     expect(screen.getByText("Aide-soignant(e)")).toBeInTheDocument();
@@ -42,11 +55,21 @@ describe("MatchingMissionsWidget", () => {
     expect(screen.getByText(/aucune nouvelle mission/i)).toBeInTheDocument();
   });
 
-  it("appelle openApplyModal au clic sur Postuler", () => {
+  it("candidature directe : postule au clic et bascule le bouton en 'Candidature envoyée'", async () => {
     render(<MatchingMissionsWidget missions={missions} />);
     const buttons = screen.getAllByRole("button", { name: /postuler/i });
     fireEvent.click(buttons[0]!);
-    expect(mockOpenApplyModal).toHaveBeenCalledWith("m-1");
+
+    await waitFor(() => {
+      expect(mockApplyToMission).toHaveBeenCalledWith("m-1");
+      expect(mockRefresh).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /candidature envoyée/i }),
+      ).toBeDisabled();
+    });
   });
 
   it("affiche max 3 cards même avec 5 missions", () => {

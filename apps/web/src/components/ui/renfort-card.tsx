@@ -61,6 +61,8 @@ export interface RenfortCardProps
   onAction?: () => void;
   /** CTA label override */
   actionLabel?: string;
+  /** Disable the CTA (e.g. already applied / pending) */
+  actionDisabled?: boolean;
   /** Optional link to the detail page (makes the title a link) */
   href?: string;
 }
@@ -80,6 +82,7 @@ const RenfortCard = React.forwardRef<HTMLElement, RenfortCardProps>(
       badges,
       onAction,
       actionLabel,
+      actionDisabled,
       href,
       ...props
     },
@@ -178,6 +181,7 @@ const RenfortCard = React.forwardRef<HTMLElement, RenfortCardProps>(
                 size="sm"
                 className="w-full sm:w-auto"
                 onClick={onAction}
+                disabled={actionDisabled}
               >
                 {actionLabel ?? "Voir & Postuler"}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />

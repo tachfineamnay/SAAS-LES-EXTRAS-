@@ -85,18 +85,39 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             )}
 
             {/* Owner mini-profile */}
-            <div className="flex items-center gap-3 pt-2">
-              <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
-                <AvatarFallback className="bg-[hsl(var(--teal)/0.1)] text-[hsl(var(--teal))] font-bold">
-                  {getAvatarFallback(ownerName)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-sm text-muted-foreground">Proposé par</p>
-                <p className="font-medium text-foreground">{ownerName}</p>
-                <p className="text-xs text-muted-foreground">{ownerJob}</p>
+            {service.owner?.id ? (
+              <Link
+                href={`/freelances/${service.owner.id}`}
+                className="group flex items-center gap-3 pt-2 rounded-lg -m-1 p-1 hover:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={`Voir le profil de ${ownerName}`}
+              >
+                <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
+                  <AvatarFallback className="bg-[hsl(var(--teal)/0.1)] text-[hsl(var(--teal))] font-bold">
+                    {getAvatarFallback(ownerName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm text-muted-foreground">Proposé par</p>
+                  <p className="font-medium text-foreground group-hover:text-[hsl(var(--teal))] group-hover:underline">
+                    {ownerName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{ownerJob}</p>
+                </div>
+              </Link>
+            ) : (
+              <div className="flex items-center gap-3 pt-2">
+                <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
+                  <AvatarFallback className="bg-[hsl(var(--teal)/0.1)] text-[hsl(var(--teal))] font-bold">
+                    {getAvatarFallback(ownerName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm text-muted-foreground">Proposé par</p>
+                  <p className="font-medium text-foreground">{ownerName}</p>
+                  <p className="text-xs text-muted-foreground">{ownerJob}</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <Separator />
@@ -186,10 +207,28 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               </Avatar>
               <div className="space-y-2">
                 <div>
-                  <h4 className="font-semibold text-lg">{ownerName}</h4>
+                  {service.owner?.id ? (
+                    <Link
+                      href={`/freelances/${service.owner.id}`}
+                      className="inline-block font-semibold text-lg hover:text-[hsl(var(--teal))] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                      aria-label={`Voir le profil de ${ownerName}`}
+                    >
+                      {ownerName}
+                    </Link>
+                  ) : (
+                    <h4 className="font-semibold text-lg">{ownerName}</h4>
+                  )}
                   <p className="text-sm text-[hsl(var(--teal))] font-medium">{ownerJob}</p>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">{ownerBio}</p>
+                {service.owner?.id && (
+                  <Link
+                    href={`/freelances/${service.owner.id}`}
+                    className="inline-block text-sm text-[hsl(var(--teal))] font-medium hover:underline mt-1"
+                  >
+                    Voir le profil complet →
+                  </Link>
+                )}
               </div>
             </div>
           </div>

@@ -8,6 +8,7 @@ import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
 import { ApplyMissionDto } from "./dto/apply-mission.dto";
 import { CreateMissionDto } from "./dto/create-mission.dto";
 import { FindMissionsQueryDto } from "./dto/find-missions-query.dto";
+import { RequestMissionInfoDto } from "./dto/request-mission-info.dto";
 import { MissionsService } from "./missions.service";
 
 @Controller("missions")
@@ -54,5 +55,16 @@ export class MissionsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.missionsService.apply(missionId, user.id, dto);
+  }
+
+  @Post(":missionId/info-request")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.FREELANCE)
+  requestInfo(
+    @Param("missionId") missionId: string,
+    @Body() dto: RequestMissionInfoDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.missionsService.requestInfo(missionId, user.id, dto.message);
   }
 }

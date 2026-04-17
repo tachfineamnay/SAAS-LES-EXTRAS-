@@ -34,10 +34,6 @@ vi.mock("@/components/modals/RenfortModal", () => ({
   RenfortModal: () => <div data-testid="renfort-modal" />,
 }));
 
-vi.mock("@/components/modals/ApplyMissionModal", () => ({
-  ApplyMissionModal: () => null,
-}));
-
 vi.mock("@/components/modals/PublishModal", () => ({
   PublishModal: () => null,
 }));

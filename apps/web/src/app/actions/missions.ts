@@ -87,6 +87,30 @@ export async function declineCandidate(bookingId: string): Promise<{ ok: boolean
     }
 }
 
+export async function requestMissionInfo(
+    missionId: string,
+    message: string,
+): Promise<{ ok: boolean; error?: string }> {
+    try {
+        const session = await getSession();
+        if (!session) return { ok: false, error: "Non connecté" };
+
+        await apiRequest(`/missions/${missionId}/info-request`, {
+            method: "POST",
+            token: session.token,
+            body: { message },
+        });
+
+        return { ok: true };
+    } catch (error) {
+        console.error("requestMissionInfo error", error);
+        return {
+            ok: false,
+            error: error instanceof Error ? error.message : "Erreur lors de l'envoi de la demande",
+        };
+    }
+}
+
 export async function getEstablishmentMissions(token?: string) {
     const resolvedToken = token ?? (await getSession())?.token;
     if (!resolvedToken) return [];

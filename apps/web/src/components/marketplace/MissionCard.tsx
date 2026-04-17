@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Calendar, MapPin, Building2, Sun, Moon, Clock, Zap } from "lucide-react";
+import { Calendar, MapPin, Building2, Sun, Moon, Clock, Zap, CheckCircle2, Loader2 } from "lucide-react";
 import { SerializedMission } from "@/app/actions/marketplace";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -14,9 +14,16 @@ import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission
 interface MissionCardProps {
   mission: SerializedMission;
   onApply?: (mission: SerializedMission) => void;
+  isPending?: boolean;
+  hasApplied?: boolean;
 }
 
-export function MissionCard({ mission, onApply }: MissionCardProps) {
+export function MissionCard({
+  mission,
+  onApply,
+  isPending = false,
+  hasApplied = false,
+}: MissionCardProps) {
   const establishmentName =
     mission.establishment?.profile?.companyName || "Établissement confidentiel";
 
@@ -126,12 +133,30 @@ export function MissionCard({ mission, onApply }: MissionCardProps) {
 
       <CardFooter className="p-4 pt-0">
         <Button
-          variant="action"
+          variant={hasApplied ? "secondary" : "action"}
           className="w-full font-bold gap-2"
-          onClick={() => onApply?.(mission)}
+          onClick={() => {
+            if (hasApplied || isPending) return;
+            onApply?.(mission);
+          }}
+          disabled={hasApplied || isPending}
         >
-          <Zap className="h-4 w-4 fill-current" />
-          Postuler
+          {hasApplied ? (
+            <>
+              <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+              Candidature envoyée
+            </>
+          ) : isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              Envoi…
+            </>
+          ) : (
+            <>
+              <Zap className="h-4 w-4 fill-current" aria-hidden="true" />
+              Postuler
+            </>
+          )}
         </Button>
       </CardFooter>
     </Card>

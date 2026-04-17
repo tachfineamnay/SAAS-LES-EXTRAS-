@@ -20,7 +20,7 @@ import { getSession } from "@/lib/session";
 import { getMetierById } from "@/lib/sos-config";
 import { Badge } from "@/components/ui/badge";
 import { MissionApplyButton } from "@/components/marketplace/MissionApplyButton";
-import { Button } from "@/components/ui/button";
+import { RequestMissionInfoModal } from "@/components/modals/RequestMissionInfoModal";
 import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
 
 export const dynamic = "force-dynamic";
@@ -214,13 +214,12 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
               </p>
             </div>
             <MissionApplyButton missionId={mission.id} />
-            <Button variant="outline" asChild className="w-full">
-              <Link
-                href={`/dashboard/inbox?counterpartId=mission:${mission.id}&counterpartName=${encodeURIComponent(establishmentName)}`}
-              >
-                Contacter l&apos;établissement
-              </Link>
-            </Button>
+            <RequestMissionInfoModal
+              missionId={mission.id}
+              missionTitle={mission.title}
+              establishmentName={establishmentName}
+              triggerClassName="w-full"
+            />
             <p className="text-xs text-center text-muted-foreground">
               Votre candidature sera envoyée à {establishmentName} et{" "}
               {planning.slots.length > 1

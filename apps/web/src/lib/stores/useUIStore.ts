@@ -7,8 +7,6 @@ export type UserRole = "ESTABLISHMENT" | "FREELANCE";
 export interface UIState {
   isRenfortModalOpen: boolean;
   isPublishModalOpen: boolean;
-  isApplyModalOpen: boolean;
-  applyMissionId: string | null;
   userRole: "ESTABLISHMENT" | "FREELANCE" | null;
   onboardingStep: number;
   isMobileOpen: boolean;
@@ -31,8 +29,6 @@ export interface UIState {
   closeRenfortModal: () => void;
   openPublishModal: () => void;
   closePublishModal: () => void;
-  openApplyModal: (missionId: string) => void;
-  closeApplyModal: () => void;
   toggleMobile: () => void;
   setMobileOpen: (open: boolean) => void;
   setUserRole: (role: "ESTABLISHMENT" | "FREELANCE" | null) => void;
@@ -54,8 +50,6 @@ export interface UIState {
 export const useUIStore = create<UIState>((set) => ({
   isRenfortModalOpen: false,
   isPublishModalOpen: false,
-  isApplyModalOpen: false,
-  applyMissionId: null,
   isMobileOpen: false,
   // null = rôle pas encore hydraté (avant que OnboardingGuard appelle setUserRole)
   userRole: null,
@@ -77,8 +71,6 @@ export const useUIStore = create<UIState>((set) => ({
   closeRenfortModal: () => set({ isRenfortModalOpen: false, renfortStep: 0 }),
   openPublishModal: () => set({ isPublishModalOpen: true }),
   closePublishModal: () => set({ isPublishModalOpen: false }),
-  openApplyModal: (missionId) => set({ isApplyModalOpen: true, applyMissionId: missionId }),
-  closeApplyModal: () => set({ isApplyModalOpen: false, applyMissionId: null }),
   toggleMobile: () => set((state) => ({ isMobileOpen: !state.isMobileOpen })),
   setMobileOpen: (open) => set({ isMobileOpen: open }),
   setUserRole: (role) => set({ userRole: role }),

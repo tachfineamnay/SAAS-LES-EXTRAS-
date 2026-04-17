@@ -3,9 +3,16 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { FreelanceJobBoard } from "@/components/marketplace/FreelanceJobBoard";
 import type { SerializedMission } from "@/app/actions/marketplace";
 
-vi.mock("@/lib/stores/useUIStore", () => ({
-  useUIStore: (selector: (s: { openApplyModal: (id: string) => void }) => unknown) =>
-    selector({ openApplyModal: vi.fn() }),
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
+}));
+
+vi.mock("@/app/actions/missions", () => ({
+  applyToMission: vi.fn(async () => ({ ok: true })),
 }));
 
 const missions: SerializedMission[] = [

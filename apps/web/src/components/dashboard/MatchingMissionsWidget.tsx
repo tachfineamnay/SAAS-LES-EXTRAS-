@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
 import { ArrowRight, Briefcase } from "lucide-react";
-import { useUIStore } from "@/lib/stores/useUIStore";
+import { useApplyToMission } from "@/lib/hooks/useApplyToMission";
 
 /* ─── E.6.3 — Matching Missions Widget ───────────────────────────
    Shows 3 compact Renfort Cards for new missions matching the
@@ -29,7 +29,7 @@ interface MatchingMissionsWidgetProps {
 }
 
 export function MatchingMissionsWidget({ missions, error }: MatchingMissionsWidgetProps) {
-  const openApplyModal = useUIStore((s) => s.openApplyModal);
+  const { apply, isPending, hasApplied } = useApplyToMission();
 
   if (error) {
     return (
@@ -56,21 +56,28 @@ export function MatchingMissionsWidget({ missions, error }: MatchingMissionsWidg
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        {missions.slice(0, 3).map((m) => (
-          <RenfortCard
-            key={m.id}
-            variant={m.urgent ? "urgent" : "normal"}
-            title={m.title}
-            establishment={m.establishment}
-            city={m.city}
-            dates={m.dates}
-            hours={m.hours}
-            rate={m.rate}
-            actionLabel="Postuler"
-            onAction={() => openApplyModal(m.id)}
-            href={`/marketplace/missions/${m.id}`}
-          />
-        ))}
+        {missions.slice(0, 3).map((m) => {
+          const applied = hasApplied(m.id);
+          return (
+            <RenfortCard
+              key={m.id}
+              variant={m.urgent ? "urgent" : "normal"}
+              title={m.title}
+              establishment={m.establishment}
+              city={m.city}
+              dates={m.dates}
+              hours={m.hours}
+              rate={m.rate}
+              actionLabel={applied ? "Candidature envoyée" : isPending ? "Envoi…" : "Postuler"}
+              actionDisabled={applied || isPending}
+              onAction={() => {
+                if (applied || isPending) return;
+                apply(m.id);
+              }}
+              href={`/marketplace/missions/${m.id}`}
+            />
+          );
+        })}
       </div>
 
       <Button variant="glass" size="sm" className="w-full min-h-[44px]" asChild>
