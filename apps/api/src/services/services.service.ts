@@ -166,6 +166,45 @@ export class ServicesService {
     return this.prisma.service.delete({ where: { id } });
   }
 
+  async duplicateService(id: string, ownerId: string) {
+    const source = await this.prisma.service.findUnique({
+      where: { id },
+      select: {
+        ownerId: true, title: true, description: true, price: true, capacity: true,
+        durationMinutes: true, category: true, type: true, pricingType: true,
+        publicCible: true, slots: true, pricePerParticipant: true, materials: true,
+        objectives: true, methodology: true, evaluation: true, imageUrl: true, scheduleInfo: true,
+      },
+    });
+
+    if (!source) throw new NotFoundException("Service not found");
+    if (source.ownerId !== ownerId) throw new ForbiddenException("Not your service");
+
+    return this.prisma.service.create({
+      data: {
+        title: `Copie de ${source.title}`,
+        description: source.description,
+        price: source.price,
+        capacity: source.capacity,
+        durationMinutes: source.durationMinutes,
+        category: source.category,
+        type: source.type,
+        status: "DRAFT",
+        pricingType: source.pricingType,
+        publicCible: source.publicCible,
+        slots: source.slots ?? undefined,
+        pricePerParticipant: source.pricePerParticipant,
+        materials: source.materials,
+        objectives: source.objectives,
+        methodology: source.methodology,
+        evaluation: source.evaluation,
+        imageUrl: source.imageUrl,
+        scheduleInfo: source.scheduleInfo,
+        ownerId,
+      },
+    });
+  }
+
   async bookService(
     serviceId: string,
     requesterId: string,

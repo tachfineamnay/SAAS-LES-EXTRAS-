@@ -7,6 +7,7 @@ import type { BookingLine } from "@/app/actions/bookings";
 const mockRefresh = vi.fn();
 const mockUpdateServiceAction = vi.fn();
 const mockDeleteServiceAction = vi.fn();
+const mockDuplicateServiceAction = vi.fn();
 const mockToastError = vi.fn();
 
 vi.mock("next/navigation", () => ({
@@ -19,6 +20,7 @@ vi.mock("@/app/actions/marketplace", async (importOriginal) => {
     ...actual,
     updateServiceAction: (...args: unknown[]) => mockUpdateServiceAction(...args),
     deleteServiceAction: (...args: unknown[]) => mockDeleteServiceAction(...args),
+    duplicateServiceAction: (...args: unknown[]) => mockDuplicateServiceAction(...args),
   };
 });
 
@@ -93,6 +95,7 @@ describe("MesAteliersClient", () => {
     vi.clearAllMocks();
     mockUpdateServiceAction.mockResolvedValue({ ok: true, data: { id: "a-2", status: "ACTIVE" } });
     mockDeleteServiceAction.mockResolvedValue({ ok: true });
+    mockDuplicateServiceAction.mockResolvedValue({ ok: true });
   });
 
   it("affiche la liste des ateliers du freelance", () => {
@@ -160,6 +163,39 @@ describe("MesAteliersClient", () => {
 
     await waitFor(() => {
       expect(mockToastError).toHaveBeenCalledWith("Impossible de publier ce brouillon.");
+    });
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
+  it("propose l'option Dupliquer dans le menu et crée un brouillon", async () => {
+    render(<MesAteliersClient ateliers={ateliers} serviceBookings={[]} />);
+
+    const menuTrigger = screen
+      .getAllByRole("button")
+      .find((button) => button.getAttribute("aria-haspopup") === "menu");
+    expect(menuTrigger).toBeTruthy();
+    fireEvent.pointerDown(menuTrigger!);
+    fireEvent.click(await screen.findByText(/dupliquer/i));
+
+    await waitFor(() => {
+      expect(mockDuplicateServiceAction).toHaveBeenCalledWith("a-1");
+      expect(mockRefresh).toHaveBeenCalled();
+    });
+  });
+
+  it("affiche un feedback si la duplication échoue", async () => {
+    mockDuplicateServiceAction.mockResolvedValueOnce({ ok: false, error: "Duplication impossible" });
+
+    render(<MesAteliersClient ateliers={ateliers} serviceBookings={[]} />);
+
+    const menuTrigger = screen
+      .getAllByRole("button")
+      .find((button) => button.getAttribute("aria-haspopup") === "menu");
+    fireEvent.pointerDown(menuTrigger!);
+    fireEvent.click(await screen.findByText(/dupliquer/i));
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith("Duplication impossible");
     });
     expect(mockRefresh).not.toHaveBeenCalled();
   });

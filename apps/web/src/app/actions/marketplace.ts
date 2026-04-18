@@ -457,6 +457,24 @@ export async function createMissionFromRenfort(input: CreateMissionInput): Promi
   return { ok: true };
 }
 
+export async function duplicateServiceAction(
+  id: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "Non connecté" };
+
+  try {
+    await apiRequest(`/services/${id}/duplicate`, {
+      method: "POST",
+      token: session.token,
+    });
+    revalidatePath(atelierInvalidationPaths.mesAteliers);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erreur lors de la duplication" };
+  }
+}
+
 export async function createServiceFromPublish(input: CreateServiceInput): Promise<{ ok: true }> {
   const session = await getSession();
   if (!session) throw new Error("Non connecté");

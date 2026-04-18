@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
 } from "@nestjs/common";
 import { BookingStatus } from "@prisma/client";
@@ -10,6 +11,7 @@ describe("ServicesService", () => {
   const prisma = {
     service: {
       findUnique: jest.fn(),
+      create: jest.fn(),
     },
     booking: {
       findFirst: jest.fn(),
@@ -203,6 +205,58 @@ describe("ServicesService", () => {
         service.bookService("service-1", "free-1", scheduledAt, undefined, 2),
       ).rejects.toThrow("Vous ne pouvez pas réserver votre propre service.");
       expect(prisma.booking.findFirst).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("duplicateService", () => {
+    const sourceService = {
+      ownerId: "free-1",
+      title: "Atelier mémoire",
+      description: "Description",
+      price: 150,
+      capacity: 8,
+      durationMinutes: 90,
+      category: "COMMUNICATION",
+      type: "WORKSHOP",
+      pricingType: "SESSION",
+      publicCible: [],
+      slots: null,
+      pricePerParticipant: null,
+      materials: null,
+      objectives: null,
+      methodology: null,
+      evaluation: null,
+      imageUrl: null,
+      scheduleInfo: null,
+    };
+
+    it("crée une copie DRAFT avec un titre préfixé", async () => {
+      prisma.service.findUnique.mockResolvedValue(sourceService);
+      prisma.service.create.mockResolvedValue({ id: "copy-1", title: "Copie de Atelier mémoire", status: "DRAFT" });
+
+      const result = await service.duplicateService("service-1", "free-1");
+
+      expect(prisma.service.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          title: "Copie de Atelier mémoire",
+          status: "DRAFT",
+          ownerId: "free-1",
+        }),
+      });
+      expect(result).toMatchObject({ status: "DRAFT" });
+    });
+
+    it("lève NotFoundException si le service n'existe pas", async () => {
+      prisma.service.findUnique.mockResolvedValue(null);
+
+      await expect(service.duplicateService("service-x", "free-1")).rejects.toThrow(NotFoundException);
+    });
+
+    it("lève ForbiddenException si l'appelant n'est pas le propriétaire", async () => {
+      prisma.service.findUnique.mockResolvedValue(sourceService);
+
+      await expect(service.duplicateService("service-1", "other-user")).rejects.toThrow(ForbiddenException);
+      expect(prisma.service.create).not.toHaveBeenCalled();
     });
   });
 });

@@ -30,11 +30,11 @@ import {
 import {
     GraduationCap, Plus, Clock3, Users, CalendarDays, AlertCircle,
     MoreHorizontal, Pencil, Trash2, Archive, Eye, BookOpen,
-    TrendingUp, Loader2
+    TrendingUp, Loader2, Copy
 } from "lucide-react";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { getCategoryLabel, formatDuration } from "@/lib/atelier-config";
-import { updateServiceAction, deleteServiceAction } from "@/app/actions/marketplace";
+import { updateServiceAction, deleteServiceAction, duplicateServiceAction } from "@/app/actions/marketplace";
 import type { BookingLine } from "@/app/actions/bookings";
 import type { MesAtelierItem } from "@/app/actions/marketplace";
 
@@ -216,12 +216,14 @@ function AtelierRow({
     onDelete,
     onArchive,
     onPublish,
+    onDuplicate,
 }: {
     atelier: MesAtelierItem;
     onEdit: () => void;
     onDelete: () => void;
     onArchive: () => void;
     onPublish: () => void;
+    onDuplicate: () => void;
 }) {
     const pricingLabel =
         atelier.pricingType === "QUOTE"
@@ -346,6 +348,9 @@ function AtelierRow({
                                                     <TrendingUp className="h-4 w-4" /> Publier ce brouillon
                                                 </DropdownMenuItem>
                                             )}
+                                            <DropdownMenuItem onClick={onDuplicate} className="flex items-center gap-2">
+                                                <Copy className="h-4 w-4" /> Dupliquer
+                                            </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             {atelier.status !== "ARCHIVED" && (
                                                 <DropdownMenuItem onClick={onArchive} className="flex items-center gap-2">
@@ -412,6 +417,15 @@ export function MesAteliersClient({ ateliers, serviceBookings, error }: MesAteli
         refresh();
     }
 
+    async function handleDuplicate(atelier: MesAtelierItem) {
+        const result = await duplicateServiceAction(atelier.id);
+        if (!result.ok) {
+            toast.error(result.error);
+            return;
+        }
+        refresh();
+    }
+
     if (error) {
         return (
             <EmptyState
@@ -441,6 +455,7 @@ export function MesAteliersClient({ ateliers, serviceBookings, error }: MesAteli
                         onDelete={() => setDeleteTarget(atelier)}
                         onArchive={() => handleArchive(atelier)}
                         onPublish={() => handlePublish(atelier)}
+                        onDuplicate={() => handleDuplicate(atelier)}
                     />
                 ))}
             </div>

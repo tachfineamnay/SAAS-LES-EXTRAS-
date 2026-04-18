@@ -857,6 +857,9 @@ export class BookingsService {
       include: {
         reliefMission: true,
         service: true,
+        establishment: {
+          select: { role: true },
+        },
         invoice: {
           select: {
             id: true,
@@ -902,12 +905,17 @@ export class BookingsService {
     }
 
     const requesterId = booking.establishmentId;
+    // Credits are only consumed when the requester is an ESTABLISHMENT.
+    // A FREELANCE booking a service from another freelance bypasses credit deduction.
+    const shouldConsumeCredit = booking.establishment?.role === UserRole.ESTABLISHMENT;
 
     if (booking.reliefMissionId) {
       const reliefMissionId = booking.reliefMissionId;
 
       await this.prisma.$transaction(async (tx) => {
-        await this.consumeOneCreditOrThrow(tx, requesterId);
+        if (shouldConsumeCredit) {
+          await this.consumeOneCreditOrThrow(tx, requesterId);
+        }
 
         await tx.booking.update({
           where: { id: bookingId },
@@ -932,7 +940,9 @@ export class BookingsService {
       });
     } else {
       await this.prisma.$transaction(async (tx) => {
-        await this.consumeOneCreditOrThrow(tx, requesterId);
+        if (shouldConsumeCredit) {
+          await this.consumeOneCreditOrThrow(tx, requesterId);
+        }
 
         await tx.booking.update({
           where: { id: bookingId },

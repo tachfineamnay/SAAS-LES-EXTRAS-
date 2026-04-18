@@ -70,6 +70,16 @@ export class ServicesController {
     return this.servicesService.deleteService(id, user.id);
   }
 
+  @Post(":id/duplicate")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.FREELANCE)
+  duplicateService(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.servicesService.duplicateService(id, user.id);
+  }
+
   @Post(":serviceId/book")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ESTABLISHMENT, UserRole.FREELANCE)

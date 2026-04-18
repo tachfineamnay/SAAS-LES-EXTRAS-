@@ -302,7 +302,8 @@ describe('BookingsService', () => {
         establishmentId: 'est-1',
         freelanceId: 'free-1',
         reliefMissionId: 'mission-1',
-        reliefMission: { 
+        establishment: { role: UserRole.ESTABLISHMENT },
+        reliefMission: {
           establishmentId: 'est-1',
           title: 'Mission Test',
           dateStart: new Date('2026-03-20T08:00:00Z'),
@@ -372,6 +373,7 @@ describe('BookingsService', () => {
         establishmentId: 'est-1',
         freelanceId: 'free-1',
         reliefMissionId: 'mission-1',
+        establishment: { role: UserRole.ESTABLISHMENT },
         reliefMission: {
           establishmentId: 'est-1',
           title: 'Mission Test',
@@ -402,6 +404,7 @@ describe('BookingsService', () => {
         establishmentId: 'free-requester',
         freelanceId: 'free-1',
         reliefMissionId: null,
+        establishment: { role: UserRole.ESTABLISHMENT },
         reliefMission: null,
         service: {
           id: 'service-1',
@@ -678,6 +681,55 @@ describe('BookingsService', () => {
         role: 'FREELANCE',
         email: 'provider@test.com',
       });
+    });
+  });
+
+  describe('confirmBooking — crédit conditionnel', () => {
+    const serviceOwner = { id: 'free-owner', ownerId: 'free-owner' };
+
+    const baseBooking = {
+      id: 'booking-1',
+      establishmentId: 'requester-id',
+      freelanceId: 'free-owner',
+      reliefMissionId: null,
+      status: BookingStatus.PENDING,
+      reliefMission: null,
+      service: { id: 'svc-1', ownerId: 'free-owner', title: 'Atelier', price: 100, pricingType: 'SESSION', pricePerParticipant: null },
+      invoice: null,
+      quotes: [],
+    };
+
+    it('consomme 1 crédit quand le demandeur est un ESTABLISHMENT', async () => {
+      const bookingWithEstab = {
+        ...baseBooking,
+        establishment: { role: UserRole.ESTABLISHMENT },
+      };
+      mockPrisma.booking.findUnique.mockResolvedValue(bookingWithEstab);
+      mockPrisma.profile.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.booking.update.mockResolvedValue({ ...bookingWithEstab, status: 'CONFIRMED' });
+      mockPrisma.invoice.create.mockResolvedValue({ id: 'inv-1' });
+
+      const user = { id: 'free-owner', email: 'owner@test.com', role: UserRole.FREELANCE, status: UserStatus.VERIFIED, onboardingStep: 4 };
+      await service.confirmBooking('booking-1', user);
+
+      expect(mockPrisma.profile.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ userId: 'requester-id' }) }),
+      );
+    });
+
+    it('ne consomme pas de crédit quand le demandeur est un FREELANCE', async () => {
+      const bookingWithFreelance = {
+        ...baseBooking,
+        establishment: { role: UserRole.FREELANCE },
+      };
+      mockPrisma.booking.findUnique.mockResolvedValue(bookingWithFreelance);
+      mockPrisma.booking.update.mockResolvedValue({ ...bookingWithFreelance, status: 'CONFIRMED' });
+      mockPrisma.invoice.create.mockResolvedValue({ id: 'inv-1' });
+
+      const user = { id: 'free-owner', email: 'owner@test.com', role: UserRole.FREELANCE, status: UserStatus.VERIFIED, onboardingStep: 4 };
+      await service.confirmBooking('booking-1', user);
+
+      expect(mockPrisma.profile.updateMany).not.toHaveBeenCalled();
     });
   });
 });
