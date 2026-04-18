@@ -25,7 +25,6 @@ export function QuoteFormModal({ bookingId, onClose, onSuccess }: QuoteFormModal
   const [lines, setLines] = useState<QuoteLine[]>([
     { description: "", quantity: 1, unitPrice: 0, unit: "heure" },
   ]);
-  const [vatRate, setVatRate] = useState(20);
   const [conditions, setConditions] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -51,8 +50,7 @@ export function QuoteFormModal({ bookingId, onClose, onSuccess }: QuoteFormModal
   }, [bookingId, prefillLoaded]);
 
   const subtotalHT = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0);
-  const vatAmount = Math.round(subtotalHT * (vatRate / 100) * 100) / 100;
-  const totalTTC = Math.round((subtotalHT + vatAmount) * 100) / 100;
+  const totalAmount = Math.round(subtotalHT * 100) / 100;
 
   function updateLine(index: number, field: keyof QuoteLine, value: string | number) {
     setLines((prev) =>
@@ -81,7 +79,6 @@ export function QuoteFormModal({ bookingId, onClose, onSuccess }: QuoteFormModal
         bookingId,
         validLines,
         {
-          vatRate: vatRate / 100,
           conditions: conditions || undefined,
           notes: notes || undefined,
         },
@@ -173,33 +170,15 @@ export function QuoteFormModal({ bookingId, onClose, onSuccess }: QuoteFormModal
 
         <Separator />
 
-        {/* TVA */}
-        <div className="flex items-center gap-3">
-          <Label className="shrink-0">TVA (%)</Label>
-          <Input
-            type="number"
-            min={0}
-            max={100}
-            step={0.5}
-            value={vatRate}
-            onChange={(e) => setVatRate(parseFloat(e.target.value) || 0)}
-            className="w-20"
-          />
-        </div>
-
         {/* Totals */}
         <div className="space-y-1 text-sm rounded-lg bg-muted p-3">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Sous-total HT</span>
+            <span className="text-muted-foreground">Sous-total</span>
             <span className="tabular-nums font-medium">{subtotalHT.toFixed(2)} €</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">TVA ({vatRate} %)</span>
-            <span className="tabular-nums">{vatAmount.toFixed(2)} €</span>
-          </div>
           <div className="flex justify-between font-semibold">
-            <span>Total TTC</span>
-            <span className="tabular-nums">{totalTTC.toFixed(2)} €</span>
+            <span>Montant</span>
+            <span className="tabular-nums">{totalAmount.toFixed(2)} €</span>
           </div>
         </div>
 

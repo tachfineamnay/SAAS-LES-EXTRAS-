@@ -14,7 +14,6 @@ import {
   CalendarDays,
   Building2,
   Clock,
-  ArrowRight,
   FileText,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -134,9 +133,15 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
       try {
         await confirmBookingLine({ bookingId: line.relatedBookingId! });
         await refreshBookings();
-        toast.success("Réservation confirmée.");
+        toast.success(
+          line.lineType === "MISSION"
+            ? "Réservation confirmée. 1 crédit a été consommé et la facture est disponible."
+            : "Réservation confirmée. 1 crédit a été consommé et la facture est disponible.",
+        );
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Impossible de confirmer.");
+        toast.error(
+          error instanceof Error ? error.message : "Impossible de confirmer cette réservation.",
+        );
       }
     });
   };
@@ -150,7 +155,7 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
       try {
         await completeBookingLine({ bookingId: line.relatedBookingId! });
         await refreshBookings();
-        toast.success("Mission terminée. Facture générée.");
+        toast.success("Réservation terminée.");
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Impossible de terminer.");
       }
@@ -342,7 +347,7 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
                       </Button>
                     )}
 
-                    {userRole === "ESTABLISHMENT" && line.status === "PENDING" && (
+                    {userRole === "ESTABLISHMENT" && line.lineType === "MISSION" && line.status === "PENDING" && (
                       <Button
                         variant="teal"
                         size="sm"
@@ -354,7 +359,22 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
                       </Button>
                     )}
 
-                    {userRole === "ESTABLISHMENT" && line.status === "CONFIRMED" && (
+                    {userRole === "FREELANCE" &&
+                      line.lineType === "SERVICE_BOOKING" &&
+                      line.viewerSide === "PROVIDER" &&
+                      (line.status === "PENDING" || line.status === "QUOTE_ACCEPTED") && (
+                        <Button
+                          variant="teal"
+                          size="sm"
+                          onClick={() => handleConfirm(line)}
+                          disabled={isActionLoading}
+                        >
+                          <Check className="mr-1 h-3.5 w-3.5" />
+                          Valider la réservation
+                        </Button>
+                      )}
+
+                    {userRole === "ESTABLISHMENT" && line.lineType === "MISSION" && line.status === "CONFIRMED" && (
                       <Button
                         variant="coral"
                         size="sm"
@@ -366,7 +386,7 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
                       </Button>
                     )}
 
-                    {userRole === "ESTABLISHMENT" && line.status === "COMPLETED_AWAITING_PAYMENT" && (
+                    {userRole === "ESTABLISHMENT" && line.lineType === "MISSION" && line.status === "COMPLETED_AWAITING_PAYMENT" && (
                       <Button
                         variant="teal"
                         size="sm"

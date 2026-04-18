@@ -3,9 +3,15 @@ import { render, screen } from "@testing-library/react";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { MesAteliersClient } from "@/components/dashboard/MesAteliersClient";
 import { FreelanceMarketplace } from "@/components/marketplace/FreelanceMarketplace";
+import AteliersLandingPage from "@/app/ateliers/page";
+import FreelancesPage from "@/app/freelances/page";
+import EtablissementsPage from "@/app/etablissements/page";
+import RegisterPage from "@/app/(auth)/register/page";
 import type { MesAtelierItem } from "@/app/actions/marketplace";
 
 // ─── Global mocks ────────────────────────────────────────────────────────────
+
+const mockRoleQuery = vi.hoisted(() => ({ value: null as string | null }));
 
 beforeAll(() => {
   Object.defineProperty(window, "matchMedia", {
@@ -25,7 +31,9 @@ beforeAll(() => {
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
-  useSearchParams: () => ({ get: () => null }),
+  useSearchParams: () => ({
+    get: (key: string) => (key === "role" ? mockRoleQuery.value : null),
+  }),
 }));
 
 vi.mock("next/link", () => ({
@@ -60,8 +68,8 @@ vi.mock("@/app/actions/marketplace", async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
-    updateServiceAction: vi.fn().mockResolvedValue(null),
-    deleteServiceAction: vi.fn().mockResolvedValue(true),
+    updateServiceAction: vi.fn().mockResolvedValue({ ok: true, data: { id: "service-1" } }),
+    deleteServiceAction: vi.fn().mockResolvedValue({ ok: true }),
   };
 });
 
@@ -69,6 +77,26 @@ vi.mock("@/lib/stores/useUIStore", () => ({
   useUIStore: (selector: (s: { openPublishModal: () => void }) => unknown) =>
     selector({ openPublishModal: vi.fn() }),
 }));
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+}));
+
+vi.mock("@/app/actions/auth", () => ({
+  register: vi.fn(),
+}));
+
+vi.mock("react-dom", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    useFormState: () => [{ message: "", errors: {} }, vi.fn()],
+    useFormStatus: () => ({ pending: false }),
+  };
+});
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 
@@ -179,5 +207,40 @@ describe("Sprint 4 — FreelanceMarketplace wording", () => {
   it("le sous-titre mentionne ateliers et formations", () => {
     render(<FreelanceMarketplace missions={[]} services={[]} />);
     expect(screen.getByText(/ateliers et formations disponibles/i)).toBeInTheDocument();
+  });
+});
+
+// ─── Public CTAs & register role normalization ──────────────────────────────
+
+describe("Sprint 4 — Public CTA role params", () => {
+  it("la landing /ateliers pointe vers un rôle FREELANCE en majuscules", () => {
+    render(<AteliersLandingPage />);
+    const links = screen.getAllByRole("link", { name: /proposer un service/i });
+    expect(links[0]).toHaveAttribute("href", "/register?role=FREELANCE");
+  });
+
+  it("la page /freelances pointe vers un rôle FREELANCE en majuscules", () => {
+    render(<FreelancesPage />);
+    expect(
+      screen.getByRole("link", { name: /m'inscrire comme freelance/i }),
+    ).toHaveAttribute("href", "/register?role=FREELANCE");
+  });
+
+  it("la page /etablissements pointe vers un rôle ESTABLISHMENT en majuscules", () => {
+    render(<EtablissementsPage />);
+    expect(
+      screen.getByRole("link", { name: /créer mon compte établissement/i }),
+    ).toHaveAttribute("href", "/register?role=ESTABLISHMENT");
+  });
+
+  it("la page register tolère les paramètres de rôle en minuscules", () => {
+    mockRoleQuery.value = "establishment";
+    render(<RegisterPage />);
+
+    expect(
+      screen.getByRole("radio", { name: /je recrute des renforts/i }),
+    ).toHaveAttribute("aria-checked", "true");
+
+    mockRoleQuery.value = null;
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { type FieldErrors, useFieldArray, useForm } from "react-hook-form";
+import { type FieldErrors, type Resolver, useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -252,7 +252,7 @@ export function PublishModal() {
   const [weeklyEnd, setWeeklyEnd] = useState("11:00");
 
   const form = useForm<PublishForm>({
-    resolver: zodResolver(publishSchema),
+    resolver: zodResolver(publishSchema) as Resolver<PublishForm>,
     defaultValues: {
       type: "WORKSHOP",
       category: "",
@@ -350,7 +350,9 @@ export function PublishModal() {
               evaluation: data.evaluation || undefined,
               imageUrl: data.imageUrl || undefined,
               scheduleInfo: data.scheduleInfo || undefined,
-              slots: data.slots.filter((s) => s.date && s.date.length > 0),
+              slots: data.slots.filter(
+                (slot: PublishForm["slots"][number]) => slot.date && slot.date.length > 0,
+              ),
               status: targetStatus,
             });
             const label = data.type === "WORKSHOP" ? "Atelier" : "Formation";

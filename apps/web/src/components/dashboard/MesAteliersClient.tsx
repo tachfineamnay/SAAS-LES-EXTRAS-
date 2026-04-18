@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -95,10 +96,13 @@ function EditAtelierDialog({
             durationMinutes: Number(durationMinutes),
         });
         setSaving(false);
-        if (result) {
-            onOpenChange(false);
-            onSaved();
+        if (!result.ok) {
+            toast.error(result.error);
+            return;
         }
+
+        onOpenChange(false);
+        onSaved();
     }
 
     return (
@@ -165,12 +169,15 @@ function DeleteConfirmDialog({
 
     async function handleDelete() {
         setDeleting(true);
-        const ok = await deleteServiceAction(atelier.id);
+        const result = await deleteServiceAction(atelier.id);
         setDeleting(false);
-        if (ok) {
-            onOpenChange(false);
-            onDeleted();
+        if (!result.ok) {
+            toast.error(result.error);
+            return;
         }
+
+        onOpenChange(false);
+        onDeleted();
     }
 
     return (
@@ -388,12 +395,20 @@ export function MesAteliersClient({ ateliers, serviceBookings, error }: MesAteli
     }
 
     async function handleArchive(atelier: MesAtelierItem) {
-        await updateServiceAction(atelier.id, { status: "ARCHIVED" });
+        const result = await updateServiceAction(atelier.id, { status: "ARCHIVED" });
+        if (!result.ok) {
+            toast.error(result.error);
+            return;
+        }
         refresh();
     }
 
     async function handlePublish(atelier: MesAtelierItem) {
-        await updateServiceAction(atelier.id, { status: "ACTIVE" });
+        const result = await updateServiceAction(atelier.id, { status: "ACTIVE" });
+        if (!result.ok) {
+            toast.error(result.error);
+            return;
+        }
         refresh();
     }
 

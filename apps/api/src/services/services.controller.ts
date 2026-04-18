@@ -72,7 +72,7 @@ export class ServicesController {
 
   @Post(":serviceId/book")
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ESTABLISHMENT)
+  @Roles(UserRole.ESTABLISHMENT, UserRole.FREELANCE)
   bookService(
     @Param("serviceId") serviceId: string,
     @Body() dto: BookServiceDto,

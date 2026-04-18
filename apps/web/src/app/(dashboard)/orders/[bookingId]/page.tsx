@@ -26,7 +26,6 @@ export default async function OrderPage({ params }: Props) {
     <OrderTrackerClient
       data={data}
       currentUserId={session.user.id}
-      currentUserRole={session.user.role === "ADMIN" ? "ESTABLISHMENT" : session.user.role}
       apiToken={session.token}
     />
   );

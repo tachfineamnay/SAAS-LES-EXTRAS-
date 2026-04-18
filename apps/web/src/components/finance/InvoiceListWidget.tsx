@@ -19,6 +19,16 @@ interface InvoiceListProps {
 export function InvoiceListWidget({ invoices }: InvoiceListProps) {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+    const getClientLabel = (invoice: any) => {
+        const profile = invoice.booking?.establishment?.profile;
+        if (profile?.companyName) return profile.companyName;
+
+        const fullName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ").trim();
+        if (fullName) return fullName;
+
+        return invoice.booking?.establishment?.email ?? "Client";
+    };
+
     const handleDownload = (id: string, e: React.MouseEvent) => {
         e.preventDefault();
         window.open(`${API_URL}/invoices/${id}/download`, '_blank');
@@ -35,7 +45,7 @@ export function InvoiceListWidget({ invoices }: InvoiceListProps) {
                     <TableRow>
                         <TableHead>Numéro</TableHead>
                         <TableHead>Date</TableHead>
-                        <TableHead>Établissement</TableHead>
+                        <TableHead>Client</TableHead>
                         <TableHead>Montant</TableHead>
                         <TableHead>Statut</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -51,7 +61,7 @@ export function InvoiceListWidget({ invoices }: InvoiceListProps) {
                                 {new Date(invoice.createdAt).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
-                                {invoice.booking.establishment.profile?.firstName} {invoice.booking.establishment.profile?.lastName}
+                                {getClientLabel(invoice)}
                             </TableCell>
                             <TableCell>{invoice.amount.toFixed(2)} €</TableCell>
                             <TableCell>

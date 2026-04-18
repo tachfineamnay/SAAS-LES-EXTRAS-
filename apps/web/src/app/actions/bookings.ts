@@ -23,11 +23,12 @@ export type BookingLine = {
   lineId: string;
   lineType: BookingLineType;
   date: string;
-  typeLabel: "Mission SOS" | "Atelier";
+  typeLabel: "Mission SOS" | "Atelier" | "Formation";
   interlocutor: string;
   status: BookingLineStatus;
   address: string;
   contactEmail: string;
+  viewerSide?: "REQUESTER" | "PROVIDER";
   relatedBookingId?: string;
   invoiceUrl?: string;
   title?: string;
@@ -138,6 +139,7 @@ export async function confirmBookingLine(
   });
 
   revalidatePath("/bookings");
+  revalidatePath(`/orders/${input.bookingId}`);
   return { ok: true };
 }
 
@@ -154,6 +156,7 @@ export async function completeBookingLine(
   });
 
   revalidatePath("/bookings");
+  revalidatePath(`/orders/${input.bookingId}`);
   return { ok: true };
 }
 

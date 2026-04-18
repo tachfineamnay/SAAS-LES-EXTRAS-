@@ -55,7 +55,7 @@ export class QuotesService {
       data: { status: 'REVISED' },
     });
 
-    const vatRate = dto.vatRate ?? 0.20;
+    const vatRate = 0;
     const lines = dto.lines.map((line) => {
       const totalHT = Math.round(line.quantity * line.unitPrice * 100) / 100;
       return { ...line, unit: line.unit ?? 'heure', totalHT };
@@ -105,7 +105,7 @@ export class QuotesService {
         conversationId: conversation.id,
         senderId: freelanceId,
         receiverId: booking.establishmentId,
-        content: `📋 ${freelanceName} a envoyé un devis de ${totalTTC.toFixed(2)} € TTC`,
+        content: `📋 ${freelanceName} a envoyé un devis de ${totalTTC.toFixed(2)} €`,
         type: 'SYSTEM',
         metadata: { quoteId: quote.id, totalTTC, event: 'QUOTE_SENT' },
       },
@@ -114,7 +114,7 @@ export class QuotesService {
     // Notify establishment
     await this.notifications.create({
       userId: booking.establishmentId,
-      message: `Nouveau devis reçu (${totalTTC.toFixed(2)} € TTC) — en attente de validation`,
+      message: `Nouveau devis reçu (${totalTTC.toFixed(2)} €) — en attente de validation`,
       type: 'INFO',
     });
 
@@ -131,9 +131,9 @@ export class QuotesService {
   }
 
   /**
-   * Accept a quote. Only the establishment owner of the booking can do this.
+   * Accept a quote. Only the requester of the booking can do this.
    */
-  async acceptQuote(quoteId: string, establishmentId: string) {
+  async acceptQuote(quoteId: string, requesterId: string) {
     const quote = await this.prisma.quote.findUnique({
       where: { id: quoteId },
       include: {
@@ -148,8 +148,8 @@ export class QuotesService {
     });
 
     if (!quote) throw new NotFoundException('Devis introuvable.');
-    if (quote.booking.establishmentId !== establishmentId) {
-      throw new ForbiddenException('Seul l\'établissement peut accepter ce devis.');
+    if (quote.booking.establishmentId !== requesterId) {
+      throw new ForbiddenException('Seul le demandeur peut accepter ce devis.');
     }
     if (quote.status !== 'SENT') {
       throw new BadRequestException('Ce devis ne peut plus être accepté.');
@@ -168,13 +168,13 @@ export class QuotesService {
 
     // System message
     if (quote.booking.conversation) {
-      const estName = quote.booking.establishment?.profile?.firstName ?? 'L\'établissement';
+      const estName = quote.booking.establishment?.profile?.firstName ?? 'Le demandeur';
       await this.prisma.message.create({
         data: {
           conversationId: quote.booking.conversation.id,
-          senderId: establishmentId,
-          receiverId: quote.booking.freelanceId ?? establishmentId,
-          content: `✅ ${estName} a accepté le devis de ${quote.totalTTC.toFixed(2)} € TTC`,
+          senderId: requesterId,
+          receiverId: quote.booking.freelanceId ?? requesterId,
+          content: `✅ ${estName} a accepté le devis de ${quote.totalTTC.toFixed(2)} €`,
           type: 'SYSTEM',
           metadata: { quoteId, event: 'QUOTE_ACCEPTED' },
         },
@@ -185,7 +185,7 @@ export class QuotesService {
     if (quote.booking.freelanceId) {
       await this.notifications.create({
         userId: quote.booking.freelanceId,
-        message: `Votre devis a été accepté (${quote.totalTTC.toFixed(2)} € TTC)`,
+        message: `Votre devis a été accepté (${quote.totalTTC.toFixed(2)} €)`,
         type: 'SUCCESS',
       });
     }
@@ -203,9 +203,9 @@ export class QuotesService {
   }
 
   /**
-   * Reject a quote. Only the establishment can do this.
+   * Reject a quote. Only the requester can do this.
    */
-  async rejectQuote(quoteId: string, establishmentId: string, dto?: RejectQuoteDto) {
+  async rejectQuote(quoteId: string, requesterId: string, dto?: RejectQuoteDto) {
     const quote = await this.prisma.quote.findUnique({
       where: { id: quoteId },
       include: {
@@ -219,8 +219,8 @@ export class QuotesService {
     });
 
     if (!quote) throw new NotFoundException('Devis introuvable.');
-    if (quote.booking.establishmentId !== establishmentId) {
-      throw new ForbiddenException('Seul l\'établissement peut refuser ce devis.');
+    if (quote.booking.establishmentId !== requesterId) {
+      throw new ForbiddenException('Seul le demandeur peut refuser ce devis.');
     }
     if (quote.status !== 'SENT') {
       throw new BadRequestException('Ce devis ne peut plus être refusé.');
@@ -240,13 +240,13 @@ export class QuotesService {
 
     // System message
     if (quote.booking.conversation) {
-      const estName = quote.booking.establishment?.profile?.firstName ?? 'L\'établissement';
+      const estName = quote.booking.establishment?.profile?.firstName ?? 'Le demandeur';
       const reasonSuffix = dto?.reason ? ` — Motif : ${dto.reason}` : '';
       await this.prisma.message.create({
         data: {
           conversationId: quote.booking.conversation.id,
-          senderId: establishmentId,
-          receiverId: quote.booking.freelanceId ?? establishmentId,
+          senderId: requesterId,
+          receiverId: quote.booking.freelanceId ?? requesterId,
           content: `❌ ${estName} a refusé le devis${reasonSuffix}`,
           type: 'SYSTEM',
           metadata: { quoteId, event: 'QUOTE_REJECTED', reason: dto?.reason },
@@ -423,7 +423,7 @@ export class QuotesService {
       const headerY = doc.y - 14;
       doc.text('Qté', 280, headerY, { width: 50, align: 'right' });
       doc.text('P.U.', 340, headerY, { width: 60, align: 'right' });
-      doc.text('Total HT', 410, headerY, { width: 80, align: 'right' });
+      doc.text('Montant', 410, headerY, { width: 80, align: 'right' });
       doc.font('Helvetica');
       doc.moveDown(0.5);
 
@@ -439,10 +439,9 @@ export class QuotesService {
       doc.moveDown();
 
       // Totals
-      doc.text(`Sous-total HT: ${quote.subtotalHT.toFixed(2)} €`, { align: 'right' });
-      doc.text(`TVA (${(quote.vatRate * 100).toFixed(0)} %): ${quote.vatAmount.toFixed(2)} €`, { align: 'right' });
+      doc.text(`Sous-total: ${quote.subtotalHT.toFixed(2)} €`, { align: 'right' });
       doc.font('Helvetica-Bold');
-      doc.text(`Total TTC: ${quote.totalTTC.toFixed(2)} €`, { align: 'right' });
+      doc.text(`Montant: ${quote.totalTTC.toFixed(2)} €`, { align: 'right' });
       doc.font('Helvetica');
 
       // Conditions

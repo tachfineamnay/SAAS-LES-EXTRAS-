@@ -30,7 +30,7 @@ export class CreateQuoteDto {
   @IsNumber()
   @IsOptional()
   @Min(0)
-  vatRate?: number; // defaults to 0.20
+  vatRate?: number; // ignored in V1 association flow — VAT is always 0
 
   @IsDateString()
   @IsOptional()

@@ -42,8 +42,8 @@ const BENEFITS = [
     },
     {
         icon: DollarSign,
-        title: "Paiement sécurisé",
-        desc: "Facturation automatique et paiement garanti après chaque mission validée.",
+        title: "Suivi simplifié",
+        desc: "Retrouvez vos missions, services et échanges dans un espace unique.",
         color: "emerald" as const,
     },
 ];
@@ -94,7 +94,7 @@ export default function FreelancesPage() {
                         </motion.p>
                         <motion.div variants={rise}>
                             <Button variant="default" size="lg" className="min-h-[52px] text-base gap-2" asChild>
-                                <Link href="/register?role=freelance">
+                                <Link href="/register?role=FREELANCE">
                                     M&apos;inscrire comme freelance
                                     <ArrowRight className="h-5 w-5" aria-hidden="true" />
                                 </Link>
@@ -193,7 +193,7 @@ export default function FreelancesPage() {
                     <h2 className="font-display text-heading-lg mb-4">Prêt à rejoindre le réseau ?</h2>
                     <p className="text-muted-foreground mb-8">Inscription gratuite, vos premières missions vous attendent.</p>
                     <Button variant="default" size="lg" className="min-h-[52px] text-base gap-2" asChild>
-                        <Link href="/register?role=freelance">
+                        <Link href="/register?role=FREELANCE">
                             S&apos;inscrire maintenant
                             <ArrowRight className="h-5 w-5" aria-hidden="true" />
                         </Link>

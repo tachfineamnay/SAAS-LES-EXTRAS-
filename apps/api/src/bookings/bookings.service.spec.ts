@@ -21,6 +21,7 @@ describe('BookingsService', () => {
       updateMany: jest.fn(),
     },
     reliefMission: {
+      findMany: jest.fn(),
       update: jest.fn(),
     },
     profile: {
@@ -79,7 +80,7 @@ describe('BookingsService', () => {
   });
 
   describe('completeBooking', () => {
-    it('should complete a confirmed booking, create invoice and notify both parties', async () => {
+    it('should complete a confirmed booking without creating a new invoice and notify both parties', async () => {
       const user = { id: 'est-1', email: 'est@est.com', role: UserRole.ESTABLISHMENT, status: UserStatus.VERIFIED, onboardingStep: 3 };
       const booking = {
         id: 'booking-1',
@@ -114,20 +115,12 @@ describe('BookingsService', () => {
       mockPrisma.booking.findUnique.mockResolvedValue(booking);
       mockPrisma.booking.update.mockResolvedValue({ ...booking, status: BookingStatus.COMPLETED });
       mockPrisma.reliefMission.update.mockResolvedValue({ id: 'mission-1', status: ReliefMissionStatus.COMPLETED });
-      mockPrisma.invoice.count.mockResolvedValue(0);
-      mockPrisma.invoice.create.mockResolvedValue({ id: 'inv-1' });
       mockPrisma.user.findUnique.mockResolvedValue({ id: 'free-1', email: 'free@test.com' });
 
       await service.completeBooking('booking-1', user);
 
       expect(mockPrisma.$transaction).toHaveBeenCalled();
-      expect(mockPrisma.invoice.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            amount: 230,
-          }),
-        }),
-      );
+      expect(mockPrisma.invoice.create).not.toHaveBeenCalled();
       // Should notify both freelance and establishment
       expect(mockNotifications.create).toHaveBeenCalledTimes(2);
     });
@@ -300,8 +293,9 @@ describe('BookingsService', () => {
 
   describe('confirmBooking', () => {
     const estUser = { id: 'est-1', email: 'est@test.com', role: UserRole.ESTABLISHMENT, status: UserStatus.VERIFIED, onboardingStep: 3 };
+    const freelanceProviderUser = { id: 'free-1', email: 'free@test.com', role: UserRole.FREELANCE, status: UserStatus.VERIFIED, onboardingStep: 4 };
 
-    it('should confirm booking, create conversation and notify rejected freelances', async () => {
+    it('should confirm a mission, consume one credit, create an invoice and notify rejected freelances', async () => {
       const booking = {
         id: 'booking-1',
         status: BookingStatus.PENDING,
@@ -312,16 +306,23 @@ describe('BookingsService', () => {
           establishmentId: 'est-1',
           title: 'Mission Test',
           dateStart: new Date('2026-03-20T08:00:00Z'),
+          dateEnd: new Date('2026-03-20T16:00:00Z'),
+          hourlyRate: 25,
         },
         service: null,
+        invoice: null,
+        quotes: [],
       };
 
       mockPrisma.booking.findUnique.mockResolvedValue(booking);
-      mockPrisma.profile.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.booking.update.mockResolvedValue({ ...booking, status: BookingStatus.CONFIRMED });
       mockPrisma.booking.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.reliefMission.update.mockResolvedValue({ id: 'mission-1' });
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'free-1', email: 'free@test.com', profile: { firstName: 'Karim' } });
+      mockPrisma.profile.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.invoice.create.mockResolvedValue({ id: 'inv-1' });
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce({ id: 'free-1', email: 'free@test.com', profile: { firstName: 'Karim' } })
+        .mockResolvedValueOnce({ id: 'est-1', email: 'est@test.com', profile: { companyName: 'Clinique Test' } });
       mockPrisma.booking.findMany.mockResolvedValue([
         {
           id: 'booking-2',
@@ -338,9 +339,20 @@ describe('BookingsService', () => {
           availableCredits: { gte: 1 },
         },
         data: {
-          availableCredits: { decrement: 1 },
+          availableCredits: {
+            decrement: 1,
+          },
         },
       });
+      expect(mockPrisma.invoice.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            bookingId: 'booking-1',
+            amount: expect.any(Number),
+            status: 'UNPAID',
+          }),
+        }),
+      );
       // Should create conversation
       expect(mockConversations.getOrCreateConversation).toHaveBeenCalledWith('free-1', 'est-1');
       // Should notify the confirmed freelance
@@ -353,29 +365,130 @@ describe('BookingsService', () => {
       );
     });
 
-    it("should reject mission confirmation when the establishment has no available credits", async () => {
+    it('refuses mission confirmation when the requester has no credit left', async () => {
       const booking = {
-        id: "booking-1",
+        id: 'booking-1',
         status: BookingStatus.PENDING,
-        establishmentId: "est-1",
-        freelanceId: "free-1",
-        reliefMissionId: "mission-1",
+        establishmentId: 'est-1',
+        freelanceId: 'free-1',
+        reliefMissionId: 'mission-1',
         reliefMission: {
-          establishmentId: "est-1",
-          title: "Mission Test",
-          dateStart: new Date("2026-03-20T08:00:00Z"),
+          establishmentId: 'est-1',
+          title: 'Mission Test',
+          dateStart: new Date('2026-03-20T08:00:00Z'),
+          dateEnd: new Date('2026-03-20T16:00:00Z'),
+          hourlyRate: 25,
         },
         service: null,
+        invoice: null,
+        quotes: [],
       };
 
       mockPrisma.booking.findUnique.mockResolvedValue(booking);
       mockPrisma.profile.updateMany.mockResolvedValue({ count: 0 });
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'est-1' });
 
-      await expect(service.confirmBooking("booking-1", estUser)).rejects.toThrow(
-        BadRequestException,
+      await expect(service.confirmBooking('booking-1', estUser)).rejects.toThrow(
+        'Crédits insuffisants pour valider cette réservation.',
       );
       expect(mockPrisma.booking.update).not.toHaveBeenCalled();
-      expect(mockConversations.getOrCreateConversation).not.toHaveBeenCalled();
+      expect(mockPrisma.invoice.create).not.toHaveBeenCalled();
+    });
+
+    it('confirms a training service after quote acceptance, consumes one credit and creates an invoice', async () => {
+      const booking = {
+        id: 'booking-service-1',
+        status: BookingStatus.QUOTE_ACCEPTED,
+        establishmentId: 'free-requester',
+        freelanceId: 'free-1',
+        reliefMissionId: null,
+        reliefMission: null,
+        service: {
+          id: 'service-1',
+          ownerId: 'free-1',
+          title: 'Formation Snoezelen',
+          type: 'TRAINING',
+          pricingType: 'QUOTE',
+          price: 0,
+          pricePerParticipant: null,
+        },
+        invoice: null,
+        quotes: [{ totalTTC: 180 }],
+      };
+
+      mockPrisma.booking.findUnique.mockResolvedValue(booking);
+      mockPrisma.profile.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.booking.update.mockResolvedValue({ ...booking, status: BookingStatus.CONFIRMED });
+      mockPrisma.invoice.create.mockResolvedValue({ id: 'inv-service-1' });
+
+      await expect(service.confirmBooking('booking-service-1', freelanceProviderUser)).resolves.toEqual({ ok: true });
+
+      expect(mockPrisma.profile.updateMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'free-requester',
+          availableCredits: { gte: 1 },
+        },
+        data: {
+          availableCredits: {
+            decrement: 1,
+          },
+        },
+      });
+      expect(mockPrisma.invoice.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            bookingId: 'booking-service-1',
+            amount: 180,
+            status: 'UNPAID',
+          }),
+        }),
+      );
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'free-requester',
+          type: 'SUCCESS',
+        }),
+      );
+    });
+
+    it('confirms a workshop service with enough credits using the same validation flow', async () => {
+      const booking = {
+        id: "booking-1",
+        status: BookingStatus.PENDING,
+        establishmentId: 'est-1',
+        freelanceId: 'free-1',
+        reliefMissionId: null,
+        reliefMission: null,
+        service: {
+          id: 'service-2',
+          ownerId: 'free-1',
+          title: 'Atelier mémoire',
+          type: 'WORKSHOP',
+          pricingType: 'SESSION',
+          price: 120,
+          pricePerParticipant: null,
+        },
+        invoice: null,
+        quotes: [],
+      };
+
+      mockPrisma.booking.findUnique.mockResolvedValue(booking);
+      mockPrisma.profile.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.booking.update.mockResolvedValue({ ...booking, status: BookingStatus.CONFIRMED });
+      mockPrisma.invoice.create.mockResolvedValue({ id: 'inv-2' });
+
+      await expect(service.confirmBooking('booking-1', freelanceProviderUser)).resolves.toEqual({ ok: true });
+      expect(mockPrisma.booking.update).toHaveBeenCalled();
+      expect(mockPrisma.invoice.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            bookingId: 'booking-1',
+            amount: 120,
+            status: 'UNPAID',
+          }),
+        }),
+      );
+      expect(mockConversations.getOrCreateConversation).toHaveBeenCalledWith('free-1', 'est-1');
     });
   });
 
@@ -446,6 +559,125 @@ describe('BookingsService', () => {
       await expect(
         service.cancelBookingLine({ lineType: 'BOOKING', lineId: 'booking-1' }, estUser),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('getBookingsPageData', () => {
+    it('inclut les réservations de service demandées par un freelance avec le bon interlocuteur et le bon libellé', async () => {
+      const freelanceUser = {
+        id: 'free-requester',
+        email: 'requester@test.com',
+        role: UserRole.FREELANCE,
+        status: UserStatus.VERIFIED,
+        onboardingStep: 4,
+      };
+
+      mockPrisma.booking.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          {
+            id: 'booking-service-1',
+            establishmentId: 'free-requester',
+            status: BookingStatus.PENDING,
+            scheduledAt: new Date('2026-04-20T10:00:00Z'),
+            establishment: { email: 'requester@test.com' },
+            service: {
+              title: 'Formation Snoezelen',
+              price: 180,
+              type: 'TRAINING',
+              owner: { email: 'provider@test.com' },
+            },
+            reviews: [],
+            invoice: null,
+          },
+        ]);
+
+      const result = await service.getBookingsPageData(freelanceUser);
+
+      expect(result.lines).toHaveLength(1);
+      expect(result.lines[0]).toMatchObject({
+        lineId: 'booking-service-1',
+        lineType: 'SERVICE_BOOKING',
+        typeLabel: 'Formation',
+        interlocutor: 'provider@test.com',
+        viewerSide: 'REQUESTER',
+      });
+    });
+  });
+
+  describe('getOrderTracker', () => {
+    it('expose requester/provider avec les rôles réels pour une réservation de service', async () => {
+      const requester = {
+        id: 'free-requester',
+        email: 'requester@test.com',
+        role: UserRole.FREELANCE,
+        profile: {
+          firstName: 'Samir',
+          lastName: 'Requester',
+          companyName: null,
+          avatar: null,
+          phone: null,
+        },
+      };
+      const provider = {
+        id: 'free-provider',
+        email: 'provider@test.com',
+        role: UserRole.FREELANCE,
+        profile: {
+          firstName: 'Nora',
+          lastName: 'Provider',
+          companyName: null,
+          avatar: null,
+          phone: null,
+        },
+      };
+
+      mockPrisma.booking.findUnique.mockResolvedValue({
+        id: 'booking-1',
+        status: BookingStatus.PENDING,
+        paymentStatus: 'UNPAID',
+        message: null,
+        scheduledAt: new Date('2026-04-20T10:00:00Z'),
+        nbParticipants: 2,
+        createdAt: new Date('2026-04-10T08:00:00Z'),
+        establishmentId: 'free-requester',
+        freelanceId: 'free-provider',
+        establishment: requester,
+        freelance: provider,
+        reliefMission: null,
+        service: {
+          id: 'service-1',
+          title: 'Atelier mémoire',
+          description: null,
+          price: 120,
+          durationMinutes: 90,
+          pricingType: 'SESSION',
+          pricePerParticipant: null,
+        },
+        invoice: null,
+        reviews: [],
+        quotes: [],
+        conversation: null,
+      });
+
+      const result = await service.getOrderTracker('booking-1', {
+        id: 'free-requester',
+        email: 'requester@test.com',
+        role: UserRole.FREELANCE,
+        status: UserStatus.VERIFIED,
+        onboardingStep: 4,
+      });
+
+      expect(result.requester).toMatchObject({
+        id: 'free-requester',
+        role: 'FREELANCE',
+        email: 'requester@test.com',
+      });
+      expect(result.provider).toMatchObject({
+        id: 'free-provider',
+        role: 'FREELANCE',
+        email: 'provider@test.com',
+      });
     });
   });
 });

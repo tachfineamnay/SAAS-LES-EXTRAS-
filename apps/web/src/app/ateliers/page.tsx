@@ -77,7 +77,7 @@ export default function AteliersLandingPage() {
                                 </Link>
                             </Button>
                             <Button variant="glass" size="lg" className="min-h-[52px] text-base gap-2" asChild>
-                                <Link href="/register?role=freelance">
+                                <Link href="/register?role=FREELANCE">
                                     Proposer un service
                                 </Link>
                             </Button>
@@ -160,7 +160,7 @@ export default function AteliersLandingPage() {
                             </Link>
                         </Button>
                         <Button variant="glass" size="lg" className="min-h-[52px] text-base gap-2" asChild>
-                            <Link href="/register?role=freelance">
+                            <Link href="/register?role=FREELANCE">
                                 Proposer un service
                             </Link>
                         </Button>

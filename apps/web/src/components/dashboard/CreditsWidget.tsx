@@ -8,6 +8,7 @@ import { buyPack, type PackType } from "@/actions/credits";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { AnimatedNumber } from "@/components/ui/animated-number";
+import { CREDIT_PACKS } from "@/lib/credit-packs";
 
 import {
     Dialog,
@@ -20,37 +21,11 @@ import {
 import { Check } from "lucide-react";
 
 interface CreditsWidgetProps {
-    credits: number;
+    credits: number | null;
+    error?: string | null;
 }
 
-const PACKS = [
-    {
-        id: "STARTER",
-        name: "Starter",
-        credits: 1,
-        price: 150,
-        features: ["1 mise en relation", "Support standard", "Validité illimitée"],
-        popular: false
-    },
-    {
-        id: "PRO",
-        name: "Pro",
-        credits: 3,
-        price: 400,
-        features: ["3 mises en relation", "Économie de 50€", "Support prioritaire", "Badge 'Recruteur'"],
-        popular: true
-    },
-    {
-        id: "ENTERPRISE",
-        name: "Entreprise",
-        credits: 5,
-        price: 600,
-        features: ["5 mises en relation", "Économie de 150€", "Account Manager dédié", "Badge 'Partenaire'"],
-        popular: false
-    }
-] as const;
-
-export function CreditsWidget({ credits }: CreditsWidgetProps) {
+export function CreditsWidget({ credits, error = null }: CreditsWidgetProps) {
     const [open, setOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
     const [displayCredits, setDisplayCredits] = useState(credits);
@@ -60,14 +35,14 @@ export function CreditsWidget({ credits }: CreditsWidgetProps) {
     }, [credits]);
 
     const handleBuyPack = (packId: PackType, packName: string, price: number) => {
-        if (confirm(`Confirmer l'achat du pack '${packName}' pour ${price}€ ?`)) {
+        if (confirm(`Confirmer l'ajout du pack '${packName}' pour ${price}€ ?`)) {
             startTransition(async () => {
                 const result = await buyPack(packId);
                 if ("error" in result) {
                     toast.error(result.error);
                 } else {
                     setDisplayCredits(result.availableCredits);
-                    toast.success(`Pack ${packName} acheté avec succès !`);
+                    toast.success(`Pack ${packName} ajouté au solde avec succès !`);
                     setOpen(false);
                 }
             });
@@ -79,12 +54,16 @@ export function CreditsWidget({ credits }: CreditsWidgetProps) {
             <GlassCard variant={displayCredits === 0 ? "glass" : "interactive"} className={displayCredits === 0 ? "border-[hsl(var(--destructive)/0.6)]" : ""}>
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">Crédits Recrutement</span>
+                        <span className="text-sm font-medium">Crédits</span>
                         <Coins className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <AnimatedNumber value={displayCredits} className="text-2xl font-bold" />
+                    {typeof displayCredits === "number" ? (
+                        <AnimatedNumber value={displayCredits} className="text-2xl font-bold" />
+                    ) : (
+                        <div className="text-2xl font-bold">—</div>
+                    )}
                     <p className="text-xs text-muted-foreground mt-1">
-                        Mises en relation disponibles
+                        Solde disponible pour vos validations de réservation
                     </p>
 
                     <Dialog open={open} onOpenChange={setOpen}>
@@ -97,12 +76,12 @@ export function CreditsWidget({ credits }: CreditsWidgetProps) {
                             <DialogHeader>
                                 <DialogTitle>Choisir un pack de crédits</DialogTitle>
                                 <DialogDescription>
-                                    Achetez des crédits pour valider vos renforts. Plus vous en prenez, plus vous économisez.
+                                    Ajoutez des crédits à votre solde. Un crédit est consommé lorsqu&apos;une réservation est validée.
                                 </DialogDescription>
                             </DialogHeader>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
-                                {PACKS.map((pack) => (
+                                {CREDIT_PACKS.map((pack) => (
                                     <div
                                         key={pack.id}
                                         className={`relative flex flex-col rounded-2xl p-4 transition-all duration-200 ${pack.popular ? 'bg-card border border-[hsl(var(--teal)/0.3)] card-shadow-md' : 'bg-card border border-border hover:card-shadow-md'}`}
@@ -116,7 +95,6 @@ export function CreditsWidget({ credits }: CreditsWidgetProps) {
                                             <h3 className="font-bold text-lg">{pack.name}</h3>
                                             <div className="flex items-baseline mt-2">
                                                 <span className="text-2xl font-bold">{pack.price}€</span>
-                                                <span className="text-sm text-muted-foreground ml-1">HT</span>
                                             </div>
                                             <p className="text-sm font-medium mt-1 text-primary">
                                                 {pack.credits} crédit{pack.credits > 1 ? 's' : ''}
@@ -148,12 +126,20 @@ export function CreditsWidget({ credits }: CreditsWidgetProps) {
                 </div>
             </GlassCard>
 
-            {displayCredits === 0 && (
+            {error && (
+                <Alert variant="destructive">
+                    <Coins className="h-4 w-4" />
+                    <AlertTitle>Solde indisponible</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
+
+            {!error && displayCredits === 0 && (
                 <Alert variant="destructive">
                     <Coins className="h-4 w-4" />
                     <AlertTitle>Solde épuisé</AlertTitle>
                     <AlertDescription>
-                        Vous n'avez plus de droits de mise en relation. Achetez un pack pour valider vos prochains renforts.
+                        Votre solde de crédits est à zéro. Ajoutez un pack pour préparer vos prochains recrutements.
                     </AlertDescription>
                 </Alert>
             )}

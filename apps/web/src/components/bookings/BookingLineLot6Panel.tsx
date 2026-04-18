@@ -69,6 +69,10 @@ export function BookingLineLot6Panel({
   disabled = false,
 }: BookingLineLot6PanelProps) {
   const bookingId = line.relatedBookingId;
+  const reviewUnsupportedForSlot =
+    line.lineType === "SERVICE_BOOKING" &&
+    userRole === "FREELANCE" &&
+    line.viewerSide === "REQUESTER";
   const [review, setReview] = useState<SerializedReview | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [isReviewLoading, setIsReviewLoading] = useState(false);
@@ -111,7 +115,8 @@ export function BookingLineLot6Panel({
     Boolean(bookingId) &&
     isReviewableStatus(line.status) &&
     !review &&
-    !isReviewLoading;
+    !isReviewLoading &&
+    !reviewUnsupportedForSlot;
 
   const handleReviewSubmit = (data: { rating: number; text: string; tags: string[] }) => {
     if (!bookingId) {
@@ -185,6 +190,8 @@ export function BookingLineLot6Panel({
           <span>Avis: indisponible pour cette ligne.</span>
         ) : !isReviewableStatus(line.status) ? (
           <span>Avis: disponible après mission terminée.</span>
+        ) : reviewUnsupportedForSlot ? (
+          <span>Avis: indisponible pour cette réservation.</span>
         ) : (
           <Button
             type="button"

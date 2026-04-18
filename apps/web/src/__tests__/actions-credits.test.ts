@@ -14,7 +14,7 @@ vi.mock("next/cache", () => ({
   revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args),
 }));
 
-const { buyPack, getCredits } = await import("@/actions/credits");
+const { buyPack, getCredits, getCreditPurchaseHistory } = await import("@/actions/credits");
 
 describe("credits actions", () => {
   beforeEach(() => {
@@ -69,5 +69,54 @@ describe("credits actions", () => {
     mockApiRequest.mockRejectedValue(new Error("Service crédits indisponible"));
 
     await expect(getCredits()).rejects.toThrow("Service crédits indisponible");
+  });
+
+  it("rejette la lecture du solde si aucune session n'est disponible", async () => {
+    mockGetSession.mockResolvedValue(null);
+
+    await expect(getCredits()).rejects.toThrow("Non connecté");
+    expect(mockApiRequest).not.toHaveBeenCalled();
+  });
+
+  it("lit l'historique d'achat sur le nouvel endpoint dédié", async () => {
+    mockApiRequest.mockResolvedValue([
+      {
+        id: "purchase-1",
+        amount: 400,
+        creditsAdded: 3,
+        createdAt: "2026-04-18T10:00:00.000Z",
+      },
+    ]);
+
+    const result = await getCreditPurchaseHistory();
+
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/users/me/credits/history",
+      expect.objectContaining({
+        method: "GET",
+        token: "credits-token",
+      }),
+    );
+    expect(result).toEqual([
+      {
+        id: "purchase-1",
+        amount: 400,
+        creditsAdded: 3,
+        createdAt: "2026-04-18T10:00:00.000Z",
+      },
+    ]);
+  });
+
+  it("propage l'erreur API sur l'historique d'achat", async () => {
+    mockApiRequest.mockRejectedValue(new Error("Historique indisponible"));
+
+    await expect(getCreditPurchaseHistory()).rejects.toThrow("Historique indisponible");
+  });
+
+  it("rejette l'historique si aucune session n'est disponible", async () => {
+    mockGetSession.mockResolvedValue(null);
+
+    await expect(getCreditPurchaseHistory()).rejects.toThrow("Non connecté");
+    expect(mockApiRequest).not.toHaveBeenCalled();
   });
 });

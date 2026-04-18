@@ -43,9 +43,9 @@ async function fetchEstablishmentData(token: string, userId: string) {
                 [],
                 "Factures",
             ),
-            fetchSafe<number>(
+            fetchSafe<number | null>(
                 () => getCredits(token),
-                0,
+                null,
                 "Crédits",
             ),
             fetchReviews(userId, token),
@@ -97,6 +97,7 @@ async function fetchEstablishmentData(token: string, userId: string) {
         invoices: invoicesResult.data ?? [],
         invoicesError: invoicesResult.error,
         availableCredits: creditsResult.data,
+        creditsError: creditsResult.error,
         pendingCandidatures,
         awaitingPaymentBookings,
         confirmedBookings,

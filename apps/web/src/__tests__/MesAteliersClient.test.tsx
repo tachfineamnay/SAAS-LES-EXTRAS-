@@ -6,6 +6,8 @@ import type { BookingLine } from "@/app/actions/bookings";
 
 const mockRefresh = vi.fn();
 const mockUpdateServiceAction = vi.fn();
+const mockDeleteServiceAction = vi.fn();
+const mockToastError = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mockRefresh }),
@@ -16,13 +18,19 @@ vi.mock("@/app/actions/marketplace", async (importOriginal) => {
   return {
     ...actual,
     updateServiceAction: (...args: unknown[]) => mockUpdateServiceAction(...args),
-    deleteServiceAction: vi.fn().mockResolvedValue(true),
+    deleteServiceAction: (...args: unknown[]) => mockDeleteServiceAction(...args),
   };
 });
 
 vi.mock("@/lib/stores/useUIStore", () => ({
   useUIStore: (selector: (s: { openPublishModal: () => void }) => unknown) =>
     selector({ openPublishModal: vi.fn() }),
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: (...args: unknown[]) => mockToastError(...args),
+  },
 }));
 
 const ateliers: MesAtelierItem[] = [
@@ -83,7 +91,8 @@ const serviceBookings: BookingLine[] = [
 describe("MesAteliersClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUpdateServiceAction.mockResolvedValue({ id: "a-2", status: "ACTIVE" });
+    mockUpdateServiceAction.mockResolvedValue({ ok: true, data: { id: "a-2", status: "ACTIVE" } });
+    mockDeleteServiceAction.mockResolvedValue({ ok: true });
   });
 
   it("affiche la liste des ateliers du freelance", () => {
@@ -106,8 +115,9 @@ describe("MesAteliersClient", () => {
   });
 
   it("propose une action publier pour un brouillon sans lien vers la fiche publique", async () => {
+    const baseAtelier = ateliers[0]!;
     const draftAtelier: MesAtelierItem = {
-      ...ateliers[0],
+      ...baseAtelier,
       id: "a-2",
       title: "Formation brouillon",
       type: "TRAINING",
@@ -127,5 +137,52 @@ describe("MesAteliersClient", () => {
       expect(mockUpdateServiceAction).toHaveBeenCalledWith("a-2", { status: "ACTIVE" });
       expect(mockRefresh).toHaveBeenCalled();
     });
+  });
+
+  it("affiche un feedback utilisateur si la publication échoue", async () => {
+    mockUpdateServiceAction.mockResolvedValueOnce({
+      ok: false,
+      error: "Impossible de publier ce brouillon.",
+    });
+
+    const baseAtelier = ateliers[0]!;
+    const draftAtelier: MesAtelierItem = {
+      ...baseAtelier,
+      id: "a-2",
+      title: "Formation brouillon",
+      type: "TRAINING",
+      status: "DRAFT",
+    };
+
+    render(<MesAteliersClient ateliers={[draftAtelier]} serviceBookings={[]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^publier$/i }));
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith("Impossible de publier ce brouillon.");
+    });
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
+  it("affiche un feedback utilisateur si la suppression échoue", async () => {
+    mockDeleteServiceAction.mockResolvedValueOnce({
+      ok: false,
+      error: "Suppression impossible",
+    });
+
+    render(<MesAteliersClient ateliers={ateliers} serviceBookings={serviceBookings} />);
+
+    const menuTrigger = screen
+      .getAllByRole("button")
+      .find((button) => button.getAttribute("aria-haspopup") === "menu");
+    expect(menuTrigger).toBeTruthy();
+    fireEvent.pointerDown(menuTrigger!);
+    fireEvent.click(await screen.findByText(/supprimer/i));
+    fireEvent.click(screen.getByRole("button", { name: /^supprimer$/i }));
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith("Suppression impossible");
+    });
+    expect(mockRefresh).not.toHaveBeenCalled();
   });
 });

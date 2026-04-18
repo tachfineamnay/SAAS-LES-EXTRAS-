@@ -5,16 +5,27 @@ import { apiRequest } from "@/lib/api";
 
 export interface SerializedInvoice {
     id: string;
-    invoiceNumber: string;
+    invoiceNumber?: string;
     createdAt: string;
     amount: number;
     status: string;
     pdfUrl?: string;
     booking?: {
-        freelance?: {
+        scheduledAt?: string;
+        establishment?: {
+            email?: string;
             profile?: {
-                firstName: string;
-                lastName: string;
+                firstName?: string | null;
+                lastName?: string | null;
+                companyName?: string | null;
+            };
+        };
+        freelance?: {
+            email?: string;
+            profile?: {
+                firstName?: string | null;
+                lastName?: string | null;
+                companyName?: string | null;
             };
         };
     };

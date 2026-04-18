@@ -26,8 +26,6 @@ import {
 import Link from "next/link";
 import type {
   OrderTrackerData,
-  OrderQuote,
-  TimelineEvent,
   OrderMessage,
 } from "@/app/actions/orders";
 import {
@@ -35,12 +33,14 @@ import {
   acceptQuote,
   rejectQuote,
 } from "@/app/actions/orders";
+import { confirmBookingLine } from "@/app/actions/bookings";
 import { QuoteCard } from "./QuoteCard";
 import { QuoteFormModal } from "./QuoteFormModal";
 import { ReviewModal } from "@/components/modals/ReviewModal";
 import { createReview } from "@/app/actions/reviews";
 import { useOrderSSE, type OrderSSEEvent } from "@/lib/hooks/useOrderSSE";
 import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
+import { toast } from "sonner";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
@@ -79,16 +79,35 @@ const TIMELINE_ICONS: Record<string, React.ReactNode> = {
 type OrderTrackerClientProps = {
   data: OrderTrackerData;
   currentUserId: string;
-  currentUserRole: "FREELANCE" | "ESTABLISHMENT";
   apiToken: string;
 };
+
+function getReviewConfig(
+  currentParticipant: OrderTrackerData["requester"],
+  counterpart: OrderTrackerData["provider"],
+) {
+  if (currentParticipant.role === "ESTABLISHMENT" && counterpart.role === "FREELANCE") {
+    return {
+      reviewerSide: "establishment" as const,
+      type: "ESTABLISHMENT_TO_FREELANCE" as const,
+    };
+  }
+
+  if (currentParticipant.role === "FREELANCE" && counterpart.role === "ESTABLISHMENT") {
+    return {
+      reviewerSide: "freelance" as const,
+      type: "FREELANCE_TO_ESTABLISHMENT" as const,
+    };
+  }
+
+  return null;
+}
 
 // ── Component ──
 
 export function OrderTrackerClient({
   data: initialData,
   currentUserId,
-  currentUserRole,
   apiToken,
 }: OrderTrackerClientProps) {
   const [data, setData] = useState(initialData);
@@ -98,7 +117,7 @@ export function OrderTrackerClient({
   const [isPending, startTransition] = useTransition();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { booking, mission, service, freelance, establishment, conversation, quotes, timeline, invoice, review } = data;
+  const { booking, mission, service, requester, provider, conversation, quotes, timeline, invoice, review } = data;
 
   // SSE — real-time updates
   const handleSSE = useCallback((event: OrderSSEEvent) => {
@@ -117,7 +136,11 @@ export function OrderTrackerClient({
     onEvent: handleSSE,
   });
 
-  const counterpart = currentUserRole === "FREELANCE" ? establishment : freelance;
+  const isRequester = requester.id === currentUserId;
+  const isProvider = provider.id === currentUserId;
+  const currentParticipant = isProvider ? provider : requester;
+  const counterpart = isProvider ? requester : provider;
+  const reviewConfig = getReviewConfig(currentParticipant, counterpart);
   const title = mission?.title ?? service?.title ?? "Commande";
   const statusConfig = STATUS_MAP[booking.status] ?? { label: booking.status, variant: "quiet" as const };
 
@@ -201,6 +224,22 @@ export function OrderTrackerClient({
     });
   }
 
+  function handleConfirmServiceBooking() {
+    startTransition(async () => {
+      try {
+        await confirmBookingLine({ bookingId: booking.id });
+        toast.success("Réservation confirmée. 1 crédit a été consommé et la facture est disponible.");
+        window.location.reload();
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Impossible de confirmer cette réservation.",
+        );
+      }
+    });
+  }
+
   // ── Render helpers ──
 
   function renderTimeline() {
@@ -243,7 +282,11 @@ export function OrderTrackerClient({
   function renderActionPanel() {
     const actions: React.ReactNode[] = [];
 
-    if (currentUserRole === "FREELANCE" && (booking.status === "PENDING" || booking.status === "QUOTE_SENT")) {
+    if (
+      isProvider &&
+      service?.pricingType === "QUOTE" &&
+      (booking.status === "PENDING" || booking.status === "QUOTE_SENT")
+    ) {
       actions.push(
         <Button
           key="create-quote"
@@ -256,8 +299,28 @@ export function OrderTrackerClient({
       );
     }
 
+    const canConfirmServiceBooking =
+      isProvider &&
+      service &&
+      ((service.pricingType !== "QUOTE" && booking.status === "PENDING") ||
+        booking.status === "QUOTE_ACCEPTED");
+
+    if (canConfirmServiceBooking) {
+      actions.push(
+        <Button
+          key="confirm-service-booking"
+          onClick={handleConfirmServiceBooking}
+          disabled={isPending}
+          className="w-full bg-[hsl(var(--color-teal-500))] hover:bg-[hsl(var(--color-teal-600))] text-white"
+        >
+          <CheckCircle2 className="mr-2 h-4 w-4" />
+          Valider la réservation
+        </Button>,
+      );
+    }
+
     // Review CTA for completed orders
-    if (REVIEWABLE_STATUSES.has(booking.status) && !review) {
+    if (REVIEWABLE_STATUSES.has(booking.status) && !review && reviewConfig) {
       actions.push(
         <Button
           key="leave-review"
@@ -423,7 +486,7 @@ export function OrderTrackerClient({
           <QuoteCard
             key={q.id}
             quote={q}
-            currentUserRole={currentUserRole}
+            canAct={isRequester}
             onAccept={() => handleAcceptQuote(q.id)}
             onReject={() => handleRejectQuote(q.id)}
             isPending={isPending}
@@ -573,11 +636,11 @@ export function OrderTrackerClient({
         onOpenChange={setShowReviewModal}
         targetName={counterpart.firstName ? `${counterpart.firstName} ${counterpart.lastName ?? ""}`.trim() : counterpart.email}
         context={title}
-        reviewerSide={currentUserRole === "ESTABLISHMENT" ? "establishment" : "freelance"}
+        reviewerSide={reviewConfig?.reviewerSide ?? "freelance"}
         onSubmit={(reviewData) => {
-          const roleType = currentUserRole === "ESTABLISHMENT"
-            ? "ESTABLISHMENT_TO_FREELANCE" as const
-            : "FREELANCE_TO_ESTABLISHMENT" as const;
+          if (!reviewConfig) {
+            return;
+          }
           const comment = [reviewData.text.trim(), reviewData.tags.length > 0 ? `Tags: ${reviewData.tags.join(", ")}` : ""].filter(Boolean).join("\n\n") || undefined;
 
           startTransition(async () => {
@@ -585,7 +648,7 @@ export function OrderTrackerClient({
               bookingId: booking.id,
               rating: reviewData.rating,
               comment,
-              type: roleType,
+              type: reviewConfig.type,
             });
             if (!("error" in result)) {
               setShowReviewModal(false);

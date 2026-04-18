@@ -12,6 +12,13 @@ const CREDIT_PACKS: Record<CreditPackType, { amount: number; credits: number }> 
     [CreditPackType.ENTERPRISE]: { amount: 600, credits: 5 },
 };
 
+export type CreditPurchaseHistoryItem = {
+    id: string;
+    amount: number;
+    creditsAdded: number;
+    createdAt: Date;
+};
+
 @Injectable()
 export class UsersService {
     constructor(private readonly prisma: PrismaService) { }
@@ -130,6 +137,29 @@ export class UsersService {
         return {
             availableCredits: user.profile?.availableCredits ?? 0,
         };
+    }
+
+    async getCreditHistory(userId: string): Promise<CreditPurchaseHistoryItem[]> {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { id: true },
+        });
+
+        if (!user) {
+            throw new NotFoundException("Utilisateur introuvable");
+        }
+
+        return this.prisma.packPurchase.findMany({
+            where: { establishmentId: userId },
+            orderBy: { createdAt: "desc" },
+            take: 10,
+            select: {
+                id: true,
+                amount: true,
+                creditsAdded: true,
+                createdAt: true,
+            },
+        });
     }
 
     async buyCredits(userId: string, dto: BuyCreditsDto) {

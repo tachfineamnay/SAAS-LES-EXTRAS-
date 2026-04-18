@@ -16,18 +16,21 @@ export function ServiceDetailActions({ serviceId, pricingType, viewerRole, isOwn
   const openBookServiceModal = useUIStore((s) => s.openBookServiceModal);
   const openQuoteRequestModal = useUIStore((s) => s.openQuoteRequestModal);
 
-  if (viewerRole !== "ESTABLISHMENT") {
-    if (isOwner) {
-      return (
-        <Button size="lg" className="w-full text-md h-12 shadow-md hover:shadow-lg" asChild>
-          <Link href="/dashboard/ateliers">Gérer cet atelier</Link>
-        </Button>
-      );
-    }
+  if (isOwner) {
+    return (
+      <Button size="lg" className="w-full text-md h-12 shadow-md hover:shadow-lg" asChild>
+        <Link href="/dashboard/ateliers">Gérer ce service</Link>
+      </Button>
+    );
+  }
 
+  const canRequestService =
+    viewerRole === "ESTABLISHMENT" || viewerRole === "FREELANCE";
+
+  if (!canRequestService) {
     return (
       <Button size="lg" variant="outline" className="w-full text-md h-12" disabled>
-        Réservation réservée aux établissements
+        Action indisponible
       </Button>
     );
   }

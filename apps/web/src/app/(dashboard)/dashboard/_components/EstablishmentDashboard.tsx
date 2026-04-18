@@ -40,7 +40,8 @@ export interface EstablishmentDashboardProps {
     quotesError: string | null;
     invoices: SerializedInvoice[];
     invoicesError: string | null;
-    availableCredits: number;
+    availableCredits: number | null;
+    creditsError: string | null;
     pendingCandidatures: number;
     awaitingPaymentBookings: BookingLine[];
     confirmedBookings: BookingLine[];
@@ -59,6 +60,7 @@ export function EstablishmentDashboard({
     invoices,
     invoicesError,
     availableCredits,
+    creditsError,
     pendingCandidatures,
     awaitingPaymentBookings,
     confirmedBookings,
@@ -199,7 +201,7 @@ export function EstablishmentDashboard({
                     subtitle="Solde de recrutement"
                     viewAllHref="/dashboard/packs"
                 >
-                    <CreditsWidget credits={availableCredits} />
+                    <CreditsWidget credits={availableCredits} error={creditsError} />
                 </DashboardWidget>
 
                 {/* Payment validation */}

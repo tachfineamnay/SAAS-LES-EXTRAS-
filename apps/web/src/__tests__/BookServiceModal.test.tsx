@@ -5,6 +5,7 @@ import { BookServiceModal } from "@/components/modals/BookServiceModal";
 const mockCloseBookServiceModal = vi.fn();
 const mockRefresh = vi.fn();
 const mockToastSuccess = vi.fn();
+const mockToastError = vi.fn();
 const mockGetService = vi.fn();
 const mockBookService = vi.fn();
 
@@ -28,6 +29,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("sonner", () => ({
   toast: {
     success: (...args: unknown[]) => mockToastSuccess(...args),
+    error: (...args: unknown[]) => mockToastError(...args),
   },
 }));
 
@@ -46,6 +48,7 @@ describe("BookServiceModal", () => {
     mockGetService.mockResolvedValue({
       id: "service-1",
       title: "Atelier test",
+      type: "WORKSHOP",
       pricingType: "SESSION",
       price: 200,
       pricePerParticipant: null,
@@ -84,14 +87,14 @@ describe("BookServiceModal", () => {
         undefined,
         1,
       );
-      expect(mockToastSuccess).toHaveBeenCalled();
+      expect(mockToastSuccess).toHaveBeenCalledWith("Demande envoyée au prestataire !");
       expect(mockRefresh).toHaveBeenCalled();
     });
   }, 15000);
 
   it("réservation refusée (doublon) : affiche un message lisible sans fermer la modale", async () => {
     mockBookService.mockResolvedValue({
-      error: "Vous avez déjà une demande active pour cet atelier.",
+      error: "Vous avez déjà une demande active pour ce service.",
     });
 
     render(<BookServiceModal />);
@@ -111,7 +114,7 @@ describe("BookServiceModal", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Vous avez déjà une demande active pour cet atelier."),
+        screen.getByText("Vous avez déjà une demande active pour ce service."),
       ).toBeInTheDocument();
     });
     expect(mockCloseBookServiceModal).not.toHaveBeenCalled();
@@ -119,7 +122,7 @@ describe("BookServiceModal", () => {
 
   it("réservation refusée (erreur métier) : affiche le message dans la modale", async () => {
     mockBookService.mockResolvedValue({
-      error: "Cet atelier n'est plus disponible à la réservation.",
+      error: "Ce service n'est plus disponible à la réservation.",
     });
 
     render(<BookServiceModal />);
@@ -139,8 +142,59 @@ describe("BookServiceModal", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Cet atelier n'est plus disponible à la réservation."),
+        screen.getByText("Ce service n'est plus disponible à la réservation."),
       ).toBeInTheDocument();
     });
+  });
+
+  it("applique la même validation de capacité pour une formation", async () => {
+    mockGetService.mockResolvedValue({
+      id: "service-2",
+      title: "Formation test",
+      type: "TRAINING",
+      pricingType: "SESSION",
+      price: 250,
+      pricePerParticipant: null,
+      durationMinutes: 120,
+      capacity: 2,
+      slots: [{ date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10), heureDebut: "09:00", heureFin: "11:00" }],
+    });
+
+    render(<BookServiceModal />);
+
+    await waitFor(() => {
+      expect(mockGetService).toHaveBeenCalled();
+    });
+
+    const slotButton = screen
+      .getAllByRole("button")
+      .find((button) => button.textContent?.includes("09:00"));
+    fireEvent.click(slotButton!);
+
+    fireEvent.click(screen.getByRole("button", { name: /suivant/i }));
+
+    fireEvent.change(screen.getByLabelText(/nombre de participants/i), {
+      target: { value: "3" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /suivant/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("La capacité maximale de ce service est de 2 participants."),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("affiche une erreur visible si le chargement du service échoue", async () => {
+    mockGetService.mockRejectedValue(new Error("Service temporairement indisponible"));
+
+    render(<BookServiceModal />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Service temporairement indisponible")).toBeInTheDocument();
+      expect(mockToastError).toHaveBeenCalledWith("Service temporairement indisponible");
+    });
+    expect(screen.getByRole("button", { name: /fermer/i })).toBeInTheDocument();
   });
 });

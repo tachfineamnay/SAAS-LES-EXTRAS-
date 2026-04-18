@@ -304,7 +304,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 />
 
                 <p className="text-xs text-center text-muted-foreground px-2">
-                  Vous ne serez débité qu&apos;une fois la mission validée.
+                  Votre demande est transmise au freelance avant confirmation.
                 </p>
               </CardContent>
             </Card>

@@ -122,6 +122,31 @@ describe("ServicesService", () => {
       expect(mailService.sendWorkshopBookingEmail).toHaveBeenCalled();
     });
 
+    it("autorise aussi un freelance à réserver une formation", async () => {
+      const scheduledAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+
+      prisma.service.findUnique.mockResolvedValue({
+        ...activeService,
+        id: "service-2",
+        title: "Formation Snoezelen",
+        type: "TRAINING",
+      });
+      prisma.booking.findFirst.mockResolvedValue(null);
+      prisma.booking.create.mockResolvedValue({ id: "booking-2" });
+      prisma.user.findUnique.mockResolvedValue({ email: "freelance@example.com" });
+
+      await service.bookService("service-2", "free-2", scheduledAt, "Je réserve pour mon équipe", 3);
+
+      expect(prisma.booking.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          establishmentId: "free-2",
+          freelanceId: "free-1",
+          serviceId: "service-2",
+          nbParticipants: 3,
+        }),
+      });
+    });
+
     it("rejette un doublon actif", async () => {
       const scheduledAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
@@ -151,6 +176,32 @@ describe("ServicesService", () => {
       await expect(
         service.bookService("service-1", "est-1", new Date(Date.now() - 60 * 1000), undefined, 2),
       ).rejects.toThrow(BadRequestException);
+      expect(prisma.booking.findFirst).not.toHaveBeenCalled();
+    });
+
+    it("rejette un brouillon même pour une formation", async () => {
+      const scheduledAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      prisma.service.findUnique.mockResolvedValue({
+        ...activeService,
+        status: "DRAFT",
+        type: "TRAINING",
+      });
+
+      await expect(
+        service.bookService("service-1", "free-2", scheduledAt, undefined, 2),
+      ).rejects.toThrow("Ce service n'est plus disponible à la réservation.");
+      expect(prisma.booking.findFirst).not.toHaveBeenCalled();
+    });
+
+    it("interdit au propriétaire de réserver son propre service", async () => {
+      const scheduledAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      prisma.service.findUnique.mockResolvedValue(activeService);
+
+      await expect(
+        service.bookService("service-1", "free-1", scheduledAt, undefined, 2),
+      ).rejects.toThrow("Vous ne pouvez pas réserver votre propre service.");
       expect(prisma.booking.findFirst).not.toHaveBeenCalled();
     });
   });

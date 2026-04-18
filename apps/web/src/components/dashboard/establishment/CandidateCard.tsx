@@ -59,7 +59,7 @@ export function CandidateCard({
 
     if (result.ok) {
       toast.success("Candidat accepté !", {
-        description: "La mission a été assignée. Les autres candidatures sont automatiquement rejetées.",
+        description: "La mission est validée, 1 crédit a été consommé et la facture est disponible.",
       });
       router.refresh();
     } else {

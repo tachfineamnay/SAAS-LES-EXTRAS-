@@ -20,7 +20,7 @@ const QUOTE_STATUS: Record<string, { label: string; variant: "success" | "warnin
 
 type QuoteCardProps = {
   quote: OrderQuote;
-  currentUserRole: "FREELANCE" | "ESTABLISHMENT";
+  canAct: boolean;
   onAccept: () => void;
   onReject: () => void;
   isPending: boolean;
@@ -29,14 +29,14 @@ type QuoteCardProps = {
 
 export function QuoteCard({
   quote,
-  currentUserRole,
+  canAct,
   onAccept,
   onReject,
   isPending,
   apiToken,
 }: QuoteCardProps) {
   const statusConfig = QUOTE_STATUS[quote.status] ?? { label: quote.status, variant: "quiet" as const };
-  const canAct = currentUserRole === "ESTABLISHMENT" && quote.status === "SENT";
+  const canManageQuote = canAct && quote.status === "SENT";
 
   return (
     <div className="rounded-xl border bg-card p-4 space-y-3">
@@ -66,15 +66,11 @@ export function QuoteCard({
       {/* Totals */}
       <div className="space-y-1 text-sm">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Sous-total HT</span>
+          <span className="text-muted-foreground">Sous-total</span>
           <span className="tabular-nums">{quote.subtotalHT.toFixed(2)} €</span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">TVA ({(quote.vatRate * 100).toFixed(0)} %)</span>
-          <span className="tabular-nums">{quote.vatAmount.toFixed(2)} €</span>
-        </div>
         <div className="flex justify-between font-semibold">
-          <span>Total TTC</span>
+          <span>Montant</span>
           <span className="tabular-nums">{quote.totalTTC.toFixed(2)} €</span>
         </div>
       </div>
@@ -118,7 +114,7 @@ export function QuoteCard({
             PDF
           </Button>
         )}
-        {canAct && (
+        {canManageQuote && (
           <>
             <Button
               size="sm"

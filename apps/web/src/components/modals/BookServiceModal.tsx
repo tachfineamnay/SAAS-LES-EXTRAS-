@@ -36,6 +36,7 @@ export function BookServiceModal() {
   const router = useRouter();
 
   const [service, setService] = useState<SerializedService | null>(null);
+  const [isLoadingService, setIsLoadingService] = useState(false);
   const [step, setStep] = useState<Step>(0);
   const [selectedSlot, setSelectedSlot] = useState<ServiceSlot | null>(null);
   const [manualDate, setManualDate] = useState("");
@@ -46,10 +47,45 @@ export function BookServiceModal() {
 
   useEffect(() => {
     if (isOpen && serviceId) {
-      getService(serviceId).then((nextService) => {
-        setService(nextService);
-        setErrors({});
-      });
+      let cancelled = false;
+      setIsLoadingService(true);
+      setService(null);
+      setErrors({});
+
+      getService(serviceId)
+        .then((nextService) => {
+          if (cancelled) {
+            return;
+          }
+
+          setService(nextService);
+          if (!nextService) {
+            setErrors({
+              submit: "Ce service n'est plus accessible.",
+            });
+          }
+        })
+        .catch((error) => {
+          if (cancelled) {
+            return;
+          }
+
+          const message =
+            error instanceof Error && error.message.trim()
+              ? error.message
+              : "Impossible de charger ce service.";
+          setErrors({ submit: message });
+          toast.error(message);
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setIsLoadingService(false);
+          }
+        });
+
+      return () => {
+        cancelled = true;
+      };
     }
   }, [isOpen, serviceId]);
 
@@ -58,6 +94,7 @@ export function BookServiceModal() {
     setTimeout(() => {
       setService(null);
       setStep(0);
+      setIsLoadingService(false);
       setSelectedSlot(null);
       setManualDate("");
       setNbParticipants(1);
@@ -117,7 +154,7 @@ export function BookServiceModal() {
     if (service?.capacity && nbParticipants > service.capacity) {
       setErrors((current) => ({
         ...current,
-        participants: `La capacité maximale de ${service?.type === "TRAINING" ? "cette formation" : "cet atelier"} est de ${service.capacity} participants.`,
+        participants: `La capacité maximale de ce service est de ${service.capacity} participants.`,
       }));
       return false;
     }
@@ -178,7 +215,7 @@ export function BookServiceModal() {
         return;
       }
 
-      toast.success("Demande envoyée au freelance !");
+      toast.success("Demande envoyée au prestataire !");
       handleClose();
       router.refresh();
     });
@@ -191,13 +228,14 @@ export function BookServiceModal() {
   });
   const hasOnlyPastSlots = slots.length > 0 && availableSlots.length === 0;
   const serviceLabelWithArticle =
-    service?.type === "TRAINING" ? "la formation" : "l'atelier";
+    service?.type === "TRAINING" ? "la formation" : service ? "l'atelier" : "le service";
   const serviceLabelCapitalized =
-    service?.type === "TRAINING" ? "Formation" : "Atelier";
+    service?.type === "TRAINING" ? "Formation" : service ? "Atelier" : "Service";
   const totalPrice =
     service?.pricingType === "PER_PARTICIPANT" && service.pricePerParticipant
       ? service.pricePerParticipant * nbParticipants
       : service?.price ?? 0;
+  const isServiceUnavailable = !isLoadingService && !service;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
@@ -207,27 +245,46 @@ export function BookServiceModal() {
           <DialogDescription>{service?.title ?? "Chargement…"}</DialogDescription>
         </DialogHeader>
 
-        <div className="mb-2 flex items-center gap-2">
-          {(["Créneau", "Participants", "Récap"] as const).map((label, index) => (
-            <div key={label} className="flex flex-1 items-center">
-              <div
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
-                  index < step
-                    ? "bg-primary text-primary-foreground"
-                    : index === step
-                    ? "border-2 border-primary bg-[hsl(var(--color-teal-100))] text-[hsl(var(--color-teal-700))]"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {index < step ? <Check className="h-3 w-3" /> : index + 1}
+        {!isServiceUnavailable && (
+          <div className="mb-2 flex items-center gap-2">
+            {(["Créneau", "Participants", "Récap"] as const).map((label, index) => (
+              <div key={label} className="flex flex-1 items-center">
+                <div
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                    index < step
+                      ? "bg-primary text-primary-foreground"
+                      : index === step
+                      ? "border-2 border-primary bg-[hsl(var(--color-teal-100))] text-[hsl(var(--color-teal-700))]"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {index < step ? <Check className="h-3 w-3" /> : index + 1}
+                </div>
+                {index < 2 && <div className={`mx-1 h-0.5 flex-1 ${index < step ? "bg-primary" : "bg-border"}`} />}
               </div>
-              {index < 2 && <div className={`mx-1 h-0.5 flex-1 ${index < step ? "bg-primary" : "bg-border"}`} />}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         <div className="min-h-[180px] space-y-4 py-2">
-          {step === 0 && (
+          {isLoadingService && (
+            <div className="flex min-h-[180px] items-center justify-center text-sm text-muted-foreground">
+              Chargement du service…
+            </div>
+          )}
+
+          {isServiceUnavailable && errors.submit && (
+            <div className="flex min-h-[180px] items-center justify-center">
+              <div
+                className="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700"
+                role="alert"
+              >
+                {errors.submit}
+              </div>
+            </div>
+          )}
+
+          {!isLoadingService && !isServiceUnavailable && step === 0 && (
             <div className="space-y-3">
               <Label className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4 text-primary" />
@@ -302,7 +359,7 @@ export function BookServiceModal() {
             </div>
           )}
 
-          {step === 1 && (
+          {!isLoadingService && !isServiceUnavailable && step === 1 && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="nb-part" className="flex items-center gap-2">
@@ -348,7 +405,7 @@ export function BookServiceModal() {
             </div>
           )}
 
-          {step === 2 && (selectedSlot || manualDate) && (
+          {!isLoadingService && !isServiceUnavailable && step === 2 && (selectedSlot || manualDate) && (
             <div className="space-y-3 rounded-xl border bg-[hsl(var(--surface-2))] p-4 text-sm">
               <p className="font-semibold text-foreground">Récapitulatif de votre demande</p>
               <div className="space-y-1.5 text-muted-foreground">
@@ -403,7 +460,7 @@ export function BookServiceModal() {
             </div>
           )}
 
-          {errors.submit && (
+          {!isServiceUnavailable && errors.submit && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
               {errors.submit}
             </div>
@@ -411,23 +468,29 @@ export function BookServiceModal() {
         </div>
 
         <div className="flex items-center justify-between border-t pt-2">
-          <Button
-            variant="ghost"
-            onClick={() => setStep((currentStep) => (Math.max(currentStep - 1, 0) as Step))}
-            disabled={step === 0}
-            className="gap-1"
-          >
-            <ChevronLeft className="h-4 w-4" /> Précédent
-          </Button>
-
-          {step < 2 ? (
-            <Button onClick={goNext} className="gap-1">
-              Suivant <ChevronRight className="h-4 w-4" />
-            </Button>
+          {isServiceUnavailable ? (
+            <Button onClick={handleClose}>Fermer</Button>
           ) : (
-            <Button onClick={onSubmit} disabled={isPending}>
-              {isPending ? "Envoi…" : "Envoyer la demande"}
-            </Button>
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => setStep((currentStep) => (Math.max(currentStep - 1, 0) as Step))}
+                disabled={step === 0 || isLoadingService}
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" /> Précédent
+              </Button>
+
+              {step < 2 ? (
+                <Button onClick={goNext} className="gap-1" disabled={isLoadingService}>
+                  Suivant <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button onClick={onSubmit} disabled={isPending || isLoadingService}>
+                  {isPending ? "Envoi…" : "Envoyer la demande"}
+                </Button>
+              )}
+            </>
           )}
         </div>
       </DialogContent>

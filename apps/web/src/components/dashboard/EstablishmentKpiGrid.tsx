@@ -6,7 +6,7 @@ import { KpiTile } from "./KpiTile";
 interface EstablishmentKpiGridProps {
     activeMissions: number;
     ongoingBookings: number;
-    availableCredits: number;
+    availableCredits: number | null;
     averageRating: number | null;
     completedThisMonth?: number;
 }
@@ -38,7 +38,7 @@ export function EstablishmentKpiGrid({
             />
             <KpiTile
                 label="Crédits disponibles"
-                value={availableCredits}
+                value={availableCredits ?? "—"}
                 icon={DollarSign}
                 iconColor="emerald"
                 index={2}

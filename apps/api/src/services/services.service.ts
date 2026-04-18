@@ -168,7 +168,7 @@ export class ServicesService {
 
   async bookService(
     serviceId: string,
-    establishmentId: string,
+    requesterId: string,
     date: Date,
     message?: string,
     nbParticipants?: number,
@@ -187,22 +187,21 @@ export class ServicesService {
     });
 
     if (!service) {
-      throw new NotFoundException("Atelier ou formation introuvable.");
+      throw new NotFoundException("Service introuvable.");
     }
-
-    const serviceDemonstrative =
-      service.type === "TRAINING" ? "Cette formation" : "Cet atelier";
-    const serviceTarget =
-      service.type === "TRAINING" ? "cette formation" : "cet atelier";
 
     if (service.status !== "ACTIVE") {
       throw new BadRequestException(
-        `${serviceDemonstrative} n'est plus disponible à la réservation.`,
+        "Ce service n'est plus disponible à la réservation.",
       );
     }
 
     if (date < new Date()) {
       throw new BadRequestException("La date de réservation ne peut pas être dans le passé.");
+    }
+
+    if (requesterId === service.ownerId) {
+      throw new BadRequestException("Vous ne pouvez pas réserver votre propre service.");
     }
 
     if (!Number.isInteger(normalizedParticipants) || normalizedParticipants < 1) {
@@ -211,7 +210,7 @@ export class ServicesService {
 
     if (normalizedParticipants > service.capacity) {
       throw new BadRequestException(
-        `Le nombre de participants ne peut pas dépasser la capacité maximale de ${serviceTarget} (${service.capacity}).`,
+        `Le nombre de participants ne peut pas dépasser la capacité maximale de ce service (${service.capacity}).`,
       );
     }
 
@@ -219,7 +218,7 @@ export class ServicesService {
     const existingBooking = await this.prisma.booking.findFirst({
       where: {
         serviceId,
-        establishmentId,
+        establishmentId: requesterId,
         status: {
           in: ACTIVE_SERVICE_BOOKING_STATUSES,
         },
@@ -229,14 +228,14 @@ export class ServicesService {
 
     if (existingBooking) {
       throw new ConflictException(
-        `Vous avez déjà une demande active pour ${serviceTarget}.`,
+        "Vous avez déjà une demande active pour ce service.",
       );
     }
 
     const booking = await this.prisma.booking.create({
       data: {
         status: BookingStatus.PENDING,
-        establishmentId,
+        establishmentId: requesterId,
         freelanceId: service.ownerId,
         serviceId: service.id,
         scheduledAt: date,
@@ -245,16 +244,16 @@ export class ServicesService {
       },
     });
 
-    // C2: Send workshop booking confirmation email (non-blocking)
-    const establishment = await this.prisma.user.findUnique({
-      where: { id: establishmentId },
+    // Notify the requester asynchronously without blocking booking creation.
+    const requester = await this.prisma.user.findUnique({
+      where: { id: requesterId },
       select: { email: true },
     });
 
-    if (establishment?.email) {
+    if (requester?.email) {
       const dateStr = format(date, "dd/MM/yyyy");
       this.mailService
-        .sendWorkshopBookingEmail(establishment.email, service.title, dateStr)
+        .sendWorkshopBookingEmail(requester.email, service.title, dateStr)
         .catch((e: unknown) => console.error("workshopBookingEmail failed:", e));
     }
 

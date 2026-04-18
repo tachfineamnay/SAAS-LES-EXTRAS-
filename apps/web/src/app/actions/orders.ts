@@ -111,6 +111,8 @@ export type OrderTrackerData = {
   };
   mission?: OrderMission;
   service?: OrderService;
+  requester: OrderParticipant;
+  provider: OrderParticipant;
   freelance: OrderParticipant;
   establishment: OrderParticipant;
   conversation?: { id: string; messages: OrderMessage[] };

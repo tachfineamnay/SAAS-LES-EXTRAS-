@@ -44,7 +44,7 @@ const FEATURES = [
     {
         icon: BarChart3,
         title: "Suivi complet",
-        desc: "Dashboard en temps réel, facturation automatique, historique des missions. Tout est centralisé.",
+        desc: "Dashboard en temps réel, historique des missions et suivi des demandes. Tout est centralisé.",
         color: "violet" as const,
     },
 ];
@@ -52,7 +52,7 @@ const FEATURES = [
 const FAQ = [
     {
         q: "Comment fonctionne le système de crédits ?",
-        a: "Vous achetez des packs de crédits qui sont débités à chaque mission confirmée. Les crédits n'expirent jamais.",
+        a: "Vous achetez des packs de crédits ajoutés à votre solde établissement. Le dashboard vous permet de suivre votre solde et vos achats.",
     },
     {
         q: "Les freelances sont-ils vraiment vérifiés ?",
@@ -115,7 +115,7 @@ export default function EtablissementsPage() {
                         </motion.p>
                         <motion.div variants={rise}>
                             <Button variant="coral" size="lg" className="min-h-[52px] text-base gap-2" asChild>
-                                <Link href="/register?role=establishment">
+                                <Link href="/register?role=ESTABLISHMENT">
                                     Créer mon compte établissement
                                     <ArrowRight className="h-5 w-5" aria-hidden="true" />
                                 </Link>
@@ -199,7 +199,7 @@ export default function EtablissementsPage() {
                     <h2 className="font-display text-heading-lg mb-4">Prêt à simplifier vos recrutements ?</h2>
                     <p className="text-muted-foreground mb-8">Inscription gratuite, sans engagement.</p>
                     <Button variant="coral" size="lg" className="min-h-[52px] text-base gap-2" asChild>
-                        <Link href="/register?role=establishment">
+                        <Link href="/register?role=ESTABLISHMENT">
                             Commencer maintenant
                             <ArrowRight className="h-5 w-5" aria-hidden="true" />
                         </Link>

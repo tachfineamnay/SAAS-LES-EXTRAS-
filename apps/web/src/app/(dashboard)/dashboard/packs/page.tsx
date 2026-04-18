@@ -1,70 +1,68 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { buyPack, type PackType } from "@/actions/credits";
+import {
+    buyPack,
+    getCredits,
+    getCreditPurchaseHistory,
+    type CreditPurchaseHistoryItem,
+    type PackType,
+} from "@/actions/credits";
 import { Button } from "@/components/ui/button";
 import { Check, Star } from "lucide-react";
+import { CREDIT_PACKS } from "@/lib/credit-packs";
 
-const PACKS = [
-    {
-        id: "STARTER",
-        name: "Starter",
-        credits: 1,
-        price: 150,
-        features: [
-            "1 mise en relation",
-            "Support standard",
-            "Validité illimitée",
-            "Facturation automatique"
-        ],
-        popular: false,
-        description: "Idéal pour un besoin ponctuel."
-    },
-    {
-        id: "PRO",
-        name: "Pro",
-        credits: 3,
-        price: 400,
-        features: [
-            "3 mises en relation",
-            "Économie de 50€",
-            "Support prioritaire",
-            "Badge 'Recruteur'",
-            "Accès aux profils vérifiés"
-        ],
-        popular: true,
-        description: "Le choix préféré des directeurs."
-    },
-    {
-        id: "ENTERPRISE",
-        name: "Entreprise",
-        credits: 5,
-        price: 600,
-        features: [
-            "5 mises en relation",
-            "Économie de 150€",
-            "Account Manager dédié",
-            "Badge 'Partenaire'",
-            "Priorité sur le support",
-            "Reporting mensuel"
-        ],
-        popular: false,
-        description: "Pour les besoins réguliers."
-    }
-] as const;
+const currencyFormatter = new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+});
+
+const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+});
 
 export default function PacksPage() {
     const [isPending, startTransition] = useTransition();
+    const [availableCredits, setAvailableCredits] = useState<number | null>(null);
+    const [purchaseHistory, setPurchaseHistory] = useState<CreditPurchaseHistoryItem[]>([]);
+    const [summaryError, setSummaryError] = useState<string | null>(null);
+
+    const loadSummary = async () => {
+        try {
+            const [credits, history] = await Promise.all([
+                getCredits(),
+                getCreditPurchaseHistory(),
+            ]);
+            setAvailableCredits(credits);
+            setPurchaseHistory(history);
+            setSummaryError(null);
+        } catch (error) {
+            setSummaryError(
+                error instanceof Error
+                    ? error.message
+                    : "Impossible de charger le solde et l'historique.",
+            );
+        }
+    };
+
+    useEffect(() => {
+        void loadSummary();
+    }, []);
 
     const handleBuyPack = (packId: PackType, packName: string, price: number) => {
-        if (confirm(`Confirmer l'achat du pack '${packName}' pour ${price}€ ?`)) {
+        if (confirm(`Confirmer l'ajout du pack '${packName}' pour ${price}€ ?`)) {
             startTransition(async () => {
                 const result = await buyPack(packId);
                 if ("error" in result) {
                     toast.error(result.error);
                 } else {
-                    toast.success(`Pack ${packName} acheté avec succès !`);
+                    setAvailableCredits(result.availableCredits);
+                    void loadSummary();
+                    toast.success(`Pack ${packName} ajouté au solde avec succès.`);
                 }
             });
         }
@@ -80,8 +78,68 @@ export default function PacksPage() {
                 </p>
             </div>
 
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="rounded-2xl border bg-card p-6 shadow-sm">
+                    <p className="text-sm font-medium text-muted-foreground">Solde disponible</p>
+                    <div className="mt-2 flex items-end gap-2">
+                        <span className="text-4xl font-extrabold">
+                            {availableCredits ?? "—"}
+                        </span>
+                        <span className="text-muted-foreground">
+                            crédit{availableCredits && availableCredits > 1 ? "s" : ""}
+                        </span>
+                    </div>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                        Chaque achat ajoute des crédits à votre solde. Un crédit est consommé lorsqu&apos;une réservation est validée.
+                    </p>
+                    {summaryError && (
+                        <p className="mt-3 text-sm text-destructive" role="alert">
+                            {summaryError}
+                        </p>
+                    )}
+                </div>
+
+                <div className="rounded-2xl border bg-card p-6 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">Historique récent</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Les 5 derniers achats visibles depuis le dashboard.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                        {purchaseHistory.slice(0, 5).length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                                Aucun achat enregistré pour le moment.
+                            </p>
+                        ) : (
+                            purchaseHistory.slice(0, 5).map((purchase) => (
+                                <div
+                                    key={purchase.id}
+                                    className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-3"
+                                >
+                                    <div>
+                                        <p className="text-sm font-medium">
+                                            {purchase.creditsAdded} crédit{purchase.creditsAdded > 1 ? "s" : ""} ajouté{purchase.creditsAdded > 1 ? "s" : ""}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {dateFormatter.format(new Date(purchase.createdAt))}
+                                        </p>
+                                    </div>
+                                    <p className="text-sm font-semibold text-[hsl(var(--teal))]">
+                                        {currencyFormatter.format(purchase.amount)}
+                                    </p>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8">
-                {PACKS.map((pack) => (
+                {CREDIT_PACKS.map((pack) => (
                     <div
                         key={pack.id}
                         className={`relative flex flex-col rounded-2xl border bg-card p-8 shadow-sm transition-all hover:shadow-xl ${pack.popular ? 'border-[hsl(var(--teal)/0.3)] ring-2 ring-[hsl(var(--teal)/0.4)] scale-105 z-10' : 'hover:border-[hsl(var(--teal)/0.3)]'
@@ -102,10 +160,9 @@ export default function PacksPage() {
                         <div className="mb-6 pb-6 border-b border-border/50">
                             <div className="flex items-baseline">
                                 <span className="text-5xl font-extrabold">{pack.price}€</span>
-                                <span className="text-muted-foreground ml-2 font-medium">HT</span>
                             </div>
                             <p className="text-sm font-medium mt-2 text-[hsl(var(--teal))]">
-                                Soit {Math.round(pack.price / pack.credits)}€ / recrutement
+                                Soit {Math.round(pack.price / pack.credits)}€ / crédit ajouté
                             </p>
                         </div>
 
@@ -130,7 +187,7 @@ export default function PacksPage() {
                         </Button>
 
                         <p className="text-xs text-center text-muted-foreground mt-4">
-                            Paiement sécurisé • Facture immédiate
+                            Achat ajouté au solde et visible dans l&apos;historique
                         </p>
                     </div>
                 ))}
@@ -144,15 +201,15 @@ export default function PacksPage() {
                 <div className="grid md:grid-cols-2 gap-6 text-sm text-muted-foreground">
                     <div>
                         <strong className="text-foreground block mb-1">Comment fonctionnent les crédits ?</strong>
-                        1 crédit = 1 mise en relation validée. Vous ne payez que lorsque vous confirmez un recrutement.
+                        Chaque achat ajoute des crédits à votre solde. Un crédit est consommé au moment où une réservation est validée.
                     </div>
                     <div>
                         <strong className="text-foreground block mb-1">Les crédits ont-ils une date d'expiration ?</strong>
                         Non, vos crédits sont valables sans limite de temps tant que votre compte est actif.
                     </div>
                     <div>
-                        <strong className="text-foreground block mb-1">Puis-je obtenir un remboursement ?</strong>
-                        Les packs ne sont pas remboursables, mais nous garantissons la qualité des profils.
+                        <strong className="text-foreground block mb-1">Où retrouver mes achats ?</strong>
+                        Les derniers achats sont affichés sur cette page avec leur montant, le nombre de crédits ajoutés et la date d&apos;achat.
                     </div>
                     <div>
                         <strong className="text-foreground block mb-1">Besoin de plus de 5 crédits ?</strong>

@@ -12,7 +12,7 @@ export function RevenueOverviewWidget({ invoices }: RevenueOverviewProps) {
     const currentYear = new Date().getFullYear();
 
     const currentMonthInvoices = invoices.filter(inv => {
-        const d = new Date(inv.booking.scheduledAt); // or createdAt? using booking date is better for "earned"
+        const d = new Date(inv.booking?.scheduledAt ?? inv.createdAt);
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
 
@@ -21,7 +21,7 @@ export function RevenueOverviewWidget({ invoices }: RevenueOverviewProps) {
         .reduce((acc, inv) => acc + inv.amount, 0);
 
     const pendingRevenue = invoices
-        .filter(inv => inv.status === "PENDING_PAYMENT")
+        .filter(inv => inv.status === "UNPAID")
         .reduce((acc, inv) => acc + inv.amount, 0);
 
     return (
@@ -36,7 +36,7 @@ export function RevenueOverviewWidget({ invoices }: RevenueOverviewProps) {
                 <CardContent>
                     <div className="text-2xl font-bold">{totalRevenue.toFixed(2)} €</div>
                     <p className="text-xs text-muted-foreground">
-                        Encusé sur {currentMonthInvoices.filter(i => i.status === "PAID").length} missions
+                        Encaissé sur {currentMonthInvoices.filter(i => i.status === "PAID").length} facture{currentMonthInvoices.filter(i => i.status === "PAID").length > 1 ? "s" : ""}
                     </p>
                 </CardContent>
             </Card>
@@ -51,7 +51,7 @@ export function RevenueOverviewWidget({ invoices }: RevenueOverviewProps) {
                 <CardContent>
                     <div className="text-2xl font-bold text-amber-600">{pendingRevenue.toFixed(2)} €</div>
                     <p className="text-xs text-muted-foreground">
-                        {invoices.filter(inv => inv.status === "PENDING_PAYMENT").length} factures en attente
+                        {invoices.filter(inv => inv.status === "UNPAID").length} facture{invoices.filter(inv => inv.status === "UNPAID").length > 1 ? "s" : ""} en attente
                     </p>
                 </CardContent>
             </Card>

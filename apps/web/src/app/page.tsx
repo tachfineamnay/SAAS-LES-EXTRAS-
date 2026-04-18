@@ -612,7 +612,7 @@ export default function HomePage() {
                   features={[
                     "Catalogue visible par tous les établissements",
                     "Réservation en 1 clic par les directeurs",
-                    "Paiement sécurisé & garanti",
+                    "Demandes centralisées sur la plateforme",
                     "Gestion planning intégrée",
                   ]}
                 >

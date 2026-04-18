@@ -35,7 +35,7 @@ const PERKS = [
     "Inscription gratuite, sans engagement",
     "Profil visible dès la validation",
     "Missions adaptées à votre secteur",
-    "Paiement sécurisé, facturation auto",
+    "Suivi clair des missions et des demandes",
 ];
 
 function SubmitButton() {
@@ -61,7 +61,8 @@ function SubmitButton() {
 
 function RegisterContent() {
     const searchParams = useSearchParams();
-    const defaultRole = searchParams.get("role") === "ESTABLISHMENT" ? "ESTABLISHMENT" : "FREELANCE";
+    const roleParam = searchParams.get("role")?.toUpperCase();
+    const defaultRole = roleParam === "ESTABLISHMENT" ? "ESTABLISHMENT" : "FREELANCE";
     const [role, setRole] = useState<"ESTABLISHMENT" | "FREELANCE">(defaultRole);
     const [state, formAction] = useFormState(register, initialState);
 

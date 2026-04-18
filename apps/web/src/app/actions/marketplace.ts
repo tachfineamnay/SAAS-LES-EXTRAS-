@@ -273,6 +273,44 @@ export type MesAtelierItem = SerializedService & {
   bookings?: MesAtelierBooking[];
 };
 
+export type UpdateServiceActionResult =
+  | { ok: true; data: SerializedService }
+  | { ok: false; error: string };
+
+export type DeleteServiceActionResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+function toReadableActionError(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim();
+  }
+
+  return fallback;
+}
+
+function revalidateServicePaths(id: string) {
+  revalidatePath(atelierInvalidationPaths.catalogue);
+  revalidatePath(atelierInvalidationPaths.bookings);
+  revalidatePath(atelierInvalidationPaths.dashboard);
+  revalidatePath(atelierInvalidationPaths.mesAteliers);
+  revalidatePath(`/marketplace/services/${id}`);
+  revalidatePath(`/ateliers/${id}`);
+}
+
+function isExpectedServiceVisibilityError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.trim().toLowerCase();
+  return (
+    message.includes("service not found") ||
+    message.includes("atelier ou formation introuvable") ||
+    message.includes("api request failed (404)")
+  );
+}
+
 export async function getMyAteliers(token?: string): Promise<MesAtelierItem[]> {
   const activeToken = token || (await getSession())?.token;
   if (!activeToken) return [];
@@ -301,38 +339,51 @@ export async function updateServiceAction(
   id: string,
   data: Record<string, unknown>,
   token?: string,
-): Promise<SerializedService | null> {
+) : Promise<UpdateServiceActionResult> {
   const activeToken = token || (await getSession())?.token;
-  if (!activeToken) return null;
+  if (!activeToken) {
+    return { ok: false, error: "Non connecté" };
+  }
 
   try {
-    return await apiRequest<SerializedService>(`/services/${id}`, {
+    const service = await apiRequest<SerializedService>(`/services/${id}`, {
       method: "PATCH",
       body: data,
       token: activeToken,
     });
+    revalidateServicePaths(id);
+    return { ok: true, data: service };
   } catch (error) {
     console.error("updateService error", error);
-    return null;
+    return {
+      ok: false,
+      error: toReadableActionError(error, "Impossible de mettre à jour ce service."),
+    };
   }
 }
 
 export async function deleteServiceAction(
   id: string,
   token?: string,
-): Promise<boolean> {
+) : Promise<DeleteServiceActionResult> {
   const activeToken = token || (await getSession())?.token;
-  if (!activeToken) return false;
+  if (!activeToken) {
+    return { ok: false, error: "Non connecté" };
+  }
 
   try {
     await apiRequest(`/services/${id}`, {
       method: "DELETE",
       token: activeToken,
     });
-    return true;
+    revalidateServicePaths(id);
+    return { ok: true };
   } catch (error) {
     console.error("deleteService error", error);
-    return false;
+    return {
+      ok: false,
+      error: toReadableActionError(error, "Impossible de supprimer ce service."),
+    };
   }
 }
 
@@ -355,8 +406,14 @@ export async function getService(id: string, token?: string): Promise<Serialized
       token: activeToken,
     });
   } catch (error) {
+    if (isExpectedServiceVisibilityError(error)) {
+      return null;
+    }
+
     console.error("GetService error:", error);
-    return null;
+    throw error instanceof Error
+      ? error
+      : new Error("Impossible de charger ce service.");
   }
 }
 
@@ -426,11 +483,11 @@ function getServiceBookingErrorMessage(error: unknown): string {
   const normalized = message.toLowerCase();
 
   if (normalized.includes("already") || normalized.includes("déjà")) {
-    return "Vous avez déjà une demande active pour cet atelier.";
+    return "Vous avez déjà une demande active pour ce service.";
   }
 
-  if (normalized.includes("service not found")) {
-    return "Atelier ou formation introuvable.";
+  if (normalized.includes("service not found") || normalized.includes("introuvable")) {
+    return "Service introuvable.";
   }
 
   return message || "Erreur lors de la réservation";

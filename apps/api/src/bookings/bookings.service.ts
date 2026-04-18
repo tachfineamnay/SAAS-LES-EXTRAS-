@@ -4,7 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { BookingStatus, ReliefMissionStatus, UserRole } from "@prisma/client";
+import { randomUUID } from "crypto";
+import { BookingStatus, Prisma, ReliefMissionStatus, ServiceType, UserRole } from "@prisma/client";
 import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
 import { PrismaService } from "../prisma/prisma.service";
 import { CancelBookingLineDto } from "./dto/cancel-booking-line.dto";
@@ -82,6 +83,10 @@ function parseLineType(value: string): BookingLineType {
   throw new BadRequestException("lineType must be MISSION or SERVICE_BOOKING");
 }
 
+function getServiceTypeLabel(type?: ServiceType | null): "Atelier" | "Formation" {
+  return type === "TRAINING" ? "Formation" : "Atelier";
+}
+
 @Injectable()
 export class BookingsService {
   constructor(
@@ -123,12 +128,143 @@ export class BookingsService {
     };
   }
 
-  private async generateInvoiceNumber(): Promise<string> {
-    const now = new Date();
-    const prefix = `LE-${format(now, "yyyyMM")}`;
-    const count = await this.prisma.invoice.count();
-    const seq = String(count + 1).padStart(4, "0");
-    return `${prefix}-${seq}`;
+  private generateInvoiceNumber(now = new Date()): string {
+    const uniqueSuffix = randomUUID().slice(0, 8).toUpperCase();
+    return `LE-${format(now, "yyyyMM")}-${uniqueSuffix}`;
+  }
+
+  private async consumeOneCreditOrThrow(
+    tx: Prisma.TransactionClient,
+    requesterId: string,
+  ): Promise<void> {
+    const result = await tx.profile.updateMany({
+      where: {
+        userId: requesterId,
+        availableCredits: {
+          gte: 1,
+        },
+      },
+      data: {
+        availableCredits: {
+          decrement: 1,
+        },
+      },
+    });
+
+    if (result.count > 0) {
+      return;
+    }
+
+    const requester = await tx.user.findUnique({
+      where: { id: requesterId },
+      select: { id: true },
+    });
+
+    if (!requester) {
+      throw new NotFoundException("Compte demandeur introuvable.");
+    }
+
+    throw new BadRequestException(
+      "Crédits insuffisants pour valider cette réservation. Ajoutez un pack avant de continuer.",
+    );
+  }
+
+  private calculateServiceAmount(
+    service: {
+      title: string;
+      price: number;
+      pricingType: string;
+      pricePerParticipant?: number | null;
+    },
+    nbParticipants?: number | null,
+    acceptedQuoteTotal?: number | null,
+  ): number {
+    if (service.pricingType === "PER_PARTICIPANT") {
+      if (service.pricePerParticipant == null) {
+        throw new BadRequestException("Le tarif par participant est manquant pour ce service.");
+      }
+
+      return Math.round(service.pricePerParticipant * (nbParticipants ?? 1) * 100) / 100;
+    }
+
+    if (service.pricingType === "QUOTE") {
+      if (acceptedQuoteTotal == null) {
+        throw new BadRequestException(
+          "Le devis accepté est requis avant de valider cette réservation.",
+        );
+      }
+
+      return Math.round(acceptedQuoteTotal * 100) / 100;
+    }
+
+    return Math.round(service.price * 100) / 100;
+  }
+
+  private async createInvoiceOnConfirmation(
+    tx: Prisma.TransactionClient,
+    booking: {
+      id: string;
+      nbParticipants?: number | null;
+      invoice?: { id: string } | null;
+      reliefMission?: {
+        dateStart: Date;
+        dateEnd: Date;
+        hourlyRate: number;
+        slots?: unknown;
+      } | null;
+      service?: {
+        title: string;
+        price: number;
+        pricingType: string;
+        pricePerParticipant?: number | null;
+      } | null;
+      quotes?: Array<{ totalTTC: number }>;
+    },
+  ): Promise<void> {
+    if (booking.invoice) {
+      return;
+    }
+
+    const amount = booking.reliefMission
+      ? this.calculateMissionAmount(booking.reliefMission)
+      : booking.service
+        ? this.calculateServiceAmount(
+            booking.service,
+            booking.nbParticipants,
+            booking.quotes?.[0]?.totalTTC,
+          )
+        : null;
+
+    if (amount == null) {
+      throw new BadRequestException("Impossible de générer la facture pour cette réservation.");
+    }
+
+    await tx.invoice.create({
+      data: {
+        bookingId: booking.id,
+        amount,
+        invoiceNumber: this.generateInvoiceNumber(),
+        status: "UNPAID",
+      },
+    });
+  }
+
+  private getBookingDisplayTitle(booking: {
+    reliefMission?: { title: string } | null;
+    service?: { title: string } | null;
+  }): string {
+    return booking.reliefMission?.title ?? booking.service?.title ?? "Réservation";
+  }
+
+  private getBookingKindLabel(booking: {
+    reliefMission?: unknown;
+    service?: { type?: ServiceType | null } | null;
+  }): string {
+    if (booking.reliefMission) {
+      return "mission";
+    }
+
+    return booking.service?.type === "TRAINING" ? "formation" : "atelier";
   }
 
   async getBookingsPageData(user: AuthenticatedUser): Promise<BookingsPageData> {
@@ -199,6 +335,7 @@ export class BookingsService {
               select: {
                 title: true,
                 price: true,
+                type: true,
                 owner: {
                   select: {
                     email: true,
@@ -238,6 +375,7 @@ export class BookingsService {
           relatedBookingId: activeBooking?.id,
           title: mission.title,
           amount: this.calculateMissionAmount(mission),
+          viewerSide: "REQUESTER",
           hasReview: (activeBooking?.reviews?.length ?? 0) > 0,
           invoiceUrl: activeBooking?.invoice ? `/invoices/${activeBooking.invoice.id}/download` : undefined,
         });
@@ -251,11 +389,12 @@ export class BookingsService {
           lineId: booking.id,
           lineType: "SERVICE_BOOKING",
           date: booking.scheduledAt.toISOString(),
-          typeLabel: "Atelier",
+          typeLabel: getServiceTypeLabel(booking.service?.type),
           interlocutor,
           status: booking.status,
           address: SERVICE_ADDRESS_PLACEHOLDER,
           contactEmail: interlocutor,
+          viewerSide: "REQUESTER",
           relatedBookingId: booking.id,
           title: booking.service?.title,
           amount: booking.service?.price,
@@ -313,16 +452,20 @@ export class BookingsService {
         }),
         this.prisma.booking.findMany({
           where: {
-            freelanceId: user.id,
             serviceId: {
               not: null,
             },
+            OR: [
+              { freelanceId: user.id },
+              { establishmentId: user.id },
+            ],
           },
           orderBy: {
             scheduledAt: "asc",
           },
           select: {
             id: true,
+            establishmentId: true,
             status: true,
             scheduledAt: true,
             establishment: {
@@ -334,6 +477,12 @@ export class BookingsService {
               select: {
                 title: true,
                 price: true,
+                type: true,
+                owner: {
+                  select: {
+                    email: true,
+                  },
+                },
               },
             },
             reviews: {
@@ -368,22 +517,27 @@ export class BookingsService {
           relatedBookingId: mb.id,
           title: mb.reliefMission.title,
           amount: this.calculateMissionAmount(mb.reliefMission),
+          viewerSide: "PROVIDER",
           hasReview: (mb.reviews?.length ?? 0) > 0,
           invoiceUrl: mb.invoice ? `/invoices/${mb.invoice.id}/download` : undefined,
         });
       }
 
       for (const booking of serviceBookings) {
-        const interlocutor = booking.establishment.email ?? UNKNOWN_COUNTERPART;
+        const isRequester = booking.establishmentId === user.id;
+        const interlocutor = isRequester
+          ? (booking.service?.owner.email ?? UNKNOWN_COUNTERPART)
+          : (booking.establishment.email ?? UNKNOWN_COUNTERPART);
         lines.push({
           lineId: booking.id,
           lineType: "SERVICE_BOOKING",
           date: booking.scheduledAt.toISOString(),
-          typeLabel: "Atelier",
+          typeLabel: getServiceTypeLabel(booking.service?.type),
           interlocutor,
           status: booking.status,
           address: SERVICE_ADDRESS_PLACEHOLDER,
           contactEmail: interlocutor,
+          viewerSide: isRequester ? "REQUESTER" : "PROVIDER",
           relatedBookingId: booking.id,
           title: booking.service?.title,
           amount: booking.service?.price,
@@ -516,7 +670,7 @@ export class BookingsService {
     });
 
     if (!booking) {
-      throw new NotFoundException("Booking not found");
+      throw new NotFoundException("Réservation introuvable.");
     }
 
     if (booking.establishmentId !== user.id && booking.freelanceId !== user.id) {
@@ -703,6 +857,23 @@ export class BookingsService {
       include: {
         reliefMission: true,
         service: true,
+        invoice: {
+          select: {
+            id: true,
+          },
+        },
+        quotes: {
+          where: {
+            status: "ACCEPTED",
+          },
+          orderBy: {
+            acceptedAt: "desc",
+          },
+          take: 1,
+          select: {
+            totalTTC: true,
+          },
+        },
       },
     });
 
@@ -716,33 +887,27 @@ export class BookingsService {
       booking.service && booking.service.ownerId === user.id;
 
     if (!isMissionEstablishment && !isServiceOwner) {
-      throw new ForbiddenException("You cannot confirm this booking");
+      throw new ForbiddenException("Vous ne pouvez pas valider cette réservation.");
     }
 
-    if (booking.status !== "PENDING") {
-      throw new BadRequestException("Booking is not pending");
+    const canConfirmMission =
+      booking.reliefMissionId != null && booking.status === BookingStatus.PENDING;
+    const canConfirmService =
+      booking.service != null &&
+      (booking.status === BookingStatus.PENDING ||
+        booking.status === BookingStatus.QUOTE_ACCEPTED);
+
+    if (!canConfirmMission && !canConfirmService) {
+      throw new BadRequestException("La réservation ne peut pas être validée à ce stade.");
     }
 
-    // Mission Assignment Logic
+    const requesterId = booking.establishmentId;
+
     if (booking.reliefMissionId) {
       const reliefMissionId = booking.reliefMissionId;
 
       await this.prisma.$transaction(async (tx) => {
-        const debitResult = await tx.profile.updateMany({
-          where: {
-            userId: user.id,
-            availableCredits: { gte: 1 },
-          },
-          data: {
-            availableCredits: { decrement: 1 },
-          },
-        });
-
-        if (debitResult.count !== 1) {
-          throw new BadRequestException(
-            "Crédits insuffisants pour confirmer cette mission.",
-          );
-        }
+        await this.consumeOneCreditOrThrow(tx, requesterId);
 
         await tx.booking.update({
           where: { id: bookingId },
@@ -762,17 +927,23 @@ export class BookingsService {
           },
           data: { status: "CANCELLED" },
         });
+
+        await this.createInvoiceOnConfirmation(tx, booking);
       });
     } else {
-      // Standard Service Confirmation
-      await this.prisma.booking.update({
-        where: { id: bookingId },
-        data: { status: "CONFIRMED" },
+      await this.prisma.$transaction(async (tx) => {
+        await this.consumeOneCreditOrThrow(tx, requesterId);
+
+        await tx.booking.update({
+          where: { id: bookingId },
+          data: { status: "CONFIRMED" },
+        });
+
+        await this.createInvoiceOnConfirmation(tx, booking);
       });
     }
 
-    // Notify Freelance
-    if (booking.freelanceId) {
+    if (booking.reliefMissionId && booking.freelanceId) {
       const freelance = await this.prisma.user.findUnique({ where: { id: booking.freelanceId }, include: { profile: true } });
       const establishment = await this.prisma.user.findUnique({ where: { id: booking.establishmentId }, include: { profile: true } });
       const missionTitle = booking.reliefMission?.title ?? 'Mission';
@@ -791,6 +962,16 @@ export class BookingsService {
 
       // Auto-create conversation between freelance and establishment
       await this.conversations.getOrCreateConversation(booking.freelanceId!, booking.establishmentId);
+    } else if (booking.service) {
+      if (booking.freelanceId) {
+        await this.conversations.getOrCreateConversation(booking.freelanceId, booking.establishmentId);
+      }
+
+      await this.notifications.create({
+        userId: booking.establishmentId,
+        message: `Votre réservation pour "${booking.service.title}" est confirmée. 1 crédit a été consommé et la facture est disponible.`,
+        type: "SUCCESS",
+      });
     }
 
     // Notify rejected freelances (for mission bookings only)
@@ -842,7 +1023,7 @@ export class BookingsService {
     });
 
     if (!booking) {
-      throw new NotFoundException("Booking not found");
+      throw new NotFoundException("Réservation introuvable.");
     }
 
     const isMissionEstablishment2 =
@@ -852,16 +1033,16 @@ export class BookingsService {
       // Mission flow: Client completes -> Awaiting Payment
     } else if (booking.service) {
       if (booking.service.ownerId !== user.id) {
-        throw new ForbiddenException("You cannot complete this booking");
+        throw new ForbiddenException("Vous ne pouvez pas terminer cette réservation.");
       }
     } else {
       if (booking.establishmentId !== user.id) {
-        throw new ForbiddenException("You cannot complete this booking");
+        throw new ForbiddenException("Vous ne pouvez pas terminer cette réservation.");
       }
     }
 
     if (booking.status !== "CONFIRMED") {
-      throw new BadRequestException("Booking must be confirmed before completion");
+      throw new BadRequestException("La réservation doit être confirmée avant d'être terminée.");
     }
 
     const transactions: any[] = [
@@ -880,56 +1061,38 @@ export class BookingsService {
       );
     }
 
-    // Auto-create Invoice if none exists
-    if (!booking.invoice && booking.reliefMission) {
-      const amount = this.calculateMissionAmount(booking.reliefMission);
-      const invoiceNumber = await this.generateInvoiceNumber();
-
-      transactions.push(
-        this.prisma.invoice.create({
-          data: {
-            bookingId,
-            amount,
-            invoiceNumber,
-            status: "UNPAID",
-          },
-        }),
-      );
-    }
-
     await this.prisma.$transaction(transactions);
 
-    const missionTitle = booking.reliefMission?.title ?? 'Mission';
+    const bookingTitle = this.getBookingDisplayTitle(booking);
+    const bookingKind = this.getBookingKindLabel(booking);
     const missionDateStr = booking.reliefMission?.dateStart
       ? format(booking.reliefMission.dateStart, "dd/MM/yyyy")
       : "récemment";
 
-    // Notify Freelance
-    if (booking.freelanceId) {
+    if (booking.freelanceId && booking.reliefMission) {
       const freelance = await this.prisma.user.findUnique({ where: { id: booking.freelanceId } });
 
       await this.notifications.create({
         userId: booking.freelanceId,
-        message: `La mission "${missionTitle}" a été marquée comme terminée. Le paiement sera traité prochainement.`,
+        message: `La mission "${bookingTitle}" a été marquée comme terminée. Le paiement sera traité prochainement.`,
         type: "INFO",
       });
 
       if (freelance?.email) {
         this.mailService.sendMissionCompletedEmail(freelance.email, missionDateStr).catch(e => console.error(e));
-        this.mailService.sendReviewInvitationEmail(freelance.email, missionTitle).catch(e => console.error(e));
+        this.mailService.sendReviewInvitationEmail(freelance.email, bookingTitle).catch(e => console.error(e));
       }
     }
 
-    // Notify Establishment
     const establishment = await this.prisma.user.findUnique({ where: { id: booking.establishmentId } });
     await this.notifications.create({
       userId: booking.establishmentId,
-      message: `La mission "${missionTitle}" est terminée. N'oubliez pas de procéder au paiement.`,
+      message: `Le ${bookingKind} "${bookingTitle}" est marqué comme terminé. Vous pouvez finaliser le règlement si nécessaire.`,
       type: "INFO",
     });
 
     if (establishment?.email) {
-      this.mailService.sendReviewInvitationEmail(establishment.email, missionTitle).catch(e => console.error(e));
+      this.mailService.sendReviewInvitationEmail(establishment.email, bookingTitle).catch(e => console.error(e));
     }
 
     return { ok: true };
@@ -948,14 +1111,14 @@ export class BookingsService {
       },
     });
 
-    if (!booking) throw new NotFoundException("Booking not found");
+    if (!booking) throw new NotFoundException("Réservation introuvable.");
 
     if (booking.establishmentId !== user.id) {
-      throw new ForbiddenException("Only the establishment can approve the manual payment");
+      throw new ForbiddenException("Seul le demandeur peut valider le règlement manuel.");
     }
 
     if (booking.status !== BookingStatus.COMPLETED) {
-      throw new BadRequestException("Booking must be completed before payment tracking");
+      throw new BadRequestException("La réservation doit être terminée avant le suivi du règlement.");
     }
 
     await this.prisma.booking.update({
@@ -967,7 +1130,7 @@ export class BookingsService {
     if (booking.freelanceId) {
       await this.notifications.create({
         userId: booking.freelanceId,
-        message: `Le paiement de votre mission a été marqué comme réglé par l'établissement.`,
+        message: `Le paiement de votre réservation a été marqué comme réglé par le demandeur.`,
         type: "SUCCESS",
       });
     }
@@ -1087,16 +1250,16 @@ export class BookingsService {
     }
 
     // Access control: only the two parties
-    const isEstablishment = booking.establishmentId === user.id;
-    const isFreelance = booking.freelanceId === user.id;
-    if (!isEstablishment && !isFreelance) {
+    const isRequester = booking.establishmentId === user.id;
+    const isProvider = booking.freelanceId === user.id;
+    if (!isRequester && !isProvider) {
       throw new ForbiddenException("You cannot view this order");
     }
 
     // Build participants
-    const establishment = this.toParticipant(booking.establishment, "ESTABLISHMENT");
-    const freelance = booking.freelance
-      ? this.toParticipant(booking.freelance, "FREELANCE")
+    const requester = this.toParticipant(booking.establishment, booking.establishment.role);
+    const provider = booking.freelance
+      ? this.toParticipant(booking.freelance, booking.freelance.role)
       : { id: "", email: "", role: "FREELANCE" };
 
     // Build quotes
@@ -1210,8 +1373,10 @@ export class BookingsService {
       },
       mission,
       service,
-      freelance,
-      establishment,
+      requester,
+      provider,
+      freelance: provider,
+      establishment: requester,
       conversation,
       quotes,
       timeline,

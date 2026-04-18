@@ -38,14 +38,21 @@ export class UsersController {
 
     @Get("me/credits")
     @UseGuards(RolesGuard)
-    @Roles(UserRole.ESTABLISHMENT)
+    @Roles(UserRole.ESTABLISHMENT, UserRole.FREELANCE)
     getCredits(@CurrentUser() user: AuthenticatedUser) {
         return this.usersService.getCredits(user.id);
     }
 
+    @Get("me/credits/history")
+    @UseGuards(RolesGuard)
+    @Roles(UserRole.ESTABLISHMENT, UserRole.FREELANCE)
+    getCreditHistory(@CurrentUser() user: AuthenticatedUser) {
+        return this.usersService.getCreditHistory(user.id);
+    }
+
     @Post("me/credits/buy")
     @UseGuards(RolesGuard)
-    @Roles(UserRole.ESTABLISHMENT)
+    @Roles(UserRole.ESTABLISHMENT, UserRole.FREELANCE)
     buyCredits(
         @CurrentUser() user: AuthenticatedUser,
         @Body() dto: BuyCreditsDto,

@@ -8,7 +8,14 @@ vi.mock("@/lib/api", () => ({ apiRequest: (...args: unknown[]) => mockApiRequest
 vi.mock("@/lib/session", () => ({ getSession: () => mockGetSession() }));
 vi.mock("next/cache", () => ({ revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args) }));
 
-const { createMissionFromRenfort, getMyAteliers, createServiceFromPublish } = await import("@/app/actions/marketplace");
+const {
+  createMissionFromRenfort,
+  getMyAteliers,
+  createServiceFromPublish,
+  updateServiceAction,
+  deleteServiceAction,
+  getService,
+} = await import("@/app/actions/marketplace");
 
 const baseInput = {
   title: "Infirmier de nuit",
@@ -207,5 +214,83 @@ describe("createServiceFromPublish", () => {
   it("lance une erreur si la session est absente", async () => {
     mockGetSession.mockResolvedValue(null);
     await expect(createServiceFromPublish(baseServiceInput)).rejects.toThrow("Non connecté");
+  });
+});
+
+describe("updateServiceAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ token: "test-token" });
+  });
+
+  it("retourne un résultat explicite en cas de succès", async () => {
+    mockApiRequest.mockResolvedValue({ id: "svc-1", title: "Atelier" });
+
+    const result = await updateServiceAction("svc-1", { status: "ACTIVE" });
+
+    expect(result).toEqual({
+      ok: true,
+      data: { id: "svc-1", title: "Atelier" },
+    });
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/marketplace/services/svc-1");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/ateliers/svc-1");
+  });
+
+  it("retourne une erreur explicite au lieu de null", async () => {
+    mockApiRequest.mockRejectedValue(new Error("Impossible de publier ce brouillon."));
+
+    const result = await updateServiceAction("svc-1", { status: "ACTIVE" });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Impossible de publier ce brouillon.",
+    });
+  });
+});
+
+describe("deleteServiceAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ token: "test-token" });
+  });
+
+  it("retourne un résultat explicite en cas de succès", async () => {
+    mockApiRequest.mockResolvedValue(undefined);
+
+    const result = await deleteServiceAction("svc-1");
+
+    expect(result).toEqual({ ok: true });
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/marketplace/services/svc-1");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/ateliers/svc-1");
+  });
+
+  it("retourne une erreur explicite au lieu de false", async () => {
+    mockApiRequest.mockRejectedValue(new Error("Suppression impossible"));
+
+    const result = await deleteServiceAction("svc-1");
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Suppression impossible",
+    });
+  });
+});
+
+describe("getService", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ token: "test-token" });
+  });
+
+  it("retourne null pour un 404 attendu", async () => {
+    mockApiRequest.mockRejectedValue(new Error("Service not found"));
+
+    await expect(getService("svc-404")).resolves.toBeNull();
+  });
+
+  it("relance les erreurs inattendues au lieu de masquer une panne", async () => {
+    mockApiRequest.mockRejectedValue(new Error("Timeout API"));
+
+    await expect(getService("svc-1")).rejects.toThrow("Timeout API");
   });
 });

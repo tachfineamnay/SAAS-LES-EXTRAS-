@@ -55,11 +55,11 @@ describe("ServiceDetailActions", () => {
       />,
     );
 
-    const link = screen.getByRole("link", { name: /gérer cet atelier/i });
+    const link = screen.getByRole("link", { name: /gérer ce service/i });
     expect(link).toHaveAttribute("href", "/dashboard/ateliers");
   });
 
-  it("pour FREELANCE non propriétaire désactive la réservation", () => {
+  it("pour FREELANCE non propriétaire ouvre aussi la réservation", () => {
     render(
       <ServiceDetailActions
         serviceId="s-4"
@@ -69,7 +69,21 @@ describe("ServiceDetailActions", () => {
       />,
     );
 
-    const button = screen.getByRole("button", { name: /réservation réservée aux établissements/i });
-    expect(button).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /demander une réservation/i }));
+    expect(mockOpenBookServiceModal).toHaveBeenCalledWith("s-4");
+  });
+
+  it("pour FREELANCE non propriétaire + QUOTE ouvre aussi la demande de devis", () => {
+    render(
+      <ServiceDetailActions
+        serviceId="s-5"
+        pricingType="QUOTE"
+        viewerRole="FREELANCE"
+        isOwner={false}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /demander un devis/i }));
+    expect(mockOpenQuoteRequestModal).toHaveBeenCalledWith("s-5");
   });
 });

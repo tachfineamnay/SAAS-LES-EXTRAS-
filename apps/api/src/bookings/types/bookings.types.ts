@@ -16,11 +16,12 @@ export type BookingLine = {
   lineId: string;
   lineType: BookingLineType;
   date: string;
-  typeLabel: "Mission SOS" | "Atelier";
+  typeLabel: "Mission SOS" | "Atelier" | "Formation";
   interlocutor: string;
   status: BookingLineStatus;
   address: string;
   contactEmail: string;
+  viewerSide?: "REQUESTER" | "PROVIDER";
   relatedBookingId?: string;
   title?: string;
   amount?: number;
@@ -179,6 +180,8 @@ export type OrderTrackerData = {
   };
   mission?: OrderMission;
   service?: OrderService;
+  requester: OrderParticipant;
+  provider: OrderParticipant;
   freelance: OrderParticipant;
   establishment: OrderParticipant;
   conversation?: OrderConversation;
