@@ -274,9 +274,8 @@ export type MesAtelierItem = SerializedService & {
 };
 
 export async function getMyAteliers(token?: string): Promise<MesAtelierItem[]> {
-  const session = await getSession();
-  const activeToken = token || session?.token;
-  if (!activeToken || !session) return [];
+  const activeToken = token || (await getSession())?.token;
+  if (!activeToken) return [];
 
   try {
     const services = await apiRequest<(SerializedService & { status?: string })[]>("/services/my", {
@@ -292,7 +291,9 @@ export async function getMyAteliers(token?: string): Promise<MesAtelierItem[]> {
       .sort((a, b) => a.title.localeCompare(b.title, "fr"));
   } catch (error) {
     console.error("getMyAteliers error", error);
-    return [];
+    throw error instanceof Error
+      ? error
+      : new Error("Impossible de charger vos ateliers.");
   }
 }
 
@@ -429,7 +430,7 @@ function getServiceBookingErrorMessage(error: unknown): string {
   }
 
   if (normalized.includes("service not found")) {
-    return "Atelier introuvable.";
+    return "Atelier ou formation introuvable.";
   }
 
   return message || "Erreur lors de la réservation";

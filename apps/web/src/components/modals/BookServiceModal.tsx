@@ -117,7 +117,7 @@ export function BookServiceModal() {
     if (service?.capacity && nbParticipants > service.capacity) {
       setErrors((current) => ({
         ...current,
-        participants: `La capacité maximale de cet atelier est de ${service.capacity} participants.`,
+        participants: `La capacité maximale de ${service?.type === "TRAINING" ? "cette formation" : "cet atelier"} est de ${service.capacity} participants.`,
       }));
       return false;
     }
@@ -190,6 +190,10 @@ export function BookServiceModal() {
     return start !== null && start.getTime() > Date.now();
   });
   const hasOnlyPastSlots = slots.length > 0 && availableSlots.length === 0;
+  const serviceLabelWithArticle =
+    service?.type === "TRAINING" ? "la formation" : "l'atelier";
+  const serviceLabelCapitalized =
+    service?.type === "TRAINING" ? "Formation" : "Atelier";
   const totalPrice =
     service?.pricingType === "PER_PARTICIPANT" && service.pricePerParticipant
       ? service.pricePerParticipant * nbParticipants
@@ -199,7 +203,7 @@ export function BookServiceModal() {
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Réserver l&apos;atelier</DialogTitle>
+          <DialogTitle>Réserver {serviceLabelWithArticle}</DialogTitle>
           <DialogDescription>{service?.title ?? "Chargement…"}</DialogDescription>
         </DialogHeader>
 
@@ -349,7 +353,7 @@ export function BookServiceModal() {
               <p className="font-semibold text-foreground">Récapitulatif de votre demande</p>
               <div className="space-y-1.5 text-muted-foreground">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Atelier</span>
+                  <span className="text-muted-foreground">{serviceLabelCapitalized}</span>
                   <span className="max-w-[60%] truncate text-right font-medium">{service?.title}</span>
                 </div>
                 <div className="flex justify-between">

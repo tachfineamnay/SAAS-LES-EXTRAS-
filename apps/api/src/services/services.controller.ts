@@ -32,8 +32,11 @@ export class ServicesController {
   @Get(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ESTABLISHMENT, UserRole.FREELANCE)
-  findOne(@Param("id") id: string) {
-    return this.servicesService.findOne(id);
+  findOne(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.servicesService.findOne(id, user.id);
   }
 
   @Post()

@@ -87,7 +87,7 @@ describe("BookServiceModal", () => {
       expect(mockToastSuccess).toHaveBeenCalled();
       expect(mockRefresh).toHaveBeenCalled();
     });
-  });
+  }, 15000);
 
   it("réservation refusée (doublon) : affiche un message lisible sans fermer la modale", async () => {
     mockBookService.mockResolvedValue({

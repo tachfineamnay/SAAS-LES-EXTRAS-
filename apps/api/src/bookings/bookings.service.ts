@@ -725,27 +725,44 @@ export class BookingsService {
 
     // Mission Assignment Logic
     if (booking.reliefMissionId) {
-      await this.prisma.$transaction([
-        // 1. Confirm this booking
-        this.prisma.booking.update({
+      const reliefMissionId = booking.reliefMissionId;
+
+      await this.prisma.$transaction(async (tx) => {
+        const debitResult = await tx.profile.updateMany({
+          where: {
+            userId: user.id,
+            availableCredits: { gte: 1 },
+          },
+          data: {
+            availableCredits: { decrement: 1 },
+          },
+        });
+
+        if (debitResult.count !== 1) {
+          throw new BadRequestException(
+            "Crédits insuffisants pour confirmer cette mission.",
+          );
+        }
+
+        await tx.booking.update({
           where: { id: bookingId },
           data: { status: "CONFIRMED" },
-        }),
-        // 2. Mark Mission as ASSIGNED
-        this.prisma.reliefMission.update({
-          where: { id: booking.reliefMissionId },
+        });
+
+        await tx.reliefMission.update({
+          where: { id: reliefMissionId },
           data: { status: ReliefMissionStatus.ASSIGNED },
-        }),
-        // 3. Cancel other PENDING bookings for this mission
-        this.prisma.booking.updateMany({
+        });
+
+        await tx.booking.updateMany({
           where: {
-            reliefMissionId: booking.reliefMissionId,
+            reliefMissionId,
             id: { not: bookingId },
             status: "PENDING",
           },
           data: { status: "CANCELLED" },
-        }),
-      ]);
+        });
+      });
     } else {
       // Standard Service Confirmation
       await this.prisma.booking.update({

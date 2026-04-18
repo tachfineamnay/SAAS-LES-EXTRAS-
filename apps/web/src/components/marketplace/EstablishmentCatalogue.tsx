@@ -179,7 +179,7 @@ export function EstablishmentCatalogue({ services, freelances, catalogueError }:
                 className="h-px bg-border"
                 role="separator"
               />
-              <p className="text-heading-sm font-display">Tous les ateliers</p>
+              <p className="text-heading-sm font-display">Tous les ateliers et formations</p>
             </div>
           )}
 
@@ -187,7 +187,7 @@ export function EstablishmentCatalogue({ services, freelances, catalogueError }:
           {filteredServices.length === 0 ? (
             <EmptyState
               icon={GraduationCap}
-              title={hasFilters ? "Aucun atelier pour ces filtres" : "Aucune formation disponible"}
+              title={hasFilters ? "Aucun atelier ou formation pour ces filtres" : "Aucune offre disponible"}
               description={
                 hasFilters
                   ? "Essayez de modifier vos filtres."

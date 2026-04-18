@@ -29,6 +29,8 @@ export default async function MesAteliersPage() {
         );
     } catch (error) {
         console.error("MesAteliersPage error", error);
-        return <MesAteliersClient ateliers={[]} serviceBookings={[]} error="Impossible de charger vos ateliers." />;
+        const message =
+            error instanceof Error ? error.message : "Impossible de charger vos ateliers.";
+        return <MesAteliersClient ateliers={[]} serviceBookings={[]} error={message} />;
     }
 }

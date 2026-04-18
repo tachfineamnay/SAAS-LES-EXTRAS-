@@ -64,4 +64,10 @@ describe("credits actions", () => {
     );
     expect(result).toBe(3);
   });
+
+  it("propage l'erreur API au lieu de masquer un faux solde à 0", async () => {
+    mockApiRequest.mockRejectedValue(new Error("Service crédits indisponible"));
+
+    await expect(getCredits()).rejects.toThrow("Service crédits indisponible");
+  });
 });

@@ -39,7 +39,7 @@ export class ServicesService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, requesterId: string) {
     const service = await this.prisma.service.findUnique({
       where: { id },
       include: {
@@ -52,6 +52,10 @@ export class ServicesService {
     });
 
     if (!service) {
+      throw new NotFoundException("Service not found");
+    }
+
+    if (service.status !== "ACTIVE" && service.ownerId !== requesterId) {
       throw new NotFoundException("Service not found");
     }
 
@@ -178,15 +182,23 @@ export class ServicesService {
         ownerId: true,
         status: true,
         capacity: true,
+        type: true,
       },
     });
 
     if (!service) {
-      throw new NotFoundException("Atelier introuvable.");
+      throw new NotFoundException("Atelier ou formation introuvable.");
     }
 
+    const serviceDemonstrative =
+      service.type === "TRAINING" ? "Cette formation" : "Cet atelier";
+    const serviceTarget =
+      service.type === "TRAINING" ? "cette formation" : "cet atelier";
+
     if (service.status !== "ACTIVE") {
-      throw new BadRequestException("Cet atelier n'est plus disponible à la réservation.");
+      throw new BadRequestException(
+        `${serviceDemonstrative} n'est plus disponible à la réservation.`,
+      );
     }
 
     if (date < new Date()) {
@@ -199,7 +211,7 @@ export class ServicesService {
 
     if (normalizedParticipants > service.capacity) {
       throw new BadRequestException(
-        `Le nombre de participants ne peut pas dépasser la capacité maximale (${service.capacity}).`,
+        `Le nombre de participants ne peut pas dépasser la capacité maximale de ${serviceTarget} (${service.capacity}).`,
       );
     }
 
@@ -216,7 +228,9 @@ export class ServicesService {
     });
 
     if (existingBooking) {
-      throw new ConflictException("Vous avez déjà une demande active pour cet atelier.");
+      throw new ConflictException(
+        `Vous avez déjà une demande active pour ${serviceTarget}.`,
+      );
     }
 
     const booking = await this.prisma.booking.create({

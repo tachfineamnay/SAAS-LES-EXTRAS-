@@ -1,4 +1,8 @@
-import { BadRequestException, ConflictException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from "@nestjs/common";
 import { BookingStatus } from "@prisma/client";
 import { ServicesService } from "./services.service";
 
@@ -27,6 +31,47 @@ describe("ServicesService", () => {
     service = new ServicesService(prisma, mailService as any);
   });
 
+  describe("findOne", () => {
+    it("retourne un service ACTIF pour tout utilisateur authentifié", async () => {
+      const activeService = {
+        id: "service-1",
+        ownerId: "free-1",
+        status: "ACTIVE",
+        owner: { profile: null },
+      };
+
+      prisma.service.findUnique.mockResolvedValue(activeService);
+
+      await expect(service.findOne("service-1", "est-1")).resolves.toEqual(activeService);
+    });
+
+    it("masque un brouillon à un utilisateur non propriétaire", async () => {
+      prisma.service.findUnique.mockResolvedValue({
+        id: "service-1",
+        ownerId: "free-1",
+        status: "DRAFT",
+        owner: { profile: null },
+      });
+
+      await expect(service.findOne("service-1", "est-1")).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it("autorise le propriétaire à lire son brouillon", async () => {
+      const draftService = {
+        id: "service-1",
+        ownerId: "free-1",
+        status: "DRAFT",
+        owner: { profile: null },
+      };
+
+      prisma.service.findUnique.mockResolvedValue(draftService);
+
+      await expect(service.findOne("service-1", "free-1")).resolves.toEqual(draftService);
+    });
+  });
+
   describe("bookService", () => {
     const activeService = {
       id: "service-1",
@@ -34,6 +79,7 @@ describe("ServicesService", () => {
       ownerId: "free-1",
       status: "ACTIVE",
       capacity: 10,
+      type: "WORKSHOP",
     };
 
     it("crée une réservation valide", async () => {

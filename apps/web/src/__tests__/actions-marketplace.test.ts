@@ -141,10 +141,9 @@ describe("getMyAteliers", () => {
     expect(mockApiRequest).not.toHaveBeenCalled();
   });
 
-  it("retourne [] et logue en cas d'erreur API", async () => {
+  it("propage l'erreur en cas d'échec API au lieu de simuler une liste vide", async () => {
     mockApiRequest.mockRejectedValue(new Error("Network error"));
-    const result = await getMyAteliers();
-    expect(result).toEqual([]);
+    await expect(getMyAteliers()).rejects.toThrow("Network error");
   });
 });
 

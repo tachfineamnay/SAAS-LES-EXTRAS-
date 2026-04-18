@@ -174,11 +174,11 @@ export class MissionsService {
     });
 
     if (!mission) {
-      throw new NotFoundException("Mission not found");
+      throw new NotFoundException("Mission introuvable");
     }
 
     if (mission.status !== ReliefMissionStatus.OPEN) {
-      throw new BadRequestException("Mission is not open");
+      throw new BadRequestException("Cette mission n'est plus ouverte");
     }
 
     const existingBooking = await this.prisma.booking.findFirst({
@@ -190,7 +190,7 @@ export class MissionsService {
     });
 
     if (existingBooking) {
-      throw new ConflictException("Already applied to this mission");
+      throw new ConflictException("Vous avez déjà postulé à cette mission");
     }
 
     return this.prisma.booking.create({
@@ -213,7 +213,7 @@ export class MissionsService {
     });
 
     if (!mission) {
-      throw new NotFoundException("Mission not found");
+      throw new NotFoundException("Mission introuvable");
     }
 
     const freelance = await this.prisma.user.findUnique({

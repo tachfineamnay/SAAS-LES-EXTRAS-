@@ -26,6 +26,7 @@ describe('BookingsService', () => {
     profile: {
       findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
     user: {
       findUnique: jest.fn(),
@@ -316,6 +317,7 @@ describe('BookingsService', () => {
       };
 
       mockPrisma.booking.findUnique.mockResolvedValue(booking);
+      mockPrisma.profile.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.booking.update.mockResolvedValue({ ...booking, status: BookingStatus.CONFIRMED });
       mockPrisma.booking.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.reliefMission.update.mockResolvedValue({ id: 'mission-1' });
@@ -330,6 +332,15 @@ describe('BookingsService', () => {
 
       await service.confirmBooking('booking-1', estUser);
 
+      expect(mockPrisma.profile.updateMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'est-1',
+          availableCredits: { gte: 1 },
+        },
+        data: {
+          availableCredits: { decrement: 1 },
+        },
+      });
       // Should create conversation
       expect(mockConversations.getOrCreateConversation).toHaveBeenCalledWith('free-1', 'est-1');
       // Should notify the confirmed freelance
@@ -340,6 +351,31 @@ describe('BookingsService', () => {
       expect(mockNotifications.create).toHaveBeenCalledWith(
         expect.objectContaining({ userId: 'free-2', type: 'WARNING' }),
       );
+    });
+
+    it("should reject mission confirmation when the establishment has no available credits", async () => {
+      const booking = {
+        id: "booking-1",
+        status: BookingStatus.PENDING,
+        establishmentId: "est-1",
+        freelanceId: "free-1",
+        reliefMissionId: "mission-1",
+        reliefMission: {
+          establishmentId: "est-1",
+          title: "Mission Test",
+          dateStart: new Date("2026-03-20T08:00:00Z"),
+        },
+        service: null,
+      };
+
+      mockPrisma.booking.findUnique.mockResolvedValue(booking);
+      mockPrisma.profile.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(service.confirmBooking("booking-1", estUser)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(mockPrisma.booking.update).not.toHaveBeenCalled();
+      expect(mockConversations.getOrCreateConversation).not.toHaveBeenCalled();
     });
   });
 

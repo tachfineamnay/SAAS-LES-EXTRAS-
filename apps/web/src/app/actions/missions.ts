@@ -38,7 +38,11 @@ export async function applyToMission(
         return { ok: true };
     } catch (error) {
         console.error("applyToMission error", error);
-        if (error instanceof Error && error.message.toLowerCase().includes("already applied")) {
+        if (
+            error instanceof Error &&
+            (error.message.toLowerCase().includes("already applied") ||
+                error.message.toLowerCase().includes("déjà postulé"))
+        ) {
             return { ok: false, error: "Vous avez déjà postulé à cette mission." };
         }
         return { ok: false, error: error instanceof Error ? error.message : "Erreur lors de la candidature" };

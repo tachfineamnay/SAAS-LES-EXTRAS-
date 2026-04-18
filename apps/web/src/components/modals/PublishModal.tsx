@@ -45,6 +45,21 @@ const slotSchema = z
     path: ["heureFin"],
   });
 
+const optionalPriceSchema = z.preprocess(
+  (value) => {
+    if (value === "" || value === null || value === undefined) {
+      return undefined;
+    }
+
+    if (typeof value === "number" && Number.isNaN(value)) {
+      return undefined;
+    }
+
+    return value;
+  },
+  z.number().min(0).optional(),
+);
+
 const publishSchema = z
   .object({
     type: z.enum(["WORKSHOP", "TRAINING"]),
@@ -60,8 +75,8 @@ const publishSchema = z
     publicCible: z.array(z.string()).min(1, "Sélectionnez au moins un public"),
     materials: z.string().optional(),
     pricingType: z.enum(["SESSION", "PER_PARTICIPANT", "QUOTE"]),
-    price: z.number().min(0).optional(),
-    pricePerParticipant: z.number().min(0).optional(),
+    price: optionalPriceSchema,
+    pricePerParticipant: optionalPriceSchema,
     slots: z.array(slotSchema).max(MAX_SERVICE_SLOTS),
     scheduleInfo: z.string().optional(),
   })

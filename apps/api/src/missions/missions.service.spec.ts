@@ -11,6 +11,13 @@ describe("MissionsService", () => {
     reliefMission: {
       create: jest.fn(),
       findMany: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    notification: {
+      create: jest.fn(),
+    },
+    user: {
+      findUnique: jest.fn(),
     },
     $transaction: jest.fn((queries: Array<Promise<unknown>>) => Promise.all(queries)),
   } as unknown as PrismaService;
@@ -328,6 +335,32 @@ describe("MissionsService", () => {
             heureFin: "07:00",
           },
         ],
+      });
+    });
+  });
+
+  describe("requestInfo", () => {
+    it("crée une notification lisible pour l'établissement", async () => {
+      (mockPrisma.reliefMission.findUnique as jest.Mock).mockResolvedValue({
+        id: "mission-1",
+        establishmentId: "est-1",
+        title: "Mission de nuit",
+      });
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+        profile: { firstName: "Nora", lastName: "Benali" },
+      });
+
+      await expect(
+        service.requestInfo("mission-1", "free-1", "Pouvez-vous préciser les horaires ?"),
+      ).resolves.toEqual({ ok: true });
+
+      expect(mockPrisma.notification.create).toHaveBeenCalledWith({
+        data: {
+          userId: "est-1",
+          type: "INFO_REQUEST",
+          message:
+            "Nora Benali demande des précisions sur la mission « Mission de nuit » : Pouvez-vous préciser les horaires ?",
+        },
       });
     });
   });

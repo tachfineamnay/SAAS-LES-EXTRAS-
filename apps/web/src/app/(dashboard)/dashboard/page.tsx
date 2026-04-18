@@ -44,7 +44,7 @@ async function fetchEstablishmentData(token: string, userId: string) {
                 "Factures",
             ),
             fetchSafe<number>(
-                () => getCredits(),
+                () => getCredits(token),
                 0,
                 "Crédits",
             ),

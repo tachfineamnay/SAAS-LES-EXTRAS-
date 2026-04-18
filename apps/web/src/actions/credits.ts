@@ -45,20 +45,22 @@ export async function buyPack(packType: PackType): Promise<BuyPackResult> {
     }
 }
 
-export async function getCredits(): Promise<number> {
-    const session = await getSession();
-    if (!session) {
+export async function getCredits(token?: string): Promise<number> {
+    const activeToken = token || (await getSession())?.token;
+    if (!activeToken) {
         return 0;
     }
 
     try {
         const response = await apiRequest<CreditsResponse>("/users/me/credits", {
             method: "GET",
-            token: session.token,
+            token: activeToken,
         });
 
         return response.availableCredits ?? 0;
-    } catch {
-        return 0;
+    } catch (error) {
+        throw error instanceof Error
+            ? error
+            : new Error("Impossible de charger le solde de crédits.");
     }
 }

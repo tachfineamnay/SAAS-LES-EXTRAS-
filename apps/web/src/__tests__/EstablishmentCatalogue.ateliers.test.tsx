@@ -43,7 +43,7 @@ describe("EstablishmentCatalogue - ateliers", () => {
 
   it("affiche un état vide quand aucun atelier n'est disponible", () => {
     render(<EstablishmentCatalogue services={[]} freelances={[]} />);
-    expect(screen.getByText(/aucune formation disponible/i)).toBeInTheDocument();
+    expect(screen.getByText(/aucune offre disponible/i)).toBeInTheDocument();
   });
 
   it("affiche un message d'erreur dégradé si catalogueError est fourni", () => {
