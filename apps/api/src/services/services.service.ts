@@ -92,6 +92,7 @@ export class ServicesService {
         durationMinutes: dto.durationMinutes ?? 120,
         category: dto.category,
         type: dto.type,
+        status: dto.status ?? "ACTIVE",
         pricingType: dto.pricingType,
         publicCible: dto.publicCible ?? [],
         slots: dto.slots ? (dto.slots as any) : null,

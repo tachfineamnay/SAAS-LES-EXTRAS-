@@ -19,8 +19,10 @@ interface EstablishmentCatalogueProps {
 export function EstablishmentCatalogue({ services, freelances, catalogueError }: EstablishmentCatalogueProps) {
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterPricing, setFilterPricing] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<"WORKSHOP" | "TRAINING" | null>(null);
 
   const filteredServices = services.filter((s) => {
+    if (filterType && s.type !== filterType) return false;
     if (filterCategory && s.category !== filterCategory) return false;
     if (filterPricing && s.pricingType !== filterPricing) return false;
     return true;
@@ -31,11 +33,12 @@ export function EstablishmentCatalogue({ services, freelances, catalogueError }:
     services.some((s) => s.category === cat.id),
   );
 
-  const hasFilters = filterCategory !== null || filterPricing !== null;
+  const hasFilters = filterCategory !== null || filterPricing !== null || filterType !== null;
 
   const clearFilters = () => {
     setFilterCategory(null);
     setFilterPricing(null);
+    setFilterType(null);
   };
 
   return (
@@ -75,6 +78,28 @@ export function EstablishmentCatalogue({ services, freelances, catalogueError }:
           {/* Filters */}
           {(presentCategories.length > 0 || services.length > 0) && (
             <div className="space-y-3">
+              {/* Type filter */}
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-xs text-muted-foreground font-medium">Type :</span>
+                {(["WORKSHOP", "TRAINING"] as const).map((t) => {
+                  const active = filterType === t;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setFilterType(active ? null : t)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        active
+                          ? "bg-[hsl(var(--color-teal-600))] text-white border-[hsl(var(--color-teal-600))]"
+                          : "border-border text-muted-foreground hover:border-[hsl(var(--color-teal-300))] hover:text-[hsl(var(--color-teal-600))]"
+                      }`}
+                    >
+                      {t === "WORKSHOP" ? "Ateliers" : "Formations"}
+                    </button>
+                  );
+                })}
+              </div>
+
               {/* Category filter */}
               {presentCategories.length > 0 && (
                 <div className="flex flex-wrap gap-2 items-center">

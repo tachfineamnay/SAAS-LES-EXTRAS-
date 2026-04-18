@@ -10,7 +10,7 @@ import {
   IsArray,
   ValidateNested,
 } from "class-validator";
-import { ServiceType, PricingType } from "@prisma/client";
+import { ServiceStatus, ServiceType, PricingType } from "@prisma/client";
 
 export class ServiceSlotDto {
   @IsString()
@@ -27,6 +27,10 @@ export class CreateServiceDto {
   @IsEnum(ServiceType)
   @IsOptional()
   type?: ServiceType;
+
+  @IsEnum(ServiceStatus)
+  @IsOptional()
+  status?: ServiceStatus;
 
   @IsString()
   @MinLength(2)

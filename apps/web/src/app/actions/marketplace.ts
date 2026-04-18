@@ -100,6 +100,7 @@ type CreateServiceInput = {
   slots?: ServiceSlot[];
   imageUrl?: string;
   scheduleInfo?: string;
+  status?: "DRAFT" | "ACTIVE";
 };
 
 export type SerializedMission = {

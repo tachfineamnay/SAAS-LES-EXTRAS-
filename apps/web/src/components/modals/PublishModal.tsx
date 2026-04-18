@@ -312,44 +312,61 @@ export function PublishModal() {
     }, 300);
   };
 
-  const onSubmit = form.handleSubmit((data) => {
-    setStepErrors([]);
-    startTransition(async () => {
-      try {
-        await createServiceFromPublish({
-          type: data.type,
-          title: data.title,
-          description: data.description,
-          price: data.pricingType === "SESSION" ? (data.price ?? 0) : 0,
-          capacity: data.capacity,
-          pricingType: data.pricingType,
-          pricePerParticipant: data.pricePerParticipant,
-          durationMinutes: data.durationMinutes,
-          category: data.category,
-          publicCible: data.publicCible,
-          materials: data.materials || undefined,
-          objectives: data.objectives || undefined,
-          methodology: data.methodology || undefined,
-          evaluation: data.evaluation || undefined,
-          imageUrl: data.imageUrl || undefined,
-          scheduleInfo: data.scheduleInfo || undefined,
-          slots: data.slots.filter((s) => s.date && s.date.length > 0),
+  function handleSaveAs(targetStatus: "ACTIVE" | "DRAFT") {
+    form.handleSubmit(
+      (data) => {
+        setStepErrors([]);
+        startTransition(async () => {
+          try {
+            await createServiceFromPublish({
+              type: data.type,
+              title: data.title,
+              description: data.description,
+              price: data.pricingType === "SESSION" ? (data.price ?? 0) : 0,
+              capacity: data.capacity,
+              pricingType: data.pricingType,
+              pricePerParticipant: data.pricePerParticipant,
+              durationMinutes: data.durationMinutes,
+              category: data.category,
+              publicCible: data.publicCible,
+              materials: data.materials || undefined,
+              objectives: data.objectives || undefined,
+              methodology: data.methodology || undefined,
+              evaluation: data.evaluation || undefined,
+              imageUrl: data.imageUrl || undefined,
+              scheduleInfo: data.scheduleInfo || undefined,
+              slots: data.slots.filter((s) => s.date && s.date.length > 0),
+              status: targetStatus,
+            });
+            const label = data.type === "WORKSHOP" ? "Atelier" : "Formation";
+            const suffix = data.type === "TRAINING" ? "e" : "";
+            toast.success(
+              targetStatus === "DRAFT"
+                ? `${label} enregistré${suffix} en brouillon.`
+                : `${label} publié${suffix} avec succès !`,
+            );
+            handleClose();
+            router.push(targetStatus === "DRAFT" ? "/dashboard/ateliers" : "/marketplace");
+            router.refresh();
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Impossible de soumettre l'offre.");
+          }
         });
-        toast.success(data.type === "WORKSHOP" ? "Atelier publié avec succès !" : "Formation publiée avec succès !");
-        handleClose();
-        router.push("/marketplace");
-        router.refresh();
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Impossible de publier l'offre.");
-      }
-    });
-  }, () => {
-    const messages = collectStepErrorMessages(step, form.formState.errors);
-    setStepErrors(
-      messages.length > 0 ? messages : ["Corrigez les champs signalés avant de publier."],
-    );
-    focusPublishStepError(step, form.formState.errors);
-  });
+      },
+      () => {
+        const messages = collectStepErrorMessages(step, form.formState.errors);
+        setStepErrors(
+          messages.length > 0 ? messages : ["Corrigez les champs signalés avant de continuer."],
+        );
+        focusPublishStepError(step, form.formState.errors);
+      },
+    )();
+  }
+
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleSaveAs("ACTIVE");
+  };
 
   const values = form.watch();
   const isLastStep = step === STEPS.length - 1;
@@ -920,13 +937,23 @@ export function PublishModal() {
             </Button>
 
             {isLastStep ? (
-              <Button
-                type="submit"
-                disabled={isPending}
-                className="gap-2"
-              >
-                {isPending ? "Publication..." : `Publier ${values.type === "WORKSHOP" ? "l'atelier" : "la formation"}`}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isPending}
+                  onClick={() => handleSaveAs("DRAFT")}
+                >
+                  {isPending ? "En cours..." : "Enregistrer en brouillon"}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isPending}
+                  className="gap-2"
+                >
+                  {isPending ? "Publication..." : `Publier ${values.type === "WORKSHOP" ? "l'atelier" : "la formation"}`}
+                </Button>
+              </div>
             ) : (
               <Button
                 type="button"
