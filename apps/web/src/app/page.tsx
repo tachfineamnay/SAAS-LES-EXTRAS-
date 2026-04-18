@@ -357,6 +357,26 @@ function TestimonialCardGrid({ quote, name, role, rating, initials }: {
   );
 }
 
+/* ── FAQ Item ── */
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-[hsl(var(--border))] last:border-0">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full text-left py-5 flex items-center justify-between gap-4"
+        aria-expanded={open ? "true" : "false"}>
+        <span className="text-sm font-semibold text-[hsl(var(--foreground))]">{q}</span>
+        <ChevronRight className={`h-4 w-4 shrink-0 text-[hsl(var(--text-tertiary))] transition-transform duration-200 ${open ? "rotate-90" : ""}`} />
+      </button>
+      {open && (
+        <p className="pb-5 text-sm text-[hsl(var(--text-secondary))] leading-relaxed">{a}</p>
+      )}
+    </div>
+  );
+}
+
 /* ── Testimonials data ── */
 const testimonials = [
   { quote: "On est passé de 4h de téléphone à 47 secondes. Les Extras a sauvé nos week-ends.", name: "Dr. Marie-Claire Dubois", role: "Directrice · EHPAD La Résidence du Parc", rating: 5, initials: "MD" },
@@ -440,6 +460,12 @@ export default function HomePage() {
                     <strong className="text-[hsl(var(--foreground))] font-semibold">en un clic</strong>.
                     Contrats &amp; paiements{" "}
                     <strong className="text-[hsl(var(--foreground))] font-semibold">100% auto</strong>.
+                  </motion.p>
+
+                  <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.30 }}
+                    className={`${MONO} text-[11px] font-semibold text-[hsl(var(--teal))] uppercase tracking-widest mt-4`}>
+                    Renfort · Ateliers · Formations — en un seul endroit
                   </motion.p>
 
                   <motion.div initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }}
@@ -677,7 +703,7 @@ export default function HomePage() {
                         <span className="text-[hsl(var(--violet))]">mieux qu&apos;un planning vide.</span>
                       </h2>
                       <p className="text-lg text-[hsl(var(--text-secondary))] leading-relaxed">
-                        Rejoignez un réseau de soignants indépendants qui choisissent leurs missions et maximisent leurs revenus.
+                        Positionnez-vous comme <strong className="text-[hsl(var(--foreground))] font-semibold">consultant éducatif</strong>. Proposez vos services, choisissez vos missions et maximisez vos revenus.
                       </p>
                       <div className="space-y-3 pt-1">
                         {[
@@ -797,8 +823,108 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* ══════════ TARIFS (placeholder anchor) ══════════ */}
-          <div id="tarifs" />
+          {/* ══════════ TARIFS ══════════ */}
+          <section id="tarifs" className="py-24 px-6">
+            <div className="mx-auto max-w-5xl">
+              <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ duration: 0.55 }}
+                className="text-center mb-12">
+                <div className={`${MONO} inline-flex items-center gap-2 text-[11px] font-medium text-[hsl(var(--teal))] px-3 py-1.5 rounded-full border border-[hsl(var(--teal)/0.25)] bg-[hsl(var(--teal-light))] mb-5`}>
+                  <Check className="h-3 w-3" /> Tarification
+                </div>
+                <h2 className={`${DISPLAY} text-3xl sm:text-4xl font-bold tracking-tight text-[hsl(var(--foreground))]`}>
+                  Tarifs simples et transparents
+                </h2>
+              </motion.div>
+              <motion.div variants={stagger} initial="hidden" whileInView="show"
+                viewport={{ once: true, margin: "-40px" }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <motion.div variants={rise}
+                  className="glass-panel dark-card-shadow rounded-2xl p-8 flex flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-[hsl(var(--coral))] text-white flex items-center justify-center shadow-md">
+                      <Building2 className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className={`${DISPLAY} text-lg font-bold text-[hsl(var(--foreground))]`}>Établissements</p>
+                      <p className={`${MONO} text-[11px] text-[hsl(var(--text-tertiary))] uppercase tracking-wide`}>Recrutement &amp; Ateliers</p>
+                    </div>
+                  </div>
+                  <ul className="space-y-3 pt-2 flex-1">
+                    {[
+                      "Publication de renforts gratuite",
+                      "Commission uniquement sur réservation confirmée",
+                      "Accès au catalogue ateliers & formations",
+                      "Support prioritaire inclus",
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <Check className="h-4 w-4 text-[hsl(var(--teal))] shrink-0 mt-0.5" />
+                        <span className="text-sm text-[hsl(var(--foreground)/0.85)]">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button asChild variant="coral" className={`${DISPLAY} w-full h-11 font-semibold rounded-xl mt-4`}>
+                    <Link href="/register?role=ESTABLISHMENT">Commencer gratuitement</Link>
+                  </Button>
+                </motion.div>
+                <motion.div variants={rise}
+                  className="glass-panel dark-card-shadow rounded-2xl p-8 flex flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-[hsl(var(--violet))] text-white flex items-center justify-center shadow-md">
+                      <UserCheck className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className={`${DISPLAY} text-lg font-bold text-[hsl(var(--foreground))]`}>Consultants éducatifs</p>
+                      <p className={`${MONO} text-[11px] text-[hsl(var(--text-tertiary))] uppercase tracking-wide`}>Freelances &amp; Intervenants</p>
+                    </div>
+                  </div>
+                  <ul className="space-y-3 pt-2 flex-1">
+                    {[
+                      "Commission 0% — 100 premières inscriptions",
+                      "Paiement garanti sous 72h",
+                      "Factures & contrats auto-générés",
+                      "Visibilité marketplace incluse",
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <Check className="h-4 w-4 text-[hsl(var(--teal))] shrink-0 mt-0.5" />
+                        <span className="text-sm text-[hsl(var(--foreground)/0.85)]">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button asChild variant="teal-soft" className={`${DISPLAY} w-full h-11 font-semibold rounded-xl mt-4`}>
+                    <Link href="/register?role=FREELANCE">Créer mon profil</Link>
+                  </Button>
+                </motion.div>
+              </motion.div>
+            </div>
+          </section>
+
+          {/* ══════════ FAQ ══════════ */}
+          <section id="faq" className="py-20 px-6">
+            <div className="mx-auto max-w-3xl">
+              <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ duration: 0.55 }}
+                className="text-center mb-10">
+                <div className={`${MONO} inline-flex items-center gap-2 text-[11px] font-medium text-[hsl(var(--amber))] px-3 py-1.5 rounded-full border border-[hsl(var(--amber)/0.25)] bg-[hsl(var(--amber-light))] mb-5`}>
+                  <Quote className="h-3 w-3" /> FAQ
+                </div>
+                <h2 className={`${DISPLAY} text-3xl font-bold tracking-tight text-[hsl(var(--foreground))]`}>
+                  Questions fréquentes
+                </h2>
+              </motion.div>
+              <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 }}
+                className="glass-panel dark-card-shadow rounded-2xl px-6 sm:px-8">
+                {[
+                  { q: "Qu'est-ce qu'une mission de renfort ?", a: "Une mission de renfort est une intervention temporaire où un établissement recrute un soignant ou éducateur freelance pour couvrir un besoin urgent d'équipe." },
+                  { q: "Quelle différence entre un atelier et une formation ?", a: "Un atelier est une session d'animation collective (art-thérapie, Snoezelen…), tandis qu'une formation transmet des compétences professionnelles certifiables." },
+                  { q: "Comment fonctionne le paiement ?", a: "Les paiements sont sécurisés et garantis sous 72h. Factures et contrats sont générés automatiquement après confirmation de la mission." },
+                ].map((item, i) => (
+                  <FaqItem key={i} q={item.q} a={item.a} />
+                ))}
+              </motion.div>
+            </div>
+          </section>
 
           {/* ══════════ CTA FINAL ══════════ */}
           <section className="py-20 px-6">

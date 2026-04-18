@@ -1,5 +1,6 @@
 import { beforeAll, describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import HomePage from "@/app/page";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { MesAteliersClient } from "@/components/dashboard/MesAteliersClient";
 import { FreelanceMarketplace } from "@/components/marketplace/FreelanceMarketplace";
@@ -96,6 +97,30 @@ vi.mock("react-dom", async (importOriginal) => {
     useFormState: () => [{ message: "", errors: {} }, vi.fn()],
     useFormStatus: () => ({ pending: false }),
   };
+});
+
+// ─── Homepage — Plateforme hybride ───────────────────────────────────────────
+
+describe("Homepage — plateforme hybride", () => {
+  it("mentionne les 3 piliers (Renfort, Ateliers, Formations) dans le hero", () => {
+    render(<HomePage />);
+    expect(screen.getByText(/renfort\s*·\s*ateliers\s*·\s*formations/i)).toBeInTheDocument();
+  });
+
+  it("positionne le freelance comme consultant éducatif", () => {
+    render(<HomePage />);
+    expect(screen.getByText(/consultant éducatif/i)).toBeInTheDocument();
+  });
+
+  it("section #tarifs a un contenu visible (pas un div vide)", () => {
+    render(<HomePage />);
+    expect(screen.getByRole("heading", { name: /tarifs simples et transparents/i })).toBeInTheDocument();
+  });
+
+  it("section #faq existe et contient le titre Questions fréquentes", () => {
+    render(<HomePage />);
+    expect(screen.getByRole("heading", { name: /questions fréquentes/i })).toBeInTheDocument();
+  });
 });
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
