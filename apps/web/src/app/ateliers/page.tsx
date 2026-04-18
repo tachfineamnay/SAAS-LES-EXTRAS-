@@ -60,13 +60,13 @@ export default function AteliersLandingPage() {
                 <div className="mx-auto max-w-5xl px-6 text-center">
                     <motion.div variants={stagger} initial="hidden" animate={heroInView ? "show" : "hidden"}>
                         <motion.p variants={rise} className="text-overline uppercase tracking-widest text-[hsl(var(--color-violet-600))] mb-4">
-                            Ateliers spécialisés
+                            Ateliers & Formations
                         </motion.p>
                         <motion.h1 variants={rise} className="font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-                            Des ateliers par des professionnels,<br className="hidden md:block" /> pour des professionnels
+                            Des ateliers et formations par des professionnels,<br className="hidden md:block" /> pour des professionnels
                         </motion.h1>
                         <motion.p variants={rise} className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-                            Montessori, Snoezelen, art-thérapie et plus encore.
+                            Montessori, Snoezelen, art-thérapie, formations certifiantes et plus encore.
                             Réservez des sessions animées par des experts certifiés.
                         </motion.p>
                         <motion.div variants={rise} className="flex flex-wrap justify-center gap-3">
@@ -77,8 +77,8 @@ export default function AteliersLandingPage() {
                                 </Link>
                             </Button>
                             <Button variant="glass" size="lg" className="min-h-[52px] text-base gap-2" asChild>
-                                <Link href="/dashboard/ateliers/new">
-                                    Proposer un atelier
+                                <Link href="/register?role=freelance">
+                                    Proposer un service
                                 </Link>
                             </Button>
                         </motion.div>
@@ -89,7 +89,7 @@ export default function AteliersLandingPage() {
             {/* Categories */}
             <section className="py-16 md:py-24">
                 <div className="mx-auto max-w-5xl px-6">
-                    <h2 className="font-display text-heading-lg text-center mb-10">Catégories d&apos;ateliers</h2>
+                    <h2 className="font-display text-heading-lg text-center mb-10">Catégories</h2>
                     <motion.div
                         variants={stagger}
                         initial="hidden"
@@ -148,9 +148,9 @@ export default function AteliersLandingPage() {
             {/* Bottom CTA */}
             <section className="py-16 bg-[hsl(var(--color-violet-50))]">
                 <div className="mx-auto max-w-3xl px-6 text-center">
-                    <h2 className="font-display text-heading-lg mb-4">Prêt à découvrir nos ateliers ?</h2>
+                    <h2 className="font-display text-heading-lg mb-4">Prêt à découvrir nos ateliers et formations ?</h2>
                     <p className="text-muted-foreground mb-8">
-                        Établissement ou freelance, il y a un atelier pour vous.
+                        Établissement ou freelance, il y a un atelier ou une formation pour vous.
                     </p>
                     <div className="flex flex-wrap justify-center gap-3">
                         <Button variant="default" size="lg" className="min-h-[52px] text-base gap-2" asChild>
@@ -161,7 +161,7 @@ export default function AteliersLandingPage() {
                         </Button>
                         <Button variant="glass" size="lg" className="min-h-[52px] text-base gap-2" asChild>
                             <Link href="/register?role=freelance">
-                                Proposer un atelier
+                                Proposer un service
                             </Link>
                         </Button>
                     </div>

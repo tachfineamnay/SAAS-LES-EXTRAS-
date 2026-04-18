@@ -10,7 +10,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 
 const NAV_LINKS = [
   { label: "Renfort", href: "#renfort" },
-  { label: "Ateliers", href: "#ateliers" },
+  { label: "Ateliers & Formations", href: "#ateliers" },
   { label: "Établissements", href: "#etablissements" },
   { label: "Freelances", href: "#freelances" },
   { label: "Tarifs", href: "#tarifs" },

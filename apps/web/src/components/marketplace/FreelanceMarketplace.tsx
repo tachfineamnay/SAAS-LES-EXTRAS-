@@ -46,10 +46,10 @@ export function FreelanceMarketplace({ missions, services }: FreelanceMarketplac
           Marketplace
         </p>
         <h1 className="font-display text-heading-xl tracking-tight">
-          Missions & Ateliers
+          Missions & Services
         </h1>
         <p className="text-sm text-muted-foreground">
-          Trouvez des missions de renfort et découvrez les ateliers disponibles.
+          Trouvez des missions de renfort et découvrez les ateliers et formations disponibles.
         </p>
       </header>
 

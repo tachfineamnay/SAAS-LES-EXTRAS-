@@ -15,7 +15,7 @@ const FOOTER_COLUMNS = [
     title: "Plateforme",
     links: [
       { label: "Accueil", href: "/" },
-      { label: "Ateliers", href: "/ateliers" },
+      { label: "Ateliers & Formations", href: "/ateliers" },
       { label: "Établissements", href: "/etablissements" },
       { label: "Freelances", href: "/freelances" },
     ],
@@ -25,7 +25,6 @@ const FOOTER_COLUMNS = [
     links: [
       { label: "Tarifs", href: "/#tarifs" },
       { label: "FAQ", href: "/#faq" },
-      { label: "Blog", href: "/blog" },
     ],
   },
   {

@@ -177,10 +177,13 @@ function DeleteConfirmDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Supprimer cet atelier ?</DialogTitle>
+                    <DialogTitle>
+                        Supprimer {atelier.type === "TRAINING" ? "cette formation" : "cet atelier"} ?
+                    </DialogTitle>
                     <DialogDescription>
-                        Cette action est irréversible. Si des réservations sont liées à cet atelier,
-                        il sera archivé au lieu d&apos;être supprimé.
+                        {atelier.type === "TRAINING"
+                            ? "Cette action est irréversible. Si des réservations sont liées à cette formation, elle sera archivée au lieu d'être supprimée."
+                            : "Cette action est irréversible. Si des réservations sont liées à cet atelier, il sera archivé au lieu d'être supprimé."}
                     </DialogDescription>
                 </DialogHeader>
                 <p className="text-sm font-medium">{atelier.title}</p>
@@ -205,11 +208,13 @@ function AtelierRow({
     onEdit,
     onDelete,
     onArchive,
+    onPublish,
 }: {
     atelier: MesAtelierItem;
     onEdit: () => void;
     onDelete: () => void;
     onArchive: () => void;
+    onPublish: () => void;
 }) {
     const pricingLabel =
         atelier.pricingType === "QUOTE"
@@ -221,6 +226,8 @@ function AtelierRow({
     const slotsCount = Array.isArray(atelier.slots) ? atelier.slots.length : 0;
     const bookingsCount = Array.isArray(atelier.bookings) ? atelier.bookings.length : 0;
     const statusCfg = STATUS_CONFIG[atelier.status] || STATUS_CONFIG.ACTIVE;
+    const marketplaceHref =
+        atelier.status === "ACTIVE" ? `/marketplace/services/${atelier.id}` : null;
 
     return (
         <GlassCard className="transition-all hover:shadow-lg hover:-translate-y-0.5 group">
@@ -242,9 +249,13 @@ function AtelierRow({
                                 </div>
                                 <div className="min-w-0 space-y-1.5">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <Link href={`/marketplace/services/${atelier.id}`} className="hover:underline">
+                                        {marketplaceHref ? (
+                                            <Link href={marketplaceHref} className="hover:underline">
+                                                <h3 className="text-sm font-semibold truncate max-w-[300px]">{atelier.title}</h3>
+                                            </Link>
+                                        ) : (
                                             <h3 className="text-sm font-semibold truncate max-w-[300px]">{atelier.title}</h3>
-                                        </Link>
+                                        )}
                                         <Badge variant={statusCfg.variant} className="text-[10px] px-1.5 py-0">
                                             {statusCfg.label}
                                         </Badge>
@@ -286,6 +297,17 @@ function AtelierRow({
                                 </div>
 
                                 <div className="flex items-center gap-1">
+                                    {atelier.status === "DRAFT" && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-1.5"
+                                            onClick={onPublish}
+                                        >
+                                            <TrendingUp className="h-4 w-4" />
+                                            Publier
+                                        </Button>
+                                    )}
                                     <Button
                                         variant="ghost"
                                         size="icon"
@@ -302,14 +324,21 @@ function AtelierRow({
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem asChild>
-                                                <Link href={`/marketplace/services/${atelier.id}`} className="flex items-center gap-2">
-                                                    <Eye className="h-4 w-4" /> Voir la fiche
-                                                </Link>
-                                            </DropdownMenuItem>
+                                            {marketplaceHref && (
+                                                <DropdownMenuItem asChild>
+                                                    <Link href={marketplaceHref} className="flex items-center gap-2">
+                                                        <Eye className="h-4 w-4" /> Voir la fiche
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            )}
                                             <DropdownMenuItem onClick={onEdit} className="flex items-center gap-2">
                                                 <Pencil className="h-4 w-4" /> Modifier
                                             </DropdownMenuItem>
+                                            {atelier.status === "DRAFT" && (
+                                                <DropdownMenuItem onClick={onPublish} className="flex items-center gap-2">
+                                                    <TrendingUp className="h-4 w-4" /> Publier ce brouillon
+                                                </DropdownMenuItem>
+                                            )}
                                             <DropdownMenuSeparator />
                                             {atelier.status !== "ARCHIVED" && (
                                                 <DropdownMenuItem onClick={onArchive} className="flex items-center gap-2">
@@ -347,6 +376,12 @@ export function MesAteliersClient({ ateliers, serviceBookings, error }: MesAteli
     const activeAteliers = ateliers.filter((a) => a.status === "ACTIVE");
     const draftAteliers = ateliers.filter((a) => a.status === "DRAFT");
     const archivedAteliers = ateliers.filter((a) => a.status === "ARCHIVED");
+    const defaultTab =
+        activeAteliers.length > 0
+            ? "active"
+            : draftAteliers.length > 0
+                ? "draft"
+                : "archived";
 
     function refresh() {
         router.refresh();
@@ -354,6 +389,11 @@ export function MesAteliersClient({ ateliers, serviceBookings, error }: MesAteli
 
     async function handleArchive(atelier: MesAtelierItem) {
         await updateServiceAction(atelier.id, { status: "ARCHIVED" });
+        refresh();
+    }
+
+    async function handlePublish(atelier: MesAtelierItem) {
+        await updateServiceAction(atelier.id, { status: "ACTIVE" });
         refresh();
     }
 
@@ -385,6 +425,7 @@ export function MesAteliersClient({ ateliers, serviceBookings, error }: MesAteli
                         onEdit={() => setEditTarget(atelier)}
                         onDelete={() => setDeleteTarget(atelier)}
                         onArchive={() => handleArchive(atelier)}
+                        onPublish={() => handlePublish(atelier)}
                     />
                 ))}
             </div>
@@ -404,7 +445,7 @@ export function MesAteliersClient({ ateliers, serviceBookings, error }: MesAteli
                 </div>
                 <Button variant="default" className="gap-2 min-h-[44px]" onClick={openPublishModal}>
                     <Plus className="h-4 w-4" aria-hidden="true" />
-                    Créer un atelier
+                    Publier un atelier ou une formation
                 </Button>
             </div>
 
@@ -438,7 +479,7 @@ export function MesAteliersClient({ ateliers, serviceBookings, error }: MesAteli
                             <TrendingUp className="h-5 w-5 text-[hsl(var(--teal))]" aria-hidden="true" />
                         </div>
                         <div>
-                            <p className="text-xs text-muted-foreground">Ateliers réalisés</p>
+                            <p className="text-xs text-muted-foreground">Sessions réalisées</p>
                             <p className="text-2xl font-bold">{completedCount}</p>
                         </div>
                     </GlassCardContent>
@@ -449,12 +490,12 @@ export function MesAteliersClient({ ateliers, serviceBookings, error }: MesAteli
             {ateliers.length === 0 ? (
                 <EmptyState
                     icon={GraduationCap}
-                    title="Vous n'avez pas encore publié d'atelier"
+                    title="Vous n'avez pas encore publié de service"
                     description="Proposez votre premier atelier ou formation pour recevoir des demandes de réservation."
-                    primaryAction={{ label: "Créer un atelier", onClick: openPublishModal }}
+                    primaryAction={{ label: "Publier un atelier ou une formation", onClick: openPublishModal }}
                 />
             ) : (
-                <Tabs defaultValue="active" className="w-full">
+                <Tabs defaultValue={defaultTab} className="w-full">
                     <TabsList className="w-full sm:w-auto">
                         <TabsTrigger value="active" className="gap-1.5">
                             Actifs
@@ -483,7 +524,7 @@ export function MesAteliersClient({ ateliers, serviceBookings, error }: MesAteli
                     </TabsList>
 
                     <TabsContent value="active" className="mt-4">
-                        {renderList(activeAteliers, "Aucun atelier actif. Publiez votre premier atelier !")}
+                        {renderList(activeAteliers, "Aucun service actif. Publiez votre premier atelier ou formation !")}
                     </TabsContent>
                     <TabsContent value="draft" className="mt-4">
                         {renderList(draftAteliers, "Aucun brouillon en cours.")}

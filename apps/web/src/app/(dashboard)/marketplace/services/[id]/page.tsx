@@ -56,7 +56,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="teal">
-                {service.type === "WORKSHOP" ? "ATELIER" : "FORMATION"}
+                {service.type === "WORKSHOP" ? "Atelier" : "Formation"}
               </Badge>
               {service.category && (
                 <Badge variant="secondary">{getCategoryLabel(service.category)}</Badge>

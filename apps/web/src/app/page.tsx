@@ -456,7 +456,7 @@ export default function HomePage() {
                     <motion.div whileTap={{ scale: 0.97 }}>
                       <Button asChild size="lg" variant="teal-soft"
                         className={`${DISPLAY} h-12 px-7 text-base font-semibold rounded-xl w-full sm:w-auto`}>
-                        <Link href="/register?role=FREELANCE">Je suis freelance</Link>
+                        <Link href="/register?role=FREELANCE">Proposer mes services</Link>
                       </Button>
                     </motion.div>
                   </motion.div>
@@ -605,9 +605,9 @@ export default function HomePage() {
 
                 {/* Pillar 2: Ateliers */}
                 <PillarCard
-                  tag="Ateliers"
-                  title="Proposez vos ateliers"
-                  desc="Art-thérapie, musicothérapie, sophrologie — publiez vos ateliers et remplissez votre agenda."
+                  tag="Ateliers & Formations"
+                  title="Proposez vos services"
+                  desc="Art-thérapie, musicothérapie, sophrologie, formations certifiantes — publiez vos services et remplissez votre agenda."
                   accent="teal"
                   features={[
                     "Catalogue visible par tous les établissements",
@@ -683,7 +683,7 @@ export default function HomePage() {
                         {[
                           { icon: Zap, text: "Fast-Apply : postulez en 1 seconde", c: "bg-[hsl(var(--coral))] text-white" },
                           { icon: FileText, text: "Factures et contrats auto-générés", c: "bg-[hsl(var(--teal))] text-white" },
-                          { icon: TrendingUp, text: "Vos ateliers sur la marketplace", c: "bg-[hsl(var(--violet))] text-white" },
+                          { icon: TrendingUp, text: "Vos services sur la marketplace", c: "bg-[hsl(var(--violet))] text-white" },
                           { icon: DollarSign, text: "Paiement garanti sous 72h", c: "bg-[hsl(var(--emerald))] text-white" },
                         ].map((item, i) => (
                           <motion.div key={i} initial={{ opacity: 0, x: -14 }} whileInView={{ opacity: 1, x: 0 }}
@@ -839,7 +839,7 @@ export default function HomePage() {
                         <Button asChild size="lg" variant="ghost"
                           className={`${DISPLAY} h-12 px-8 text-base font-semibold rounded-xl border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--foreground))]`}>
                           <Link href="/register?role=FREELANCE">
-                            Espace freelance <ArrowUpRight className="ml-1.5 h-4 w-4" />
+                            Espace Freelance <ArrowUpRight className="ml-1.5 h-4 w-4" />
                           </Link>
                         </Button>
                       </motion.div>
