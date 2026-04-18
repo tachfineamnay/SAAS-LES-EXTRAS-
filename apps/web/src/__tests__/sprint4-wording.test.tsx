@@ -121,6 +121,12 @@ describe("Homepage — plateforme hybride", () => {
     render(<HomePage />);
     expect(screen.getByRole("heading", { name: /questions fréquentes/i })).toBeInTheDocument();
   });
+
+  it('section tarifs établissements dit "Renfort & Ateliers" (pas "Recrutement & Ateliers")', () => {
+    render(<HomePage />);
+    expect(screen.queryByText(/recrutement & ateliers/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/renfort & ateliers/i)).toBeInTheDocument();
+  });
 });
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
@@ -240,8 +246,13 @@ describe("Sprint 4 — FreelanceMarketplace wording", () => {
 describe("Sprint 4 — Public CTA role params", () => {
   it("la landing /ateliers pointe vers un rôle FREELANCE en majuscules", () => {
     render(<AteliersLandingPage />);
-    const links = screen.getAllByRole("link", { name: /proposer un service/i });
+    const links = screen.getAllByRole("link", { name: /proposer un atelier ou une formation/i });
     expect(links[0]).toHaveAttribute("href", "/register?role=FREELANCE");
+  });
+
+  it('la landing /ateliers ne contient plus "Proposer un service" générique', () => {
+    render(<AteliersLandingPage />);
+    expect(screen.queryByRole("link", { name: /^proposer un service$/i })).not.toBeInTheDocument();
   });
 
   it("la page /freelances pointe vers un rôle FREELANCE en majuscules", () => {

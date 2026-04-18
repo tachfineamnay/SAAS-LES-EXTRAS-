@@ -35,9 +35,9 @@ export default async function SosDashboardPage() {
         <p className="text-overline uppercase tracking-widest text-muted-foreground">Espace Établissement</p>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="font-display text-heading-xl tracking-tight">Board de matching</h1>
+            <h1 className="font-display text-heading-xl tracking-tight">Missions de renfort</h1>
             <p className="text-body-md text-muted-foreground">
-              Gérez vos missions de renfort et validez les candidatures des freelances.
+              Gérez vos missions et traitez les postulations des freelances.
             </p>
           </div>
           <PublishRenfortButton label="Nouveau renfort" size="sm" />

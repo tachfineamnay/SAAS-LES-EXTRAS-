@@ -847,7 +847,7 @@ export default function HomePage() {
                     </div>
                     <div>
                       <p className={`${DISPLAY} text-lg font-bold text-[hsl(var(--foreground))]`}>Établissements</p>
-                      <p className={`${MONO} text-[11px] text-[hsl(var(--text-tertiary))] uppercase tracking-wide`}>Recrutement &amp; Ateliers</p>
+                      <p className={`${MONO} text-[11px] text-[hsl(var(--text-tertiary))] uppercase tracking-wide`}>Renfort &amp; Ateliers</p>
                     </div>
                   </div>
                   <ul className="space-y-3 pt-2 flex-1">

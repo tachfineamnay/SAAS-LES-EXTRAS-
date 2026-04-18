@@ -78,7 +78,7 @@ export default function AteliersLandingPage() {
                             </Button>
                             <Button variant="glass" size="lg" className="min-h-[52px] text-base gap-2" asChild>
                                 <Link href="/register?role=FREELANCE">
-                                    Proposer un service
+                                    Proposer un atelier ou une formation
                                 </Link>
                             </Button>
                         </motion.div>
@@ -161,7 +161,7 @@ export default function AteliersLandingPage() {
                         </Button>
                         <Button variant="glass" size="lg" className="min-h-[52px] text-base gap-2" asChild>
                             <Link href="/register?role=FREELANCE">
-                                Proposer un service
+                                Proposer un atelier ou une formation
                             </Link>
                         </Button>
                     </div>

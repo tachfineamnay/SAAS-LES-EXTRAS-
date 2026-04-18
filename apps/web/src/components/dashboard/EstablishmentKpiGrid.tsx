@@ -28,7 +28,7 @@ export function EstablishmentKpiGrid({
                 index={0}
             />
             <KpiTile
-                label="Candidatures en attente"
+                label="Demandes en attente"
                 value={ongoingBookings}
                 icon={Calendar}
                 iconColor="coral"
