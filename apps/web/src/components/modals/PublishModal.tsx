@@ -696,7 +696,7 @@ export function PublishModal() {
 
                   {values.pricingType === "SESSION" && (
                     <div className="space-y-2">
-                      <Label htmlFor="pub-price">Tarif forfaitaire (€ HT)</Label>
+                      <Label htmlFor="pub-price">Tarif forfaitaire (€)</Label>
                       <Input
                         id="pub-price"
                         type="number"
@@ -713,7 +713,7 @@ export function PublishModal() {
 
                   {values.pricingType === "PER_PARTICIPANT" && (
                     <div className="space-y-2">
-                      <Label htmlFor="pub-ppp">Tarif par participant (€ HT)</Label>
+                      <Label htmlFor="pub-ppp">Tarif par participant (€)</Label>
                       <Input
                         id="pub-ppp"
                         type="number"
@@ -926,7 +926,7 @@ export function PublishModal() {
                           ? "Sur devis"
                           : values.pricingType === "PER_PARTICIPANT"
                           ? `${values.pricePerParticipant ?? 0} €/pers.`
-                          : `${values.price ?? 0} € HT`}
+                          : `${values.price ?? 0} €`}
                       </span>
                       <span className="text-muted-foreground/70">Planning</span>
                       <span className="truncate">

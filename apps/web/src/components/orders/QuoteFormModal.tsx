@@ -172,10 +172,6 @@ export function QuoteFormModal({ bookingId, onClose, onSuccess }: QuoteFormModal
 
         {/* Totals */}
         <div className="space-y-1 text-sm rounded-lg bg-muted p-3">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Sous-total</span>
-            <span className="tabular-nums font-medium">{subtotalHT.toFixed(2)} €</span>
-          </div>
           <div className="flex justify-between font-semibold">
             <span>Montant</span>
             <span className="tabular-nums">{totalAmount.toFixed(2)} €</span>

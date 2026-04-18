@@ -65,10 +65,6 @@ export function QuoteCard({
 
       {/* Totals */}
       <div className="space-y-1 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Sous-total</span>
-          <span className="tabular-nums">{quote.subtotalHT.toFixed(2)} €</span>
-        </div>
         <div className="flex justify-between font-semibold">
           <span>Montant</span>
           <span className="tabular-nums">{quote.totalTTC.toFixed(2)} €</span>

@@ -41,7 +41,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
     if (service.pricingType === "PER_PARTICIPANT" && service.pricePerParticipant) {
       return `${moneyFormatter.format(service.pricePerParticipant)} / pers.`;
     }
-    return `${moneyFormatter.format(service.price)} HT`;
+    return `${moneyFormatter.format(service.price)}`;
   };
 
   return (

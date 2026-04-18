@@ -131,7 +131,7 @@ export function QuoteEditorModal() {
           <div className="space-y-2">
             <Label htmlFor="qe-amount" className="flex items-center gap-2">
               <Euro className="w-4 h-4 text-primary" />
-              Montant du devis (€ HT)
+              Montant du devis (€)
             </Label>
             <Input
               id="qe-amount"

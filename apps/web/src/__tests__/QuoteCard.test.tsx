@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 const { QuoteCard } = await import("@/components/orders/QuoteCard");
 
 describe("QuoteCard", () => {
-  it("affiche un montant simple sans mention TVA ni TTC", () => {
+  it("affiche un montant simple sans mention HT, TVA ni TTC", () => {
     render(
       <QuoteCard
         quote={{
@@ -34,9 +34,10 @@ describe("QuoteCard", () => {
       />,
     );
 
-    expect(screen.getByText("Sous-total")).toBeInTheDocument();
+    expect(screen.queryByText("Sous-total")).not.toBeInTheDocument();
     expect(screen.getByText("Montant")).toBeInTheDocument();
     expect(screen.queryByText(/^TVA$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/TTC/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\bHT\b/)).not.toBeInTheDocument();
   });
 });

@@ -254,7 +254,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                       <span className="text-muted-foreground font-medium">Par participant</span>
                       <div className="text-right">
                         <span className="text-3xl font-bold">{service.pricePerParticipant} €</span>
-                        <span className="text-xs text-muted-foreground block">/ pers. HT</span>
+                        <span className="text-xs text-muted-foreground block">/ pers.</span>
                       </div>
                     </div>
                   ) : (
@@ -262,7 +262,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                       <span className="text-muted-foreground font-medium">Prix forfaitaire</span>
                       <div className="text-right">
                         <span className="text-3xl font-bold">{service.price} €</span>
-                        <span className="text-xs text-muted-foreground block">HT</span>
+                        <span className="text-xs text-muted-foreground block">par session</span>
                       </div>
                     </div>
                   )}

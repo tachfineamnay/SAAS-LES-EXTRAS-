@@ -445,8 +445,7 @@ export function BookServiceModal() {
                         style: "currency",
                         currency: "EUR",
                         maximumFractionDigits: 0,
-                      }).format(totalPrice)}{" "}
-                      HT
+                      }).format(totalPrice)}
                     </span>
                   </div>
                 )}
