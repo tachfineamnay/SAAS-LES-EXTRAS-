@@ -438,8 +438,7 @@ export class QuotesService {
 
       doc.moveDown();
 
-      // Totals
-      doc.text(`Sous-total: ${quote.subtotalHT.toFixed(2)} €`, { align: 'right' });
+      // Total (TVA 0% — subtotalHT === totalTTC)
       doc.font('Helvetica-Bold');
       doc.text(`Montant: ${quote.totalTTC.toFixed(2)} €`, { align: 'right' });
       doc.font('Helvetica');
