@@ -102,14 +102,14 @@ export function EstablishmentDashboard({
                         Tableau de bord
                     </h1>
                     <p className="text-body-md text-muted-foreground">
-                        Vue d&apos;ensemble de vos renforts et opérations.
+                        Pilotez vos renforts, ateliers, formations et le suivi de votre établissement.
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
                     <Link href="/marketplace">
                         <span className="inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--teal))] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity">
                             <Sparkles className="h-4 w-4" aria-hidden="true" />
-                            Explorer les ateliers
+                            Explorer le catalogue
                         </span>
                     </Link>
                     <PublishRenfortButton label="Publier un renfort" />
@@ -155,11 +155,11 @@ export function EstablishmentDashboard({
                     <RenfortsWidget missions={activeMissions} error={missionsError} />
                 </DashboardWidget>
 
-                {/* Profil & Complétude */}
+                {/* Fiche établissement */}
                 <DashboardWidget
                     icon={ShieldCheck}
                     iconColor="emerald"
-                    title="Profil & Complétude"
+                    title="Fiche établissement"
                 >
                     <EstablishmentChecklistWidget />
                 </DashboardWidget>
@@ -198,7 +198,7 @@ export function EstablishmentDashboard({
                     icon={DollarSign}
                     iconColor="emerald"
                     title="Mes Crédits"
-                    subtitle="Solde de recrutement"
+                    subtitle="Solde renforts et services"
                     viewAllHref="/dashboard/packs"
                 >
                     <CreditsWidget credits={availableCredits} error={creditsError} />
@@ -260,7 +260,7 @@ export function EstablishmentDashboard({
                                 href="/dashboard/renforts"
                                 className="block w-full text-center text-xs font-medium text-[hsl(var(--teal))] hover:underline"
                             >
-                                Voir le board de matching →
+                                Gérer les candidatures →
                             </Link>
                         </div>
                     ) : (

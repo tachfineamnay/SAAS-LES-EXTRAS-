@@ -55,7 +55,6 @@ const BOTTOM_LINKS = [
 ];
 
 const ESTABLISHMENT_BOTTOM_LINKS = [
-  { href: "/account",                label: "Mon Profil",          icon: UserRound },
   { href: "/account/establishment",  label: "Mon Établissement",   icon: Building2 },
   { href: "/settings",               label: "Paramètres",          icon: Settings },
 ];

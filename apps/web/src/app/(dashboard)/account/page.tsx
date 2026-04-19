@@ -8,6 +8,12 @@ export default async function AccountPage() {
 
   if (!session) {
     redirect("/login");
+    return null;
+  }
+
+  if (session.user.role === "ESTABLISHMENT") {
+    redirect("/account/establishment");
+    return null;
   }
 
   let profile: Record<string, any> | null = null;

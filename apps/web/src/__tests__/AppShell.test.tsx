@@ -64,15 +64,26 @@ vi.mock("@/lib/hooks/useScrollProgress", () => ({
 
 vi.mock("@/components/ui/mobile-bottom-nav", () => ({
   MobileBottomNav: ({
+    items,
     onFabClick,
     fabLabel,
   }: {
+    items: { id: string; label: string; onClick?: () => void }[];
     onFabClick?: () => void;
     fabLabel?: string;
   }) => (
-    <button type="button" onClick={onFabClick}>
-      {fabLabel}
-    </button>
+    <nav aria-label="Navigation mobile">
+      {items
+        .filter((item) => item.id !== "fab")
+        .map((item) => (
+          <button key={item.id} type="button" onClick={item.onClick}>
+            {item.label}
+          </button>
+        ))}
+      <button type="button" onClick={onFabClick}>
+        {fabLabel}
+      </button>
+    </nav>
   ),
 }));
 
@@ -102,6 +113,17 @@ describe("AppShell", () => {
     await user.click(screen.getByRole("button", { name: /publier un renfort/i }));
     expect(mockOpenRenfortModal).toHaveBeenCalledTimes(1);
     expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+
+  it("oriente le compte mobile établissement vers Mon Établissement", async () => {
+    const user = userEvent.setup();
+    store.userRole = "ESTABLISHMENT";
+    render(<AppShell><div>content</div></AppShell>);
+
+    expect(screen.queryByRole("button", { name: /^profil$/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /établ\./i }));
+    expect(mockRouterPush).toHaveBeenCalledWith("/account/establishment");
   });
 
   it("ferme la modale renfort si le rôle n'est pas établissement", async () => {

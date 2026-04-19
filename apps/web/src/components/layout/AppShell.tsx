@@ -13,7 +13,7 @@ import { Sidebar } from "./Sidebar";
 import { MobileBottomNav, BottomNavItem } from "@/components/ui/mobile-bottom-nav";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import { useScrollProgress } from "@/lib/hooks/useScrollProgress";
-import { LayoutDashboard, ShoppingBag, CalendarDays, Mail, UserRound } from "lucide-react";
+import { Building2, LayoutDashboard, ShoppingBag, CalendarDays, Mail, UserRound } from "lucide-react";
 
 export function RenfortModalWrapper() {
   const isOpen = useUIStore((state) => state.isRenfortModalOpen);
@@ -56,7 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           { id: "marketplace", label: "Catalogue", icon: ShoppingBag, active: isActive("/marketplace"), onClick: () => router.push("/marketplace") },
           { id: "fab", label: "", icon: LayoutDashboard }, // placeholder for FAB slot
           { id: "inbox", label: "Messages", icon: Mail, active: isActive("/dashboard/inbox"), onClick: () => router.push("/dashboard/inbox") },
-          { id: "account", label: "Profil", icon: UserRound, active: isActive("/account"), onClick: () => router.push("/account") },
+          { id: "establishment", label: "Établ.", icon: Building2, active: isActive("/account/establishment"), onClick: () => router.push("/account/establishment") },
         ]
       : [
           // Rôle null — rôle pas encore hydraté : structure stable 5 éléments

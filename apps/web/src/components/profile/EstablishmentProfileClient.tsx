@@ -135,7 +135,7 @@ export function EstablishmentProfileClient({ initialData, stats }: Establishment
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Profil établissement mis à jour !");
+        toast.success("Fiche établissement mise à jour !");
         setIsEditing(false);
       }
     });
@@ -193,7 +193,7 @@ export function EstablishmentProfileClient({ initialData, stats }: Establishment
               <Button variant="outline" size="sm" asChild>
                 <a href="/account">
                   <Users className="h-4 w-4 mr-1.5" />
-                  Profil Personnel
+                  Coordonnées compte
                 </a>
               </Button>
               <Button
@@ -512,7 +512,7 @@ export function EstablishmentProfileClient({ initialData, stats }: Establishment
                 </div>
                 <Separator />
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Complétude profil</span>
+                  <span className="text-muted-foreground">Complétude établissement</span>
                   <span className="font-medium">{pct}%</span>
                 </div>
                 <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -535,7 +535,7 @@ export function EstablishmentProfileClient({ initialData, stats }: Establishment
                 <Button variant="outline" size="sm" className="w-full justify-start" asChild>
                   <a href="/account">
                     <Users className="h-4 w-4 mr-2 text-[hsl(var(--teal))]" />
-                    Profil personnel
+                    Coordonnées compte
                   </a>
                 </Button>
                 <Button variant="outline" size="sm" className="w-full justify-start" asChild>

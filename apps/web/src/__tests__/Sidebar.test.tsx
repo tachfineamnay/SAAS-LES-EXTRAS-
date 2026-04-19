@@ -10,6 +10,22 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/account/establishment",
 }));
 
+vi.mock("next/link", () => ({
+  default: ({
+    href,
+    children,
+    ...props
+  }: {
+    href: string;
+    children: ReactNode;
+    [key: string]: unknown;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock("@/lib/stores/useUIStore", () => ({
   useUIStore: (selector: (state: typeof store) => unknown) => selector(store),
 }));
@@ -37,5 +53,19 @@ describe("Sidebar", () => {
     const activeLinks = screen.getAllByRole("link", { current: "page" });
     expect(activeLinks).toHaveLength(1);
     expect(activeLinks[0]).toHaveTextContent(/mon établissement/i);
+  });
+
+  it("centre le compte établissement sur Mon Établissement et Paramètres", () => {
+    render(<Sidebar isMobileOpen={false} onMobileOpenChange={() => undefined} />);
+
+    expect(screen.queryByRole("link", { name: /mon profil/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /mon établissement/i })).toHaveAttribute(
+      "href",
+      "/account/establishment",
+    );
+    expect(screen.getByRole("link", { name: /paramètres/i })).toHaveAttribute(
+      "href",
+      "/settings",
+    );
   });
 });

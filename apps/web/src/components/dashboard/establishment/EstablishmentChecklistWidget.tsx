@@ -56,7 +56,7 @@ export function EstablishmentChecklistWidget() {
         <div className="h-full flex flex-col justify-between space-y-4">
             <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm font-medium">
-                    <span className="text-muted-foreground">Profil établissement</span>
+                    <span className="text-muted-foreground">Fiche établissement</span>
                     <span>{progress}%</span>
                 </div>
                 <div className="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
@@ -121,7 +121,7 @@ export function EstablishmentChecklistWidget() {
             </motion.div>
 
             <div className="rounded-md bg-[hsl(var(--color-teal-50))] p-3 text-xs text-[hsl(var(--color-teal-700))]">
-                <p>Un profil complet inspire confiance aux freelances et accélère vos recrutements.</p>
+                <p>Une fiche établissement complète inspire confiance aux freelances et accélère vos demandes de renfort.</p>
             </div>
         </div>
     );

@@ -16,7 +16,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   dashboard: "Tableau de bord",
   marketplace: "Marketplace",
   bookings: "Agenda",
-  account: "Mon Profil",
+  account: "Compte",
   settings: "Paramètres",
   inbox: "Messagerie",
   packs: "Crédits",
@@ -24,20 +24,24 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   ateliers: "Ateliers",
   finance: "Finance",
   reservations: "Réservations",
-  establishment: "Établissement",
+  establishment: "Mon Établissement",
   missions: "Missions",
   services: "Services",
 };
 
 function Breadcrumbs() {
-  const pathname = usePathname();
+  const pathname: string = usePathname();
+  const userRole = useUIStore((state) => state.userRole);
   const segments = pathname.split("/").filter(Boolean);
 
   if (segments.length === 0) return null;
 
   const crumbs = segments.map((seg, i) => {
     const href = "/" + segments.slice(0, i + 1).join("/");
-    const label = BREADCRUMB_LABELS[seg] || seg.charAt(0).toUpperCase() + seg.slice(1);
+    const label =
+      userRole === "FREELANCE" && seg === "account"
+        ? "Mon Profil"
+        : BREADCRUMB_LABELS[seg] || seg.charAt(0).toUpperCase() + seg.slice(1);
     const isLast = i === segments.length - 1;
     return { href, label, isLast };
   });
