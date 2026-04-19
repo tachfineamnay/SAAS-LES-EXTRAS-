@@ -17,7 +17,11 @@ export default async function DashboardLayout({
 
   // Vérifie que le token API est encore valide (peut expirer indépendamment du cookie Next.js)
   try {
-    await apiRequest("/users/me", { token: session.token, cache: "no-store" });
+    await apiRequest("/users/me", {
+      token: session.token,
+      cache: "no-store",
+      label: "dashboard.session",
+    });
   } catch (e) {
     if (e instanceof UnauthorizedError) {
       await deleteSession();

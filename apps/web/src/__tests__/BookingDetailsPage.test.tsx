@@ -15,6 +15,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/session", () => ({
   getSession: () => mockGetSession(),
+  deleteSession: () => mockDeleteSession(),
 }));
 
 vi.mock("@/app/actions/bookings", () => ({
@@ -23,6 +24,7 @@ vi.mock("@/app/actions/bookings", () => ({
 }));
 
 const mockGetSession = vi.fn();
+const mockDeleteSession = vi.fn();
 const mockGetBookingsPageData = vi.fn();
 const mockGetBookingLineDetails = vi.fn();
 
@@ -112,6 +114,20 @@ describe("BookingDetailsPage", () => {
     await expect(
       BookingDetailsPage({ params: { lineType: "MISSION", lineId: "line-1" } }),
     ).rejects.toThrow("NEXT_REDIRECT:/login");
+    expect(mockRedirect).toHaveBeenCalledWith("/login");
+  });
+
+  it("redirige vers /login si l'API renvoie une session expirée", async () => {
+    mockGetBookingsPageData.mockResolvedValue({
+      ok: false,
+      error: "Session expirée — reconnectez-vous.",
+      unauthorized: true,
+    });
+
+    await expect(
+      BookingDetailsPage({ params: { lineType: "MISSION", lineId: "line-1" } }),
+    ).rejects.toThrow("NEXT_REDIRECT:/login");
+    expect(mockDeleteSession).toHaveBeenCalledTimes(1);
     expect(mockRedirect).toHaveBeenCalledWith("/login");
   });
 });

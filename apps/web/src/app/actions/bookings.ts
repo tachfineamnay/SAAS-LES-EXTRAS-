@@ -103,6 +103,7 @@ export async function getBookingsPageData(token?: string): Promise<BookingsPageD
   return apiRequest<BookingsPageData>("/bookings", {
     method: "GET",
     token: activeToken,
+    label: "bookings.page-data",
   });
 }
 

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/session";
-import { getBookingsPageData } from "@/app/actions/bookings";
+import { getSession, deleteSession } from "@/lib/session";
+import { getBookingsPageDataSafe } from "@/app/actions/bookings";
 import { getNotifications } from "@/actions/messaging";
 import { InboxClient } from "./InboxClient";
 import type { MessagingConversationSeed } from "@/lib/messaging-v1";
@@ -26,16 +26,19 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
   }[] = [];
   let notificationsError: string | null = null;
 
-  try {
-    const bookings = await getBookingsPageData(session.token);
-    seeds = bookings.lines.map((line) => ({
+  const bookingsResult = await getBookingsPageDataSafe(session.token);
+  if (bookingsResult.ok) {
+    seeds = bookingsResult.data.lines.map((line) => ({
       id: `booking:${line.lineType}:${line.lineId}`,
       name: line.interlocutor,
       context: line.typeLabel,
       source: "BOOKING" as const,
     }));
-  } catch {
-    loadError = "Impossible de charger les conversations liées à vos missions et ateliers.";
+  } else if (bookingsResult.unauthorized) {
+    await deleteSession();
+    redirect("/login");
+  } else {
+    loadError = bookingsResult.error || "Impossible de charger les conversations liées à vos missions et ateliers.";
   }
 
   try {

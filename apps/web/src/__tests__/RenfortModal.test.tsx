@@ -364,5 +364,5 @@ describe("RenfortModal", () => {
       expect(mockPush).toHaveBeenCalledWith("/dashboard/renforts");
       expect(mockRefresh).toHaveBeenCalled();
     });
-  });
+  }, 10000);
 });

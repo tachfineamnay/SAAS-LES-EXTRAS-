@@ -13,10 +13,18 @@ import { Button } from "@/components/ui/button";
 interface EstablishmentCatalogueProps {
   services: SerializedService[];
   freelances: SerializedFreelance[];
+  servicesError?: string | null;
+  freelancesError?: string | null;
   catalogueError?: string | null;
 }
 
-export function EstablishmentCatalogue({ services, freelances, catalogueError }: EstablishmentCatalogueProps) {
+export function EstablishmentCatalogue({
+  services,
+  freelances,
+  servicesError,
+  freelancesError,
+  catalogueError,
+}: EstablishmentCatalogueProps) {
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterPricing, setFilterPricing] = useState<string | null>(null);
 
@@ -124,6 +132,8 @@ export function EstablishmentCatalogue({ services, freelances, catalogueError }:
     filteredEmptyTitle,
     emptyTitle,
     emptyDescription,
+    unavailableTitle,
+    sourceError,
   }: {
     sourceServices: SerializedService[];
     filteredServices: SerializedService[];
@@ -131,55 +141,72 @@ export function EstablishmentCatalogue({ services, freelances, catalogueError }:
     filteredEmptyTitle: string;
     emptyTitle: string;
     emptyDescription: string;
-  }) => (
-    <div className="space-y-4">
-      {renderFilters(sourceServices)}
+    unavailableTitle: string;
+    sourceError?: string | null;
+  }) => {
+    const emptyStateTitle =
+      sourceError && !hasFilters
+        ? unavailableTitle
+        : hasFilters
+          ? filteredEmptyTitle
+          : emptyTitle;
+    const emptyStateDescription =
+      sourceError && !hasFilters
+        ? "Cette source est temporairement indisponible. Réessayez dans quelques instants."
+        : hasFilters
+          ? "Essayez de modifier vos filtres."
+          : emptyDescription;
 
-      {!hasFilters && filteredServices.length >= 3 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="text-heading-sm font-display">Recommandés pour vous</span>
-            <span className="text-xs text-muted-foreground">Sélection personnalisée</span>
+    return (
+      <div className="space-y-4">
+        {renderFilters(sourceServices)}
+
+        {!hasFilters && filteredServices.length >= 3 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-heading-sm font-display">Recommandés pour vous</span>
+              <span className="text-xs text-muted-foreground">Sélection personnalisée</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredServices.slice(0, 3).map((service) => (
+                <ServiceCard key={`rec-${service.id}`} service={service} />
+              ))}
+            </div>
+            <div
+              className="h-px bg-border"
+              role="separator"
+            />
+            <p className="text-heading-sm font-display">{allLabel}</p>
           </div>
+        )}
+
+        {filteredServices.length === 0 ? (
+          <EmptyState
+            icon={GraduationCap}
+            title={emptyStateTitle}
+            description={emptyStateDescription}
+            tips="Revenez régulièrement pour découvrir les nouvelles offres."
+          />
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredServices.slice(0, 3).map((service) => (
-              <ServiceCard key={`rec-${service.id}`} service={service} />
+            {filteredServices.map((service) => (
+              <ServiceCard key={service.id} service={service} />
             ))}
           </div>
-          <div
-            className="h-px bg-border"
-            role="separator"
-          />
-          <p className="text-heading-sm font-display">{allLabel}</p>
-        </div>
-      )}
-
-      {filteredServices.length === 0 ? (
-        <EmptyState
-          icon={GraduationCap}
-          title={hasFilters ? filteredEmptyTitle : emptyTitle}
-          description={
-            hasFilters
-              ? "Essayez de modifier vos filtres."
-              : emptyDescription
-          }
-          tips="Revenez régulièrement pour découvrir les nouvelles offres."
-        />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredServices.map((service) => (
-            <ServiceCard key={service.id} service={service} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
-      {catalogueError && (
+      {(catalogueError || servicesError || freelancesError) && (
         <div className="rounded-lg border border-[hsl(var(--color-coral-300))] bg-[hsl(var(--color-coral-50))] px-4 py-3 text-sm text-[hsl(var(--color-coral-700))]">
-          {catalogueError}
+          <div className="space-y-1">
+            {catalogueError && <p>{catalogueError}</p>}
+            {servicesError && <p>{servicesError}</p>}
+            {freelancesError && <p>{freelancesError}</p>}
+          </div>
         </div>
       )}
 
@@ -230,6 +257,8 @@ export function EstablishmentCatalogue({ services, freelances, catalogueError }:
             filteredEmptyTitle: "Aucun atelier pour ces filtres",
             emptyTitle: "Aucun atelier disponible",
             emptyDescription: "Les ateliers seront bientôt disponibles.",
+            unavailableTitle: "Ateliers indisponibles",
+            sourceError: servicesError,
           })}
         </TabsContent>
 
@@ -241,6 +270,8 @@ export function EstablishmentCatalogue({ services, freelances, catalogueError }:
             filteredEmptyTitle: "Aucune formation pour ces filtres",
             emptyTitle: "Aucune formation disponible",
             emptyDescription: "Les formations seront bientôt disponibles.",
+            unavailableTitle: "Formations indisponibles",
+            sourceError: servicesError,
           })}
         </TabsContent>
 
@@ -248,8 +279,12 @@ export function EstablishmentCatalogue({ services, freelances, catalogueError }:
           {freelances.length === 0 ? (
             <EmptyState
               icon={Users}
-              title="Aucun freelance disponible"
-              description="Aucun freelance vérifié n'est disponible pour le moment."
+              title={freelancesError ? "Annuaire indisponible" : "Aucun freelance disponible"}
+              description={
+                freelancesError
+                  ? "Impossible de charger les profils Extras vérifiés pour le moment."
+                  : "Aucun freelance vérifié n'est disponible pour le moment."
+              }
               primaryAction={{ label: "Demander un renfort SOS", href: "/dashboard" }}
               tips="Nos équipes valident les profils régulièrement."
             />

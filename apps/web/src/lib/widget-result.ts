@@ -28,13 +28,15 @@ export async function fetchSafe<T>(
     const data = await fn();
     return { data, error: null };
   } catch (e) {
-    const isAuth = e instanceof UnauthorizedError;
-    console.error(`[dashboard] ${label}:`, isAuth ? "401 Unauthorized" : e);
+    if (e instanceof UnauthorizedError) {
+      console.error(`[dashboard] ${label}:`, "401 Unauthorized");
+      throw e;
+    }
+
+    console.error(`[dashboard] ${label}:`, e);
     return {
       data: fallback,
-      error: isAuth
-        ? "Session expirée — reconnectez-vous."
-        : `${label} indisponible pour le moment.`,
+      error: `${label} indisponible pour le moment.`,
     };
   }
 }

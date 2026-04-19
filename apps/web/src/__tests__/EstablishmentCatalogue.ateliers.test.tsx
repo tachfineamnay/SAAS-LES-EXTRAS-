@@ -108,4 +108,36 @@ describe("EstablishmentCatalogue - ateliers", () => {
     );
     expect(screen.getByText(/impossible de charger certaines données du catalogue/i)).toBeInTheDocument();
   });
+
+  it("distingue une source ateliers/formations indisponible d'un catalogue vide", () => {
+    render(
+      <EstablishmentCatalogue
+        services={[]}
+        freelances={[]}
+        servicesError="Impossible de charger les ateliers et formations pour le moment."
+      />,
+    );
+
+    expect(
+      screen.getByText(/impossible de charger les ateliers et formations pour le moment/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/ateliers indisponibles/i)).toBeInTheDocument();
+    expect(screen.queryByText(/aucun atelier disponible/i)).not.toBeInTheDocument();
+  });
+
+  it("distingue une source annuaire indisponible d'un annuaire vide", async () => {
+    const user = userEvent.setup();
+    render(
+      <EstablishmentCatalogue
+        services={[]}
+        freelances={[]}
+        freelancesError="Impossible de charger les profils Extras vérifiés pour le moment."
+      />,
+    );
+
+    await user.click(screen.getByRole("tab", { name: /annuaire des extras/i }));
+
+    expect(screen.getByText(/annuaire indisponible/i)).toBeInTheDocument();
+    expect(screen.queryByText(/aucun freelance disponible/i)).not.toBeInTheDocument();
+  });
 });

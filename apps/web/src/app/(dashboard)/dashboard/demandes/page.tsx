@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CheckCircle2, Clock, Inbox, MessageSquare } from "lucide-react";
-import { getSession } from "@/lib/session";
-import { getMyDeskRequests, type MyDeskRequest, type MyDeskRequestStatus } from "@/app/actions/desk";
+import { getSession, deleteSession } from "@/lib/session";
+import { getMyDeskRequestsSafe, type MyDeskRequest, type MyDeskRequestStatus } from "@/app/actions/desk";
 import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
@@ -79,7 +79,14 @@ export default async function MesDemandesPage() {
   if (!session) redirect("/login");
   if (session.user.role !== "FREELANCE") redirect("/dashboard");
 
-  const requests = await getMyDeskRequests(session.token);
+  const result = await getMyDeskRequestsSafe(session.token);
+  if (!result.ok && result.unauthorized) {
+    await deleteSession();
+    redirect("/login");
+  }
+
+  const requests = result.ok ? result.data : [];
+  const loadError = result.ok ? null : result.error;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
@@ -90,10 +97,18 @@ export default async function MesDemandesPage() {
         </p>
       </header>
 
+      {loadError && (
+        <div className="rounded-xl border border-[hsl(var(--color-amber-300))] bg-[hsl(var(--color-amber-50))] p-4 text-sm text-[hsl(var(--color-amber-800))]">
+          {loadError}
+        </div>
+      )}
+
       {requests.length === 0 ? (
         <div className="rounded-xl border bg-card p-10 flex flex-col items-center gap-3 text-center">
           <Inbox className="h-10 w-10 text-muted-foreground/40" aria-hidden="true" />
-          <p className="text-sm text-muted-foreground">Aucune demande pour le moment.</p>
+          <p className="text-sm text-muted-foreground">
+            {loadError ? "Nous ne pouvons pas afficher vos demandes pour le moment." : "Aucune demande pour le moment."}
+          </p>
           <p className="text-xs text-muted-foreground">
             Vous pouvez en soumettre depuis la fiche d&apos;une mission via &laquo; Demander plus d&apos;informations &raquo;.
           </p>

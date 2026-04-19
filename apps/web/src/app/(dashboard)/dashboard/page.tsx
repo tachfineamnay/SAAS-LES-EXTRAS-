@@ -245,7 +245,11 @@ async function fetchReviews(
             };
         });
         return { data, error: null };
-    } catch {
+    } catch (error) {
+        if (error instanceof UnauthorizedError) {
+            throw error;
+        }
+
         return { data: [], error: "Impossible de charger les avis pour le moment." };
     }
 }

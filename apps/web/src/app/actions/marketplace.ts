@@ -236,14 +236,17 @@ export async function getAvailableMission(id: string, token?: string): Promise<S
   }
 }
 
-export async function getFreelancesStrict(token?: string): Promise<SerializedFreelance[]> {
+export async function getFreelancesStrict(
+  token?: string,
+  label = "marketplace.freelances",
+): Promise<SerializedFreelance[]> {
   const activeToken = token || (await getSession())?.token;
   if (!activeToken) return [];
 
   return await apiRequest<SerializedFreelance[]>("/users/freelances", {
     method: "GET",
     token: activeToken,
-    label: "marketplace.freelances",
+    label,
   });
 }
 
@@ -256,14 +259,17 @@ export async function getFreelances(token?: string): Promise<SerializedFreelance
   }
 }
 
-export async function getServicesCatalogue(token?: string): Promise<SerializedService[]> {
+export async function getServicesCatalogue(
+  token?: string,
+  label = "marketplace.services",
+): Promise<SerializedService[]> {
   const activeToken = token || (await getSession())?.token;
   if (!activeToken) return [];
 
   return await apiRequest<SerializedService[]>("/services", {
     method: "GET",
     token: activeToken,
-    label: "marketplace.services",
+    label,
   });
 }
 
@@ -272,8 +278,8 @@ export async function getMarketplaceCatalogue(token?: string) {
   if (!activeToken) return { services: [], freelances: [] };
 
   const [services, freelances] = await Promise.all([
-    getServicesCatalogue(activeToken),
-    getFreelancesStrict(activeToken),
+    getServicesCatalogue(activeToken, "marketplace.establishment.services"),
+    getFreelancesStrict(activeToken, "marketplace.establishment.freelances"),
   ]);
 
   return { services, freelances };

@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Calendar, MapPin, Mail } from "lucide-react";
-import { getSession } from "@/lib/session";
+import { getSession, deleteSession } from "@/lib/session";
 import {
     getBookingsPageDataSafe,
     getBookingLineDetailsSafe,
@@ -76,6 +76,14 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         getBookingsPageDataSafe(session.token),
         getBookingLineDetailsSafe({ lineType: safeLineType, lineId }, session.token),
     ]);
+
+    if (
+        (!dataResult.ok && dataResult.unauthorized) ||
+        (!detailsResult.ok && detailsResult.unauthorized)
+    ) {
+        await deleteSession();
+        redirect("/login");
+    }
 
     if (!dataResult.ok) {
         return <BookingDetailsUnavailable message={dataResult.error} />;

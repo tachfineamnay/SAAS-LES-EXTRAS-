@@ -43,6 +43,7 @@ export async function getReviewsByTarget(targetId: string, token?: string): Prom
   return apiRequest<SerializedReview[]>(`/reviews/user/${targetId}`, {
     method: "GET",
     token: activeToken,
+    label: "reviews.by-target",
   });
 }
 
@@ -57,6 +58,7 @@ export async function getReviewByBooking(bookingId: string, token?: string): Pro
   return apiRequest<SerializedReview | null>(`/reviews/booking/${bookingId}`, {
     method: "GET",
     token: activeToken,
+    label: "reviews.by-booking",
   });
 }
 

@@ -1,5 +1,7 @@
 import { getEstablishmentMissions } from "@/app/actions/missions";
-import { getSession } from "@/lib/session";
+import type { EstablishmentMission } from "@/app/actions/missions";
+import { getSession, deleteSession } from "@/lib/session";
+import { UnauthorizedError, toUserFacingApiError } from "@/lib/api";
 import { redirect } from "next/navigation";
 import { GlassCard, GlassCardContent, GlassCardHeader } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
@@ -20,14 +22,30 @@ export default async function SosDashboardPage() {
     redirect("/login");
   }
 
-  const missions = await getEstablishmentMissions();
+  let missions: EstablishmentMission[] = [];
+  let loadError: string | null = null;
+
+  try {
+    missions = await getEstablishmentMissions(session.token);
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      await deleteSession();
+      redirect("/login");
+    }
+
+    console.error("[dashboard.renforts] managed missions error", error);
+    loadError = toUserFacingApiError(
+      error,
+      "Impossible de charger vos missions de renfort pour le moment.",
+    );
+  }
 
   const openMissions = missions.filter(
     (m) => m.status === "OPEN" || m.status === "ASSIGNED",
   );
 
   // Sort: missions with most candidates first
-  openMissions.sort((a, b) => b.bookings.length - a.bookings.length);
+  openMissions.sort((a, b) => (b.bookings?.length ?? 0) - (a.bookings?.length ?? 0));
 
   return (
     <div className="space-y-8">
@@ -44,12 +62,18 @@ export default async function SosDashboardPage() {
         </div>
       </header>
 
+      {loadError && (
+        <div className="rounded-xl border border-[hsl(var(--color-amber-300))] bg-[hsl(var(--color-amber-50))] p-4 text-sm text-[hsl(var(--color-amber-800))]">
+          {loadError}
+        </div>
+      )}
+
       <div className="grid gap-6">
         {openMissions.length === 0 ? (
           <RenfortsEmptyState />
         ) : (
           openMissions.map((mission: any) => {
-            const activeCandidacies = mission.bookings.filter(
+            const activeCandidacies = (mission.bookings ?? []).filter(
               (b: any) => b.status !== "CANCELLED",
             );
             const planning = getMissionPlanning(mission);

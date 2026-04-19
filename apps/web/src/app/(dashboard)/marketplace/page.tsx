@@ -1,14 +1,19 @@
 import {
   getAvailableMissionsStrict,
-  getMarketplaceCatalogue,
+  getFreelancesStrict,
   getServicesCatalogue,
 } from "@/app/actions/marketplace";
 import { FreelanceMarketplace } from "@/components/marketplace/FreelanceMarketplace";
 import { EstablishmentCatalogue } from "@/components/marketplace/EstablishmentCatalogue";
-import { getSession } from "@/lib/session";
+import { UnauthorizedError } from "@/lib/api";
+import { deleteSession, getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
+
+function isRejectedUnauthorized(result: PromiseSettledResult<unknown>) {
+  return result.status === "rejected" && result.reason instanceof UnauthorizedError;
+}
 
 export default async function MarketplacePage() {
   const session = await getSession();
@@ -19,6 +24,11 @@ export default async function MarketplacePage() {
       getAvailableMissionsStrict(session.token),
       getServicesCatalogue(session.token),
     ]);
+
+    if (isRejectedUnauthorized(missionsResult) || isRejectedUnauthorized(servicesResult)) {
+      await deleteSession();
+      redirect("/login");
+    }
 
     return (
       <FreelanceMarketplace
@@ -39,22 +49,30 @@ export default async function MarketplacePage() {
   }
 
   if (session.user.role === "ESTABLISHMENT") {
-    let services: Awaited<ReturnType<typeof getMarketplaceCatalogue>>["services"] = [];
-    let freelances: Awaited<ReturnType<typeof getMarketplaceCatalogue>>["freelances"] = [];
-    let catalogueError: string | null = null;
-    try {
-      const data = await getMarketplaceCatalogue(session.token);
-      services = data.services;
-      freelances = data.freelances;
-    } catch (err) {
-      console.error("MarketplacePage catalogue error", err);
-      catalogueError = "Impossible de charger certaines données du catalogue.";
+    const [servicesResult, freelancesResult] = await Promise.allSettled([
+      getServicesCatalogue(session.token, "marketplace.establishment.services"),
+      getFreelancesStrict(session.token, "marketplace.establishment.freelances"),
+    ]);
+
+    if (isRejectedUnauthorized(servicesResult) || isRejectedUnauthorized(freelancesResult)) {
+      await deleteSession();
+      redirect("/login");
     }
+
     return (
       <EstablishmentCatalogue
-        services={services}
-        freelances={freelances}
-        catalogueError={catalogueError}
+        services={servicesResult.status === "fulfilled" ? servicesResult.value : []}
+        freelances={freelancesResult.status === "fulfilled" ? freelancesResult.value : []}
+        servicesError={
+          servicesResult.status === "rejected"
+            ? "Impossible de charger les ateliers et formations pour le moment."
+            : null
+        }
+        freelancesError={
+          freelancesResult.status === "rejected"
+            ? "Impossible de charger les profils Extras vérifiés pour le moment."
+            : null
+        }
       />
     );
   }
