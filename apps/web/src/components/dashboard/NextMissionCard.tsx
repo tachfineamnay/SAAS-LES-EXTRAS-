@@ -74,7 +74,7 @@ export function NextMissionCard({
       <h3 className="text-heading-md font-display mb-1">{title}</h3>
       <p className="text-body-sm text-muted-foreground mb-4">{establishment}</p>
 
-      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-5">
+      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
         <span className="inline-flex items-center gap-1.5">
           <Calendar className="h-4 w-4 text-[hsl(var(--teal))]" aria-hidden="true" />
           {dateDisplay}

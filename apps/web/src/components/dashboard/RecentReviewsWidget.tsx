@@ -45,7 +45,7 @@ export function RecentReviewsWidget({ reviews, error }: RecentReviewsWidgetProps
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {reviews.slice(0, 2).map((r) => (
         <ReviewCard
           key={r.id}

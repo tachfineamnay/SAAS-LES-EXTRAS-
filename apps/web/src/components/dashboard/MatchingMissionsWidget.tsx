@@ -55,7 +55,7 @@ export function MatchingMissionsWidget({ missions, error }: MatchingMissionsWidg
 
   return (
     <div className="space-y-4">
-      <div className="space-y-3">
+      <div className="space-y-4">
         {missions.slice(0, 3).map((m) => {
           const applied = hasApplied(m.id);
           return (
