@@ -207,6 +207,7 @@ export async function getAvailableMissionsStrict(token?: string): Promise<Serial
   const missions = await apiRequest<SerializedMission[]>("/missions", {
     method: "GET",
     token: activeToken,
+    label: "marketplace.missions",
   });
   return sortMarketplaceMissions(missions);
 }
@@ -242,6 +243,7 @@ export async function getFreelancesStrict(token?: string): Promise<SerializedFre
   return await apiRequest<SerializedFreelance[]>("/users/freelances", {
     method: "GET",
     token: activeToken,
+    label: "marketplace.freelances",
   });
 }
 
@@ -261,6 +263,7 @@ export async function getServicesCatalogue(token?: string): Promise<SerializedSe
   return await apiRequest<SerializedService[]>("/services", {
     method: "GET",
     token: activeToken,
+    label: "marketplace.services",
   });
 }
 
@@ -338,6 +341,7 @@ export async function getMyAteliers(token?: string): Promise<MesAtelierItem[]> {
     const services = await apiRequest<(SerializedService & { status?: string })[]>("/services/my", {
       method: "GET",
       token: activeToken,
+      label: "services.mine",
     });
 
     return services

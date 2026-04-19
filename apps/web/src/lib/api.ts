@@ -15,7 +15,12 @@ type ApiRequestOptions = {
   token?: string;
   body?: unknown;
   cache?: RequestCache;
+  label?: string;
 };
+
+export type SafeApiResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string; unauthorized?: boolean };
 
 const DEFAULT_API_BASE_URL = "http://localhost:3001/api";
 
@@ -37,11 +42,87 @@ function toErrorMessage(payload: unknown, fallback: string): string {
 }
 
 export function getApiBaseUrl(): string {
-  return (
-    process.env.API_BASE_URL ??
-    process.env.NEXT_PUBLIC_API_URL ??
-    DEFAULT_API_BASE_URL
-  ).replace(/\/$/, "");
+  const configuredBaseUrl =
+    process.env.API_BASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_API_URL?.trim() ||
+    DEFAULT_API_BASE_URL;
+
+  return configuredBaseUrl.replace(/\/$/, "");
+}
+
+function getApiHost(): string {
+  try {
+    return new URL(getApiBaseUrl()).host;
+  } catch {
+    return "invalid-api-base-url";
+  }
+}
+
+function logApiFailure({
+  path,
+  method,
+  label,
+  status,
+  durationMs,
+  error,
+}: {
+  path: string;
+  method: string;
+  label?: string;
+  status?: number;
+  durationMs: number;
+  error?: unknown;
+}) {
+  const errorMessage =
+    error instanceof Error ? error.message : typeof error === "string" ? error : undefined;
+
+  console.error("[apiRequest] request failed", {
+    label,
+    method,
+    path,
+    host: getApiHost(),
+    status,
+    durationMs,
+    error: errorMessage,
+  });
+}
+
+export function toUserFacingApiError(error: unknown, fallback: string): string {
+  if (error instanceof UnauthorizedError) {
+    return "Session expirée — reconnectez-vous.";
+  }
+
+  const message = error instanceof Error ? error.message.trim() : "";
+  if (!message) return fallback;
+
+  const normalized = message.toLowerCase();
+  const isTechnicalServerMessage =
+    normalized.includes("server components render") ||
+    normalized.includes("api request failed (5") ||
+    normalized.includes("fetch failed") ||
+    normalized.includes("networkerror") ||
+    normalized.includes("the operation was aborted") ||
+    normalized.includes("aborterror") ||
+    normalized.includes("digest");
+
+  return isTechnicalServerMessage ? fallback : message;
+}
+
+export async function safeApiRequest<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+  fallback = "Donnée indisponible pour le moment.",
+): Promise<SafeApiResult<T>> {
+  try {
+    const data = await apiRequest<T>(path, options);
+    return { ok: true, data };
+  } catch (error) {
+    return {
+      ok: false,
+      error: toUserFacingApiError(error, fallback),
+      unauthorized: error instanceof UnauthorizedError,
+    };
+  }
 }
 
 export async function apiRequest<T>(
@@ -50,17 +131,30 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const method = options.method ?? "GET";
   const url = `${getApiBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
+  const startedAt = Date.now();
 
-  const response = await fetch(url, {
-    method,
-    cache: options.cache ?? "no-store",
-    headers: {
-      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined,
-    signal: AbortSignal.timeout(10_000),
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method,
+      cache: options.cache ?? "no-store",
+      headers: {
+        ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch (error) {
+    logApiFailure({
+      path,
+      method,
+      label: options.label,
+      durationMs: Date.now() - startedAt,
+      error,
+    });
+    throw error;
+  }
 
   const text = await response.text();
   let payload: unknown = null;
@@ -78,7 +172,16 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const fallback = `API request failed (${response.status})`;
-    throw new Error(toErrorMessage(payload, fallback));
+    const message = toErrorMessage(payload, fallback);
+    logApiFailure({
+      path,
+      method,
+      label: options.label,
+      status: response.status,
+      durationMs: Date.now() - startedAt,
+      error: message,
+    });
+    throw new Error(message);
   }
 
   return payload as T;

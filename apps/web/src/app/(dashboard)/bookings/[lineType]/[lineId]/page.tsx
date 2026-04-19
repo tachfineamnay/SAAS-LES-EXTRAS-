@@ -3,8 +3,8 @@ import Link from "next/link";
 import { ArrowLeft, Calendar, MapPin, Mail } from "lucide-react";
 import { getSession } from "@/lib/session";
 import {
-    getBookingsPageData,
-    getBookingLineDetails,
+    getBookingsPageDataSafe,
+    getBookingLineDetailsSafe,
     type BookingLineType,
     type BookingLineStatus,
 } from "@/app/actions/bookings";
@@ -46,6 +46,23 @@ interface BookingDetailsPageProps {
     params: { lineType: string; lineId: string };
 }
 
+function BookingDetailsUnavailable({ message }: { message: string }) {
+    return (
+        <div className="max-w-2xl mx-auto space-y-6">
+            <Button variant="ghost" size="sm" asChild className="-ml-2">
+                <Link href="/bookings">
+                    <ArrowLeft className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                    Mes réservations
+                </Link>
+            </Button>
+
+            <div className="rounded-xl border border-[hsl(var(--color-amber-300))] bg-[hsl(var(--color-amber-50))] p-4 text-sm text-[hsl(var(--color-amber-800))]">
+                {message}
+            </div>
+        </div>
+    );
+}
+
 export default async function BookingDetailsPage({ params }: BookingDetailsPageProps) {
     const { lineType, lineId } = params;
 
@@ -55,15 +72,21 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     const session = await getSession();
     if (!session) redirect("/login");
 
-    const [data, details] = await Promise.all([
-        getBookingsPageData(session.token),
-        getBookingLineDetails({ lineType: safeLineType, lineId }),
+    const [dataResult, detailsResult] = await Promise.all([
+        getBookingsPageDataSafe(session.token),
+        getBookingLineDetailsSafe({ lineType: safeLineType, lineId }, session.token),
     ]);
 
+    if (!dataResult.ok) {
+        return <BookingDetailsUnavailable message={dataResult.error} />;
+    }
+
+    const data = dataResult.data;
     const line = data.lines.find(
         (l) => l.lineType === safeLineType && l.lineId === lineId,
     );
     if (!line) notFound();
+    const details = detailsResult.ok ? detailsResult.data : null;
 
     const statusLabel = STATUS_LABELS[line.status] ?? line.status;
     const statusVariant = STATUS_VARIANTS[line.status] ?? "outline";
@@ -88,6 +111,12 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
             </header>
 
             <div className="grid gap-4">
+                {!detailsResult.ok && (
+                    <div className="rounded-xl border border-[hsl(var(--color-amber-300))] bg-[hsl(var(--color-amber-50))] p-4 text-sm text-[hsl(var(--color-amber-800))]">
+                        {detailsResult.error}
+                    </div>
+                )}
+
                 <div className="flex items-start gap-3 p-4 rounded-xl border bg-card">
                     <Calendar
                         className="mt-0.5 h-5 w-5 text-[hsl(var(--teal))] shrink-0"
@@ -108,7 +137,9 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
                     />
                     <div>
                         <p className="text-sm font-semibold mb-0.5">Adresse</p>
-                        <p className="text-sm text-muted-foreground">{details.address}</p>
+                        <p className="text-sm text-muted-foreground">
+                            {details?.address ?? line.address}
+                        </p>
                     </div>
                 </div>
 
@@ -120,7 +151,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
                     <div>
                         <p className="text-sm font-semibold mb-0.5">Contact</p>
                         <p className="text-sm text-muted-foreground">
-                            {details.contactEmail}
+                            {details?.contactEmail ?? line.contactEmail}
                         </p>
                     </div>
                 </div>

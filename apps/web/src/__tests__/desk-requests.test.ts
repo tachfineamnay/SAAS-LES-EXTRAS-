@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockApiRequest = vi.fn();
+const mockSafeApiRequest = vi.fn();
 const mockGetSession = vi.fn();
 const mockGetAdminSessionToken = vi.fn().mockResolvedValue("admin-tok");
 const mockRevalidatePath = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   apiRequest: (...args: unknown[]) => mockApiRequest(...args),
+  safeApiRequest: (...args: unknown[]) => mockSafeApiRequest(...args),
 }));
 vi.mock("@/lib/session", () => ({
   getSession: () => mockGetSession(),

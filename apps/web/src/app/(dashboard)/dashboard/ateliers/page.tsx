@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { MesAteliersClient } from "@/components/dashboard/MesAteliersClient";
 import { getMyAteliers } from "@/app/actions/marketplace";
-import { getBookingsPageData } from "@/app/actions/bookings";
+import { getBookingsPageDataSafe } from "@/app/actions/bookings";
+import { toUserFacingApiError } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +15,10 @@ export default async function MesAteliersPage() {
     try {
         const [ateliers, bookingsData] = await Promise.all([
             getMyAteliers(session.token),
-            getBookingsPageData(session.token),
+            getBookingsPageDataSafe(session.token),
         ]);
 
-        const serviceBookings = bookingsData.lines.filter(
+        const serviceBookings = (bookingsData.ok ? bookingsData.data.lines : []).filter(
             (line) => line.lineType === "SERVICE_BOOKING",
         );
 
@@ -29,8 +30,10 @@ export default async function MesAteliersPage() {
         );
     } catch (error) {
         console.error("MesAteliersPage error", error);
-        const message =
-            error instanceof Error ? error.message : "Impossible de charger vos ateliers.";
+        const message = toUserFacingApiError(
+            error,
+            "Impossible de charger vos ateliers pour le moment.",
+        );
         return <MesAteliersClient ateliers={[]} serviceBookings={[]} error={message} />;
     }
 }

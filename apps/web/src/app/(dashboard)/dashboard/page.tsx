@@ -10,7 +10,7 @@ import { getReviewsByTarget } from "@/app/actions/reviews";
 import { getEstablishmentMissions, getAvailableMissions } from "@/app/actions/missions";
 import type { EstablishmentMission } from "@/app/actions/missions";
 import { getMyAteliers, type MesAtelierItem } from "@/app/actions/marketplace";
-import { getMyDeskRequests, type MyDeskRequest } from "@/app/actions/desk";
+import { getMyDeskRequestsSafe, type MyDeskRequest } from "@/app/actions/desk";
 import { fetchSafe } from "@/lib/widget-result";
 import { UnauthorizedError } from "@/lib/api";
 import { format } from "date-fns";
@@ -142,7 +142,13 @@ async function fetchFreelanceData(token: string, userId: string) {
             "Services",
         ),
         fetchSafe<MyDeskRequest[]>(
-            () => getMyDeskRequests(token),
+            async () => {
+                const result = await getMyDeskRequestsSafe(token);
+                if (!result.ok) {
+                    throw new Error(result.error);
+                }
+                return result.data;
+            },
             [],
             "Demandes",
         ),

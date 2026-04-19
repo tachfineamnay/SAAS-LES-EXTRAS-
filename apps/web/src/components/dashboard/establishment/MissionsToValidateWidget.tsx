@@ -19,6 +19,8 @@ export function MissionsToValidateWidget({ bookings }: MissionsToValidateWidgetP
             const result = await completeBookingLine({ bookingId });
             if (result.ok) {
                 toast.success("Mission validée.");
+            } else {
+                toast.error(result.error);
             }
         } catch (error) {
             toast.error("Erreur lors de la validation : " + (error as any).message);

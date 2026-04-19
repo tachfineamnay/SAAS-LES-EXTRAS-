@@ -4,8 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
     buyPack,
-    getCredits,
-    getCreditPurchaseHistory,
+    getCreditsSummarySafe,
     type CreditPurchaseHistoryItem,
     type PackType,
 } from "@/actions/credits";
@@ -32,21 +31,15 @@ export default function PacksPage() {
     const [summaryError, setSummaryError] = useState<string | null>(null);
 
     const loadSummary = async () => {
-        try {
-            const [credits, history] = await Promise.all([
-                getCredits(),
-                getCreditPurchaseHistory(),
-            ]);
-            setAvailableCredits(credits);
-            setPurchaseHistory(history);
-            setSummaryError(null);
-        } catch (error) {
-            setSummaryError(
-                error instanceof Error
-                    ? error.message
-                    : "Impossible de charger le solde et l'historique.",
-            );
-        }
+        const summary = await getCreditsSummarySafe();
+        setAvailableCredits(summary.availableCredits);
+        setPurchaseHistory(summary.purchaseHistory);
+        setSummaryError(
+            [summary.creditsError, summary.historyError]
+                .filter((message): message is string => Boolean(message))
+                .filter((message, index, all) => all.indexOf(message) === index)
+                .join(" ") || null,
+        );
     };
 
     useEffect(() => {

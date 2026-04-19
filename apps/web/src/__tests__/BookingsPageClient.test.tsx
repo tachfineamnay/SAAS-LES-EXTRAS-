@@ -16,8 +16,8 @@ vi.mock("@/lib/stores/useUIStore", () => ({
 }));
 
 vi.mock("@/app/actions/bookings", () => ({
-  getBookingsPageData: (...args: unknown[]) => mockGetBookingsPageData(...args),
-  getBookingLineDetails: (...args: unknown[]) => mockGetBookingLineDetails(...args),
+  getBookingsPageDataSafe: (...args: unknown[]) => mockGetBookingsPageData(...args),
+  getBookingLineDetailsSafe: (...args: unknown[]) => mockGetBookingLineDetails(...args),
   cancelBookingLine: vi.fn(),
   completeBookingLine: vi.fn(),
   confirmBookingLine: (...args: unknown[]) => mockConfirmBookingLine(...args),
@@ -37,10 +37,13 @@ describe("BookingsPageClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUserRole = "ESTABLISHMENT";
-    mockGetBookingsPageData.mockResolvedValue({ nextStep: null, lines: [] });
+    mockGetBookingsPageData.mockResolvedValue({ ok: true, data: { nextStep: null, lines: [] } });
     mockGetBookingLineDetails.mockResolvedValue({
-      address: "10 rue de test",
-      contactEmail: "contact@test.com",
+      ok: true,
+      data: {
+        address: "10 rue de test",
+        contactEmail: "contact@test.com",
+      },
     });
     mockConfirmBookingLine.mockResolvedValue({ ok: true });
   });
@@ -124,21 +127,24 @@ describe("BookingsPageClient", () => {
   it("permet au prestataire freelance de valider une réservation de service", async () => {
     mockUserRole = "FREELANCE";
     mockGetBookingsPageData.mockResolvedValue({
-      nextStep: null,
-      lines: [
-        {
-          lineId: "line-3",
-          lineType: "SERVICE_BOOKING",
-          date: "2026-03-21T09:00:00.000Z",
-          typeLabel: "Atelier",
-          interlocutor: "Client C",
-          status: "QUOTE_ACCEPTED",
-          address: "10 rue de test",
-          contactEmail: "contact@test.com",
-          relatedBookingId: "booking-3",
-          viewerSide: "PROVIDER",
-        },
-      ],
+      ok: true,
+      data: {
+        nextStep: null,
+        lines: [
+          {
+            lineId: "line-3",
+            lineType: "SERVICE_BOOKING",
+            date: "2026-03-21T09:00:00.000Z",
+            typeLabel: "Atelier",
+            interlocutor: "Client C",
+            status: "QUOTE_ACCEPTED",
+            address: "10 rue de test",
+            contactEmail: "contact@test.com",
+            relatedBookingId: "booking-3",
+            viewerSide: "PROVIDER",
+          },
+        ],
+      },
     });
 
     render(

@@ -1,7 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { apiRequest } from "@/lib/api";
+import {
+  apiRequest,
+  safeApiRequest,
+  toUserFacingApiError,
+  type SafeApiResult,
+} from "@/lib/api";
 import { getSession } from "@/lib/session";
 
 export type DashboardRole = "ESTABLISHMENT" | "FREELANCE";
@@ -78,6 +83,13 @@ type ActionBookingInput = {
   bookingId: string;
 };
 
+type BookingActionResult = { ok: true } | { ok: false; error: string };
+
+async function resolveActionToken(): Promise<string | null> {
+  const session = await getSession();
+  return session?.token ?? null;
+}
+
 
 
 export async function getBookingsPageData(token?: string): Promise<BookingsPageData> {
@@ -94,21 +106,51 @@ export async function getBookingsPageData(token?: string): Promise<BookingsPageD
   });
 }
 
+export async function getBookingsPageDataSafe(
+  token?: string,
+): Promise<SafeApiResult<BookingsPageData>> {
+  const activeToken = token ?? (await resolveActionToken());
+  if (!activeToken) {
+    return { ok: false, error: "Non connecté", unauthorized: true };
+  }
+
+  return safeApiRequest<BookingsPageData>(
+    "/bookings",
+    {
+      method: "GET",
+      token: activeToken,
+      label: "bookings.page-data",
+    },
+    "Impossible de charger votre agenda pour le moment.",
+  );
+}
+
 export async function cancelBookingLine(
   input: CancelBookingInput,
-): Promise<{ ok: true }> {
+): Promise<BookingActionResult> {
   const session = await getSession();
-  if (!session) throw new Error("Non connecté");
+  if (!session) return { ok: false, error: "Non connecté" };
 
-  await apiRequest<{ ok: true }>("/bookings/cancel", {
-    method: "POST",
-    token: session.token,
-    body: input,
-  });
+  try {
+    await apiRequest<{ ok: true }>("/bookings/cancel", {
+      method: "POST",
+      token: session.token,
+      body: input,
+      label: "bookings.cancel",
+    });
 
-  revalidatePath("/bookings");
-  revalidatePath("/marketplace");
-  return { ok: true };
+    revalidatePath("/bookings");
+    revalidatePath("/marketplace");
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      error: toUserFacingApiError(
+        error,
+        "Impossible d'annuler cette réservation pour le moment.",
+      ),
+    };
+  }
 }
 
 export async function getBookingLineDetails(
@@ -122,56 +164,110 @@ export async function getBookingLineDetails(
     {
       method: "GET",
       token: session.token,
+      label: "bookings.details",
     },
+  );
+}
+
+export async function getBookingLineDetailsSafe(
+  input: BookingDetailsInput,
+  token?: string,
+): Promise<SafeApiResult<BookingDetails>> {
+  const activeToken = token ?? (await resolveActionToken());
+  if (!activeToken) {
+    return { ok: false, error: "Non connecté", unauthorized: true };
+  }
+
+  return safeApiRequest<BookingDetails>(
+    `/bookings/${input.lineType}/${input.lineId}/details`,
+    {
+      method: "GET",
+      token: activeToken,
+      label: "bookings.details",
+    },
+    "Impossible de récupérer les détails pour le moment.",
   );
 }
 
 export async function confirmBookingLine(
   input: ActionBookingInput,
-): Promise<{ ok: true }> {
+): Promise<BookingActionResult> {
   const session = await getSession();
-  if (!session) throw new Error("Non connecté");
+  if (!session) return { ok: false, error: "Non connecté" };
 
-  await apiRequest<{ ok: true }>("/bookings/confirm", {
-    method: "POST",
-    token: session.token,
-    body: input,
-  });
+  try {
+    await apiRequest<{ ok: true }>("/bookings/confirm", {
+      method: "POST",
+      token: session.token,
+      body: input,
+      label: "bookings.confirm",
+    });
 
-  revalidatePath("/bookings");
-  revalidatePath(`/orders/${input.bookingId}`);
-  return { ok: true };
+    revalidatePath("/bookings");
+    revalidatePath(`/orders/${input.bookingId}`);
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      error: toUserFacingApiError(
+        error,
+        "Impossible de confirmer cette réservation pour le moment.",
+      ),
+    };
+  }
 }
 
 export async function completeBookingLine(
   input: ActionBookingInput,
-): Promise<{ ok: true }> {
+): Promise<BookingActionResult> {
   const session = await getSession();
-  if (!session) throw new Error("Non connecté");
+  if (!session) return { ok: false, error: "Non connecté" };
 
-  await apiRequest<{ ok: true }>("/bookings/complete", {
-    method: "POST",
-    token: session.token,
-    body: input,
-  });
+  try {
+    await apiRequest<{ ok: true }>("/bookings/complete", {
+      method: "POST",
+      token: session.token,
+      body: input,
+      label: "bookings.complete",
+    });
 
-  revalidatePath("/bookings");
-  revalidatePath(`/orders/${input.bookingId}`);
-  return { ok: true };
+    revalidatePath("/bookings");
+    revalidatePath(`/orders/${input.bookingId}`);
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      error: toUserFacingApiError(
+        error,
+        "Impossible de terminer cette réservation pour le moment.",
+      ),
+    };
+  }
 }
 
 export async function acknowledgeBooking(
   input: ActionBookingInput,
-): Promise<{ ok: true }> {
+): Promise<BookingActionResult> {
   const session = await getSession();
-  if (!session) throw new Error("Non connecté");
+  if (!session) return { ok: false, error: "Non connecté" };
 
-  await apiRequest<{ ok: true }>("/bookings/acknowledge", {
-    method: "POST",
-    token: session.token,
-    body: input,
-  });
+  try {
+    await apiRequest<{ ok: true }>("/bookings/acknowledge", {
+      method: "POST",
+      token: session.token,
+      body: input,
+      label: "bookings.acknowledge",
+    });
 
-  revalidatePath("/bookings");
-  return { ok: true };
+    revalidatePath("/bookings");
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      error: toUserFacingApiError(
+        error,
+        "Impossible de confirmer la lecture pour le moment.",
+      ),
+    };
+  }
 }

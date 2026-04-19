@@ -31,6 +31,7 @@ export async function applyToMission(
             method: "POST",
             token: session.token,
             body: input ?? {},
+            label: "missions.apply",
         });
 
         revalidatePath("/marketplace");
@@ -58,6 +59,7 @@ export async function acceptCandidate(bookingId: string): Promise<{ ok: boolean;
             method: "POST",
             token: session.token,
             body: { bookingId },
+            label: "missions.accept-candidate",
         });
 
         revalidatePath("/dashboard");
@@ -79,6 +81,7 @@ export async function declineCandidate(bookingId: string): Promise<{ ok: boolean
             method: "POST",
             token: session.token,
             body: { lineType: "BOOKING", lineId: bookingId },
+            label: "missions.decline-candidate",
         });
 
         revalidatePath("/dashboard");
@@ -103,6 +106,7 @@ export async function requestMissionInfo(
             method: "POST",
             token: session.token,
             body: { message },
+            label: "missions.info-request",
         });
 
         return { ok: true };
@@ -122,6 +126,7 @@ export async function getEstablishmentMissions(token?: string) {
     const missions = await apiRequest("/missions/managed", {
         method: "GET",
         token: resolvedToken,
+        label: "missions.managed",
     });
     return Array.isArray(missions) ? (missions as EstablishmentMission[]) : [];
 }
@@ -130,6 +135,7 @@ export async function getAvailableMissions(token: string): Promise<SerializedMis
     const missions = await apiRequest("/missions", {
         method: "GET",
         token,
+        label: "missions.available",
     });
     return Array.isArray(missions) ? (missions as SerializedMission[]) : [];
 }

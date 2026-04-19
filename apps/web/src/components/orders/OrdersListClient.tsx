@@ -44,6 +44,7 @@ const PAID_STATUSES = new Set(["PAID"]);
 
 type OrdersListClientProps = {
   lines: BookingLine[];
+  error?: string | null;
 };
 
 function formatAmount(amount?: number): string | null {
@@ -51,7 +52,7 @@ function formatAmount(amount?: number): string | null {
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount);
 }
 
-export function OrdersListClient({ lines }: OrdersListClientProps) {
+export function OrdersListClient({ lines, error = null }: OrdersListClientProps) {
   const orderable = useMemo(
     () => lines.filter((l) => l.relatedBookingId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     [lines],
@@ -74,18 +75,31 @@ export function OrdersListClient({ lines }: OrdersListClientProps) {
 
   if (orderable.length === 0) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <EmptyState
-          icon={Package}
-          title="Aucune commande"
-          description="Vos commandes apparaîtront ici une fois qu'une réservation sera créée."
-        />
+      <div className="space-y-4">
+        {error && (
+          <div className="rounded-lg border border-[hsl(var(--color-amber-300))] bg-[hsl(var(--color-amber-50))] px-4 py-3 text-sm text-[hsl(var(--color-amber-800))]">
+            {error}
+          </div>
+        )}
+        <div className="flex items-center justify-center py-20">
+          <EmptyState
+            icon={Package}
+            title="Aucune commande"
+            description="Vos commandes apparaîtront ici une fois qu'une réservation sera créée."
+          />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="rounded-lg border border-[hsl(var(--color-amber-300))] bg-[hsl(var(--color-amber-50))] px-4 py-3 text-sm text-[hsl(var(--color-amber-800))]">
+          {error}
+        </div>
+      )}
+
       <h1 className="text-lg font-semibold">Mes Commandes</h1>
 
       {/* KPI Cards */}

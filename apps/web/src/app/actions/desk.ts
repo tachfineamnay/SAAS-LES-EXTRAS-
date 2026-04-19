@@ -1,7 +1,7 @@
 "use server";
 
 import { getSession } from "@/lib/session";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, safeApiRequest, type SafeApiResult } from "@/lib/api";
 
 export type MyDeskRequestStatus = "OPEN" | "IN_PROGRESS" | "ANSWERED" | "CLOSED";
 
@@ -37,4 +37,25 @@ export async function getMyDeskRequests(token?: string): Promise<MyDeskRequest[]
   } catch {
     return [];
   }
+}
+
+export async function getMyDeskRequestsSafe(
+  token?: string,
+): Promise<SafeApiResult<MyDeskRequest[]>> {
+  let activeToken = token;
+  if (!activeToken) {
+    const session = await getSession();
+    if (!session) return { ok: true, data: [] };
+    activeToken = session.token;
+  }
+
+  return safeApiRequest<MyDeskRequest[]>(
+    "/desk-requests/mine",
+    {
+      method: "GET",
+      token: activeToken,
+      label: "desk.mine",
+    },
+    "Impossible de charger vos demandes pour le moment.",
+  );
 }

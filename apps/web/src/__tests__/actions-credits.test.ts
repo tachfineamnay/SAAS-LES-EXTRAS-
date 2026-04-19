@@ -1,11 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockApiRequest = vi.fn();
+const mockSafeApiRequest = vi.fn();
 const mockGetSession = vi.fn().mockResolvedValue({ token: "credits-token" });
 const mockRevalidatePath = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   apiRequest: (...args: unknown[]) => mockApiRequest(...args),
+  safeApiRequest: (...args: unknown[]) => mockSafeApiRequest(...args),
+  toUserFacingApiError: (error: unknown, fallback: string) =>
+    error instanceof Error && !error.message.includes("API request failed (5")
+      ? error.message
+      : fallback,
 }));
 vi.mock("@/lib/session", () => ({
   getSession: () => mockGetSession(),
@@ -14,12 +20,14 @@ vi.mock("next/cache", () => ({
   revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args),
 }));
 
-const { buyPack, getCredits, getCreditPurchaseHistory } = await import("@/actions/credits");
+const { buyPack, getCredits, getCreditPurchaseHistory, getCreditsSummarySafe } =
+  await import("@/actions/credits");
 
 describe("credits actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetSession.mockResolvedValue({ token: "credits-token" });
+    mockSafeApiRequest.mockResolvedValue({ ok: true, data: {} });
   });
 
   it("achète un pack et retourne le nouveau solde", async () => {
@@ -48,6 +56,14 @@ describe("credits actions", () => {
     const result = await buyPack("ENTERPRISE");
 
     expect(result).toEqual({ error: "Pack de crédits invalide." });
+  });
+
+  it("sanitise les erreurs techniques lors de l'achat d'un pack", async () => {
+    mockApiRequest.mockRejectedValue(new Error("API request failed (502)"));
+
+    const result = await buyPack("PRO");
+
+    expect(result).toEqual({ error: "Impossible d'ajouter ce pack pour le moment." });
   });
 
   it("lit le vrai endpoint crédits", async () => {
@@ -118,5 +134,40 @@ describe("credits actions", () => {
 
     await expect(getCreditPurchaseHistory()).rejects.toThrow("Non connecté");
     expect(mockApiRequest).not.toHaveBeenCalled();
+  });
+
+  it("retourne un résumé crédits dégradé sans propager les erreurs API", async () => {
+    mockSafeApiRequest
+      .mockResolvedValueOnce({
+        ok: false,
+        error: "Impossible de charger le solde de crédits pour le moment.",
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        data: [
+          {
+            id: "purchase-1",
+            amount: 400,
+            creditsAdded: 3,
+            createdAt: "2026-04-18T10:00:00.000Z",
+          },
+        ],
+      });
+
+    const result = await getCreditsSummarySafe();
+
+    expect(result).toEqual({
+      availableCredits: null,
+      purchaseHistory: [
+        {
+          id: "purchase-1",
+          amount: 400,
+          creditsAdded: 3,
+          createdAt: "2026-04-18T10:00:00.000Z",
+        },
+      ],
+      creditsError: "Impossible de charger le solde de crédits pour le moment.",
+      historyError: null,
+    });
   });
 });

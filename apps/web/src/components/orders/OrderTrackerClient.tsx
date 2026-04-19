@@ -226,17 +226,14 @@ export function OrderTrackerClient({
 
   function handleConfirmServiceBooking() {
     startTransition(async () => {
-      try {
-        await confirmBookingLine({ bookingId: booking.id });
-        toast.success("Réservation confirmée. 1 crédit a été consommé et la facture est disponible.");
-        window.location.reload();
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Impossible de confirmer cette réservation.",
-        );
+      const result = await confirmBookingLine({ bookingId: booking.id });
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
       }
+
+      toast.success("Réservation confirmée. 1 crédit a été consommé et la facture est disponible.");
+      window.location.reload();
     });
   }
 

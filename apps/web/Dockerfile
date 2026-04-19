@@ -16,8 +16,10 @@ COPY . .
 RUN mkdir -p apps/web/public
 RUN npx prisma generate --schema=./apps/api/prisma/schema.prisma
 # Accept build-time public env vars so Next.js bakes them into the client bundle
+ARG API_BASE_URL
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_SENTRY_DSN
+ENV API_BASE_URL=$API_BASE_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 RUN pnpm --filter @lesextras/web build
@@ -27,6 +29,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV NEXT_TELEMETRY_DISABLED=1
+ARG API_BASE_URL
+ENV API_BASE_URL=$API_BASE_URL
 RUN apk add --no-cache curl wget
 
 COPY --from=builder /app/apps/web/.next/standalone ./

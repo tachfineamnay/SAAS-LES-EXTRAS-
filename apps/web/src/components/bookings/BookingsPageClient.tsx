@@ -21,8 +21,8 @@ import {
   cancelBookingLine,
   completeBookingLine,
   confirmBookingLine,
-  getBookingLineDetails,
-  getBookingsPageData,
+  getBookingLineDetailsSafe,
+  getBookingsPageDataSafe,
   type BookingDetails,
   type BookingLine,
   type BookingLineStatus,
@@ -91,9 +91,19 @@ export function BookingsPageClient({ initialData, initialError = null }: Booking
   const [selectedLine, setSelectedLine] = useState<BookingLine | null>(null);
   const [details, setDetails] = useState<BookingDetails | null>(null);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
+  const [pageError, setPageError] = useState<string | null>(initialError);
 
   const refreshBookings = async () => {
-    setData(await getBookingsPageData());
+    const result = await getBookingsPageDataSafe();
+    if (!result.ok) {
+      setPageError(result.error);
+      toast.error(result.error);
+      return false;
+    }
+
+    setData(result.data);
+    setPageError(null);
+    return true;
   };
 
   useEffect(() => {
@@ -101,27 +111,32 @@ export function BookingsPageClient({ initialData, initialError = null }: Booking
 
     let cancelled = false;
     startRoleLoading(async () => {
-      try {
-        const nextData = await getBookingsPageData();
-        if (cancelled) return;
-        setData(nextData);
-        if (userRole) setLoadedRole(userRole);
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Impossible de charger les réservations.");
+      const result = await getBookingsPageDataSafe();
+      if (cancelled) return;
+
+      if (!result.ok) {
+        setPageError(result.error);
+        toast.error(result.error);
+        return;
       }
+
+      setData(result.data);
+      setPageError(null);
+      if (userRole) setLoadedRole(userRole);
     });
     return () => { cancelled = true; };
   }, [loadedRole, userRole]);
 
   const handleCancel = (line: BookingLine) => {
     startActionLoading(async () => {
-      try {
-        await cancelBookingLine({ lineType: line.lineType, lineId: line.lineId });
+      const result = await cancelBookingLine({ lineType: line.lineType, lineId: line.lineId });
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+
         await refreshBookings();
         toast.success("Réservation annulée.");
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Impossible d'annuler cette réservation.");
-      }
     });
   };
 
@@ -131,19 +146,18 @@ export function BookingsPageClient({ initialData, initialError = null }: Booking
       return;
     }
     startActionLoading(async () => {
-      try {
-        await confirmBookingLine({ bookingId: line.relatedBookingId! });
+      const result = await confirmBookingLine({ bookingId: line.relatedBookingId! });
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+
         await refreshBookings();
         toast.success(
           line.lineType === "MISSION"
             ? "Réservation confirmée. 1 crédit a été consommé et la facture est disponible."
             : "Réservation confirmée. 1 crédit a été consommé et la facture est disponible.",
         );
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Impossible de confirmer cette réservation.",
-        );
-      }
     });
   };
 
@@ -153,13 +167,14 @@ export function BookingsPageClient({ initialData, initialError = null }: Booking
       return;
     }
     startActionLoading(async () => {
-      try {
-        await completeBookingLine({ bookingId: line.relatedBookingId! });
+      const result = await completeBookingLine({ bookingId: line.relatedBookingId! });
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+
         await refreshBookings();
         toast.success("Réservation terminée.");
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Impossible de terminer.");
-      }
     });
   };
 
@@ -186,9 +201,15 @@ export function BookingsPageClient({ initialData, initialError = null }: Booking
     setDetails(null);
     setIsDetailsOpen(true);
     setIsDetailsLoading(true);
-    void getBookingLineDetails({ lineType: line.lineType, lineId: line.lineId })
-      .then((response) => setDetails(response))
-      .catch((error) => toast.error(error instanceof Error ? error.message : "Impossible de récupérer les détails."))
+    void getBookingLineDetailsSafe({ lineType: line.lineType, lineId: line.lineId })
+      .then((result) => {
+        if (result.ok) {
+          setDetails(result.data);
+          return;
+        }
+
+        toast.error(result.error);
+      })
       .finally(() => setIsDetailsLoading(false));
   }, []);
 
@@ -222,9 +243,9 @@ export function BookingsPageClient({ initialData, initialError = null }: Booking
         </p>
       </header>
 
-      {initialError && (
+      {pageError && (
         <div className="rounded-lg border border-[hsl(var(--color-amber-300))] bg-[hsl(var(--color-amber-50))] px-4 py-3 text-sm text-[hsl(var(--color-amber-800))]">
-          {initialError}
+          {pageError}
         </div>
       )}
 

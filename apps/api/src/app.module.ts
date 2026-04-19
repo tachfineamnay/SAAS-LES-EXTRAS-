@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { APP_GUARD } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { SentryModule } from "@sentry/nestjs/setup";
@@ -21,6 +21,7 @@ import { ConversationsModule } from './conversations/conversations.module';
 import { MailModule } from './mail/mail.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { EventsModule } from './events/events.module';
+import { RequestLoggingInterceptor } from "./common/interceptors/request-logging.interceptor";
 
 @Module({
   imports: [
@@ -63,6 +64,10 @@ import { EventsModule } from './events/events.module';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestLoggingInterceptor,
     },
   ],
 })
