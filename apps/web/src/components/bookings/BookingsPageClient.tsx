@@ -345,7 +345,9 @@ export function BookingsPageClient({ initialData, initialError = null }: Booking
                     <BookingLineLot6Panel
                       line={line}
                       userRole={userRole ?? loadedRole}
-                      onBookingUpdated={refreshBookings}
+                      onBookingUpdated={async () => {
+                        await refreshBookings();
+                      }}
                       disabled={isActionLoading}
                     />
                   </div>

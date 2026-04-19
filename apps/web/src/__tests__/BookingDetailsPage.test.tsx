@@ -18,8 +18,8 @@ vi.mock("@/lib/session", () => ({
 }));
 
 vi.mock("@/app/actions/bookings", () => ({
-  getBookingsPageData: (...args: unknown[]) => mockGetBookingsPageData(...args),
-  getBookingLineDetails: (...args: unknown[]) => mockGetBookingLineDetails(...args),
+  getBookingsPageDataSafe: (...args: unknown[]) => mockGetBookingsPageData(...args),
+  getBookingLineDetailsSafe: (...args: unknown[]) => mockGetBookingLineDetails(...args),
 }));
 
 const mockGetSession = vi.fn();
@@ -46,12 +46,18 @@ describe("BookingDetailsPage", () => {
     vi.clearAllMocks();
     mockGetSession.mockResolvedValue({ token: "tok", user: { id: "u1" } });
     mockGetBookingsPageData.mockResolvedValue({
-      lines: [mockLine],
-      nextStep: null,
+      ok: true,
+      data: {
+        lines: [mockLine],
+        nextStep: null,
+      },
     });
     mockGetBookingLineDetails.mockResolvedValue({
-      address: "5 av. de la paix",
-      contactEmail: "contact@ehpad.fr",
+      ok: true,
+      data: {
+        address: "5 av. de la paix",
+        contactEmail: "contact@ehpad.fr",
+      },
     });
   });
 
@@ -69,7 +75,7 @@ describe("BookingDetailsPage", () => {
     expect(mockGetBookingLineDetails).toHaveBeenCalledWith({
       lineType: "MISSION",
       lineId: "line-1",
-    });
+    }, "tok");
   });
 
   it("contient un lien retour vers /bookings", async () => {
@@ -89,7 +95,10 @@ describe("BookingDetailsPage", () => {
   });
 
   it("appelle notFound si la ligne n'appartient pas à l'utilisateur", async () => {
-    mockGetBookingsPageData.mockResolvedValue({ lines: [], nextStep: null });
+    mockGetBookingsPageData.mockResolvedValue({
+      ok: true,
+      data: { lines: [], nextStep: null },
+    });
 
     await expect(
       BookingDetailsPage({ params: { lineType: "MISSION", lineId: "ghost" } }),
