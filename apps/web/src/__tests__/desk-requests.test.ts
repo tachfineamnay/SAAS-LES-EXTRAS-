@@ -152,6 +152,15 @@ describe("getMyDeskRequests (freelance)", () => {
     );
   });
 
+  it("utilise le token fourni sans relire la session", async () => {
+    await getMyDeskRequests("direct-freelance-tok");
+    expect(mockGetSession).not.toHaveBeenCalled();
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/desk-requests/mine",
+      expect.objectContaining({ method: "GET", token: "direct-freelance-tok" }),
+    );
+  });
+
   it("retourne uniquement les demandes du candidat connecté", async () => {
     const result = await getMyDeskRequests();
     expect(result).toHaveLength(1);

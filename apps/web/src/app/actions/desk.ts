@@ -21,13 +21,18 @@ export type MyDeskRequest = {
   } | null;
 };
 
-export async function getMyDeskRequests(): Promise<MyDeskRequest[]> {
+export async function getMyDeskRequests(token?: string): Promise<MyDeskRequest[]> {
   try {
-    const session = await getSession();
-    if (!session) return [];
+    let activeToken = token;
+    if (!activeToken) {
+      const session = await getSession();
+      if (!session) return [];
+      activeToken = session.token;
+    }
+
     return await apiRequest<MyDeskRequest[]>("/desk-requests/mine", {
       method: "GET",
-      token: session.token,
+      token: activeToken,
     });
   } catch {
     return [];

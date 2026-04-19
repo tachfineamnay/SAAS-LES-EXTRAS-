@@ -1,13 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 
 const store = {
   userRole: "ESTABLISHMENT" as "ESTABLISHMENT" | "FREELANCE" | null,
+  pathname: "/account/establishment",
 };
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/account/establishment",
+  usePathname: () => store.pathname,
 }));
 
 vi.mock("next/link", () => ({
@@ -47,6 +48,11 @@ vi.mock("@/components/ui/sheet", () => ({
 const { Sidebar } = await import("@/components/layout/Sidebar");
 
 describe("Sidebar", () => {
+  beforeEach(() => {
+    store.userRole = "ESTABLISHMENT";
+    store.pathname = "/account/establishment";
+  });
+
   it("n'affiche qu'un seul lien actif sur /account/establishment", () => {
     render(<Sidebar isMobileOpen={false} onMobileOpenChange={() => undefined} />);
 
@@ -66,6 +72,18 @@ describe("Sidebar", () => {
     expect(screen.getByRole("link", { name: /paramètres/i })).toHaveAttribute(
       "href",
       "/settings",
+    );
+  });
+
+  it("affiche Mes demandes dans la navigation freelance", () => {
+    store.userRole = "FREELANCE";
+    store.pathname = "/dashboard/demandes";
+
+    render(<Sidebar isMobileOpen={false} onMobileOpenChange={() => undefined} />);
+
+    expect(screen.getByRole("link", { name: /mes demandes/i })).toHaveAttribute(
+      "href",
+      "/dashboard/demandes",
     );
   });
 });

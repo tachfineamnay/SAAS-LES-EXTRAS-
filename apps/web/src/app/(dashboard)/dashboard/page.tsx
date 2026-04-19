@@ -9,6 +9,8 @@ import { getCredits } from "@/actions/credits";
 import { getReviewsByTarget } from "@/app/actions/reviews";
 import { getEstablishmentMissions, getAvailableMissions } from "@/app/actions/missions";
 import type { EstablishmentMission } from "@/app/actions/missions";
+import { getMyAteliers, type MesAtelierItem } from "@/app/actions/marketplace";
+import { getMyDeskRequests, type MyDeskRequest } from "@/app/actions/desk";
 import { fetchSafe } from "@/lib/widget-result";
 import { UnauthorizedError } from "@/lib/api";
 import { format } from "date-fns";
@@ -110,7 +112,14 @@ async function fetchEstablishmentData(token: string, userId: string) {
 }
 
 async function fetchFreelanceData(token: string, userId: string) {
-    const [bookingsResult, missionsResult, reviewsResult, availabilityResult] = await Promise.all([
+    const [
+        bookingsResult,
+        missionsResult,
+        reviewsResult,
+        availabilityResult,
+        servicesResult,
+        deskRequestsResult,
+    ] = await Promise.all([
         fetchSafe<BookingsPageData>(
             () => getBookingsPageData(token),
             { lines: [], nextStep: null },
@@ -127,12 +136,43 @@ async function fetchFreelanceData(token: string, userId: string) {
             null,
             "Disponibilité",
         ),
+        fetchSafe<MesAtelierItem[]>(
+            () => getMyAteliers(token),
+            [],
+            "Services",
+        ),
+        fetchSafe<MyDeskRequest[]>(
+            () => getMyDeskRequests(token),
+            [],
+            "Demandes",
+        ),
     ]);
 
     const lines = bookingsResult.data?.lines ?? [];
-    const confirmedBookings = lines.filter(
+    const missionBookings = lines.filter((line) => line.lineType === "MISSION");
+    const serviceBookings = lines.filter((line) => line.lineType === "SERVICE_BOOKING");
+    const confirmedBookings = missionBookings.filter(
         (b) => b.status === "CONFIRMED" || b.status === "ASSIGNED",
     );
+    const completedBookings = missionBookings.filter(
+        (b) => b.status === "COMPLETED" || b.status === "PAID",
+    );
+    const now = new Date();
+    const completedMissionsThisMonth = completedBookings.filter((booking) => {
+        const date = new Date(booking.date);
+        if (Number.isNaN(date.getTime())) return false;
+        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+    }).length;
+    const services = servicesResult.data ?? [];
+    const deskRequests = deskRequestsResult.data ?? [];
+    const openDeskRequests = deskRequests.filter(
+        (request) => request.status === "OPEN" || request.status === "IN_PROGRESS",
+    ).length;
+    const averageRating =
+        reviewsResult.data.length > 0
+            ? reviewsResult.data.reduce((acc, review) => acc + review.rating, 0) /
+              reviewsResult.data.length
+            : null;
 
     const matchingMissions: MatchingMission[] = (missionsResult.data ?? [])
         .slice(0, 3)
@@ -154,10 +194,8 @@ async function fetchFreelanceData(token: string, userId: string) {
 
     return {
         confirmedBookings,
-        pendingBookings: lines.filter((b) => b.status === "PENDING"),
-        completedBookings: lines.filter(
-            (b) => b.status === "COMPLETED" || b.status === "PAID",
-        ),
+        pendingBookings: missionBookings.filter((b) => b.status === "PENDING"),
+        serviceBookings,
         bookingsError: bookingsResult.error,
         matchingMissions,
         availableMissionsError: missionsResult.error,
@@ -165,6 +203,14 @@ async function fetchFreelanceData(token: string, userId: string) {
         recentReviews: reviewsResult.data,
         recentReviewsError: reviewsResult.error,
         isAvailable: availabilityResult.data?.isAvailable ?? false,
+        services,
+        servicesError: servicesResult.error,
+        deskRequests,
+        deskRequestsError: deskRequestsResult.error,
+        completedMissionsThisMonth,
+        activeServices: services.filter((service) => service.status === "ACTIVE").length,
+        openDeskRequests,
+        averageRating,
     };
 }
 

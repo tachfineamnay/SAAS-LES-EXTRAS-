@@ -12,6 +12,7 @@ import {
   Settings,
   CalendarDays,
   Mail,
+  Inbox,
   Building2,
   LogOut,
   BookOpen,
@@ -45,6 +46,7 @@ const FREELANCE_LINKS = [
   { href: "/dashboard/packs",    label: "Crédits",             icon: WalletCards },
   { href: "/bookings",           label: "Mon Agenda",         icon: CalendarDays },
   { href: "/dashboard/ateliers", label: "Mes ateliers et formations", icon: BookOpen },
+  { href: "/dashboard/demandes", label: "Mes demandes",       icon: Inbox },
   { href: "/orders",             label: "Mes Commandes",      icon: Package },
   { href: "/dashboard/inbox",    label: "Messagerie",         icon: Mail },
 ];
