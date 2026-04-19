@@ -90,6 +90,17 @@ enum DocumentType {
   OTHER
 }
 
+enum DeskRequestStatus {
+  OPEN
+  IN_PROGRESS
+  ANSWERED
+  CLOSED
+}
+
+enum DeskRequestType {
+  MISSION_INFO_REQUEST
+}
+
 // ─────────────────────────────────────────────
 // CORE IDENTITY
 // ─────────────────────────────────────────────
@@ -123,6 +134,8 @@ model User {
   documents             Document[]
   issuedQuotes          Quote[]         @relation("QuoteIssuer")
   packPurchases         PackPurchase[]  @relation("EstablishmentPackPurchases")
+  deskRequests          DeskRequest[]   @relation("UserDeskRequests")
+  answeredDeskRequests  DeskRequest[]   @relation("DeskRequestAnsweredBy")
 }
 
 model Profile {
@@ -255,8 +268,9 @@ model ReliefMission {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  establishment User      @relation("EstablishmentMissions", fields: [establishmentId], references: [id], onDelete: Restrict)
+  establishment User          @relation("EstablishmentMissions", fields: [establishmentId], references: [id], onDelete: Restrict)
   bookings      Booking[]
+  deskRequests  DeskRequest[] @relation("MissionDeskRequests")
 
   @@index([establishmentId])
 }
@@ -444,4 +458,30 @@ model Document {
 
   @@index([userId])
   @@index([serviceId])
+}
+
+// ─────────────────────────────────────────────
+// DESK / CRM — Demandes d'informations
+// ─────────────────────────────────────────────
+
+model DeskRequest {
+  id           String            @id @default(cuid())
+  type         DeskRequestType
+  status       DeskRequestStatus @default(OPEN)
+  missionId    String
+  requesterId  String
+  message      String            @db.Text
+  response     String?           @db.Text
+  answeredById String?
+  answeredAt   DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  mission    ReliefMission @relation("MissionDeskRequests", fields: [missionId], references: [id], onDelete: Cascade)
+  requester  User          @relation("UserDeskRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+  answeredBy User?         @relation("DeskRequestAnsweredBy", fields: [answeredById], references: [id], onDelete: SetNull)
+
+  @@index([requesterId])
+  @@index([missionId])
+  @@index([status])
 }

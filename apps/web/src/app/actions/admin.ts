@@ -209,3 +209,71 @@ export async function hideService(serviceId: string): Promise<{ ok: true }> {
   revalidatePath("/marketplace");
   return { ok: true };
 }
+
+// ─────────────────────────────────────────────
+// DESK — Demandes d'informations
+// ─────────────────────────────────────────────
+
+export type DeskRequestStatus = "OPEN" | "IN_PROGRESS" | "ANSWERED" | "CLOSED";
+export type DeskRequestType = "MISSION_INFO_REQUEST";
+
+export type DeskRequestRow = {
+  id: string;
+  type: DeskRequestType;
+  status: DeskRequestStatus;
+  message: string;
+  response: string | null;
+  answeredAt: string | null;
+  createdAt: string;
+  mission: { id: string; title: string };
+  requester: {
+    id: string;
+    email: string;
+    profile: { firstName: string; lastName: string } | null;
+  };
+  answeredBy: {
+    id: string;
+    email: string;
+    profile: { firstName: string; lastName: string } | null;
+  } | null;
+};
+
+export async function getDeskRequests(): Promise<DeskRequestRow[]> {
+  try {
+    const token = await getAdminToken();
+    return await apiRequest<DeskRequestRow[]>("/admin/desk-requests", {
+      method: "GET",
+      token,
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function updateDeskRequestStatus(
+  id: string,
+  status: DeskRequestStatus,
+): Promise<{ ok: true }> {
+  const token = await getAdminToken();
+  await apiRequest<unknown>(`/admin/desk-requests/${id}/status`, {
+    method: "PATCH",
+    token,
+    body: { status },
+  });
+  revalidatePath("/admin/demandes");
+  return { ok: true };
+}
+
+export async function respondToDeskRequest(
+  id: string,
+  response: string,
+): Promise<{ ok: true }> {
+  const token = await getAdminToken();
+  await apiRequest<unknown>(`/admin/desk-requests/${id}/respond`, {
+    method: "PATCH",
+    token,
+    body: { response },
+  });
+  revalidatePath("/admin/demandes");
+  return { ok: true };
+}

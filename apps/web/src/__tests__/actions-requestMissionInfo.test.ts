@@ -33,7 +33,15 @@ describe("requestMissionInfo", () => {
     );
   });
 
-  it("retourne { ok: true } en cas de succès", async () => {
+  it("n'appelle pas un endpoint de notification directe établissement", async () => {
+    await requestMissionInfo("mission-1", "Question longue et précise sur la mission.");
+    const calls: string[] = mockApiRequest.mock.calls.map((c: unknown[]) => c[0] as string);
+    expect(calls).not.toContain(expect.stringContaining("notification"));
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toBe("/missions/mission-1/info-request");
+  });
+
+  it("retourne { ok: true } en cas de succès — crée une DeskRequest", async () => {
     const result = await requestMissionInfo("m-1", "Question précise et suffisamment longue.");
     expect(result).toEqual({ ok: true });
   });

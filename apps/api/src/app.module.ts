@@ -4,6 +4,7 @@ import { ConfigModule } from "@nestjs/config";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { SentryModule } from "@sentry/nestjs/setup";
 import { AdminOffersModule } from "./admin-offers/admin-offers.module";
+import { DeskModule } from "./desk/desk.module";
 import { AdminUsersModule } from "./admin-users/admin-users.module";
 import { AuthModule } from "./auth/auth.module";
 import { BookingsModule } from "./bookings/bookings.module";
@@ -42,6 +43,7 @@ import { EventsModule } from './events/events.module';
     PrismaModule,
     AdminUsersModule,
     AdminOffersModule,
+    DeskModule,
     AuthModule,
     MissionsModule,
     ServicesModule,

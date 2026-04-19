@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   GraduationCap,
+  Inbox,
   LayoutDashboard,
   TriangleAlert,
   Users,
@@ -45,6 +46,11 @@ const links = [
     href: "/admin/finance",
     label: "Finance",
     icon: Wallet,
+  },
+  {
+    href: "/admin/demandes",
+    label: "Demandes Info",
+    icon: Inbox,
   },
 ];
 

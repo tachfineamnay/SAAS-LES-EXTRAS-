@@ -61,9 +61,9 @@ export function RequestMissionInfoModal({
     setSubmitting(false);
 
     if (result.ok) {
-      toast.success("Demande transmise", {
+      toast.success("Demande envoyée", {
         description:
-          "L'établissement sera notifié. Nous traitons votre demande rapidement.",
+          "Notre équipe va traiter votre demande. Vous recevrez une réponse dans votre espace Mes demandes.",
       });
       setMessage("");
       setOpen(false);
@@ -87,14 +87,13 @@ export function RequestMissionInfoModal({
           <DialogDescription>
             {missionTitle ? (
               <>
-                Posez votre question à propos de la mission «&nbsp;{missionTitle}&nbsp;»
-                {establishmentName ? ` (${establishmentName})` : ""}. Notre équipe la
-                transmettra à l&apos;établissement.
+                Posez votre question à propos de la mission «&nbsp;{missionTitle}&nbsp;».
+                Notre équipe traitera votre demande et vous répondra dans votre espace Mes demandes.
               </>
             ) : (
               <>
-                Posez votre question&nbsp;: nous la transmettons à l&apos;établissement
-                et revenons vers vous rapidement.
+                Posez votre question&nbsp;: elle sera traitée par notre équipe et une réponse
+                vous sera communiquée dans votre espace Mes demandes.
               </>
             )}
           </DialogDescription>

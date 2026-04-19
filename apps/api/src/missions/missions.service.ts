@@ -209,27 +209,19 @@ export class MissionsService {
   async requestInfo(missionId: string, freelanceId: string, message: string) {
     const mission = await this.prisma.reliefMission.findUnique({
       where: { id: missionId },
-      select: { id: true, establishmentId: true, title: true },
+      select: { id: true, title: true },
     });
 
     if (!mission) {
       throw new NotFoundException("Mission introuvable");
     }
 
-    const freelance = await this.prisma.user.findUnique({
-      where: { id: freelanceId },
-      select: { profile: { select: { firstName: true, lastName: true } } },
-    });
-
-    const freelanceName = freelance?.profile
-      ? `${freelance.profile.firstName} ${freelance.profile.lastName}`.trim()
-      : "Un freelance";
-
-    await this.prisma.notification.create({
+    await this.prisma.deskRequest.create({
       data: {
-        userId: mission.establishmentId,
-        type: "INFO_REQUEST",
-        message: `${freelanceName} demande des précisions sur la mission « ${mission.title} » : ${message}`,
+        type: "MISSION_INFO_REQUEST",
+        missionId: mission.id,
+        requesterId: freelanceId,
+        message,
       },
     });
 

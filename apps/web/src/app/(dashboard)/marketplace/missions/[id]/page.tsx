@@ -221,10 +221,9 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
               triggerClassName="w-full"
             />
             <p className="text-xs text-center text-muted-foreground">
-              Votre candidature sera envoyée à {establishmentName} et{" "}
               {planning.slots.length > 1
-                ? "couvrira l’ensemble du planning listé."
-                : "portera sur cette plage de mission."}
+                ? "Votre candidature couvrira l’ensemble du planning listé."
+                : "Votre candidature portera sur cette plage de mission."}
             </p>
           </div>
         </aside>
