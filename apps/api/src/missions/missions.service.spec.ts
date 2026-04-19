@@ -16,6 +16,9 @@ describe("MissionsService", () => {
     notification: {
       create: jest.fn(),
     },
+    deskRequest: {
+      create: jest.fn(),
+    },
     user: {
       findUnique: jest.fn(),
     },
@@ -266,6 +269,20 @@ describe("MissionsService", () => {
   });
 
   describe("findAll", () => {
+    it("ne demande à Prisma que les missions OPEN pour le catalogue freelance", async () => {
+      (mockPrisma.reliefMission.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll({});
+
+      expect(mockPrisma.reliefMission.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            status: ReliefMissionStatus.OPEN,
+          },
+        }),
+      );
+    });
+
     it("filters by planning overlap on the requested date and keeps the legacy fallback", async () => {
       (mockPrisma.reliefMission.findMany as jest.Mock).mockResolvedValue([
         {
@@ -340,28 +357,25 @@ describe("MissionsService", () => {
   });
 
   describe("requestInfo", () => {
-    it("crée une notification lisible pour l'établissement", async () => {
+    it("crée une demande Desk sans notification directe établissement", async () => {
       (mockPrisma.reliefMission.findUnique as jest.Mock).mockResolvedValue({
         id: "mission-1",
-        establishmentId: "est-1",
         title: "Mission de nuit",
-      });
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
-        profile: { firstName: "Nora", lastName: "Benali" },
       });
 
       await expect(
         service.requestInfo("mission-1", "free-1", "Pouvez-vous préciser les horaires ?"),
       ).resolves.toEqual({ ok: true });
 
-      expect(mockPrisma.notification.create).toHaveBeenCalledWith({
+      expect(mockPrisma.deskRequest.create).toHaveBeenCalledWith({
         data: {
-          userId: "est-1",
-          type: "INFO_REQUEST",
-          message:
-            "Nora Benali demande des précisions sur la mission « Mission de nuit » : Pouvez-vous préciser les horaires ?",
+          type: "MISSION_INFO_REQUEST",
+          missionId: "mission-1",
+          requesterId: "free-1",
+          message: "Pouvez-vous préciser les horaires ?",
         },
       });
+      expect(mockPrisma.notification.create).not.toHaveBeenCalled();
     });
   });
 });

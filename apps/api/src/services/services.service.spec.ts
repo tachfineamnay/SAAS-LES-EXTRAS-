@@ -11,6 +11,7 @@ describe("ServicesService", () => {
   const prisma = {
     service: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       create: jest.fn(),
     },
     booking: {
@@ -31,6 +32,33 @@ describe("ServicesService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     service = new ServicesService(prisma, mailService as any);
+  });
+
+  describe("findAll", () => {
+    it("retourne uniquement les services ACTIVE du catalogue", async () => {
+      const activeServices = [
+        { id: "service-active", title: "Atelier mémoire", status: "ACTIVE" },
+      ];
+      prisma.service.findMany.mockResolvedValue(activeServices);
+
+      await expect(service.findAll()).resolves.toEqual(activeServices);
+
+      expect(prisma.service.findMany).toHaveBeenCalledWith({
+        where: {
+          status: "ACTIVE",
+        },
+        include: {
+          owner: {
+            include: {
+              profile: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+    });
   });
 
   describe("findOne", () => {

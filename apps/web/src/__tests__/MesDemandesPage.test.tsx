@@ -1,0 +1,64 @@
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+
+const mockGetSession = vi.fn();
+const mockGetMyDeskRequests = vi.fn();
+const mockRedirect = vi.fn((path: string) => {
+  throw new Error(`redirect:${path}`);
+});
+
+vi.mock("next/navigation", () => ({
+  redirect: (path: string) => mockRedirect(path),
+}));
+
+vi.mock("@/lib/session", () => ({
+  getSession: () => mockGetSession(),
+}));
+
+vi.mock("@/app/actions/desk", () => ({
+  getMyDeskRequests: (token?: string) => mockGetMyDeskRequests(token),
+}));
+
+const { default: MesDemandesPage } = await import("@/app/(dashboard)/dashboard/demandes/page");
+const { default: LegacyMesDemandesPage } = await import("@/app/(dashboard)/demandes/page");
+
+describe("MesDemandesPage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({
+      token: "freelance-token",
+      user: {
+        id: "free-1",
+        role: "FREELANCE",
+      },
+    });
+    mockGetMyDeskRequests.mockResolvedValue([
+      {
+        id: "desk-1",
+        status: "ANSWERED",
+        message: "Pouvez-vous préciser les horaires ?",
+        response: "La mission commence à 8h.",
+        createdAt: "2026-04-18T10:00:00.000Z",
+        answeredAt: "2026-04-18T11:00:00.000Z",
+        mission: {
+          id: "mission-1",
+          title: "Renfort éducateur",
+        },
+      },
+    ]);
+  });
+
+  it("rend la page canonique /dashboard/demandes pour un freelance", async () => {
+    render(await MesDemandesPage());
+
+    expect(screen.getByRole("heading", { name: /mes demandes/i })).toBeInTheDocument();
+    expect(screen.getByText("Renfort éducateur")).toBeInTheDocument();
+    expect(screen.getByText("La mission commence à 8h.")).toBeInTheDocument();
+    expect(mockGetMyDeskRequests).toHaveBeenCalledWith("freelance-token");
+  });
+
+  it("redirige l'ancienne route /demandes vers /dashboard/demandes", () => {
+    expect(() => LegacyMesDemandesPage()).toThrow("redirect:/dashboard/demandes");
+    expect(mockRedirect).toHaveBeenCalledWith("/dashboard/demandes");
+  });
+});

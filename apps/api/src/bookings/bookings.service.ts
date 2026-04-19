@@ -410,19 +410,13 @@ export class BookingsService {
             reliefMissionId: {
               not: null,
             },
-            reliefMission: {
-              is: {
-                status: {
-                  not: ReliefMissionStatus.OPEN,
-                },
-              },
-            },
           },
           orderBy: {
             scheduledAt: "asc",
           },
           select: {
             id: true,
+            status: true,
             reliefMission: {
               select: {
                 id: true,
@@ -511,7 +505,7 @@ export class BookingsService {
           date: planning.lineDate.toISOString(),
           typeLabel: "Mission SOS",
           interlocutor,
-          status: normalizeMissionStatus(mb.reliefMission.status),
+          status: mb.status,
           address: mb.reliefMission.address,
           contactEmail: interlocutor,
           relatedBookingId: mb.id,

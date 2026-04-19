@@ -46,6 +46,7 @@ import { useUIStore } from "@/lib/stores/useUIStore";
 
 type BookingsPageClientProps = {
   initialData: BookingsPageData;
+  initialError?: string | null;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
@@ -78,7 +79,7 @@ function canCancel(status: BookingLineStatus): boolean {
   return status !== "CANCELLED" && status !== "COMPLETED";
 }
 
-export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
+export function BookingsPageClient({ initialData, initialError = null }: BookingsPageClientProps) {
   const userRole = useUIStore((state) => state.userRole);
   const searchParams = useSearchParams();
   const hasAutoOpenedDetailsRef = useRef(false);
@@ -220,6 +221,12 @@ export function BookingsPageClient({ initialData }: BookingsPageClientProps) {
           Vue planning de vos interventions et réservations selon votre rôle.
         </p>
       </header>
+
+      {initialError && (
+        <div className="rounded-lg border border-[hsl(var(--color-amber-300))] bg-[hsl(var(--color-amber-50))] px-4 py-3 text-sm text-[hsl(var(--color-amber-800))]">
+          {initialError}
+        </div>
+      )}
 
       {/* ── Next step highlight ── */}
       <GlassCard variant="teal" className="p-5">

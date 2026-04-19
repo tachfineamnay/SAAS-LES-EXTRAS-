@@ -103,6 +103,24 @@ describe("BookingsPageClient", () => {
     });
   });
 
+  it("affiche une erreur non bloquante quand le chargement initial échoue", () => {
+    render(
+      <BookingsPageClient
+        initialData={{
+          nextStep: null,
+          lines: [],
+        }}
+        initialError="Impossible de charger votre agenda pour le moment."
+      />,
+    );
+
+    expect(screen.getByText("Mes Réservations")).toBeInTheDocument();
+    expect(
+      screen.getByText("Impossible de charger votre agenda pour le moment."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Aucune réservation")).toBeInTheDocument();
+  });
+
   it("permet au prestataire freelance de valider une réservation de service", async () => {
     mockUserRole = "FREELANCE";
     mockGetBookingsPageData.mockResolvedValue({

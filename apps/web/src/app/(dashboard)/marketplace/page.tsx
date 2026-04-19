@@ -1,4 +1,8 @@
-import { getAvailableMissions, getMarketplaceCatalogue } from "@/app/actions/marketplace";
+import {
+  getAvailableMissionsStrict,
+  getMarketplaceCatalogue,
+  getServicesCatalogue,
+} from "@/app/actions/marketplace";
 import { FreelanceMarketplace } from "@/components/marketplace/FreelanceMarketplace";
 import { EstablishmentCatalogue } from "@/components/marketplace/EstablishmentCatalogue";
 import { getSession } from "@/lib/session";
@@ -11,11 +15,27 @@ export default async function MarketplacePage() {
   if (!session) redirect("/login");
 
   if (session.user.role === "FREELANCE") {
-    const [missions, { services }] = await Promise.all([
-      getAvailableMissions(session.token),
-      getMarketplaceCatalogue(session.token),
+    const [missionsResult, servicesResult] = await Promise.allSettled([
+      getAvailableMissionsStrict(session.token),
+      getServicesCatalogue(session.token),
     ]);
-    return <FreelanceMarketplace missions={missions} services={services} />;
+
+    return (
+      <FreelanceMarketplace
+        missions={missionsResult.status === "fulfilled" ? missionsResult.value : []}
+        services={servicesResult.status === "fulfilled" ? servicesResult.value : []}
+        missionsError={
+          missionsResult.status === "rejected"
+            ? "Impossible de charger les missions de renfort pour le moment."
+            : null
+        }
+        servicesError={
+          servicesResult.status === "rejected"
+            ? "Impossible de charger les ateliers et formations pour le moment."
+            : null
+        }
+      />
+    );
   }
 
   if (session.user.role === "ESTABLISHMENT") {

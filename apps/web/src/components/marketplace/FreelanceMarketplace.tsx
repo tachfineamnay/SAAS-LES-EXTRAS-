@@ -13,9 +13,16 @@ import { Button } from "@/components/ui/button";
 interface FreelanceMarketplaceProps {
   missions: SerializedMission[];
   services: SerializedService[];
+  missionsError?: string | null;
+  servicesError?: string | null;
 }
 
-export function FreelanceMarketplace({ missions, services }: FreelanceMarketplaceProps) {
+export function FreelanceMarketplace({
+  missions,
+  services,
+  missionsError = null,
+  servicesError = null,
+}: FreelanceMarketplaceProps) {
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterPricing, setFilterPricing] = useState<string | null>(null);
 
@@ -168,6 +175,13 @@ export function FreelanceMarketplace({ missions, services }: FreelanceMarketplac
 
   return (
     <div className="space-y-6">
+      {(missionsError || servicesError) && (
+        <div className="rounded-lg border border-[hsl(var(--color-amber-300))] bg-[hsl(var(--color-amber-50))] px-4 py-3 text-sm text-[hsl(var(--color-amber-800))] space-y-1">
+          {missionsError && <p>{missionsError}</p>}
+          {servicesError && <p>{servicesError}</p>}
+        </div>
+      )}
+
       <header className="space-y-1">
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Marketplace

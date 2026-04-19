@@ -566,6 +566,61 @@ describe('BookingsService', () => {
   });
 
   describe('getBookingsPageData', () => {
+    it('inclut les candidatures freelance PENDING sur une mission encore OPEN', async () => {
+      const freelanceUser = {
+        id: 'free-1',
+        email: 'free@test.com',
+        role: UserRole.FREELANCE,
+        status: UserStatus.VERIFIED,
+        onboardingStep: 4,
+      };
+
+      mockPrisma.booking.findMany
+        .mockResolvedValueOnce([
+          {
+            id: 'booking-mission-1',
+            status: BookingStatus.PENDING,
+            reliefMission: {
+              id: 'mission-open-1',
+              title: 'Renfort éducateur',
+              dateStart: new Date('2026-04-20T10:00:00Z'),
+              dateEnd: new Date('2026-04-20T18:00:00Z'),
+              slots: null,
+              hourlyRate: 28,
+              address: '12 rue des Lilas',
+              status: ReliefMissionStatus.OPEN,
+              establishment: { email: 'ime@example.com' },
+            },
+            reviews: [],
+            invoice: null,
+          },
+        ])
+        .mockResolvedValueOnce([]);
+
+      const result = await service.getBookingsPageData(freelanceUser);
+
+      expect(mockPrisma.booking.findMany).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          where: {
+            freelanceId: 'free-1',
+            reliefMissionId: {
+              not: null,
+            },
+          },
+        }),
+      );
+      expect(result.lines).toHaveLength(1);
+      expect(result.lines[0]).toMatchObject({
+        lineId: 'mission-open-1',
+        lineType: 'MISSION',
+        typeLabel: 'Mission SOS',
+        interlocutor: 'ime@example.com',
+        status: BookingStatus.PENDING,
+        viewerSide: 'PROVIDER',
+      });
+    });
+
     it('inclut les réservations de service demandées par un freelance avec le bon interlocuteur et le bon libellé', async () => {
       const freelanceUser = {
         id: 'free-requester',

@@ -190,22 +190,30 @@ export type SerializedFreelanceDetail = {
   ownerServices: SerializedService[];
 };
 
-export async function getAvailableMissions(token?: string): Promise<SerializedMission[]> {
+function sortMarketplaceMissions(missions: SerializedMission[]): SerializedMission[] {
+  return missions.sort((a, b) => {
+    const left = getMissionPlanning(a);
+    const right = getMissionPlanning(b);
+    const leftDate = left.nextSlot?.start ?? left.firstSlot?.start ?? new Date(a.dateStart);
+    const rightDate = right.nextSlot?.start ?? right.firstSlot?.start ?? new Date(b.dateStart);
+    return leftDate.getTime() - rightDate.getTime();
+  });
+}
+
+export async function getAvailableMissionsStrict(token?: string): Promise<SerializedMission[]> {
   const activeToken = token || (await getSession())?.token;
   if (!activeToken) return [];
 
+  const missions = await apiRequest<SerializedMission[]>("/missions", {
+    method: "GET",
+    token: activeToken,
+  });
+  return sortMarketplaceMissions(missions);
+}
+
+export async function getAvailableMissions(token?: string): Promise<SerializedMission[]> {
   try {
-    const missions = await apiRequest<SerializedMission[]>("/missions", {
-      method: "GET",
-      token: activeToken,
-    });
-    return missions.sort((a, b) => {
-      const left = getMissionPlanning(a);
-      const right = getMissionPlanning(b);
-      const leftDate = left.nextSlot?.start ?? left.firstSlot?.start ?? new Date(a.dateStart);
-      const rightDate = right.nextSlot?.start ?? right.firstSlot?.start ?? new Date(b.dateStart);
-      return leftDate.getTime() - rightDate.getTime();
-    });
+    return await getAvailableMissionsStrict(token);
   } catch (error) {
     console.error("getAvailableMissions error", error);
     return [];
@@ -227,19 +235,33 @@ export async function getAvailableMission(id: string, token?: string): Promise<S
   }
 }
 
-export async function getFreelances(token?: string): Promise<SerializedFreelance[]> {
+export async function getFreelancesStrict(token?: string): Promise<SerializedFreelance[]> {
   const activeToken = token || (await getSession())?.token;
   if (!activeToken) return [];
 
+  return await apiRequest<SerializedFreelance[]>("/users/freelances", {
+    method: "GET",
+    token: activeToken,
+  });
+}
+
+export async function getFreelances(token?: string): Promise<SerializedFreelance[]> {
   try {
-    return await apiRequest<SerializedFreelance[]>("/users/freelances", {
-      method: "GET",
-      token: activeToken,
-    });
+    return await getFreelancesStrict(token);
   } catch (error) {
     console.error("getFreelances error", error);
     return [];
   }
+}
+
+export async function getServicesCatalogue(token?: string): Promise<SerializedService[]> {
+  const activeToken = token || (await getSession())?.token;
+  if (!activeToken) return [];
+
+  return await apiRequest<SerializedService[]>("/services", {
+    method: "GET",
+    token: activeToken,
+  });
 }
 
 export async function getMarketplaceCatalogue(token?: string) {
@@ -247,11 +269,8 @@ export async function getMarketplaceCatalogue(token?: string) {
   if (!activeToken) return { services: [], freelances: [] };
 
   const [services, freelances] = await Promise.all([
-    apiRequest<SerializedService[]>("/services", { method: "GET", token: activeToken }).catch((err) => {
-      console.error("getMarketplaceCatalogue /services error", err);
-      return [] as SerializedService[];
-    }),
-    getFreelances(activeToken),
+    getServicesCatalogue(activeToken),
+    getFreelancesStrict(activeToken),
   ]);
 
   return { services, freelances };

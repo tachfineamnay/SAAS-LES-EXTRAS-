@@ -6,6 +6,7 @@ describe("UsersService", () => {
   const prisma = {
     user: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
     },
     profile: {
       upsert: jest.fn(),
@@ -161,6 +162,36 @@ describe("UsersService", () => {
         NotFoundException,
       );
       expect(prisma.packPurchase.findMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("findAllFreelances", () => {
+    it("retourne uniquement les freelances VERIFIED pour l'annuaire", async () => {
+      const freelances = [
+        {
+          id: "free-verified",
+          email: "verified@example.com",
+          role: "FREELANCE",
+          status: "VERIFIED",
+          profile: null,
+        },
+      ];
+      prisma.user.findMany.mockResolvedValue(freelances);
+
+      await expect(service.findAllFreelances()).resolves.toEqual(freelances);
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith({
+        where: {
+          role: "FREELANCE",
+          status: "VERIFIED",
+        },
+        include: {
+          profile: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
     });
   });
 });
