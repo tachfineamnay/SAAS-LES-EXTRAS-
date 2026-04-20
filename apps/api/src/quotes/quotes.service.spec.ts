@@ -37,7 +37,6 @@ describe("QuotesService", () => {
     service = new QuotesService(
       prisma,
       notifications as any,
-      conversations as any,
       events as any,
     );
   });

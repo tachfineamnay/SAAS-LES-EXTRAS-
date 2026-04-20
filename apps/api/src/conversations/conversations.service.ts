@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { BookingStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SendMessageDto } from './dto/conversations.dto';
 import { MailService } from '../mail/mail.service';
@@ -124,7 +125,7 @@ export class ConversationsService {
     const { receiverId, content } = dto;
 
     // Only allow messaging when a confirmed booking links the two users
-    const ALLOWED_STATUSES = ['CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'AWAITING_PAYMENT', 'PAID'];
+    const ALLOWED_STATUSES: BookingStatus[] = [BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS, BookingStatus.COMPLETED, BookingStatus.AWAITING_PAYMENT, BookingStatus.PAID];
     const validBooking = await this.prisma.booking.findFirst({
       where: {
         status: { in: ALLOWED_STATUSES },
