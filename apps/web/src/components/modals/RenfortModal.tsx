@@ -200,7 +200,7 @@ export function RenfortModal() {
       const envelope = deriveMissionEnvelopeFromPlanning(sortedPlanning);
       if (!envelope) throw new Error("Au moins une plage valide est requise.");
 
-      await createMissionFromRenfort({
+      const result = await createMissionFromRenfort({
         title: getMetierLabel(data.metier),
         dateStart: envelope.dateStart,
         dateEnd: envelope.dateEnd,
@@ -226,6 +226,11 @@ export function RenfortModal() {
         exactAddress: data.exactAddress,
         accessInstructions: data.accessInstructions || undefined,
       });
+
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
 
       toast.success("Renfort publié !", {
         description:

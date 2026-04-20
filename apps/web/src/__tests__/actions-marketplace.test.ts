@@ -71,9 +71,10 @@ describe("createMissionFromRenfort", () => {
     expect(mockRevalidatePath).toHaveBeenCalledWith("/marketplace");
   });
 
-  it("lance une erreur si la session est absente", async () => {
+  it("retourne { ok: false } si la session est absente", async () => {
     mockGetSession.mockResolvedValue(null);
-    await expect(createMissionFromRenfort(baseInput)).rejects.toThrow("Non connecté");
+    const result = await createMissionFromRenfort(baseInput);
+    expect(result).toEqual({ ok: false, error: "Non connecté" });
   });
 });
 

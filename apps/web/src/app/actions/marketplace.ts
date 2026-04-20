@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, toUserFacingApiError } from "@/lib/api";
 import { getSession } from "@/lib/session";
 import { atelierInvalidationPaths } from "@/lib/atelier-query-keys";
 import type { ServiceSlot } from "@/lib/atelier-config";
@@ -465,15 +465,24 @@ export async function getFreelanceById(id: string, token?: string): Promise<Seri
   }
 }
 
-export async function createMissionFromRenfort(input: CreateMissionInput): Promise<{ ok: true }> {
+export async function createMissionFromRenfort(
+  input: CreateMissionInput,
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const session = await getSession();
-  if (!session) throw new Error("Non connecté");
+  if (!session) return { ok: false, error: "Non connecté" };
 
-  await apiRequest("/missions", {
-    method: "POST",
-    token: session.token,
-    body: input,
-  });
+  try {
+    await apiRequest("/missions", {
+      method: "POST",
+      token: session.token,
+      body: input,
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      error: toUserFacingApiError(error, "Impossible de publier le renfort pour le moment."),
+    };
+  }
 
   try {
     revalidatePath("/marketplace");

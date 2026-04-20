@@ -15,7 +15,14 @@ export default async function FinancePage() {
         redirect("/dashboard");
     }
 
-    const invoices = await getInvoices();
+    let invoices: Awaited<ReturnType<typeof getInvoices>> = [];
+    let loadError: string | null = null;
+
+    try {
+        invoices = await getInvoices();
+    } catch {
+        loadError = "Impossible de charger vos factures pour le moment.";
+    }
 
     return (
         <div className="space-y-8">
@@ -30,6 +37,12 @@ export default async function FinancePage() {
                     Exporter (CSV)
                 </Button>
             </div>
+
+            {loadError && (
+                <div className="rounded-xl border border-amber-300/40 bg-amber-500/10 p-4 text-sm text-amber-200">
+                    {loadError}
+                </div>
+            )}
 
             <RevenueOverviewWidget invoices={invoices} />
 
