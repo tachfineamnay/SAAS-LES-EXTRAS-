@@ -1127,7 +1127,7 @@ export class BookingsService {
 
     await this.prisma.booking.update({
       where: { id: bookingId },
-      data: { paymentStatus: "PAID" },
+      data: { paymentStatus: "PAID", status: "PAID" },
     });
 
     // Notify Freelance

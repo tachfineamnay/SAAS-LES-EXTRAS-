@@ -69,7 +69,9 @@ services:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.les-extras.com/api}
       APP_WEB_HOST: ${APP_WEB_HOST:-les-extras.com}
       APP_DESK_HOST: ${APP_DESK_HOST:-desk.les-extras.com}
+      APP_RUNTIME: ${APP_RUNTIME:-front}
       JWT_SECRET: ${JWT_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
       DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:-LesExtrasDemo!2026}
     expose:
       - "3000"

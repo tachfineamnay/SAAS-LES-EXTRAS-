@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { apiRequest } from "@/lib/api";
-import { createSession } from "@/lib/session";
+import { createSession, deleteSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { UserRole } from "@/lib/stores/useUIStore";
 import { MAX_STEP_BY_ROLE } from "@/lib/constants";
@@ -51,33 +51,31 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
             method: "POST",
             body: { email, password },
         });
-
-        await createSession({
-            token: response.accessToken,
-            user: {
-                id: response.user.id,
-                email: response.user.email,
-                role: response.user.role as UserRole,
-                onboardingStep: response.user.onboardingStep,
-            },
-        });
     } catch (error) {
         return {
             message: "Email ou mot de passe incorrect.",
         };
     }
 
-    // If onboarding not completed, send back to wizard
     const role = response.user.role as "ESTABLISHMENT" | "FREELANCE" | "ADMIN";
 
     // Admin accounts must authenticate via Le Desk (APP_RUNTIME=desk), not through
-    // the front-user login page. Reject here to prevent an ADMIN from landing on
-    // the front dashboard with a mismatched session.
+    // the front-user login page. Check role BEFORE creating any session.
     if (role === "ADMIN") {
         return {
             message: "Accès refusé. Les comptes administrateurs se connectent via Le Desk.",
         };
     }
+
+    await createSession({
+        token: response.accessToken,
+        user: {
+            id: response.user.id,
+            email: response.user.email,
+            role: response.user.role as UserRole,
+            onboardingStep: response.user.onboardingStep,
+        },
+    });
 
     const maxStep = MAX_STEP_BY_ROLE[role as keyof typeof MAX_STEP_BY_ROLE] ?? 2;
     if (response.user.onboardingStep < maxStep) {
