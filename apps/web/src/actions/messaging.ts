@@ -54,6 +54,66 @@ export async function getUnreadMessagesCount() {
     }
 }
 
+export type ApiConversation = {
+  id: string;
+  updatedAt: string;
+  bookingId: string | null;
+  otherParticipant: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatar: string | null;
+    role: string;
+  };
+  lastMessage: { content: string; createdAt: string } | null;
+  unreadCount: number;
+};
+
+export type ApiMessage = {
+  id: string;
+  content: string;
+  senderId: string;
+  receiverId: string;
+  conversationId: string;
+  createdAt: string;
+  isRead: boolean;
+};
+
+export async function fetchApiConversations(): Promise<ApiConversation[]> {
+  const session = await getSession();
+  if (!session) return [];
+  try {
+    return await apiRequest<ApiConversation[]>("/conversations", { token: session.token });
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchApiMessages(conversationId: string): Promise<ApiMessage[]> {
+  const session = await getSession();
+  if (!session) return [];
+  try {
+    return await apiRequest<ApiMessage[]>(`/conversations/${conversationId}/messages`, {
+      token: session.token,
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function callMarkAsRead(conversationId: string): Promise<void> {
+  const session = await getSession();
+  if (!session) return;
+  try {
+    await apiRequest(`/conversations/${conversationId}/read`, {
+      method: "PATCH" as const,
+      token: session.token,
+    });
+  } catch {
+    // ignore — best effort
+  }
+}
+
 export async function getNotifications() {
     // Notifications are not exposed via REST API — return empty array
     return [];

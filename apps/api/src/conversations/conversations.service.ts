@@ -51,6 +51,7 @@ export class ConversationsService {
       return {
         id: conv.id,
         updatedAt: conv.updatedAt,
+        bookingId: (conv as any).bookingId ?? null,
         otherParticipant: {
           id: otherParticipant.id,
           firstName: otherParticipant.profile?.firstName,
@@ -83,6 +84,14 @@ export class ConversationsService {
     return this.prisma.message.findMany({
       where: { conversationId },
       orderBy: { createdAt: 'asc' },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            profile: { select: { firstName: true, lastName: true } },
+          },
+        },
+      },
     });
   }
 

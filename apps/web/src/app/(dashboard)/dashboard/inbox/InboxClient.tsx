@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -74,6 +74,7 @@ export function InboxClient({
   const [mobileView, setMobileView] = useState<"list" | "thread">("list");
   const [draft, setDraft] = useState("");
   const [notifications] = useState(initialNotifications);
+  const [isSending, startSendTransition] = useTransition();
 
   const {
     conversations,
@@ -105,15 +106,14 @@ export function InboxClient({
   };
 
   const handleSend = () => {
-    const result = sendMessage(draft);
-    if (result.ok) {
-      setDraft("");
-      if (activeConversationId) {
-        refetchMessages(activeConversationId);
+    startSendTransition(async () => {
+      const result = await sendMessage(draft);
+      if (result.ok) {
+        setDraft("");
+        return;
       }
-      return;
-    }
-    setError(result.error ?? "Impossible d'envoyer le message.");
+      setError(result.error ?? "Impossible d'envoyer le message.");
+    });
   };
 
   return (
@@ -203,6 +203,7 @@ export function InboxClient({
           >
             {conversations.map((conversation) => (
               <button
+                type="button"
                 key={conversation.id}
                 onClick={() => handleSelectConversation(conversation.id)}
                 className={cn(
@@ -241,6 +242,7 @@ export function InboxClient({
               <>
                 <div className="p-4 border-b border-border flex items-center gap-3">
                   <button
+                    type="button"
                     onClick={() => setMobileView("list")}
                     className="md:hidden p-1"
                     aria-label="Retour à la liste"
@@ -279,10 +281,11 @@ export function InboxClient({
                       className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--teal))] resize-none"
                     />
                     <Button
+                      type="button"
                       variant="default"
                       size="sm"
                       className="h-10 w-10 p-0"
-                      disabled={!draft.trim()}
+                      disabled={!draft.trim() || isSending}
                       aria-label="Envoyer"
                       onClick={handleSend}
                     >
