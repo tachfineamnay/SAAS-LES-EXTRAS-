@@ -1,4 +1,4 @@
-type DemoRole = "CLIENT" | "TALENT";
+type DemoRole = "ESTABLISHMENT" | "FREELANCE";
 
 type AuthResponse = {
   accessToken: string;
@@ -25,8 +25,8 @@ const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:3001/api";
 const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD ?? "LesExtrasDemo!2026";
 
 const DEMO_USERS = {
-  CLIENT: "directeur@mecs-avenir.fr",
-  TALENT: "karim.educ@gmail.com",
+  ESTABLISHMENT: "directeur@mecs-avenir.fr",
+  FREELANCE: "karim.educ@gmail.com",
 } as const;
 
 type RequestOptions = {
@@ -109,19 +109,19 @@ async function main() {
   console.log("== LesExtras verify-system ==");
   console.log(`API base URL: ${API_BASE_URL}`);
 
-  console.log("1) Auth - login client");
-  const clientAuth = await login("CLIENT");
-  console.log(`   OK client: ${clientAuth.user.email} (${clientAuth.user.id})`);
+  console.log("1) Auth - login establishment");
+  const clientAuth = await login("ESTABLISHMENT");
+  console.log(`   OK establishment: ${clientAuth.user.email} (${clientAuth.user.id})`);
 
-  console.log("2) Auth - login talent");
-  const talentAuth = await login("TALENT");
-  console.log(`   OK talent: ${talentAuth.user.email} (${talentAuth.user.id})`);
+  console.log("2) Auth - login freelance");
+  const talentAuth = await login("FREELANCE");
+  console.log(`   OK freelance: ${talentAuth.user.email} (${talentAuth.user.id})`);
 
   const dateStart = new Date(Date.now() + 2 * 60 * 60 * 1000);
   const dateEnd = new Date(dateStart.getTime() + 8 * 60 * 60 * 1000);
   const missionTitle = `Smoke SOS ${new Date().toISOString()}`;
 
-  console.log("3) Flow Client - create mission");
+  console.log("3) Flow Establishment - create mission");
   const createMission = await apiRequest<MissionResponse>({
     method: "POST",
     path: "/missions",
@@ -139,7 +139,7 @@ async function main() {
   assert(createMission.data.id, "Mission ID missing after creation");
   console.log(`   OK mission created: ${createMission.data.id}`);
 
-  console.log("4) Flow Talent - fetch missions feed");
+  console.log("4) Flow Freelance - fetch missions feed");
   const missionsFeed = await apiRequest<MissionResponse[]>({
     method: "GET",
     path: "/missions",
@@ -151,7 +151,7 @@ async function main() {
   assert(foundMission, "Created mission not found in talent feed");
   console.log("   OK mission visible in talent feed");
 
-  console.log("5) Interaction - talent applies to mission");
+  console.log("5) Interaction - freelance applies to mission");
   const applyResponse = await apiRequest<BookingResponse>({
     method: "POST",
     path: `/missions/${createMission.data.id}/apply`,

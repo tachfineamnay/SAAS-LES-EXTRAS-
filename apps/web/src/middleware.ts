@@ -45,8 +45,16 @@ async function hasValidAdminSession(request: NextRequest): Promise<boolean> {
   }
 }
 
-function hasSessionCookie(request: NextRequest): boolean {
-  return !!request.cookies.get(FRONT_SESSION_COOKIE)?.value;
+async function hasValidFrontSession(request: NextRequest): Promise<boolean> {
+  const token = request.cookies.get(FRONT_SESSION_COOKIE)?.value;
+  const secret = process.env.SESSION_SECRET;
+  if (!token || !secret) return false;
+  try {
+    await jwtVerify(token, new TextEncoder().encode(secret));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function middleware(request: NextRequest) {
@@ -73,7 +81,7 @@ export async function middleware(request: NextRequest) {
     const isAuthPage = AUTH_PAGES.some(
       (page) => pathname === page || pathname.startsWith(page + "/"),
     );
-    const hasSession = hasSessionCookie(request);
+    const hasSession = await hasValidFrontSession(request);
 
     // Redirect unauthenticated users away from protected pages
     if (isProtected && !hasSession) {
