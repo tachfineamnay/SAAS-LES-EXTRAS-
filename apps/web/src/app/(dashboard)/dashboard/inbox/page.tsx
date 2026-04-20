@@ -1,17 +1,13 @@
 import { redirect } from "next/navigation";
 import { getSession, deleteSession } from "@/lib/session";
-import { getBookingsPageDataSafe } from "@/app/actions/bookings";
+import { getBookingsPageDataSafe, type BookingLineStatus } from "@/app/actions/bookings";
 import { getNotifications } from "@/actions/messaging";
 import { InboxClient } from "./InboxClient";
 import type { MessagingConversationSeed } from "@/lib/messaging-v1";
 
 export const dynamic = "force-dynamic";
 
-type InboxPageProps = {
-  searchParams?: Record<string, string | string[] | undefined>;
-};
-
-export default async function InboxPage({ searchParams }: InboxPageProps) {
+export default async function InboxPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
@@ -26,14 +22,21 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
   }[] = [];
   let notificationsError: string | null = null;
 
+  const MESSAGING_ALLOWED_STATUSES: BookingLineStatus[] = [
+    "CONFIRMED", "IN_PROGRESS", "COMPLETED", "AWAITING_PAYMENT", "PAID",
+    "ASSIGNED", "COMPLETED_AWAITING_PAYMENT",
+  ];
+
   const bookingsResult = await getBookingsPageDataSafe(session.token);
   if (bookingsResult.ok) {
-    seeds = bookingsResult.data.lines.map((line) => ({
-      id: `booking:${line.lineType}:${line.lineId}`,
-      name: line.interlocutor,
-      context: line.typeLabel,
-      source: "BOOKING" as const,
-    }));
+    seeds = bookingsResult.data.lines
+      .filter((line) => MESSAGING_ALLOWED_STATUSES.includes(line.status))
+      .map((line) => ({
+        id: `booking:${line.lineType}:${line.lineId}`,
+        name: line.interlocutor,
+        context: line.typeLabel,
+        source: "BOOKING" as const,
+      }));
   } else if (bookingsResult.unauthorized) {
     await deleteSession();
     redirect("/login");
@@ -52,30 +55,6 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
     }));
   } catch {
     notificationsError = "Notifications indisponibles pour le moment.";
-  }
-
-  const counterpartId =
-    typeof searchParams?.counterpartId === "string"
-      ? searchParams.counterpartId
-      : typeof searchParams?.freelanceId === "string"
-        ? searchParams.freelanceId
-        : undefined;
-
-  const counterpartName =
-    typeof searchParams?.counterpartName === "string"
-      ? searchParams.counterpartName
-      : typeof searchParams?.freelanceName === "string"
-        ? searchParams.freelanceName
-        : undefined;
-
-  if (counterpartId && counterpartName) {
-    const seededContext = counterpartId.startsWith("mission:") ? "Mission de renfort" : "Fiche FREELANCE";
-    seeds.unshift({
-      id: `profile:${counterpartId}`,
-      name: counterpartName,
-      context: seededContext,
-      source: "PROFILE",
-    });
   }
 
   const uniqueSeeds = Array.from(new Map(seeds.map((seed) => [seed.id, seed])).values());

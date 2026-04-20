@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { FicheFreelance } from "@/components/patterns/fiche-freelance";
 import { useUIStore } from "@/lib/stores/useUIStore";
 import type { SerializedFreelanceDetail, SerializedService } from "@/app/actions/marketplace";
@@ -29,7 +28,6 @@ export function FicheFreelanceClient({
   rating,
   reviewCount,
 }: FicheFreelanceClientProps) {
-  const router = useRouter();
   const openRenfortModal = useUIStore((s) => s.openRenfortModal);
 
   const profile = freelance.profile;
@@ -86,10 +84,6 @@ export function FicheFreelanceClient({
           availableDays={profile?.availableDays ?? []}
           ateliers={ateliers}
           reviews={reviews}
-          onChat={() => {
-            const name = encodeURIComponent(fullName);
-            router.push(`/dashboard/inbox?counterpartId=${freelance.id}&counterpartName=${name}`);
-          }}
           onProposeMission={() => openRenfortModal()}
         />
       </div>

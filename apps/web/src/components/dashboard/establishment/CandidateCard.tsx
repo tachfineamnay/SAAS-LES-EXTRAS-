@@ -115,13 +115,15 @@ export function CandidateCard({
           >
             <ExternalLink className="h-3.5 w-3.5" />
           </Link>
-          <Link
-            href={`/dashboard/inbox?counterpartId=${freelance.id}&counterpartName=${encodeURIComponent(name)}`}
-            className="text-muted-foreground hover:text-foreground p-1 rounded"
-            title="Ouvrir la messagerie"
-          >
-            <MessageCircle className="h-3.5 w-3.5" />
-          </Link>
+          {isConfirmed && (
+            <Link
+              href={`/dashboard/inbox`}
+              className="text-muted-foreground hover:text-foreground p-1 rounded"
+              title="Ouvrir la messagerie"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+            </Link>
+          )}
         </div>
       </CardHeader>
 

@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { ConversationsService } from '../conversations/conversations.service';
 import { CreateQuoteDto, RejectQuoteDto } from './dto/quotes.dto';
 import { EventsService } from '../events/events.service';
 import type { OrderEvent } from '../events/events.types';
@@ -22,7 +21,6 @@ export class QuotesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
-    private readonly conversations: ConversationsService,
     private readonly events: EventsService,
   ) {}
 
@@ -37,7 +35,6 @@ export class QuotesService {
         service: true,
         freelance: { include: { profile: true } },
         establishment: { include: { profile: true } },
-        conversation: true,
       },
     });
 
@@ -85,30 +82,6 @@ export class QuotesService {
     await this.prisma.booking.update({
       where: { id: dto.bookingId },
       data: { status: 'QUOTE_SENT' },
-    });
-
-    // Create system message in conversation
-    const conversation = booking.conversation
-      ?? await this.conversations.getOrCreateConversation(freelanceId, booking.establishmentId);
-
-    // Link conversation to booking if not yet
-    if (!booking.conversation) {
-      await this.prisma.conversation.update({
-        where: { id: conversation.id },
-        data: { bookingId: booking.id },
-      });
-    }
-
-    const freelanceName = booking.freelance?.profile?.firstName ?? 'Le freelance';
-    await this.prisma.message.create({
-      data: {
-        conversationId: conversation.id,
-        senderId: freelanceId,
-        receiverId: booking.establishmentId,
-        content: `📋 ${freelanceName} a envoyé un devis de ${totalTTC.toFixed(2)} €`,
-        type: 'SYSTEM',
-        metadata: { quoteId: quote.id, totalTTC, event: 'QUOTE_SENT' },
-      },
     });
 
     // Notify establishment

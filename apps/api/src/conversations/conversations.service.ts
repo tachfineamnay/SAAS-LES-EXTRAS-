@@ -123,6 +123,22 @@ export class ConversationsService {
   async sendMessage(senderId: string, dto: SendMessageDto) {
     const { receiverId, content } = dto;
 
+    // Only allow messaging when a confirmed booking links the two users
+    const ALLOWED_STATUSES = ['CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'AWAITING_PAYMENT', 'PAID'];
+    const validBooking = await this.prisma.booking.findFirst({
+      where: {
+        status: { in: ALLOWED_STATUSES },
+        OR: [
+          { freelanceId: senderId, establishmentId: receiverId },
+          { freelanceId: receiverId, establishmentId: senderId },
+        ],
+      },
+      select: { id: true },
+    });
+    if (!validBooking) {
+      throw new ForbiddenException("La messagerie est disponible uniquement après validation d'un achat.");
+    }
+
     // Check if receiver exists
     const receiver = await this.prisma.user.findUnique({
       where: { id: receiverId },

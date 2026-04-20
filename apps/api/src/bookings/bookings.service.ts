@@ -964,11 +964,19 @@ export class BookingsService {
         this.mailService.sendMissionConfirmedEmail(freelance.email, missionDateStr, estabName).catch(e => console.error(e));
       }
 
-      // Auto-create conversation between freelance and establishment
-      await this.conversations.getOrCreateConversation(booking.freelanceId!, booking.establishmentId);
+      // Auto-create conversation and link it to this booking
+      const missionConversation = await this.conversations.getOrCreateConversation(booking.freelanceId!, booking.establishmentId);
+      await this.prisma.conversation.updateMany({
+        where: { id: missionConversation.id, bookingId: null },
+        data: { bookingId: bookingId },
+      });
     } else if (booking.service) {
       if (booking.freelanceId) {
-        await this.conversations.getOrCreateConversation(booking.freelanceId, booking.establishmentId);
+        const serviceConversation = await this.conversations.getOrCreateConversation(booking.freelanceId, booking.establishmentId);
+        await this.prisma.conversation.updateMany({
+          where: { id: serviceConversation.id, bookingId: null },
+          data: { bookingId: bookingId },
+        });
       }
 
       await this.notifications.create({
