@@ -101,6 +101,13 @@ enum DeskRequestType {
   MISSION_INFO_REQUEST
 }
 
+enum DeskRequestPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
 // ─────────────────────────────────────────────
 // CORE IDENTITY
 // ─────────────────────────────────────────────
@@ -136,6 +143,7 @@ model User {
   packPurchases         PackPurchase[]  @relation("EstablishmentPackPurchases")
   deskRequests          DeskRequest[]   @relation("UserDeskRequests")
   answeredDeskRequests  DeskRequest[]   @relation("DeskRequestAnsweredBy")
+  assignedDeskRequests  DeskRequest[]   @relation("DeskRequestAssignedToAdmin")
 }
 
 model Profile {
@@ -223,6 +231,20 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model AdminActionLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  entityType String
+  entityId   String
+  action     String
+  meta       Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  @@index([adminId])
+  @@index([entityType, entityId])
+  @@index([action])
+}
+
 model PackPurchase {
   id              String   @id @default(cuid())
   establishmentId String
@@ -301,6 +323,8 @@ model Service {
   scheduleInfo        String?
 
   status ServiceStatus @default(ACTIVE)
+  isFeatured Boolean @default(false)
+  isHidden   Boolean @default(false)
 
   ownerId   String
   createdAt DateTime @default(now())
@@ -465,23 +489,29 @@ model Document {
 // ─────────────────────────────────────────────
 
 model DeskRequest {
-  id           String            @id @default(cuid())
-  type         DeskRequestType
-  status       DeskRequestStatus @default(OPEN)
-  missionId    String
-  requesterId  String
-  message      String            @db.Text
-  response     String?           @db.Text
-  answeredById String?
-  answeredAt   DateTime?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  id                String              @id @default(cuid())
+  type              DeskRequestType
+  priority          DeskRequestPriority @default(NORMAL)
+  status            DeskRequestStatus   @default(OPEN)
+  missionId         String
+  requesterId       String
+  assignedToAdminId String?
+  message           String              @db.Text
+  response          String?             @db.Text
+  answeredById      String?
+  answeredAt        DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 
-  mission    ReliefMission @relation("MissionDeskRequests", fields: [missionId], references: [id], onDelete: Cascade)
-  requester  User          @relation("UserDeskRequests", fields: [requesterId], references: [id], onDelete: Cascade)
-  answeredBy User?         @relation("DeskRequestAnsweredBy", fields: [answeredById], references: [id], onDelete: SetNull)
+  mission         ReliefMission @relation("MissionDeskRequests", fields: [missionId], references: [id], onDelete: Cascade)
+  requester       User          @relation("UserDeskRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+  assignedToAdmin User?         @relation("DeskRequestAssignedToAdmin", fields: [assignedToAdminId], references: [id], onDelete: SetNull)
+  answeredBy      User?         @relation("DeskRequestAnsweredBy", fields: [answeredById], references: [id], onDelete: SetNull)
 
   @@index([requesterId])
   @@index([missionId])
   @@index([status])
+  @@index([type])
+  @@index([priority])
+  @@index([assignedToAdminId])
 }

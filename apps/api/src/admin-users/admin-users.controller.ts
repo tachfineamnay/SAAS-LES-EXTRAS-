@@ -25,8 +25,8 @@ export class AdminUsersController {
   }
 
   @Post(":userId/verify")
-  verifyUser(@Param("userId") userId: string) {
-    return this.adminUsersService.verifyUser(userId);
+  verifyUser(@Param("userId") userId: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.adminUsersService.verifyUser(userId, user.id);
   }
 
   @Post(":userId/ban")

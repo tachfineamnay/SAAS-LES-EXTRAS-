@@ -20,14 +20,24 @@ vi.mock("next/cache", () => ({
   revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args),
 }));
 
-const { getDeskRequests, updateDeskRequestStatus, respondToDeskRequest } =
+const {
+  assignDeskRequest,
+  featureService,
+  getAdminOverview,
+  getDeskRequests,
+  hideService,
+  respondToDeskRequest,
+  updateDeskRequestStatus,
+} =
   await import("@/app/actions/admin");
 const { getMyDeskRequests } = await import("@/app/actions/desk");
 
 const fakeDeskRequest = {
   id: "dr-1",
   type: "MISSION_INFO_REQUEST",
+  priority: "NORMAL",
   status: "OPEN",
+  assignedToAdminId: null,
   message: "Question sur le public accueilli",
   response: null,
   answeredAt: null,
@@ -38,6 +48,7 @@ const fakeDeskRequest = {
     email: "karim@test.fr",
     profile: { firstName: "Karim", lastName: "Bensalem" },
   },
+  assignedToAdmin: null,
   answeredBy: null,
 };
 
@@ -77,6 +88,33 @@ describe("getDeskRequests (admin)", () => {
 });
 
 // ─────────────────────────────────────────────
+// Admin — getAdminOverview
+// ─────────────────────────────────────────────
+
+describe("getAdminOverview (admin)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetAdminSessionToken.mockResolvedValue("admin-tok");
+    mockApiRequest.mockResolvedValue({
+      pendingUsersCount: 1,
+      openDeskRequestsCount: 2,
+      urgentOpenMissionsCount: 3,
+      featuredServicesCount: 4,
+      hiddenServicesCount: 5,
+      pendingInvoicesCount: 6,
+    });
+  });
+
+  it("appelle GET /admin/overview avec le token admin", async () => {
+    await getAdminOverview();
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/overview",
+      expect.objectContaining({ method: "GET", token: "admin-tok" }),
+    );
+  });
+});
+
+// ─────────────────────────────────────────────
 // Admin — updateDeskRequestStatus
 // ─────────────────────────────────────────────
 
@@ -102,6 +140,74 @@ describe("updateDeskRequestStatus (admin)", () => {
   it("revalide la page /admin/demandes", async () => {
     await updateDeskRequestStatus("dr-1", "CLOSED");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/admin/demandes");
+  });
+});
+
+// ─────────────────────────────────────────────
+// Admin — assignDeskRequest
+// ─────────────────────────────────────────────
+
+describe("assignDeskRequest (admin)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetAdminSessionToken.mockResolvedValue("admin-tok");
+    mockApiRequest.mockResolvedValue({});
+  });
+
+  it("appelle PATCH /admin/desk-requests/:id/assign avec l'admin choisi", async () => {
+    await assignDeskRequest("dr-1", "admin-2");
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/desk-requests/dr-1/assign",
+      expect.objectContaining({
+        method: "PATCH",
+        body: { adminId: "admin-2" },
+        token: "admin-tok",
+      }),
+    );
+  });
+
+  it("permet de retirer l'assignation", async () => {
+    await assignDeskRequest("dr-1", null);
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/desk-requests/dr-1/assign",
+      expect.objectContaining({
+        body: { adminId: null },
+      }),
+    );
+  });
+});
+
+// ─────────────────────────────────────────────
+// Admin — services moderation
+// ─────────────────────────────────────────────
+
+describe("moderation services (admin)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetAdminSessionToken.mockResolvedValue("admin-tok");
+    mockApiRequest.mockResolvedValue({});
+  });
+
+  it("appelle l'endpoint de mise en avant et revalide les pages utiles", async () => {
+    await featureService("svc-1");
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/services/svc-1/feature",
+      expect.objectContaining({ method: "POST", token: "admin-tok" }),
+    );
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin/services");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/marketplace");
+  });
+
+  it("appelle l'endpoint de masquage et revalide les pages utiles", async () => {
+    await hideService("svc-1");
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/services/svc-1/hide",
+      expect.objectContaining({ method: "POST", token: "admin-tok" }),
+    );
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin/services");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/marketplace");
   });
 });
 

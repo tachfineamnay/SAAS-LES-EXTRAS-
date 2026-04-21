@@ -3,6 +3,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { SentryModule } from "@sentry/nestjs/setup";
+import { AdminOverviewModule } from "./admin-overview/admin-overview.module";
 import { AdminOffersModule } from "./admin-offers/admin-offers.module";
 import { DeskModule } from "./desk/desk.module";
 import { AdminUsersModule } from "./admin-users/admin-users.module";
@@ -42,6 +43,7 @@ import { RequestLoggingInterceptor } from "./common/interceptors/request-logging
       },
     ]),
     PrismaModule,
+    AdminOverviewModule,
     AdminUsersModule,
     AdminOffersModule,
     DeskModule,

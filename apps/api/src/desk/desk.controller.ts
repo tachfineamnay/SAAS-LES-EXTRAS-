@@ -6,6 +6,7 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
 import { DeskService } from "./desk.service";
+import { AssignDeskRequestDto } from "./dto/assign-desk-request.dto";
 import { UpdateDeskRequestStatusDto } from "./dto/update-desk-request-status.dto";
 import { RespondDeskRequestDto } from "./dto/respond-desk-request.dto";
 
@@ -25,8 +26,19 @@ export class DeskController {
   updateStatus(
     @Param("id") id: string,
     @Body() dto: UpdateDeskRequestStatusDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.deskService.updateStatus(id, dto);
+    return this.deskService.updateStatus(id, user.id, dto);
+  }
+
+  @Patch("admin/desk-requests/:id/assign")
+  @Roles(UserRole.ADMIN)
+  assign(
+    @Param("id") id: string,
+    @Body() dto: AssignDeskRequestDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.deskService.assign(id, user.id, dto);
   }
 
   @Patch("admin/desk-requests/:id/respond")

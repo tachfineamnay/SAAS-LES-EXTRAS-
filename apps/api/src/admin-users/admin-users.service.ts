@@ -104,22 +104,36 @@ export class AdminUsersService {
     };
   }
 
-  async verifyUser(userId: string): Promise<{ ok: true }> {
+  async verifyUser(userId: string, adminId: string): Promise<{ ok: true }> {
     const existing = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true },
+      select: { id: true, status: true },
     });
 
     if (!existing) {
       throw new NotFoundException("User not found");
     }
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        status: UserStatus.VERIFIED,
-      },
-    });
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          status: UserStatus.VERIFIED,
+        },
+      }),
+      this.prisma.adminActionLog.create({
+        data: {
+          adminId,
+          entityType: "USER",
+          entityId: userId,
+          action: "USER_VERIFY",
+          meta: {
+            previousStatus: existing.status,
+            nextStatus: UserStatus.VERIFIED,
+          },
+        },
+      }),
+    ]);
 
     return { ok: true };
   }
@@ -131,19 +145,33 @@ export class AdminUsersService {
 
     const existing = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true },
+      select: { id: true, status: true },
     });
 
     if (!existing) {
       throw new NotFoundException("User not found");
     }
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        status: UserStatus.BANNED,
-      },
-    });
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          status: UserStatus.BANNED,
+        },
+      }),
+      this.prisma.adminActionLog.create({
+        data: {
+          adminId: actorId,
+          entityType: "USER",
+          entityId: userId,
+          action: "USER_BAN",
+          meta: {
+            previousStatus: existing.status,
+            nextStatus: UserStatus.BANNED,
+          },
+        },
+      }),
+    ]);
 
     return { ok: true };
   }

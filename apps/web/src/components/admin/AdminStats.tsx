@@ -1,47 +1,51 @@
 "use client";
 
-import { Banknote, CircleGauge, Percent, UserPlus } from "lucide-react";
+import { AlertTriangle, EyeOff, Inbox, Receipt, Star, UserCheck } from "lucide-react";
 import { KpiTile } from "@/components/dashboard/KpiTile";
-import type { AdminStatsData } from "@/lib/admin/desk-mocks";
+import type { AdminOverviewData } from "@/app/actions/admin";
 
 type AdminStatsProps = {
-  data: AdminStatsData;
+  data: AdminOverviewData;
 };
-
-const currencyFormatter = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 export function AdminStats({ data }: AdminStatsProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <KpiTile
-        label="Volume d'Affaires (GMV)"
-        value={currencyFormatter.format(data.gmv)}
-        icon={Banknote}
-        iconColor="emerald"
+        label="Utilisateurs à valider"
+        value={data.pendingUsersCount}
+        icon={UserCheck}
+        iconColor="teal"
       />
       <KpiTile
-        label="Missions en cours"
-        value={data.activeMissionsToday}
-        icon={CircleGauge}
+        label="Demandes Desk ouvertes"
+        value={data.openDeskRequestsCount}
+        icon={Inbox}
+        iconColor="violet"
+      />
+      <KpiTile
+        label="Missions urgentes 48h"
+        value={data.urgentOpenMissionsCount}
+        icon={AlertTriangle}
+        iconColor="coral"
+      />
+      <KpiTile
+        label="Services mis en avant"
+        value={data.featuredServicesCount}
+        icon={Star}
+        iconColor="amber"
+      />
+      <KpiTile
+        label="Services masqués"
+        value={data.hiddenServicesCount}
+        icon={EyeOff}
         iconColor="gray"
       />
       <KpiTile
-        label="Nouveaux Users (7j)"
-        value={data.newUsersLast7Days}
-        icon={UserPlus}
-        iconColor="teal"
-        trend="up"
-        trendLabel={data.newUsersTrendLabel}
-      />
-      <KpiTile
-        label="Taux de Conversion"
-        value={`${data.sosConversionRate}%`}
-        icon={Percent}
-        iconColor="amber"
+        label="Factures impayées"
+        value={data.pendingInvoicesCount}
+        icon={Receipt}
+        iconColor="emerald"
       />
     </div>
   );

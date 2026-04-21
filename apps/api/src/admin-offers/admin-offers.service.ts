@@ -78,7 +78,7 @@ export class AdminOffersService {
     }));
   }
 
-  async deleteMission(missionId: string): Promise<{ ok: true }> {
+  async deleteMission(missionId: string, adminId: string): Promise<{ ok: true }> {
     const mission = await this.prisma.reliefMission.findUnique({
       where: { id: missionId },
       select: { id: true, status: true },
@@ -89,6 +89,19 @@ export class AdminOffersService {
     }
 
     if (mission.status === ReliefMissionStatus.CANCELLED) {
+      await this.prisma.adminActionLog.create({
+        data: {
+          adminId,
+          entityType: "MISSION",
+          entityId: missionId,
+          action: "MISSION_DELETE",
+          meta: {
+            previousStatus: mission.status,
+            nextStatus: ReliefMissionStatus.CANCELLED,
+            alreadyCancelled: true,
+          },
+        },
+      });
       return { ok: true };
     }
 
@@ -110,6 +123,18 @@ export class AdminOffersService {
           status: BookingStatus.CANCELLED,
         },
       }),
+      this.prisma.adminActionLog.create({
+        data: {
+          adminId,
+          entityType: "MISSION",
+          entityId: missionId,
+          action: "MISSION_DELETE",
+          meta: {
+            previousStatus: mission.status,
+            nextStatus: ReliefMissionStatus.CANCELLED,
+          },
+        },
+      }),
     ]);
 
     return { ok: true };
@@ -125,6 +150,9 @@ export class AdminOffersService {
         title: true,
         description: true,
         price: true,
+        type: true,
+        isFeatured: true,
+        isHidden: true,
         createdAt: true,
         owner: {
           select: {
@@ -145,6 +173,9 @@ export class AdminOffersService {
       title: service.title,
       description: service.description,
       price: service.price,
+      type: service.type,
+      isFeatured: service.isFeatured,
+      isHidden: service.isHidden,
       createdAt: service.createdAt.toISOString(),
       freelanceName: getDisplayName(
         service.owner.profile?.firstName,
@@ -153,5 +184,73 @@ export class AdminOffersService {
       ),
       freelanceEmail: service.owner.email,
     }));
+  }
+
+  async featureService(serviceId: string, adminId: string): Promise<{ ok: true }> {
+    const service = await this.prisma.service.findUnique({
+      where: { id: serviceId },
+      select: { id: true, isFeatured: true },
+    });
+
+    if (!service) {
+      throw new NotFoundException("Service not found");
+    }
+
+    const nextIsFeatured = !service.isFeatured;
+
+    await this.prisma.$transaction([
+      this.prisma.service.update({
+        where: { id: serviceId },
+        data: { isFeatured: nextIsFeatured },
+      }),
+      this.prisma.adminActionLog.create({
+        data: {
+          adminId,
+          entityType: "SERVICE",
+          entityId: serviceId,
+          action: "SERVICE_FEATURE",
+          meta: {
+            previousIsFeatured: service.isFeatured,
+            nextIsFeatured,
+          },
+        },
+      }),
+    ]);
+
+    return { ok: true };
+  }
+
+  async hideService(serviceId: string, adminId: string): Promise<{ ok: true }> {
+    const service = await this.prisma.service.findUnique({
+      where: { id: serviceId },
+      select: { id: true, isHidden: true },
+    });
+
+    if (!service) {
+      throw new NotFoundException("Service not found");
+    }
+
+    const nextIsHidden = !service.isHidden;
+
+    await this.prisma.$transaction([
+      this.prisma.service.update({
+        where: { id: serviceId },
+        data: { isHidden: nextIsHidden },
+      }),
+      this.prisma.adminActionLog.create({
+        data: {
+          adminId,
+          entityType: "SERVICE",
+          entityId: serviceId,
+          action: "SERVICE_HIDE",
+          meta: {
+            previousIsHidden: service.isHidden,
+            nextIsHidden,
+          },
+        },
+      }),
+    ]);
+
+    return { ok: true };
   }
 }

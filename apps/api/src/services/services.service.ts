@@ -25,6 +25,7 @@ export class ServicesService {
     return this.prisma.service.findMany({
       where: {
         status: "ACTIVE",
+        isHidden: false,
       },
       include: {
         owner: {
@@ -55,7 +56,7 @@ export class ServicesService {
       throw new NotFoundException("Service not found");
     }
 
-    if (service.status !== "ACTIVE" && service.ownerId !== requesterId) {
+    if ((service.status !== "ACTIVE" || service.isHidden) && service.ownerId !== requesterId) {
       throw new NotFoundException("Service not found");
     }
 

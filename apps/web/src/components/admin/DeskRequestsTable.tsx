@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { CheckCircle, Clock, MessageSquareReply, XCircle } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { CheckCircle, MessageSquareReply, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import {
+  assignDeskRequest,
+  type AdminUserRow,
+  type DeskRequestPriority,
   type DeskRequestRow,
   type DeskRequestStatus,
   updateDeskRequestStatus,
@@ -12,6 +16,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { FilterBar, type FilterDefinition } from "@/components/data/FilterBar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -48,6 +60,50 @@ const STATUS_VARIANTS: Record<DeskRequestStatus, "default" | "outline" | "second
   CLOSED: "outline",
 };
 
+const TYPE_LABELS: Record<DeskRequestRow["type"], string> = {
+  MISSION_INFO_REQUEST: "Info mission",
+};
+
+const PRIORITY_LABELS: Record<DeskRequestPriority, string> = {
+  LOW: "Basse",
+  NORMAL: "Normale",
+  HIGH: "Haute",
+  URGENT: "Urgente",
+};
+
+const PRIORITY_VARIANTS: Record<DeskRequestPriority, "quiet" | "default" | "amber" | "coral"> = {
+  LOW: "quiet",
+  NORMAL: "default",
+  HIGH: "amber",
+  URGENT: "coral",
+};
+
+const FILTERS: FilterDefinition[] = [
+  {
+    key: "type",
+    label: "Tous les types",
+    options: [{ label: TYPE_LABELS.MISSION_INFO_REQUEST, value: "MISSION_INFO_REQUEST" }],
+  },
+  {
+    key: "priority",
+    label: "Toutes priorités",
+    options: [
+      { label: PRIORITY_LABELS.LOW, value: "LOW" },
+      { label: PRIORITY_LABELS.NORMAL, value: "NORMAL" },
+      { label: PRIORITY_LABELS.HIGH, value: "HIGH" },
+      { label: PRIORITY_LABELS.URGENT, value: "URGENT" },
+    ],
+  },
+  {
+    key: "assigned",
+    label: "Assignation",
+    options: [
+      { label: "Assignées", value: "ASSIGNED" },
+      { label: "Non assignées", value: "UNASSIGNED" },
+    ],
+  },
+];
+
 function getRequesterName(requester: DeskRequestRow["requester"]): string {
   if (requester.profile) {
     return `${requester.profile.firstName} ${requester.profile.lastName}`.trim();
@@ -55,14 +111,37 @@ function getRequesterName(requester: DeskRequestRow["requester"]): string {
   return requester.email;
 }
 
+function getAdminName(admin: NonNullable<DeskRequestRow["assignedToAdmin"]> | AdminUserRow): string {
+  if ("name" in admin) return admin.name;
+  if (admin.profile) {
+    return `${admin.profile.firstName} ${admin.profile.lastName}`.trim();
+  }
+  return admin.email;
+}
+
 type DeskRequestsTableProps = {
   requests: DeskRequestRow[];
+  admins: AdminUserRow[];
 };
 
-export function DeskRequestsTable({ requests }: DeskRequestsTableProps) {
+export function DeskRequestsTable({ requests, admins }: DeskRequestsTableProps) {
+  const router = useRouter();
   const [selected, setSelected] = useState<DeskRequestRow | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [priorityFilter, setPriorityFilter] = useState("ALL");
+  const [assignedFilter, setAssignedFilter] = useState("ALL");
   const [isPending, startTransition] = useTransition();
+
+  const filteredRequests = useMemo(() => {
+    return requests.filter((request) => {
+      if (typeFilter !== "ALL" && request.type !== typeFilter) return false;
+      if (priorityFilter !== "ALL" && request.priority !== priorityFilter) return false;
+      if (assignedFilter === "ASSIGNED" && !request.assignedToAdminId) return false;
+      if (assignedFilter === "UNASSIGNED" && request.assignedToAdminId) return false;
+      return true;
+    });
+  }, [assignedFilter, priorityFilter, requests, typeFilter]);
 
   const openSheet = (req: DeskRequestRow) => {
     setSelected(req);
@@ -74,13 +153,51 @@ export function DeskRequestsTable({ requests }: DeskRequestsTableProps) {
     setReplyText("");
   };
 
+  const handleFilterChange = (key: string, value: string) => {
+    if (key === "type") setTypeFilter(value);
+    if (key === "priority") setPriorityFilter(value);
+    if (key === "assigned") setAssignedFilter(value);
+  };
+
+  const handleResetFilters = () => {
+    setTypeFilter("ALL");
+    setPriorityFilter("ALL");
+    setAssignedFilter("ALL");
+  };
+
   const handleStatusChange = (id: string, status: DeskRequestStatus) => {
     startTransition(async () => {
       try {
         await updateDeskRequestStatus(id, status);
         toast.success("Statut mis à jour");
+        setSelected((current) => (current?.id === id ? { ...current, status } : current));
+        router.refresh();
       } catch {
         toast.error("Erreur lors de la mise à jour");
+      }
+    });
+  };
+
+  const handleAssign = (id: string, adminId: string | null) => {
+    startTransition(async () => {
+      try {
+        await assignDeskRequest(id, adminId);
+        toast.success(adminId ? "Demande assignée" : "Assignation retirée");
+        const assignedAdmin = admins.find((admin) => admin.id === adminId);
+        setSelected((current) =>
+          current?.id === id
+            ? {
+                ...current,
+                assignedToAdminId: adminId,
+                assignedToAdmin: assignedAdmin
+                  ? { id: assignedAdmin.id, email: assignedAdmin.email, profile: null }
+                  : null,
+              }
+            : current,
+        );
+        router.refresh();
+      } catch {
+        toast.error("Erreur lors de l'assignation");
       }
     });
   };
@@ -92,6 +209,7 @@ export function DeskRequestsTable({ requests }: DeskRequestsTableProps) {
         await respondToDeskRequest(selected.id, replyText.trim());
         toast.success("Réponse envoyée — le candidat a été notifié");
         closeSheet();
+        router.refresh();
       } catch {
         toast.error("Erreur lors de l'envoi de la réponse");
       }
@@ -109,19 +227,39 @@ export function DeskRequestsTable({ requests }: DeskRequestsTableProps) {
   return (
     <>
       <div className="rounded-xl border bg-card overflow-hidden">
+        <div className="border-b border-border/50 p-4">
+          <FilterBar
+            filters={FILTERS}
+            activeFilters={{
+              type: typeFilter,
+              priority: priorityFilter,
+              assigned: assignedFilter,
+            }}
+            onFilterChange={handleFilterChange}
+            onReset={handleResetFilters}
+          />
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Mission</TableHead>
               <TableHead>Candidat</TableHead>
               <TableHead>Message</TableHead>
+              <TableHead>Priorité</TableHead>
               <TableHead>Statut</TableHead>
+              <TableHead>Assigné</TableHead>
               <TableHead>Date</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {requests.map((req) => (
+            {filteredRequests.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
+                  Aucune demande ne correspond aux filtres.
+                </TableCell>
+              </TableRow>
+            ) : filteredRequests.map((req) => (
               <TableRow key={req.id}>
                 <TableCell className="font-medium max-w-[160px] truncate">
                   {req.mission.title}
@@ -136,9 +274,17 @@ export function DeskRequestsTable({ requests }: DeskRequestsTableProps) {
                   <p className="text-sm text-muted-foreground line-clamp-2">{req.message}</p>
                 </TableCell>
                 <TableCell>
+                  <Badge variant={PRIORITY_VARIANTS[req.priority]}>
+                    {PRIORITY_LABELS[req.priority]}
+                  </Badge>
+                </TableCell>
+                <TableCell>
                   <Badge variant={STATUS_VARIANTS[req.status]}>
                     {STATUS_LABELS[req.status]}
                   </Badge>
+                </TableCell>
+                <TableCell className="max-w-[140px] truncate text-sm text-muted-foreground">
+                  {req.assignedToAdmin ? getAdminName(req.assignedToAdmin) : "Non assignée"}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                   {dateFormatter.format(new Date(req.createdAt))}
@@ -192,6 +338,31 @@ export function DeskRequestsTable({ requests }: DeskRequestsTableProps) {
                       ),
                     )}
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    Assignation
+                  </p>
+                  <Select
+                    value={selected.assignedToAdminId ?? "UNASSIGNED"}
+                    disabled={isPending}
+                    onValueChange={(value) => {
+                      handleAssign(selected.id, value === "UNASSIGNED" ? null : value);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Assigner à un admin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="UNASSIGNED">Non assignée</SelectItem>
+                      {admins.map((admin) => (
+                        <SelectItem key={admin.id} value={admin.id}>
+                          {admin.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Message candidat */}
@@ -249,7 +420,10 @@ export function DeskRequestsTable({ requests }: DeskRequestsTableProps) {
 
                 {/* Infos candidat */}
                 <div className="rounded-lg border bg-muted/20 p-4 space-y-1 text-sm">
-                  <p className="font-medium">{getRequesterName(selected.requester)}</p>
+                  <p className="font-medium flex items-center gap-1.5">
+                    <UserRound className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                    {getRequesterName(selected.requester)}
+                  </p>
                   <p className="text-muted-foreground">{selected.requester.email}</p>
                   <p className="text-xs text-muted-foreground">
                     Demande reçue le {dateFormatter.format(new Date(selected.createdAt))}

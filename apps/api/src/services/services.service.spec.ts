@@ -46,6 +46,7 @@ describe("ServicesService", () => {
       expect(prisma.service.findMany).toHaveBeenCalledWith({
         where: {
           status: "ACTIVE",
+          isHidden: false,
         },
         include: {
           owner: {
@@ -80,6 +81,20 @@ describe("ServicesService", () => {
         id: "service-1",
         ownerId: "free-1",
         status: "DRAFT",
+        owner: { profile: null },
+      });
+
+      await expect(service.findOne("service-1", "est-1")).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it("masque un service caché à un utilisateur non propriétaire", async () => {
+      prisma.service.findUnique.mockResolvedValue({
+        id: "service-1",
+        ownerId: "free-1",
+        status: "ACTIVE",
+        isHidden: true,
         owner: { profile: null },
       });
 

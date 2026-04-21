@@ -61,7 +61,7 @@ describe("InboxPage", () => {
       error: "Impossible de charger les conversations liées à vos missions et ateliers.",
     });
 
-    render(await InboxPage({}));
+    render(await InboxPage());
 
     expect(screen.getByText("InboxClient")).toBeInTheDocument();
     expect(screen.getByText("seeds:0")).toBeInTheDocument();
@@ -77,7 +77,7 @@ describe("InboxPage", () => {
       unauthorized: true,
     });
 
-    await expect(InboxPage({})).rejects.toThrow("NEXT_REDIRECT:/login");
+    await expect(InboxPage()).rejects.toThrow("NEXT_REDIRECT:/login");
     expect(mockDeleteSession).toHaveBeenCalledTimes(1);
   });
 });

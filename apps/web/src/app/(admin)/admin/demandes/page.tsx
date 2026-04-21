@@ -1,10 +1,13 @@
-import { getDeskRequests } from "@/app/actions/admin";
+import { getAdminUsers, getDeskRequests } from "@/app/actions/admin";
 import { DeskRequestsTable } from "@/components/admin/DeskRequestsTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDemandesPage() {
-  const requests = await getDeskRequests();
+  const [requests, admins] = await Promise.all([
+    getDeskRequests(),
+    getAdminUsers({ role: "ADMIN" }),
+  ]);
 
   return (
     <section className="space-y-5">
@@ -15,7 +18,7 @@ export default async function AdminDemandesPage() {
         </p>
       </header>
 
-      <DeskRequestsTable requests={requests} />
+      <DeskRequestsTable requests={requests} admins={admins} />
     </section>
   );
 }

@@ -1,8 +1,10 @@
 import { Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { UserRole } from "@prisma/client";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
+import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
 import { AdminOffersService } from "./admin-offers.service";
 
 @Controller("admin")
@@ -17,8 +19,11 @@ export class AdminOffersController {
   }
 
   @Post("missions/:missionId/delete")
-  deleteMission(@Param("missionId") missionId: string) {
-    return this.adminOffersService.deleteMission(missionId);
+  deleteMission(
+    @Param("missionId") missionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.adminOffersService.deleteMission(missionId, user.id);
   }
 
   @Get("services")
@@ -26,4 +31,19 @@ export class AdminOffersController {
     return this.adminOffersService.getServices();
   }
 
+  @Post("services/:serviceId/feature")
+  featureService(
+    @Param("serviceId") serviceId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.adminOffersService.featureService(serviceId, user.id);
+  }
+
+  @Post("services/:serviceId/hide")
+  hideService(
+    @Param("serviceId") serviceId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.adminOffersService.hideService(serviceId, user.id);
+  }
 }

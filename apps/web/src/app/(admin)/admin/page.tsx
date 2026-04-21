@@ -1,10 +1,19 @@
-import { Banknote, CircleGauge, Percent, UserPlus } from "lucide-react";
+import { getAdminOverview, getAdminUsers, getDeskRequests } from "@/app/actions/admin";
 import { AdminStats } from "@/components/admin/AdminStats";
 import { RequiredActions } from "@/components/admin/RequiredActions";
-import { adminDeskMockData } from "@/lib/admin/desk-mocks";
 import { BentoSection } from "@/components/layout/BentoSection";
 
-export default function AdminOverviewPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminOverviewPage() {
+  const [overview, users, deskRequests] = await Promise.all([
+    getAdminOverview(),
+    getAdminUsers(),
+    getDeskRequests(),
+  ]);
+  const pendingUsers = users.filter((user) => user.status === "PENDING");
+  const openDeskRequests = deskRequests.filter((request) => request.status === "OPEN");
+
   return (
     <section className="space-y-8">
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -19,7 +28,7 @@ export default function AdminOverviewPage() {
         </div>
       </header>
 
-      <AdminStats data={adminDeskMockData.stats} />
+      <AdminStats data={overview} />
 
       <BentoSection
         cols={2}
@@ -28,8 +37,8 @@ export default function AdminOverviewPage() {
         description="Points de contrôle prioritaires du Desk."
       >
         <RequiredActions
-          pendingUsers={adminDeskMockData.pendingUsers}
-          blockedBookings={adminDeskMockData.blockedBookings}
+          pendingUsers={pendingUsers}
+          openDeskRequests={openDeskRequests}
         />
       </BentoSection>
     </section>

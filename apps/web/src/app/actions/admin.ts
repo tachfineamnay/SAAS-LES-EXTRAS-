@@ -56,6 +56,15 @@ export type AdminServiceRow = {
   freelanceEmail: string;
 };
 
+export type AdminOverviewData = {
+  pendingUsersCount: number;
+  openDeskRequestsCount: number;
+  urgentOpenMissionsCount: number;
+  featuredServicesCount: number;
+  hiddenServicesCount: number;
+  pendingInvoicesCount: number;
+};
+
 type GetAdminUsersInput = {
   search?: string;
   role?: AdminUserRole | "ALL";
@@ -88,6 +97,14 @@ export async function getAdminUsers(input?: GetAdminUsersInput): Promise<AdminUs
   });
 }
 
+export async function getAdminOverview(): Promise<AdminOverviewData> {
+  const token = await getAdminToken();
+  return apiRequest<AdminOverviewData>("/admin/overview", {
+    method: "GET",
+    token,
+  });
+}
+
 export async function getAdminUserProfile(userId: string): Promise<AdminUserProfileDetails> {
   if (!userId) {
     throw new Error("Utilisateur introuvable.");
@@ -112,6 +129,7 @@ export async function verifyUser(userId: string): Promise<{ ok: true }> {
   });
 
   revalidatePath("/admin/users");
+  revalidatePath("/admin");
   return { ok: true };
 }
 
@@ -127,6 +145,7 @@ export async function banUser(userId: string): Promise<{ ok: true }> {
   });
 
   revalidatePath("/admin/users");
+  revalidatePath("/admin");
   return { ok: true };
 }
 
@@ -165,6 +184,7 @@ export async function deleteMission(missionId: string): Promise<{ ok: true }> {
   });
 
   revalidatePath("/admin/missions");
+  revalidatePath("/admin");
   revalidatePath("/bookings");
   revalidatePath("/marketplace");
   return { ok: true };
@@ -190,6 +210,7 @@ export async function featureService(serviceId: string): Promise<{ ok: true }> {
   });
 
   revalidatePath("/admin/services");
+  revalidatePath("/admin");
   revalidatePath("/marketplace");
   return { ok: true };
 }
@@ -206,6 +227,7 @@ export async function hideService(serviceId: string): Promise<{ ok: true }> {
   });
 
   revalidatePath("/admin/services");
+  revalidatePath("/admin");
   revalidatePath("/marketplace");
   return { ok: true };
 }
@@ -216,11 +238,20 @@ export async function hideService(serviceId: string): Promise<{ ok: true }> {
 
 export type DeskRequestStatus = "OPEN" | "IN_PROGRESS" | "ANSWERED" | "CLOSED";
 export type DeskRequestType = "MISSION_INFO_REQUEST";
+export type DeskRequestPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
+
+type DeskAdminSummary = {
+  id: string;
+  email: string;
+  profile: { firstName: string; lastName: string } | null;
+};
 
 export type DeskRequestRow = {
   id: string;
   type: DeskRequestType;
+  priority: DeskRequestPriority;
   status: DeskRequestStatus;
+  assignedToAdminId: string | null;
   message: string;
   response: string | null;
   answeredAt: string | null;
@@ -231,11 +262,8 @@ export type DeskRequestRow = {
     email: string;
     profile: { firstName: string; lastName: string } | null;
   };
-  answeredBy: {
-    id: string;
-    email: string;
-    profile: { firstName: string; lastName: string } | null;
-  } | null;
+  assignedToAdmin: DeskAdminSummary | null;
+  answeredBy: DeskAdminSummary | null;
 };
 
 export async function getDeskRequests(): Promise<DeskRequestRow[]> {
@@ -261,6 +289,21 @@ export async function updateDeskRequestStatus(
     body: { status },
   });
   revalidatePath("/admin/demandes");
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+export async function assignDeskRequest(
+  id: string,
+  adminId: string | null,
+): Promise<{ ok: true }> {
+  const token = await getAdminToken();
+  await apiRequest<unknown>(`/admin/desk-requests/${id}/assign`, {
+    method: "PATCH",
+    token,
+    body: { adminId },
+  });
+  revalidatePath("/admin/demandes");
   return { ok: true };
 }
 
@@ -275,5 +318,6 @@ export async function respondToDeskRequest(
     body: { response },
   });
   revalidatePath("/admin/demandes");
+  revalidatePath("/admin");
   return { ok: true };
 }
