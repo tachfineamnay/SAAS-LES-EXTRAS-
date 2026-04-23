@@ -100,6 +100,76 @@ export type AdminOverviewData = {
   awaitingPaymentCount: number;
 };
 
+export type AdminFinanceSummary = {
+  invoicesCount: number;
+  paidInvoicesCount: number;
+  unpaidInvoicesCount: number;
+  totalInvoicedAmount: number;
+  totalPaidAmount: number;
+  totalOutstandingAmount: number;
+  quotesSentCount: number;
+  quotesAcceptedCount: number;
+  bookingsAwaitingPaymentCount: number;
+};
+
+export type AdminFinanceBookingType = "MISSION" | "SERVICE";
+export type AdminFinanceQuoteStatus = "DRAFT" | "SENT" | "ACCEPTED" | "REJECTED" | "REVISED";
+export type AdminFinancePaymentStatus = "PENDING" | "PAID" | "CANCELLED";
+export type AdminFinanceBookingStatus =
+  | "PENDING"
+  | "QUOTE_SENT"
+  | "QUOTE_ACCEPTED"
+  | "CONFIRMED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "AWAITING_PAYMENT"
+  | "PAID"
+  | "CANCELLED";
+
+export type AdminFinanceInvoiceRow = {
+  id: string;
+  invoiceNumber: string | null;
+  status: string;
+  amount: number;
+  createdAt: string;
+  bookingId: string;
+  bookingType: AdminFinanceBookingType;
+  bookingTitle: string;
+  scheduledAt: string;
+  establishmentName: string;
+  providerName: string;
+};
+
+export type AdminFinanceQuoteRow = {
+  id: string;
+  status: AdminFinanceQuoteStatus;
+  totalTTC: number;
+  createdAt: string;
+  validUntil: string | null;
+  acceptedAt: string | null;
+  rejectedAt: string | null;
+  bookingId: string;
+  bookingType: AdminFinanceBookingType;
+  bookingTitle: string;
+  issuerName: string;
+  requesterName: string;
+};
+
+export type AdminAwaitingPaymentBookingRow = {
+  id: string;
+  status: AdminFinanceBookingStatus;
+  paymentStatus: AdminFinancePaymentStatus;
+  amount: number | null;
+  createdAt: string;
+  scheduledAt: string;
+  bookingType: AdminFinanceBookingType;
+  bookingTitle: string;
+  establishmentName: string;
+  providerName: string;
+  invoiceId: string | null;
+  invoiceNumber: string | null;
+};
+
 type GetAdminUsersInput = {
   search?: string;
   role?: AdminUserRole | "ALL";
@@ -135,6 +205,40 @@ export async function getAdminUsers(input?: GetAdminUsersInput): Promise<AdminUs
 export async function getAdminOverview(): Promise<AdminOverviewData> {
   const token = await getAdminToken();
   return apiRequest<AdminOverviewData>("/admin/overview", {
+    method: "GET",
+    token,
+  });
+}
+
+export async function getAdminFinanceSummary(): Promise<AdminFinanceSummary> {
+  const token = await getAdminToken();
+  return apiRequest<AdminFinanceSummary>("/admin/finance/summary", {
+    method: "GET",
+    token,
+  });
+}
+
+export async function getAdminFinanceInvoices(): Promise<AdminFinanceInvoiceRow[]> {
+  const token = await getAdminToken();
+  return apiRequest<AdminFinanceInvoiceRow[]>("/admin/finance/invoices", {
+    method: "GET",
+    token,
+  });
+}
+
+export async function getAdminFinanceQuotes(): Promise<AdminFinanceQuoteRow[]> {
+  const token = await getAdminToken();
+  return apiRequest<AdminFinanceQuoteRow[]>("/admin/finance/quotes", {
+    method: "GET",
+    token,
+  });
+}
+
+export async function getAdminFinanceBookingsAwaitingPayment(): Promise<
+  AdminAwaitingPaymentBookingRow[]
+> {
+  const token = await getAdminToken();
+  return apiRequest<AdminAwaitingPaymentBookingRow[]>("/admin/finance/bookings-awaiting-payment", {
     method: "GET",
     token,
   });
