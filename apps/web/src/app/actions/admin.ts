@@ -62,7 +62,7 @@ export type AdminOverviewData = {
   urgentOpenMissionsCount: number;
   featuredServicesCount: number;
   hiddenServicesCount: number;
-  pendingInvoicesCount: number;
+  awaitingPaymentCount: number;
 };
 
 type GetAdminUsersInput = {

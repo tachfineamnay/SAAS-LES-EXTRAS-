@@ -101,7 +101,7 @@ describe("getAdminOverview (admin)", () => {
       urgentOpenMissionsCount: 3,
       featuredServicesCount: 4,
       hiddenServicesCount: 5,
-      pendingInvoicesCount: 6,
+      awaitingPaymentCount: 6,
     });
   });
 

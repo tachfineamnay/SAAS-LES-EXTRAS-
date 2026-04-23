@@ -1,4 +1,5 @@
 import {
+  BookingStatus,
   DeskRequestStatus,
   ReliefMissionStatus,
   UserStatus,
@@ -11,7 +12,7 @@ describe("AdminOverviewService", () => {
     deskRequest: { count: jest.fn() },
     reliefMission: { count: jest.fn() },
     service: { count: jest.fn() },
-    invoice: { count: jest.fn() },
+    booking: { count: jest.fn() },
     $transaction: jest.fn((queries: Array<Promise<unknown>>) => Promise.all(queries)),
   } as any;
 
@@ -28,7 +29,7 @@ describe("AdminOverviewService", () => {
     prisma.deskRequest.count.mockResolvedValueOnce(3);
     prisma.reliefMission.count.mockResolvedValueOnce(4);
     prisma.service.count.mockResolvedValueOnce(5).mockResolvedValueOnce(6);
-    prisma.invoice.count.mockResolvedValueOnce(7);
+    prisma.booking.count.mockResolvedValueOnce(7);
 
     await expect(service.getOverview(now)).resolves.toEqual({
       pendingUsersCount: 2,
@@ -36,14 +37,18 @@ describe("AdminOverviewService", () => {
       urgentOpenMissionsCount: 4,
       featuredServicesCount: 5,
       hiddenServicesCount: 6,
-      pendingInvoicesCount: 7,
+      awaitingPaymentCount: 7,
     });
 
     expect(prisma.user.count).toHaveBeenCalledWith({
       where: { status: UserStatus.PENDING },
     });
     expect(prisma.deskRequest.count).toHaveBeenCalledWith({
-      where: { status: DeskRequestStatus.OPEN },
+      where: {
+        status: {
+          in: [DeskRequestStatus.OPEN, DeskRequestStatus.IN_PROGRESS],
+        },
+      },
     });
     expect(prisma.reliefMission.count).toHaveBeenCalledWith({
       where: {
@@ -58,8 +63,8 @@ describe("AdminOverviewService", () => {
     expect(prisma.service.count).toHaveBeenNthCalledWith(2, {
       where: { isHidden: true },
     });
-    expect(prisma.invoice.count).toHaveBeenCalledWith({
-      where: { status: "UNPAID" },
+    expect(prisma.booking.count).toHaveBeenCalledWith({
+      where: { status: BookingStatus.AWAITING_PAYMENT },
     });
   });
 });

@@ -4,6 +4,7 @@ import { RequiredActions } from "@/components/admin/RequiredActions";
 import { BentoSection } from "@/components/layout/BentoSection";
 
 export const dynamic = "force-dynamic";
+const OPEN_DESK_REQUEST_STATUSES = new Set(["OPEN", "IN_PROGRESS"]);
 
 export default async function AdminOverviewPage() {
   const [overview, users, deskRequests] = await Promise.all([
@@ -12,7 +13,9 @@ export default async function AdminOverviewPage() {
     getDeskRequests(),
   ]);
   const pendingUsers = users.filter((user) => user.status === "PENDING");
-  const openDeskRequests = deskRequests.filter((request) => request.status === "OPEN");
+  const openDeskRequests = deskRequests.filter((request) =>
+    OPEN_DESK_REQUEST_STATUSES.has(request.status),
+  );
 
   return (
     <section className="space-y-8">

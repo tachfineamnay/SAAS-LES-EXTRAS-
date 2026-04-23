@@ -42,8 +42,8 @@ export function AdminStats({ data }: AdminStatsProps) {
         iconColor="gray"
       />
       <KpiTile
-        label="Factures impayées"
-        value={data.pendingInvoicesCount}
+        label="Paiements en attente"
+        value={data.awaitingPaymentCount}
         icon={Receipt}
         iconColor="emerald"
       />

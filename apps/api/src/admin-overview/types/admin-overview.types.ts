@@ -4,5 +4,5 @@ export type AdminOverview = {
   urgentOpenMissionsCount: number;
   featuredServicesCount: number;
   hiddenServicesCount: number;
-  pendingInvoicesCount: number;
+  awaitingPaymentCount: number;
 };

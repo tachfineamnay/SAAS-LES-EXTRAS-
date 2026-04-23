@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import {
+  BookingStatus,
   DeskRequestStatus,
   ReliefMissionStatus,
   UserStatus,
@@ -8,6 +9,10 @@ import { PrismaService } from "../prisma/prisma.service";
 import { AdminOverview } from "./types/admin-overview.types";
 
 const URGENT_MISSION_WINDOW_MS = 48 * 60 * 60 * 1000;
+const OPEN_DESK_REQUEST_STATUSES = [
+  DeskRequestStatus.OPEN,
+  DeskRequestStatus.IN_PROGRESS,
+] as const;
 
 @Injectable()
 export class AdminOverviewService {
@@ -22,13 +27,17 @@ export class AdminOverviewService {
       urgentOpenMissionsCount,
       featuredServicesCount,
       hiddenServicesCount,
-      pendingInvoicesCount,
+      awaitingPaymentCount,
     ] = await this.prisma.$transaction([
       this.prisma.user.count({
         where: { status: UserStatus.PENDING },
       }),
       this.prisma.deskRequest.count({
-        where: { status: DeskRequestStatus.OPEN },
+        where: {
+          status: {
+            in: [...OPEN_DESK_REQUEST_STATUSES],
+          },
+        },
       }),
       this.prisma.reliefMission.count({
         where: {
@@ -46,8 +55,8 @@ export class AdminOverviewService {
       this.prisma.service.count({
         where: { isHidden: true },
       }),
-      this.prisma.invoice.count({
-        where: { status: "UNPAID" },
+      this.prisma.booking.count({
+        where: { status: BookingStatus.AWAITING_PAYMENT },
       }),
     ]);
 
@@ -57,7 +66,7 @@ export class AdminOverviewService {
       urgentOpenMissionsCount,
       featuredServicesCount,
       hiddenServicesCount,
-      pendingInvoicesCount,
+      awaitingPaymentCount,
     };
   }
 }
