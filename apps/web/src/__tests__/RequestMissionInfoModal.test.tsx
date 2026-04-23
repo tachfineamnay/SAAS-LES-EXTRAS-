@@ -23,9 +23,7 @@ describe("RequestMissionInfoModal", () => {
   });
 
   it("ouvre la modale au clic sur le bouton déclencheur", () => {
-    render(
-      <RequestMissionInfoModal missionId="m-1" missionTitle="Mission A" establishmentName="EHPAD" />,
-    );
+    render(<RequestMissionInfoModal missionId="m-1" missionTitle="Mission A" />);
 
     fireEvent.click(screen.getByRole("button", { name: /demander plus d'informations/i }));
 
@@ -65,9 +63,26 @@ describe("RequestMissionInfoModal", () => {
       expect(mockToastSuccess).toHaveBeenCalled();
     });
 
+    expect(mockToastSuccess).toHaveBeenCalledWith(
+      "Demande envoyée",
+      expect.objectContaining({
+        description: expect.stringContaining("transmise à l'équipe"),
+      }),
+    );
+
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
+  });
+
+  it("affiche un wording centré équipe plateforme et pas établissement", () => {
+    render(<RequestMissionInfoModal missionId="m-1" missionTitle="Mission A" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /demander plus d'informations/i }));
+
+    expect(screen.getByText(/Notre équipe traitera votre demande/i)).toBeInTheDocument();
+    expect(screen.getByText(/Mes demandes/i)).toBeInTheDocument();
+    expect(screen.queryByText(/établissement sera notifié/i)).not.toBeInTheDocument();
   });
 
   it("affiche l'erreur API sans fermer la modale", async () => {

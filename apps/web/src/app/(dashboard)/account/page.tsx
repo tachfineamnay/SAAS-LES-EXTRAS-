@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { apiRequest } from "@/lib/api";
 import { UserProfileClient } from "@/components/profile/UserProfileClient";
+import type { UserKycDocumentsPayload } from "@/lib/kyc-documents";
 
 export default async function AccountPage() {
   const session = await getSession();
@@ -18,12 +19,33 @@ export default async function AccountPage() {
 
   let profile: Record<string, any> | null = null;
   let isAvailable = false;
+  let kycDocuments: UserKycDocumentsPayload["documents"] = [];
+  let kycSummary: UserKycDocumentsPayload["summary"] = {
+    globalStatus: "MISSING",
+    requiredDocuments: 6,
+    uploadedDocuments: 0,
+    approvedDocuments: 0,
+    pendingDocuments: 0,
+    rejectedDocuments: 0,
+    missingDocuments: [],
+  };
   try {
-    const me = await apiRequest<{ isAvailable: boolean; profile: Record<string, any> | null }>("/users/me", {
-      token: session.token,
-    });
+    const [me, documentsPayload] = await Promise.all([
+      apiRequest<{ isAvailable: boolean; profile: Record<string, any> | null }>("/users/me", {
+        token: session.token,
+      }),
+      session.user.role === "FREELANCE"
+        ? apiRequest<UserKycDocumentsPayload>("/users/me/documents", {
+            token: session.token,
+          })
+        : Promise.resolve(null),
+    ]);
     profile = me.profile ?? null;
     isAvailable = me.isAvailable ?? false;
+    if (documentsPayload) {
+      kycDocuments = documentsPayload.documents;
+      kycSummary = documentsPayload.summary;
+    }
   } catch (error) {
     console.error("Failed to load profile:", error);
   }
@@ -50,6 +72,8 @@ export default async function AccountPage() {
   return (
     <UserProfileClient
       initialData={initialData}
+      initialKycDocuments={kycDocuments}
+      initialKycSummary={kycSummary}
       userRole={session.user.role as "ESTABLISHMENT" | "FREELANCE" | "ADMIN"}
       userEmail={session.user.email}
     />

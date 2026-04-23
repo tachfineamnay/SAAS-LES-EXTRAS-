@@ -47,6 +47,8 @@ import {
   itemFadeUp,
   SPRING_SOFT,
 } from "@/lib/motion";
+import { FreelanceKycDocumentsCard } from "@/components/profile/FreelanceKycDocumentsCard";
+import type { KycSummary, UserKycDocument } from "@/lib/kyc-documents";
 
 /* ────────────────── Schema ────────────────── */
 const profileSchema = z.object({
@@ -85,6 +87,8 @@ interface UserProfileClientProps {
     availableCredits: number;
     createdAt: string;
   };
+  initialKycDocuments: UserKycDocument[];
+  initialKycSummary: KycSummary;
   userRole: "ESTABLISHMENT" | "FREELANCE" | "ADMIN";
   userEmail: string;
 }
@@ -141,7 +145,13 @@ function StatTile({ icon: Icon, label, value, color }: {
 /* ════════════════════════════════════════════ */
 /*                 MAIN COMPONENT              */
 /* ════════════════════════════════════════════ */
-export function UserProfileClient({ initialData, userRole, userEmail }: UserProfileClientProps) {
+export function UserProfileClient({
+  initialData,
+  initialKycDocuments,
+  initialKycSummary,
+  userRole,
+  userEmail,
+}: UserProfileClientProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [newSkill, setNewSkill] = useState("");
@@ -566,6 +576,15 @@ export function UserProfileClient({ initialData, userRole, userEmail }: UserProf
                       </div>
                     </GlassCardContent>
                   </GlassCard>
+                </motion.div>
+              )}
+
+              {userRole === "FREELANCE" && (
+                <motion.div variants={itemFadeUp}>
+                  <FreelanceKycDocumentsCard
+                    initialDocuments={initialKycDocuments}
+                    initialSummary={initialKycSummary}
+                  />
                 </motion.div>
               )}
 

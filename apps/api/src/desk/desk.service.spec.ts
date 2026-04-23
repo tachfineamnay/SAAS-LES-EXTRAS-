@@ -1,4 +1,4 @@
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { DeskRequestStatus, UserRole } from "@prisma/client";
 import { DeskService } from "./desk.service";
 
@@ -11,9 +11,11 @@ describe("DeskService", () => {
     },
     contactBypassEvent: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
     },
     user: {
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
     },
     notification: {
       create: jest.fn(),
@@ -23,12 +25,15 @@ describe("DeskService", () => {
     },
     $transaction: jest.fn((queries: Array<Promise<unknown>>) => Promise.all(queries)),
   } as any;
+  const mailService = {
+    sendAdminOutreachEmail: jest.fn().mockResolvedValue(undefined),
+  };
 
   let service: DeskService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new DeskService(prisma);
+    service = new DeskService(prisma, mailService as any);
   });
 
   it("met à jour le statut et journalise l'action", async () => {
@@ -162,12 +167,15 @@ describe("DeskService", () => {
       {
         id: "event-1",
         conversationId: "conv-1",
+        conversation: { bookingId: "booking-1" },
         blockedReason: "EMAIL",
         rawExcerpt: "jo@example.com",
         createdAt: new Date("2026-04-23T09:00:00.000Z"),
         sender: {
           id: "user-1",
           email: "sender@example.com",
+          role: "FREELANCE",
+          status: "VERIFIED",
           profile: {
             firstName: "Aya",
             lastName: "Benali",
@@ -180,6 +188,7 @@ describe("DeskService", () => {
       {
         id: "event-1",
         conversationId: "conv-1",
+        bookingId: "booking-1",
         blockedReason: "EMAIL",
         rawExcerpt: "jo@example.com",
         createdAt: "2026-04-23T09:00:00.000Z",
@@ -187,8 +196,96 @@ describe("DeskService", () => {
           id: "user-1",
           email: "sender@example.com",
           name: "Aya Benali",
+          role: "FREELANCE",
+          status: "VERIFIED",
         },
       },
     ]);
+  });
+
+  it("envoie un outreach Desk, notifie le user et journalise l'action", async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "aya@example.com",
+      role: "FREELANCE",
+      status: "VERIFIED",
+      profile: {
+        firstName: "Aya",
+        lastName: "Benali",
+      },
+    });
+    prisma.notification.create.mockResolvedValue({});
+    prisma.adminActionLog.create.mockResolvedValue({});
+
+    await expect(
+      service.sendAdminOutreach("user-1", "admin-1", {
+        message: "Merci de passer par la plateforme.",
+        origin: "CONTACT_BYPASS",
+        contextId: "event-1",
+      }),
+    ).resolves.toEqual({ ok: true });
+
+    expect(prisma.notification.create).toHaveBeenCalledWith({
+      data: {
+        userId: "user-1",
+        type: "INFO",
+        message: "Message du Desk : Merci de passer par la plateforme.",
+      },
+    });
+    expect(prisma.adminActionLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        adminId: "admin-1",
+        entityType: "USER",
+        entityId: "user-1",
+        action: "USER_OUTREACH_SEND",
+      }),
+    });
+    expect(mailService.sendAdminOutreachEmail).toHaveBeenCalledWith(
+      "aya@example.com",
+      "Aya Benali",
+      "Merci de passer par la plateforme.",
+    );
+  });
+
+  it("refuse un outreach Desk vers un admin", async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      id: "admin-2",
+      email: "admin2@example.com",
+      role: "ADMIN",
+      status: "VERIFIED",
+      profile: null,
+    });
+
+    await expect(
+      service.sendAdminOutreach("admin-2", "admin-1", { message: "Test outreach" }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it("journalise la mise sous surveillance d'un contournement", async () => {
+    prisma.contactBypassEvent.findUnique.mockResolvedValue({
+      id: "event-1",
+      senderId: "user-1",
+      blockedReason: "EMAIL",
+      conversationId: "conv-1",
+    });
+    prisma.adminActionLog.create.mockResolvedValue({});
+
+    await expect(service.monitorContactBypassEvent("event-1", "admin-1")).resolves.toEqual({
+      ok: true,
+    });
+
+    expect(prisma.adminActionLog.create).toHaveBeenCalledWith({
+      data: {
+        adminId: "admin-1",
+        entityType: "CONTACT_BYPASS_EVENT",
+        entityId: "event-1",
+        action: "CONTACT_BYPASS_MONITOR",
+        meta: {
+          senderId: "user-1",
+          blockedReason: "EMAIL",
+          conversationId: "conv-1",
+        },
+      },
+    });
   });
 });

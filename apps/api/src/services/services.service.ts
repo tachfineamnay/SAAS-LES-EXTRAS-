@@ -14,6 +14,50 @@ const ACTIVE_SERVICE_BOOKING_STATUSES: BookingStatus[] = [
   BookingStatus.IN_PROGRESS,
 ];
 
+const PUBLIC_SERVICE_OWNER_SELECT = {
+  id: true,
+  profile: {
+    select: {
+      firstName: true,
+      lastName: true,
+      avatar: true,
+      jobTitle: true,
+      bio: true,
+    },
+  },
+};
+
+const PUBLIC_SERVICE_LIST_SELECT = {
+  id: true,
+  title: true,
+  description: true,
+  price: true,
+  type: true,
+  capacity: true,
+  pricingType: true,
+  pricePerParticipant: true,
+  durationMinutes: true,
+  category: true,
+  publicCible: true,
+  materials: true,
+  objectives: true,
+  methodology: true,
+  evaluation: true,
+  slots: true,
+  imageUrl: true,
+  scheduleInfo: true,
+  owner: {
+    select: PUBLIC_SERVICE_OWNER_SELECT,
+  },
+};
+
+const PUBLIC_SERVICE_DETAIL_SELECT = {
+  ...PUBLIC_SERVICE_LIST_SELECT,
+  ownerId: true,
+  status: true,
+  isHidden: true,
+};
+
 @Injectable()
 export class ServicesService {
   constructor(
@@ -27,13 +71,7 @@ export class ServicesService {
         status: "ACTIVE",
         isHidden: false,
       },
-      include: {
-        owner: {
-          include: {
-            profile: true,
-          },
-        },
-      },
+      select: PUBLIC_SERVICE_LIST_SELECT,
       orderBy: {
         createdAt: "desc",
       },
@@ -43,13 +81,7 @@ export class ServicesService {
   async findOne(id: string, requesterId: string) {
     const service = await this.prisma.service.findUnique({
       where: { id },
-      include: {
-        owner: {
-          include: {
-            profile: true,
-          },
-        },
-      },
+      select: PUBLIC_SERVICE_DETAIL_SELECT,
     });
 
     if (!service) {
@@ -60,7 +92,8 @@ export class ServicesService {
       throw new NotFoundException("Service not found");
     }
 
-    return service;
+    const { ownerId: _ownerId, status: _status, isHidden: _isHidden, ...publicService } = service;
+    return publicService;
   }
 
   async findMyServices(ownerId: string) {

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getAdminSessionToken } from "@/app/actions/_shared/admin-session";
 import { apiRequest } from "@/lib/api";
+import type { KycSummary, PendingKycDocumentRow, UserKycDocument } from "@/lib/kyc-documents";
 
 export type AdminUserRole = "ESTABLISHMENT" | "FREELANCE" | "ADMIN";
 export type AdminUserStatus = "PENDING" | "VERIFIED" | "BANNED";
@@ -26,6 +27,8 @@ export type AdminUserProfileDetails = {
   jobTitle: string | null;
   bio: string | null;
   avatar: string | null;
+  kyc: KycSummary;
+  documents: UserKycDocument[];
 };
 
 export type AdminMissionRow = {
@@ -51,17 +54,124 @@ export type AdminMissionLinkedDeskRequest = {
   messageExcerpt: string;
 };
 
+export type AdminMissionStakeholder = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type AdminMissionConversationMessage = {
+  id: string;
+  type: "USER" | "SYSTEM";
+  contentExcerpt: string;
+  createdAt: string;
+  senderName: string;
+};
+
+export type AdminMissionLinkedBooking = {
+  id: string;
+  status: AdminFinanceBookingStatus;
+  paymentStatus: AdminFinancePaymentStatus;
+  scheduledAt: string;
+  createdAt: string;
+  message: string | null;
+  proposedRate: number | null;
+  freelanceAcknowledged: boolean;
+  assignedFreelance: AdminMissionStakeholder | null;
+  conversation:
+    | {
+        id: string;
+        createdAt: string;
+        lastMessageAt: string | null;
+        lastMessageExcerpt: string | null;
+        recentMessages: AdminMissionConversationMessage[];
+      }
+    | null;
+  invoice:
+    | {
+        id: string;
+        status: string;
+        amount: number;
+        invoiceNumber: string | null;
+        createdAt: string;
+        updatedAt: string;
+      }
+    | null;
+  latestQuote:
+    | {
+        id: string;
+        status: AdminFinanceQuoteStatus;
+        totalTTC: number;
+        createdAt: string;
+        acceptedAt: string | null;
+        rejectedAt: string | null;
+      }
+    | null;
+};
+
+export type AdminMissionCandidate = {
+  bookingId: string;
+  status: AdminFinanceBookingStatus;
+  paymentStatus: AdminFinancePaymentStatus;
+  createdAt: string;
+  proposedRate: number | null;
+  freelanceAcknowledged: boolean;
+  canAssign: boolean;
+  freelance: AdminMissionStakeholder | null;
+  latestQuote:
+    | {
+        id: string;
+        status: AdminFinanceQuoteStatus;
+        totalTTC: number;
+        createdAt: string;
+        acceptedAt: string | null;
+      }
+    | null;
+};
+
+export type AdminMissionTimelineEvent = {
+  id: string;
+  type:
+    | "MISSION_CREATED"
+    | "CANDIDATE_RECEIVED"
+    | "MISSION_ASSIGNED"
+    | "DESK_REQUEST_OPENED"
+    | "CONVERSATION_LINKED"
+    | "QUOTE_SENT"
+    | "QUOTE_ACCEPTED"
+    | "BOOKING_CONFIRMED"
+    | "MISSION_COMPLETED"
+    | "PAYMENT_PENDING"
+    | "PAYMENT_PAID"
+    | "MISSION_CANCELLED"
+    | "ADMIN_ACTION";
+  label: string;
+  description?: string;
+  timestamp: string;
+};
+
 export type AdminMissionDetail = {
   id: string;
   title: string;
   status: "OPEN" | "ASSIGNED" | "COMPLETED" | "CANCELLED";
+  createdAt: string;
+  updatedAt: string;
   establishmentName: string;
   establishmentEmail: string;
+  establishmentId: string;
   address: string;
+  city: string | null;
+  shift: string | null;
   dateStart: string;
   dateEnd: string;
   hourlyRate: number;
   candidatesCount: number;
+  proposedTotalTTC: number | null;
+  attentionItems: string[];
+  assignedFreelance: AdminMissionStakeholder | null;
+  linkedBooking: AdminMissionLinkedBooking | null;
+  candidates: AdminMissionCandidate[];
+  timeline: AdminMissionTimelineEvent[];
   linkedDeskRequests: AdminMissionLinkedDeskRequest[];
 };
 
@@ -256,6 +366,14 @@ export async function getAdminUserProfile(userId: string): Promise<AdminUserProf
   });
 }
 
+export async function getPendingKycDocuments(): Promise<PendingKycDocumentRow[]> {
+  const token = await getAdminToken();
+  return apiRequest<PendingKycDocumentRow[]>("/admin/users/kyc/documents", {
+    method: "GET",
+    token,
+  });
+}
+
 export async function verifyUser(userId: string): Promise<{ ok: true }> {
   if (!userId) {
     throw new Error("Utilisateur introuvable.");
@@ -285,6 +403,32 @@ export async function banUser(userId: string): Promise<{ ok: true }> {
 
   revalidatePath("/admin/users");
   revalidatePath("/admin");
+  return { ok: true };
+}
+
+export async function reviewUserDocument(
+  documentId: string,
+  status: "APPROVED" | "REJECTED",
+  reviewReason?: string,
+): Promise<{ ok: true }> {
+  if (!documentId) {
+    throw new Error("Document introuvable.");
+  }
+
+  const token = await getAdminToken();
+  await apiRequest<{ ok: true }>(`/admin/users/documents/${documentId}/review`, {
+    method: "PATCH",
+    token,
+    body: {
+      status,
+      reviewReason,
+    },
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/kyc");
+  revalidatePath("/account");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -336,6 +480,30 @@ export async function deleteMission(missionId: string): Promise<{ ok: true }> {
 
   revalidatePath("/admin/missions");
   revalidatePath("/admin");
+  revalidatePath("/bookings");
+  revalidatePath("/marketplace");
+  return { ok: true };
+}
+
+export async function reassignMission(
+  missionId: string,
+  bookingId: string,
+): Promise<{ ok: true }> {
+  if (!missionId || !bookingId) {
+    throw new Error("Mission introuvable.");
+  }
+
+  const token = await getAdminToken();
+  await apiRequest<{ ok: true }>(`/admin/missions/${missionId}/reassign`, {
+    method: "POST",
+    token,
+    body: { bookingId },
+  });
+
+  revalidatePath("/admin/missions");
+  revalidatePath("/admin");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/renforts");
   revalidatePath("/bookings");
   revalidatePath("/marketplace");
   return { ok: true };
@@ -402,6 +570,7 @@ export async function hideService(serviceId: string): Promise<{ ok: true }> {
 export type DeskRequestStatus = "OPEN" | "IN_PROGRESS" | "ANSWERED" | "CLOSED";
 export type DeskRequestType = "MISSION_INFO_REQUEST";
 export type DeskRequestPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
+export type AdminOutreachOrigin = "USER_PROFILE" | "CONTACT_BYPASS" | "MISSION_DETAIL";
 export type ContactBypassBlockedReason =
   | "EMAIL"
   | "PHONE"
@@ -438,6 +607,7 @@ export type DeskRequestRow = {
 export type ContactBypassEventRow = {
   id: string;
   conversationId: string | null;
+  bookingId: string | null;
   blockedReason: ContactBypassBlockedReason;
   rawExcerpt: string;
   createdAt: string;
@@ -445,6 +615,8 @@ export type ContactBypassEventRow = {
     id: string;
     email: string;
     name: string;
+    role: AdminUserRole;
+    status: AdminUserStatus;
   };
 };
 
@@ -470,6 +642,49 @@ export async function getContactBypassEvents(): Promise<ContactBypassEventRow[]>
   } catch {
     return [];
   }
+}
+
+export async function sendAdminOutreach(
+  userId: string,
+  message: string,
+  options?: {
+    notifyByEmail?: boolean;
+    origin?: AdminOutreachOrigin;
+    contextId?: string;
+  },
+): Promise<{ ok: true }> {
+  if (!userId) {
+    throw new Error("Utilisateur introuvable.");
+  }
+
+  const token = await getAdminToken();
+  await apiRequest(`/admin/outreach/${userId}`, {
+    method: "POST",
+    token,
+    body: {
+      message,
+      notifyByEmail: options?.notifyByEmail ?? true,
+      origin: options?.origin,
+      contextId: options?.contextId,
+    },
+  });
+
+  return { ok: true };
+}
+
+export async function monitorContactBypassEvent(id: string): Promise<{ ok: true }> {
+  if (!id) {
+    throw new Error("Événement introuvable.");
+  }
+
+  const token = await getAdminToken();
+  await apiRequest(`/admin/contact-bypass-events/${id}/monitor`, {
+    method: "POST",
+    token,
+  });
+
+  revalidatePath("/admin/contournements");
+  return { ok: true };
 }
 
 export async function updateDeskRequestStatus(

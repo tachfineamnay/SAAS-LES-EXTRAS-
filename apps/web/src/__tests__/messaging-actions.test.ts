@@ -18,7 +18,11 @@ vi.mock("next/cache", () => ({
   revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args),
 }));
 
-const { sendMessage } = await import("@/actions/messaging");
+const {
+  getNotifications,
+  markNotificationAsRead,
+  sendMessage,
+} = await import("@/actions/messaging");
 const { sendOrderMessage } = await import("@/app/actions/orders");
 
 describe("messaging actions", () => {
@@ -45,5 +49,30 @@ describe("messaging actions", () => {
     await expect(sendOrderMessage("user-2", "https://example.com", "booking-1")).resolves.toEqual({
       error: "Le partage de lien externe n'est pas autorisé dans la messagerie.",
     });
+  });
+
+  it("charge les notifications réelles via GET /notifications", async () => {
+    mockApiRequest.mockResolvedValue([{ id: "notif-1", message: "Desk", type: "INFO" }]);
+
+    await expect(getNotifications()).resolves.toEqual([
+      { id: "notif-1", message: "Desk", type: "INFO" },
+    ]);
+
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/notifications",
+      expect.objectContaining({ method: "GET", token: "user-token" }),
+    );
+  });
+
+  it("marque une notification comme lue et revalide l'inbox", async () => {
+    mockApiRequest.mockResolvedValue({ ok: true });
+
+    await expect(markNotificationAsRead("notif-1")).resolves.toEqual({ success: true });
+
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/notifications/notif-1/read",
+      expect.objectContaining({ method: "PATCH", token: "user-token" }),
+    );
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/inbox");
   });
 });

@@ -1,6 +1,19 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+vi.mock("@/app/actions/admin", () => ({
+  banUser: vi.fn(),
+  monitorContactBypassEvent: vi.fn(),
+  sendAdminOutreach: vi.fn(),
+}));
+
 vi.mock("@/components/data/FilterBar", () => ({
   FilterBar: ({
     onFilterChange,
@@ -35,6 +48,7 @@ describe("ContactBypassEventsTable", () => {
           {
             id: "event-1",
             conversationId: "conv-1",
+            bookingId: "booking-1",
             blockedReason: "EMAIL",
             rawExcerpt: "jo@example.com",
             createdAt: now.toISOString(),
@@ -42,11 +56,14 @@ describe("ContactBypassEventsTable", () => {
               id: "user-1",
               name: "Aya Benali",
               email: "aya@test.fr",
+              role: "FREELANCE",
+              status: "VERIFIED",
             },
           },
           {
             id: "event-2",
             conversationId: null,
+            bookingId: null,
             blockedReason: "PHONE",
             rawExcerpt: "+33 6 12 34 56 78",
             createdAt: tenDaysAgo.toISOString(),
@@ -54,6 +71,8 @@ describe("ContactBypassEventsTable", () => {
               id: "user-2",
               name: "Nora Diallo",
               email: "nora@test.fr",
+              role: "ESTABLISHMENT",
+              status: "BANNED",
             },
           },
         ]}

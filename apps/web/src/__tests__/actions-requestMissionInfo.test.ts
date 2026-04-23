@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockApiRequest = vi.fn();
 const mockGetSession = vi.fn().mockResolvedValue({ token: "tok" });
+const mockRevalidatePath = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   apiRequest: (...args: unknown[]) => mockApiRequest(...args),
@@ -10,7 +11,7 @@ vi.mock("@/lib/session", () => ({
   getSession: () => mockGetSession(),
 }));
 vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
+  revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args),
 }));
 
 const { requestMissionInfo } = await import("@/app/actions/missions");
@@ -44,6 +45,13 @@ describe("requestMissionInfo", () => {
   it("retourne { ok: true } en cas de succès — crée une DeskRequest", async () => {
     const result = await requestMissionInfo("m-1", "Question précise et suffisamment longue.");
     expect(result).toEqual({ ok: true });
+  });
+
+  it("revalide le dashboard et la page Mes demandes après succès", async () => {
+    await requestMissionInfo("m-1", "Question précise et suffisamment longue.");
+
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/demandes");
   });
 
   it("retourne { ok: false } si la session est absente", async () => {

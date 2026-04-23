@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays, Clock3, MapPin, Building2, Zap, CheckCircle2, Loader2 } from "lucide-react";
-import type { MissionStatus } from "@/app/actions/marketplace";
+import type { SerializedMission } from "@/app/actions/marketplace";
 import { useApplyToMission } from "@/lib/hooks/useApplyToMission";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 import {
   getMissionPlanning,
   isMissionPlanningLineMultiDay,
-  type MissionPlanningLine,
 } from "@/lib/mission-planning";
 
 import {
@@ -21,22 +20,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export type MissionCardProps = {
-  mission: {
-    id: string;
-    title: string;
-    dateStart: string;
-    dateEnd: string;
-    address: string;
-    hourlyRate: number;
-    status: MissionStatus;
-    isRenfort?: boolean;
-    isUrgent?: boolean;
-    isNetworkMatch?: boolean;
-    establishmentName?: string;
-    requiredDiploma?: string[];
-    planning?: MissionPlanningLine[] | null;
-    slots?: MissionPlanningLine[] | null;
-  };
+  mission: SerializedMission;
   isVerified?: boolean;
 };
 
@@ -60,6 +44,10 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
   const { apply, isPending, hasApplied } = useApplyToMission();
   const planning = getMissionPlanning(mission);
   const applied = hasApplied(mission.id);
+  const displayLocation =
+    mission.city ||
+    mission.establishment?.profile?.city ||
+    "Localisation communiquée après validation";
 
   const handleApply = () => {
     if (!isVerified || applied || isPending) return;
@@ -137,7 +125,7 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
         <div className="flex items-center justify-between pt-2 border-t border-dashed">
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 text-primary/70" />
-            <span className="truncate max-w-[140px]">{mission.address.split(',')[0]}</span>
+            <span className="truncate max-w-[140px]">{displayLocation}</span>
           </div>
           <div className="text-lg font-bold text-[hsl(var(--emerald))] tabular-nums">
             {moneyFormatter.format(mission.hourlyRate)}

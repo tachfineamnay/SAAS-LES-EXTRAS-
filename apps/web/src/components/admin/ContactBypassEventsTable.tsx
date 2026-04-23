@@ -1,10 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { type ContactBypassEventRow } from "@/app/actions/admin";
+import { useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
+import {
+  banUser,
+  monitorContactBypassEvent,
+  sendAdminOutreach,
+  type ContactBypassEventRow,
+} from "@/app/actions/admin";
 import { DataTableShell } from "@/components/data/DataTableShell";
 import { FilterBar, type FilterDefinition } from "@/components/data/FilterBar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 
 type ContactBypassEventsTableProps = {
@@ -73,6 +80,7 @@ export function ContactBypassEventsTable({ events }: ContactBypassEventsTablePro
   const [dateFilter, setDateFilter] = useState<DateFilter>("ALL");
   const [reasonFilter, setReasonFilter] = useState<"ALL" | ContactBypassEventRow["blockedReason"]>("ALL");
   const [search, setSearch] = useState("");
+  const [isPending, startTransition] = useTransition();
 
   const filteredEvents = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -111,9 +119,55 @@ export function ContactBypassEventsTable({ events }: ContactBypassEventsTablePro
     setSearch("");
   };
 
+  const buildWarningMessage = (event: ContactBypassEventRow) => {
+    const reason = getBlockedReasonMeta(event.blockedReason).label.toLowerCase();
+    return [
+      "Le Desk a détecté une tentative de partage de coordonnées ou de lien externe dans la messagerie.",
+      `Motif relevé : ${reason}.`,
+      "Merci de poursuivre vos échanges uniquement sur la plateforme Les Extras.",
+      "En cas de récidive, votre compte pourra être suspendu manuellement.",
+    ].join("\n");
+  };
+
+  const handleWarn = (event: ContactBypassEventRow) => {
+    startTransition(async () => {
+      try {
+        await sendAdminOutreach(event.sender.id, buildWarningMessage(event), {
+          origin: "CONTACT_BYPASS",
+          contextId: event.id,
+        });
+        toast.success("Avertissement envoyé au user.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Avertissement impossible.");
+      }
+    });
+  };
+
+  const handleMonitor = (eventId: string) => {
+    startTransition(async () => {
+      try {
+        await monitorContactBypassEvent(eventId);
+        toast.success("Événement ajouté à la surveillance.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Surveillance impossible.");
+      }
+    });
+  };
+
+  const handleSuspend = (userId: string) => {
+    startTransition(async () => {
+      try {
+        await banUser(userId);
+        toast.success("Compte suspendu.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Suspension impossible.");
+      }
+    });
+  };
+
   return (
     <DataTableShell
-      columns={["Date", "Raison", "Expéditeur", "Extrait", "Conversation"]}
+      columns={["Date", "Raison", "Expéditeur", "Statut", "Extrait", "Contexte", "Actions"]}
       emptyTitle="Aucun contournement détecté"
       emptyDescription="Les tentatives bloquées apparaîtront ici."
       filterSlot={
@@ -142,12 +196,47 @@ export function ContactBypassEventsTable({ events }: ContactBypassEventsTablePro
             <TableCell className="max-w-[200px]">
               <p className="font-medium text-foreground">{event.sender.name}</p>
               <p className="truncate text-xs text-muted-foreground">{event.sender.email}</p>
+              <p className="truncate text-[11px] text-muted-foreground">{event.sender.role}</p>
+            </TableCell>
+            <TableCell>
+              <Badge variant={event.sender.status === "BANNED" ? "error" : "quiet"}>
+                {event.sender.status}
+              </Badge>
             </TableCell>
             <TableCell className="max-w-[420px]">
               <p className="line-clamp-2 text-sm text-foreground">{event.rawExcerpt}</p>
             </TableCell>
-            <TableCell className="font-mono text-xs text-muted-foreground">
-              {event.conversationId ?? "—"}
+            <TableCell className="space-y-1 font-mono text-xs text-muted-foreground">
+              <p>conv: {event.conversationId ?? "—"}</p>
+              <p>booking: {event.bookingId ?? "—"}</p>
+            </TableCell>
+            <TableCell className="min-w-[250px]">
+              <div className="flex flex-wrap gap-2 justify-end">
+                <Button
+                  size="xs"
+                  variant="outline"
+                  disabled={isPending}
+                  onClick={() => handleWarn(event)}
+                >
+                  Avertir
+                </Button>
+                <Button
+                  size="xs"
+                  variant="quiet"
+                  disabled={isPending}
+                  onClick={() => handleMonitor(event.id)}
+                >
+                  Surveiller
+                </Button>
+                <Button
+                  size="xs"
+                  variant="danger-soft"
+                  disabled={isPending || event.sender.status === "BANNED"}
+                  onClick={() => handleSuspend(event.sender.id)}
+                >
+                  Suspendre
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         );

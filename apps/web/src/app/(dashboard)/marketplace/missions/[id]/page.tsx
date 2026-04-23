@@ -45,8 +45,7 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
   const displayCity =
     mission.city ||
     mission.establishment?.profile?.city ||
-    mission.address.split(",").pop()?.trim() ||
-    "";
+    "Localisation communiquée après validation";
 
   const planning = getMissionPlanning(mission);
 
@@ -217,7 +216,6 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
             <RequestMissionInfoModal
               missionId={mission.id}
               missionTitle={mission.title}
-              establishmentName={establishmentName}
               triggerClassName="w-full"
             />
             <p className="text-xs text-center text-muted-foreground">

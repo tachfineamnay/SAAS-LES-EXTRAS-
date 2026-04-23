@@ -109,6 +109,8 @@ export async function requestMissionInfo(
             label: "missions.info-request",
         });
 
+        revalidatePath("/dashboard");
+        revalidatePath("/dashboard/demandes");
         return { ok: true };
     } catch (error) {
         console.error("requestMissionInfo error", error);

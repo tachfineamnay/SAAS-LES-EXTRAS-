@@ -30,8 +30,7 @@ export function MissionCard({
   const displayCity =
     mission.city ||
     mission.establishment?.profile?.city ||
-    mission.address.split(",").pop()?.trim() ||
-    "Localisation inconnue";
+    "Localisation communiquée après validation";
 
   const metier = mission.metier ? getMetierById(mission.metier) : null;
   const MetierIcon = metier?.icon;

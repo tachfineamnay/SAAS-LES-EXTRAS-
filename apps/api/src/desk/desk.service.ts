@@ -1,7 +1,13 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { DeskRequestStatus, UserRole } from "@prisma/client";
+import { MailService } from "../mail/mail.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { AssignDeskRequestDto } from "./dto/assign-desk-request.dto";
+import { SendAdminOutreachDto } from "./dto/send-admin-outreach.dto";
 import { UpdateDeskRequestStatusDto } from "./dto/update-desk-request-status.dto";
 import { RespondDeskRequestDto } from "./dto/respond-desk-request.dto";
 
@@ -37,7 +43,10 @@ function getDisplayName(user: {
 
 @Injectable()
 export class DeskService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async findAll() {
     return this.prisma.deskRequest.findMany({
@@ -72,13 +81,21 @@ export class DeskService {
         blockedReason: true,
         rawExcerpt: true,
         createdAt: true,
-        sender: { select: REQUESTER_SELECT },
+        conversation: { select: { bookingId: true } },
+        sender: {
+          select: {
+            ...REQUESTER_SELECT,
+            role: true,
+            status: true,
+          },
+        },
       },
     });
 
     return events.map((event) => ({
       id: event.id,
       conversationId: event.conversationId,
+      bookingId: event.conversation?.bookingId ?? null,
       blockedReason: event.blockedReason,
       rawExcerpt: event.rawExcerpt,
       createdAt: event.createdAt.toISOString(),
@@ -86,8 +103,108 @@ export class DeskService {
         id: event.sender.id,
         email: event.sender.email,
         name: getDisplayName(event.sender),
+        role: event.sender.role,
+        status: event.sender.status,
       },
     }));
+  }
+
+  async sendAdminOutreach(userId: string, adminId: string, dto: SendAdminOutreachDto) {
+    if (userId === adminId) {
+      throw new BadRequestException("Un admin ne peut pas s'envoyer un message Desk");
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        status: true,
+        profile: { select: { firstName: true, lastName: true } },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException("Utilisateur introuvable");
+    }
+
+    if (user.role === UserRole.ADMIN) {
+      throw new BadRequestException("Le canal Desk cible uniquement les utilisateurs non-admin");
+    }
+
+    const message = dto.message.trim();
+    if (message.length < 5) {
+      throw new BadRequestException("Le message Desk est trop court");
+    }
+    const notifyByEmail = dto.notifyByEmail ?? true;
+    const notificationMessage = `Message du Desk : ${message}`;
+
+    await this.prisma.$transaction([
+      this.prisma.notification.create({
+        data: {
+          userId: user.id,
+          type: "INFO",
+          message: notificationMessage,
+        },
+      }),
+      this.prisma.adminActionLog.create({
+        data: {
+          adminId,
+          entityType: "USER",
+          entityId: user.id,
+          action: "USER_OUTREACH_SEND",
+          meta: {
+            origin: dto.origin ?? null,
+            contextId: dto.contextId ?? null,
+            notifyByEmail,
+            targetRole: user.role,
+            targetStatus: user.status,
+            messagePreview: message.slice(0, 160),
+          },
+        },
+      }),
+    ]);
+
+    if (notifyByEmail && user.email) {
+      this.mailService
+        .sendAdminOutreachEmail(user.email, getDisplayName(user), message)
+        .catch((error: unknown) => console.error(error));
+    }
+
+    return { ok: true };
+  }
+
+  async monitorContactBypassEvent(id: string, adminId: string) {
+    const event = await this.prisma.contactBypassEvent.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        senderId: true,
+        blockedReason: true,
+        conversationId: true,
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException("Événement de contournement introuvable");
+    }
+
+    await this.prisma.adminActionLog.create({
+      data: {
+        adminId,
+        entityType: "CONTACT_BYPASS_EVENT",
+        entityId: id,
+        action: "CONTACT_BYPASS_MONITOR",
+        meta: {
+          senderId: event.senderId,
+          blockedReason: event.blockedReason,
+          conversationId: event.conversationId,
+        },
+      },
+    });
+
+    return { ok: true };
   }
 
   async updateStatus(id: string, adminId: string, dto: UpdateDeskRequestStatusDto) {

@@ -1,10 +1,19 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { UpdateOnboardingDto } from "./dto/update-onboarding.dto";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
 import { MAX_STEP_BY_ROLE } from "../common/constants";
 import { BuyCreditsDto, CreditPackType } from "./dto/buy-credits.dto";
+import {
+    buildFreelanceKycSummary,
+    type DocumentReviewStatusValue,
+    FREELANCE_KYC_DOCUMENT_TYPES,
+    getFreelanceKycDocumentLabel,
+    isFreelanceKycDocumentType,
+    type FreelanceKycDocumentType,
+    type KycSummary,
+} from "./kyc-documents";
 
 const CREDIT_PACKS: Record<CreditPackType, { amount: number; credits: number }> = {
     [CreditPackType.STARTER]: { amount: 150, credits: 1 },
@@ -18,6 +27,55 @@ export type CreditPurchaseHistoryItem = {
     creditsAdded: number;
     createdAt: Date;
 };
+
+export type UserKycDocumentRow = {
+    id: string;
+    type: FreelanceKycDocumentType;
+    label: string;
+    filename: string;
+    mimeType: string | null;
+    sizeBytes: number | null;
+    status: DocumentReviewStatusValue;
+    reviewReason: string | null;
+    createdAt: string;
+    reviewedAt: string | null;
+};
+
+export type UserKycDocumentsPayload = {
+    documents: UserKycDocumentRow[];
+    summary: KycSummary;
+};
+
+export type UserKycDocumentFilePayload = {
+    filename: string;
+    mimeType: string | null;
+    storagePath: string;
+};
+
+function mapUserKycDocument(document: {
+    id: string;
+    type: FreelanceKycDocumentType;
+    filename: string;
+    mimeType: string | null;
+    sizeBytes: number | null;
+    status: DocumentReviewStatusValue;
+    reviewReason: string | null;
+    updatedAt: Date;
+    reviewedAt: Date | null;
+}): UserKycDocumentRow {
+    return {
+        id: document.id,
+        type: document.type,
+        label: getFreelanceKycDocumentLabel(document.type),
+        filename: document.filename,
+        mimeType: document.mimeType,
+        sizeBytes: document.sizeBytes,
+        status: document.status,
+        reviewReason: document.reviewReason,
+        createdAt: document.updatedAt.toISOString(),
+        reviewedAt: document.reviewedAt?.toISOString() ?? null,
+    };
+}
 
 @Injectable()
 export class UsersService {
@@ -116,6 +174,178 @@ export class UsersService {
         });
         if (!user) throw new NotFoundException("Utilisateur introuvable");
         return user;
+    }
+
+    async getMyKycDocuments(userId: string): Promise<UserKycDocumentsPayload> {
+        const user = await (this.prisma.user.findUnique as any)({
+            where: { id: userId },
+            select: {
+                id: true,
+                role: true,
+                documents: {
+                    where: {
+                        userId,
+                        serviceId: null,
+                        type: {
+                            in: [...FREELANCE_KYC_DOCUMENT_TYPES],
+                        },
+                    },
+                    orderBy: {
+                        updatedAt: "desc",
+                    },
+                    select: {
+                        id: true,
+                        type: true,
+                        filename: true,
+                        mimeType: true,
+                        sizeBytes: true,
+                        status: true,
+                        reviewReason: true,
+                        updatedAt: true,
+                        reviewedAt: true,
+                    },
+                },
+            },
+        });
+
+        if (!user) {
+            throw new NotFoundException("Utilisateur introuvable");
+        }
+
+        if (user.role !== UserRole.FREELANCE) {
+            throw new BadRequestException("Le KYC documentaire est réservé aux freelances");
+        }
+
+        const documents = user.documents.map((document: any) =>
+            mapUserKycDocument({
+                ...document,
+                type: document.type as FreelanceKycDocumentType,
+            }),
+        );
+
+        return {
+            documents,
+            summary: buildFreelanceKycSummary(
+                documents.map((document: UserKycDocumentRow) => ({
+                    type: document.type,
+                    status: document.status,
+                })),
+            ),
+        };
+    }
+
+    async upsertFreelanceDocument(
+        userId: string,
+        documentType: string,
+        file: Express.Multer.File,
+    ): Promise<UserKycDocumentsPayload> {
+        if (!file) {
+            throw new BadRequestException("Aucun fichier fourni");
+        }
+
+        if (!isFreelanceKycDocumentType(documentType)) {
+            throw new BadRequestException("Type de document KYC invalide");
+        }
+
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                role: true,
+            },
+        });
+
+        if (!user) {
+            throw new NotFoundException("Utilisateur introuvable");
+        }
+
+        if (user.role !== UserRole.FREELANCE) {
+            throw new BadRequestException("Le KYC documentaire est réservé aux freelances");
+        }
+
+        const existing = await (this.prisma.document.findFirst as any)({
+            where: {
+                userId,
+                serviceId: null,
+                type: documentType,
+            },
+            orderBy: {
+                updatedAt: "desc",
+            },
+            select: {
+                id: true,
+            },
+        });
+
+        const relativeStoragePath = file.path.replace(/\\/g, "/");
+
+        if (existing) {
+            await (this.prisma.document.update as any)({
+                where: { id: existing.id },
+                data: {
+                    filename: file.originalname,
+                    mimeType: file.mimetype,
+                    sizeBytes: file.size,
+                    storagePath: relativeStoragePath,
+                    status: "PENDING",
+                    reviewedAt: null,
+                    reviewedById: null,
+                    reviewReason: null,
+                    url: `/users/me/documents/${existing.id}/file`,
+                },
+            });
+        } else {
+            const created = await (this.prisma.document.create as any)({
+                data: {
+                    type: documentType,
+                    status: "PENDING",
+                    url: "",
+                    storagePath: relativeStoragePath,
+                    filename: file.originalname,
+                    mimeType: file.mimetype,
+                    sizeBytes: file.size,
+                    userId,
+                },
+                select: { id: true },
+            });
+
+            await (this.prisma.document.update as any)({
+                where: { id: created.id },
+                data: {
+                    url: `/users/me/documents/${created.id}/file`,
+                },
+            });
+        }
+
+        return this.getMyKycDocuments(userId);
+    }
+
+    async getMyKycDocumentFile(userId: string, documentId: string): Promise<UserKycDocumentFilePayload> {
+        const document = await (this.prisma.document.findFirst as any)({
+            where: {
+                id: documentId,
+                userId,
+                serviceId: null,
+                type: {
+                    in: [...FREELANCE_KYC_DOCUMENT_TYPES],
+                },
+            },
+            select: {
+                filename: true,
+                mimeType: true,
+                storagePath: true,
+            },
+        });
+
+        if (!document?.storagePath) {
+            throw new NotFoundException("Document introuvable");
+        }
+
+        return {
+            filename: document.filename,
+            mimeType: document.mimeType,
+            storagePath: document.storagePath,
+        };
     }
 
     async getCredits(userId: string) {

@@ -30,6 +30,19 @@ export const getBaseTemplate = (content: string) => `
 </html>
 `;
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatMultilineText(value: string) {
+  return escapeHtml(value).replace(/\n/g, "<br />");
+}
+
 export const welcomeFreelanceTemplate = (firstName: string) => getBaseTemplate(`
   <h2>Bonjour ${firstName},</h2>
   <p>Bienvenue sur <strong>Les Extras</strong> ! Nous sommes ravis de vous compter parmi nos freelances.</p>
@@ -66,6 +79,16 @@ export const messageNotificationTemplate = (senderName: string) => getBaseTempla
   <h2>Nouveau message</h2>
   <p>Vous avez reçu un nouveau message de <strong>${senderName}</strong> sur la plateforme Les Extras.</p>
   <p><a href="https://les-extras.com/messaging" class="btn">Voir le message</a></p>
+`);
+
+export const adminOutreachTemplate = (recipientName: string, message: string) => getBaseTemplate(`
+  <h2>Bonjour ${escapeHtml(recipientName)},</h2>
+  <p>Le Desk Les Extras souhaite vous transmettre le message suivant :</p>
+  <div style="margin: 16px 0; padding: 16px; border-radius: 8px; background: #f7f9fc; border: 1px solid #eaeaea;">
+    ${formatMultilineText(message)}
+  </div>
+  <p>Retrouvez ce message dans votre espace personnel sur la plateforme.</p>
+  <p><a href="https://les-extras.com/dashboard/inbox" class="btn">Accéder à mon espace</a></p>
 `);
 
 export const passwordResetTemplate = (resetUrl: string) => getBaseTemplate(`

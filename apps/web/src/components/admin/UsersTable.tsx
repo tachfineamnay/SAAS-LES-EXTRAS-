@@ -7,6 +7,7 @@ import {
   banUser,
   getAdminUserProfile,
   getAdminUsers,
+  sendAdminOutreach,
   verifyUser,
   type AdminUserProfileDetails,
   type AdminUserRole,
@@ -27,6 +28,7 @@ import {
 import { StatusPill } from "@/components/ui/status-pill";
 import { DataTableShell } from "@/components/data/DataTableShell";
 import { FilterBar, type FilterDefinition } from "@/components/data/FilterBar";
+import { AdminKycDocumentsPanel } from "@/components/admin/AdminKycDocumentsPanel";
 import {
   TableCell,
   TableRow,
@@ -38,6 +40,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
 
 type UsersTableProps = {
   initialUsers: AdminUserRow[];
@@ -89,9 +92,11 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("ALL");
   const [isLoadingUsers, startLoadingUsers] = useTransition();
   const [isActionPending, startAction] = useTransition();
+  const [isOutreachPending, startOutreach] = useTransition();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profile, setProfile] = useState<AdminUserProfileDetails | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [outreachMessage, setOutreachMessage] = useState("");
 
   const requestFilters = useMemo(
     () => ({
@@ -155,19 +160,40 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
 
   const handleOpenProfile = (userId: string) => {
     setIsProfileOpen(true);
-    setIsProfileLoading(true);
     setProfile(null);
+    setOutreachMessage("");
+    void loadProfile(userId);
+  };
 
-    void getAdminUserProfile(userId)
-      .then((nextProfile) => {
-        setProfile(nextProfile);
-      })
-      .catch((error) => {
-        toast.error(error instanceof Error ? error.message : "Impossible de charger le profil.");
-      })
-      .finally(() => {
-        setIsProfileLoading(false);
-      });
+  const loadProfile = async (userId: string) => {
+    setIsProfileLoading(true);
+
+    try {
+      const nextProfile = await getAdminUserProfile(userId);
+      setProfile(nextProfile);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Impossible de charger le profil.");
+    } finally {
+      setIsProfileLoading(false);
+    }
+  };
+
+  const handleSendOutreach = (userId: string) => {
+    const message = outreachMessage.trim();
+    if (message.length < 5) {
+      toast.error("Le message doit contenir au moins 5 caractères.");
+      return;
+    }
+
+    startOutreach(async () => {
+      try {
+        await sendAdminOutreach(userId, message, { origin: "USER_PROFILE" });
+        toast.success("Message transmis à l'utilisateur.");
+        setOutreachMessage("");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Envoi impossible.");
+      }
+    });
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -320,6 +346,45 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
                   Suspendre
                 </Button>
               </div>
+
+              {profile.role === "FREELANCE" && (
+                <AdminKycDocumentsPanel
+                  documents={profile.documents}
+                  kyc={profile.kyc}
+                  onRefresh={() => loadProfile(profile.id)}
+                />
+              )}
+
+              {profile.role !== "ADMIN" ? (
+                <div className="space-y-2 rounded-md border border-border/50 bg-muted/30 px-3 py-3">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-foreground">Contacter depuis Le Desk</p>
+                    <p className="text-xs text-muted-foreground">
+                      Le message sera visible dans l&apos;Inbox de l&apos;utilisateur et pourra
+                      déclencher un email.
+                    </p>
+                  </div>
+                  <Textarea
+                    rows={5}
+                    className="resize-none"
+                    placeholder="Rédigez un message du Desk…"
+                    value={outreachMessage}
+                    onChange={(event) => setOutreachMessage(event.target.value)}
+                  />
+                  <Button
+                    variant="teal"
+                    className="w-full"
+                    disabled={isOutreachPending || outreachMessage.trim().length < 5}
+                    onClick={() => handleSendOutreach(profile.id)}
+                  >
+                    Envoyer au user
+                  </Button>
+                </div>
+              ) : (
+                <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-3 text-xs text-muted-foreground">
+                  Canal Desk réservé aux comptes freelance et établissement.
+                </div>
+              )}
             </div>
           ) : (
             <p className="mt-6 text-sm text-muted-foreground">Aucun profil sélectionné.</p>

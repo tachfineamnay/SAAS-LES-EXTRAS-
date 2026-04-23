@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
+  FileText,
   GraduationCap,
   Inbox,
   LayoutDashboard,
@@ -32,6 +33,11 @@ const links = [
     href: "/admin/users",
     label: "Utilisateurs",
     icon: Users,
+  },
+  {
+    href: "/admin/kyc",
+    label: "KYC Freelances",
+    icon: FileText,
   },
   {
     href: "/admin/missions",

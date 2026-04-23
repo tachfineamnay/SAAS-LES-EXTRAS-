@@ -19,8 +19,10 @@ const { MissionDetailSheet } = await import("@/components/admin/MissionDetailShe
 const { ServiceDetailSheet } = await import("@/components/admin/ServiceDetailSheet");
 
 describe("MissionDetailSheet", () => {
-  it("affiche les demandes liées et déclenche la suppression rapide", () => {
+  it("affiche la vue mission 360 et déclenche les actions Desk utiles", () => {
     const onDelete = vi.fn();
+    const onReassign = vi.fn();
+    const onNotifyStakeholder = vi.fn();
 
     render(
       <MissionDetailSheet
@@ -29,17 +31,53 @@ describe("MissionDetailSheet", () => {
         isLoading={false}
         isPending={false}
         onDelete={onDelete}
+        onReassign={onReassign}
+        onNotifyStakeholder={onNotifyStakeholder}
         mission={{
           id: "mission-1",
           title: "Mission de nuit",
           status: "OPEN",
+          createdAt: "2026-04-18T08:00:00.000Z",
+          updatedAt: "2026-04-18T08:00:00.000Z",
           establishmentName: "Luc Martin",
           establishmentEmail: "est@test.fr",
+          establishmentId: "est-1",
           address: "12 rue des Lilas",
+          city: "Paris",
+          shift: "NUIT",
           dateStart: "2026-04-20T08:00:00.000Z",
           dateEnd: "2026-04-20T16:00:00.000Z",
           hourlyRate: 28,
+          proposedTotalTTC: null,
           candidatesCount: 2,
+          attentionItems: ["2 candidature(s) en attente d'arbitrage avant attribution."],
+          assignedFreelance: null,
+          linkedBooking: null,
+          candidates: [
+            {
+              bookingId: "booking-1",
+              status: "PENDING",
+              paymentStatus: "PENDING",
+              createdAt: "2026-04-18T10:00:00.000Z",
+              proposedRate: 30,
+              freelanceAcknowledged: false,
+              canAssign: true,
+              freelance: {
+                id: "free-1",
+                name: "Aya Benali",
+                email: "aya@test.fr",
+              },
+              latestQuote: null,
+            },
+          ],
+          timeline: [
+            {
+              id: "tl-1",
+              type: "MISSION_CREATED",
+              label: "Mission créée",
+              timestamp: "2026-04-18T08:00:00.000Z",
+            },
+          ],
           linkedDeskRequests: [
             {
               id: "desk-1",
@@ -55,12 +93,25 @@ describe("MissionDetailSheet", () => {
 
     expect(screen.getByText("Mission de nuit")).toBeInTheDocument();
     expect(screen.getByText("Question sur les transmissions.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /voir les demandes liées/i })).toHaveAttribute(
+    expect(screen.getByText("Aya Benali")).toBeInTheDocument();
+    expect(screen.getByText("Mission créée")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /voir les tickets/i })).toHaveAttribute(
       "href",
       "/admin/demandes",
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /supprimer la mission/i }));
+    fireEvent.click(screen.getByRole("button", { name: /attribuer cette candidature/i }));
+    expect(onReassign).toHaveBeenCalledWith("mission-1", "booking-1");
+
+    fireEvent.click(screen.getByRole("button", { name: /relancer l'établissement/i }));
+    fireEvent.click(screen.getByRole("button", { name: /notifier l'acteur/i }));
+    expect(onNotifyStakeholder).toHaveBeenCalledWith(
+      "est-1",
+      "mission-1",
+      expect.stringContaining("Mission de nuit"),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /annuler proprement/i }));
     expect(onDelete).toHaveBeenCalledWith("mission-1");
   });
 });

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { UserRole } from "@prisma/client";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { Roles } from "../auth/decorators/roles.decorator";
@@ -7,6 +7,7 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
 import { DeskService } from "./desk.service";
 import { AssignDeskRequestDto } from "./dto/assign-desk-request.dto";
+import { SendAdminOutreachDto } from "./dto/send-admin-outreach.dto";
 import { UpdateDeskRequestStatusDto } from "./dto/update-desk-request-status.dto";
 import { RespondDeskRequestDto } from "./dto/respond-desk-request.dto";
 
@@ -25,6 +26,25 @@ export class DeskController {
   @Roles(UserRole.ADMIN)
   findContactBypassEvents() {
     return this.deskService.findContactBypassEvents();
+  }
+
+  @Post("admin/outreach/:userId")
+  @Roles(UserRole.ADMIN)
+  sendAdminOutreach(
+    @Param("userId") userId: string,
+    @Body() dto: SendAdminOutreachDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.deskService.sendAdminOutreach(userId, user.id, dto);
+  }
+
+  @Post("admin/contact-bypass-events/:id/monitor")
+  @Roles(UserRole.ADMIN)
+  monitorContactBypassEvent(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.deskService.monitorContactBypassEvent(id, user.id);
   }
 
   @Patch("admin/desk-requests/:id/status")

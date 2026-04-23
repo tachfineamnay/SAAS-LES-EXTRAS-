@@ -87,7 +87,19 @@ enum DocumentType {
   AVATAR
   SERVICE_PHOTO
   IDENTITY_DOC
+  CV
+  DIPLOMA
+  AUTO_ENTREPRENEUR_CERTIFICATE
+  DRIVER_LICENSE
+  CRIMINAL_RECORD
+  RIB
   OTHER
+}
+
+enum DocumentReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum DeskRequestStatus {
@@ -153,6 +165,7 @@ model User {
   answeredDeskRequests  DeskRequest[]   @relation("DeskRequestAnsweredBy")
   assignedDeskRequests  DeskRequest[]   @relation("DeskRequestAssignedToAdmin")
   contactBypassEvents   ContactBypassEvent[] @relation("ContactBypassSender")
+  reviewedDocuments     Document[]      @relation("DocumentReviewedBy")
 }
 
 model Profile {
@@ -477,21 +490,30 @@ model QuoteLine {
 // ─────────────────────────────────────────────
 
 model Document {
-  id        String       @id @default(cuid())
-  type      DocumentType @default(OTHER)
-  url       String
-  filename  String
-  mimeType  String?
-  sizeBytes Int?
-  userId    String?
-  serviceId String?
-  createdAt DateTime     @default(now())
+  id           String               @id @default(cuid())
+  type         DocumentType         @default(OTHER)
+  status       DocumentReviewStatus @default(PENDING)
+  url          String
+  storagePath  String?
+  filename     String
+  mimeType     String?
+  sizeBytes    Int?
+  reviewReason String?              @db.Text
+  userId       String?
+  serviceId    String?
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 
-  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  service Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service    Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  reviewedBy User?    @relation("DocumentReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([serviceId])
+  @@index([reviewedById])
+  @@index([status])
 }
 
 // ─────────────────────────────────────────────

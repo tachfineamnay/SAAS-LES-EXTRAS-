@@ -115,11 +115,37 @@ export async function callMarkAsRead(conversationId: string): Promise<void> {
 }
 
 export async function getNotifications() {
-    // Notifications are not exposed via REST API — return empty array
-    return [];
+    const session = await getSession();
+    if (!session) return [];
+
+    try {
+        return await apiRequest<{
+            id: string;
+            message: string;
+            type: string;
+            isRead: boolean;
+            createdAt: string;
+        }[]>("/notifications", {
+            method: "GET",
+            token: session.token,
+        });
+    } catch {
+        return [];
+    }
 }
 
-export async function markNotificationAsRead(_id: string) {
-    // Notifications are not exposed via REST API — no-op
-    return { success: true };
+export async function markNotificationAsRead(id: string) {
+    const session = await getSession();
+    if (!session) return { success: false };
+
+    try {
+        await apiRequest(`/notifications/${id}/read`, {
+            method: "PATCH" as const,
+            token: session.token,
+        });
+        revalidatePath("/dashboard/inbox");
+        return { success: true };
+    } catch {
+        return { success: false };
+    }
 }

@@ -279,6 +279,19 @@ describe("MissionsService", () => {
           where: {
             status: ReliefMissionStatus.OPEN,
           },
+          include: {
+            establishment: {
+              select: {
+                profile: {
+                  select: {
+                    companyName: true,
+                    city: true,
+                    avatar: true,
+                  },
+                },
+              },
+            },
+          },
         }),
       );
     });
@@ -344,6 +357,9 @@ describe("MissionsService", () => {
         "mission-legacy",
       ]);
       expect(results[0]).toMatchObject({
+        address: "Paris",
+        exactAddress: null,
+        accessInstructions: null,
         planning: [
           {
             dateStart: "2026-05-05",
@@ -352,6 +368,38 @@ describe("MissionsService", () => {
             heureFin: "07:00",
           },
         ],
+      });
+    });
+
+    it("masque l'adresse précise et les consignes dans le détail freelance", async () => {
+      (mockPrisma.reliefMission.findUnique as jest.Mock).mockResolvedValue({
+        id: "mission-1",
+        title: "Mission de jour",
+        dateStart: new Date("2026-05-06T08:00:00.000Z"),
+        dateEnd: new Date("2026-05-06T18:00:00.000Z"),
+        hourlyRate: 28,
+        address: "12 rue des Lilas, Paris",
+        exactAddress: "12 rue des Lilas",
+        accessInstructions: "Sonner bâtiment B",
+        status: ReliefMissionStatus.OPEN,
+        city: null,
+        slots: null,
+        establishment: {
+          profile: {
+            companyName: "EHPAD Test",
+            city: "Paris",
+            avatar: null,
+          },
+        },
+      });
+
+      const mission = await service.getMission("mission-1");
+
+      expect(mission).toMatchObject({
+        address: "Paris",
+        city: "Paris",
+        exactAddress: null,
+        accessInstructions: null,
       });
     });
   });

@@ -24,6 +24,39 @@ import {
   type RenfortPublicationMode,
 } from "./mission-slots";
 
+const MARKETPLACE_ESTABLISHMENT_SELECT = {
+  profile: {
+    select: {
+      companyName: true,
+      city: true,
+      avatar: true,
+    },
+  },
+};
+
+function getMarketplaceMissionLocation(mission: {
+  city?: string | null;
+  address: string;
+  establishment?: {
+    profile?: {
+      city?: string | null;
+    } | null;
+  } | null;
+}) {
+  const derivedCity = mission.address
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .at(-1);
+
+  return (
+    mission.city ??
+    mission.establishment?.profile?.city ??
+    derivedCity ??
+    "Localisation communiquée après validation"
+  );
+}
+
 @Injectable()
 export class MissionsService {
   constructor(private readonly prisma: PrismaService) { }
@@ -124,9 +157,7 @@ export class MissionsService {
       },
       include: {
         establishment: {
-          include: {
-            profile: true,
-          },
+          select: MARKETPLACE_ESTABLISHMENT_SELECT,
         },
       },
     });
@@ -159,7 +190,7 @@ export class MissionsService {
         (left, right) =>
           this.getMissionSortDate(left).getTime() - this.getMissionSortDate(right).getTime(),
       )
-      .map((mission: any) => this.serializeMission(mission));
+      .map((mission: any) => this.serializeMarketplaceMission(mission));
   }
 
   async apply(missionId: string, freelanceId: string, dto: ApplyMissionDto = {}) {
@@ -261,16 +292,14 @@ export class MissionsService {
       where: { id },
       include: {
         establishment: {
-          include: {
-            profile: true,
-          },
+          select: MARKETPLACE_ESTABLISHMENT_SELECT,
         },
       },
     });
     if (!mission) {
       throw new NotFoundException("Mission not found");
     }
-    return this.serializeMission(mission);
+    return this.serializeMarketplaceMission(mission);
   }
 
   private resolveMissionPlanning(dto: CreateMissionDto): MissionPlanningLineInput[] {
@@ -359,6 +388,35 @@ export class MissionsService {
 
     return {
       ...mission,
+      planning,
+      slots: planning,
+      isRenfort: true as const,
+    };
+  }
+
+  private serializeMarketplaceMission<
+    T extends {
+      slots: unknown;
+      address: string;
+      city?: string | null;
+      exactAddress?: string | null;
+      accessInstructions?: string | null;
+      establishment?: {
+        profile?: {
+          city?: string | null;
+        } | null;
+      } | null;
+    },
+  >(mission: T) {
+    const planning = coerceMissionPlanning(mission.slots);
+    const location = getMarketplaceMissionLocation(mission);
+
+    return {
+      ...mission,
+      address: location,
+      city: mission.city ?? location,
+      exactAddress: null,
+      accessInstructions: null,
       planning,
       slots: planning,
       isRenfort: true as const,

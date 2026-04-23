@@ -1,10 +1,11 @@
-import { Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { UserRole } from "@prisma/client";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
+import { ActionBookingDto } from "../bookings/dto/action-booking.dto";
 import { AdminOffersService } from "./admin-offers.service";
 
 @Controller("admin")
@@ -21,6 +22,15 @@ export class AdminOffersController {
   @Get("missions/:missionId")
   getMissionById(@Param("missionId") missionId: string) {
     return this.adminOffersService.getMissionById(missionId);
+  }
+
+  @Post("missions/:missionId/reassign")
+  reassignMission(
+    @Param("missionId") missionId: string,
+    @Body() dto: ActionBookingDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.adminOffersService.reassignMission(missionId, dto.bookingId, user.id);
   }
 
   @Post("missions/:missionId/delete")

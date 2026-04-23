@@ -2,8 +2,9 @@
 
 import { z } from "zod";
 import { getSession } from "@/lib/session";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, getApiBaseUrl } from "@/lib/api";
 import { revalidatePath } from "next/cache";
+import type { FreelanceKycDocumentType, UserKycDocumentsPayload } from "@/lib/kyc-documents";
 
 const profileSchema = z.object({
     firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
@@ -62,5 +63,38 @@ export async function updateFreelanceProfile(data: ProfileFormValues) {
     } catch (error) {
         console.error("Profile update error:", error);
         return { error: "Une erreur est survenue lors de la mise à jour du profil." };
+    }
+}
+
+export async function uploadFreelanceKycDocument(
+    type: FreelanceKycDocumentType,
+    formData: FormData,
+): Promise<UserKycDocumentsPayload | { error: string }> {
+    const session = await getSession();
+
+    if (!session) {
+        return { error: "Non connecté" };
+    }
+
+    try {
+        const response = await fetch(`${getApiBaseUrl()}/users/me/documents/${type}`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${session.token}`,
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const text = await response.text().catch(() => "");
+            return { error: `Upload échoué (${response.status})${text ? `: ${text}` : ""}` };
+        }
+
+        const payload = await response.json() as UserKycDocumentsPayload;
+        revalidatePath("/account");
+        revalidatePath("/dashboard");
+        return payload;
+    } catch (error) {
+        return { error: error instanceof Error ? error.message : "Erreur réseau lors de l'upload." };
     }
 }

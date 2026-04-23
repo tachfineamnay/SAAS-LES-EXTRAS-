@@ -36,7 +36,6 @@ export function FreelanceJobBoard({ missions, hideHeader }: FreelanceJobBoardPro
         const q = search.toLowerCase();
         const matchText =
           m.title.toLowerCase().includes(q) ||
-          m.address.toLowerCase().includes(q) ||
           m.city?.toLowerCase().includes(q) ||
           m.establishment?.profile?.city?.toLowerCase().includes(q) ||
           m.establishment?.profile?.companyName?.toLowerCase().includes(q) ||

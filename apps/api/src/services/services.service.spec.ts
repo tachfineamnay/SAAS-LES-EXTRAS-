@@ -48,10 +48,37 @@ describe("ServicesService", () => {
           status: "ACTIVE",
           isHidden: false,
         },
-        include: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          price: true,
+          type: true,
+          capacity: true,
+          pricingType: true,
+          pricePerParticipant: true,
+          durationMinutes: true,
+          category: true,
+          publicCible: true,
+          materials: true,
+          objectives: true,
+          methodology: true,
+          evaluation: true,
+          slots: true,
+          imageUrl: true,
+          scheduleInfo: true,
           owner: {
-            include: {
-              profile: true,
+            select: {
+              id: true,
+              profile: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  avatar: true,
+                  jobTitle: true,
+                  bio: true,
+                },
+              },
             },
           },
         },
@@ -68,12 +95,16 @@ describe("ServicesService", () => {
         id: "service-1",
         ownerId: "free-1",
         status: "ACTIVE",
+        isHidden: false,
         owner: { profile: null },
       };
 
       prisma.service.findUnique.mockResolvedValue(activeService);
 
-      await expect(service.findOne("service-1", "est-1")).resolves.toEqual(activeService);
+      await expect(service.findOne("service-1", "est-1")).resolves.toEqual({
+        id: "service-1",
+        owner: { profile: null },
+      });
     });
 
     it("masque un brouillon à un utilisateur non propriétaire", async () => {
@@ -81,6 +112,7 @@ describe("ServicesService", () => {
         id: "service-1",
         ownerId: "free-1",
         status: "DRAFT",
+        isHidden: false,
         owner: { profile: null },
       });
 
@@ -108,12 +140,16 @@ describe("ServicesService", () => {
         id: "service-1",
         ownerId: "free-1",
         status: "DRAFT",
+        isHidden: false,
         owner: { profile: null },
       };
 
       prisma.service.findUnique.mockResolvedValue(draftService);
 
-      await expect(service.findOne("service-1", "free-1")).resolves.toEqual(draftService);
+      await expect(service.findOne("service-1", "free-1")).resolves.toEqual({
+        id: "service-1",
+        owner: { profile: null },
+      });
     });
   });
 

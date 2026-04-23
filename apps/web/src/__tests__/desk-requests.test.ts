@@ -25,11 +25,16 @@ const {
   featureService,
   getAdminMissionDetail,
   getAdminOverview,
+  getPendingKycDocuments,
   getAdminServiceDetail,
   getContactBypassEvents,
   getDeskRequests,
   hideService,
+  monitorContactBypassEvent,
+  reassignMission,
+  reviewUserDocument,
   respondToDeskRequest,
+  sendAdminOutreach,
   updateDeskRequestStatus,
 } =
   await import("@/app/actions/admin");
@@ -225,13 +230,24 @@ describe("admin detail fetchers", () => {
       id: "mission-1",
       title: "Mission de nuit",
       status: "OPEN",
+      createdAt: "2026-04-18T08:00:00.000Z",
+      updatedAt: "2026-04-18T08:00:00.000Z",
       establishmentName: "Luc Martin",
       establishmentEmail: "est@test.fr",
+      establishmentId: "est-1",
       address: "12 rue des Lilas",
+      city: "Paris",
+      shift: "NUIT",
       dateStart: "2026-04-20T08:00:00.000Z",
       dateEnd: "2026-04-20T16:00:00.000Z",
       hourlyRate: 28,
       candidatesCount: 2,
+      proposedTotalTTC: 320,
+      attentionItems: [],
+      assignedFreelance: null,
+      linkedBooking: null,
+      candidates: [],
+      timeline: [],
       linkedDeskRequests: [],
     });
 
@@ -270,6 +286,7 @@ describe("admin detail fetchers", () => {
       {
         id: "event-1",
         conversationId: "conv-1",
+        bookingId: "booking-1",
         blockedReason: "EMAIL",
         rawExcerpt: "jo@example.com",
         createdAt: "2026-04-23T09:00:00.000Z",
@@ -277,6 +294,8 @@ describe("admin detail fetchers", () => {
           id: "user-1",
           name: "Aya Benali",
           email: "aya@test.fr",
+          role: "FREELANCE",
+          status: "VERIFIED",
         },
       },
     ]);
@@ -289,6 +308,142 @@ describe("admin detail fetchers", () => {
     );
     expect(result).toHaveLength(1);
     expect(result[0]!.blockedReason).toBe("EMAIL");
+    expect(result[0]!.bookingId).toBe("booking-1");
+    expect(result[0]!.sender.status).toBe("VERIFIED");
+  });
+});
+
+describe("mission moderation actions (admin)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetAdminSessionToken.mockResolvedValue("admin-tok");
+    mockApiRequest.mockResolvedValue({ ok: true });
+  });
+
+  it("appelle l'endpoint d'arbitrage mission et revalide les pages utiles", async () => {
+    await reassignMission("mission-1", "booking-9");
+
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/missions/mission-1/reassign",
+      expect.objectContaining({
+        method: "POST",
+        token: "admin-tok",
+        body: { bookingId: "booking-9" },
+      }),
+    );
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin/missions");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/renforts");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/bookings");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/marketplace");
+  });
+});
+
+describe("sendAdminOutreach (admin)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetAdminSessionToken.mockResolvedValue("admin-tok");
+    mockApiRequest.mockResolvedValue({ ok: true });
+  });
+
+  it("appelle POST /admin/outreach/:userId avec le message et le contexte", async () => {
+    await sendAdminOutreach("user-1", "Message du Desk.", {
+      notifyByEmail: true,
+      origin: "CONTACT_BYPASS",
+      contextId: "event-1",
+    });
+
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/outreach/user-1",
+      expect.objectContaining({
+        method: "POST",
+        token: "admin-tok",
+        body: {
+          message: "Message du Desk.",
+          notifyByEmail: true,
+          origin: "CONTACT_BYPASS",
+          contextId: "event-1",
+        },
+      }),
+    );
+  });
+});
+
+describe("KYC admin actions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetAdminSessionToken.mockResolvedValue("admin-tok");
+    mockApiRequest.mockResolvedValue([
+      {
+        id: "doc-1",
+        type: "CV",
+        label: "CV",
+        filename: "cv.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 1024,
+        status: "PENDING",
+        createdAt: "2026-04-23T09:00:00.000Z",
+        user: {
+          id: "free-1",
+          name: "Aya Benali",
+          email: "aya@test.fr",
+          status: "PENDING",
+        },
+      },
+    ]);
+  });
+
+  it("charge la file KYC via GET /admin/users/kyc/documents", async () => {
+    const result = await getPendingKycDocuments();
+
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/users/kyc/documents",
+      expect.objectContaining({ method: "GET", token: "admin-tok" }),
+    );
+    expect(result[0]!.label).toBe("CV");
+  });
+
+  it("envoie une review documentaire et revalide les écrans liés", async () => {
+    mockApiRequest.mockResolvedValueOnce({ ok: true });
+
+    await reviewUserDocument("doc-1", "REJECTED", "Document illisible");
+
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/users/documents/doc-1/review",
+      expect.objectContaining({
+        method: "PATCH",
+        token: "admin-tok",
+        body: {
+          status: "REJECTED",
+          reviewReason: "Document illisible",
+        },
+      }),
+    );
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin/users");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin/kyc");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/account");
+  });
+});
+
+describe("monitorContactBypassEvent (admin)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetAdminSessionToken.mockResolvedValue("admin-tok");
+    mockApiRequest.mockResolvedValue({ ok: true });
+  });
+
+  it("appelle POST /admin/contact-bypass-events/:id/monitor", async () => {
+    await monitorContactBypassEvent("event-1");
+
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/contact-bypass-events/event-1/monitor",
+      expect.objectContaining({
+        method: "POST",
+        token: "admin-tok",
+      }),
+    );
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin/contournements");
   });
 });
 

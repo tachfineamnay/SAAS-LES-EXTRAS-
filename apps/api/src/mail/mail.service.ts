@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import {
+  adminOutreachTemplate,
   welcomeFreelanceTemplate,
   welcomeEstablishmentTemplate,
   missionConfirmedTemplate,
@@ -68,6 +69,14 @@ export class MailService {
 
   async sendMessageNotificationEmail(to: string, senderName: string) {
     await this.sendMail(to, 'Nouveau message reçu', messageNotificationTemplate(senderName));
+  }
+
+  async sendAdminOutreachEmail(to: string, recipientName: string, message: string) {
+    await this.sendMail(
+      to,
+      'Message du Desk Les Extras',
+      adminOutreachTemplate(recipientName, message),
+    );
   }
 
   async sendPasswordResetEmail(to: string, resetUrl: string) {

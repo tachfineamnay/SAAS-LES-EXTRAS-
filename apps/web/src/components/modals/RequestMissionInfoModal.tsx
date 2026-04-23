@@ -20,7 +20,6 @@ import { requestMissionInfo } from "@/app/actions/missions";
 interface RequestMissionInfoModalProps {
   missionId: string;
   missionTitle?: string;
-  establishmentName?: string;
   triggerLabel?: string;
   triggerClassName?: string;
 }
@@ -31,7 +30,6 @@ const MAX_LENGTH = 1000;
 export function RequestMissionInfoModal({
   missionId,
   missionTitle,
-  establishmentName,
   triggerLabel = "Demander plus d'informations",
   triggerClassName,
 }: RequestMissionInfoModalProps) {
@@ -63,7 +61,7 @@ export function RequestMissionInfoModal({
     if (result.ok) {
       toast.success("Demande envoyée", {
         description:
-          "Notre équipe va traiter votre demande. Vous recevrez une réponse dans votre espace Mes demandes.",
+          "Votre demande a été transmise à l'équipe. Vous recevrez une réponse dans votre espace Mes demandes.",
       });
       setMessage("");
       setOpen(false);
@@ -88,12 +86,13 @@ export function RequestMissionInfoModal({
             {missionTitle ? (
               <>
                 Posez votre question à propos de la mission «&nbsp;{missionTitle}&nbsp;».
-                Notre équipe traitera votre demande et vous répondra dans votre espace Mes demandes.
+                Notre équipe traitera votre demande et vous répondra directement dans votre espace
+                Mes demandes.
               </>
             ) : (
               <>
-                Posez votre question&nbsp;: elle sera traitée par notre équipe et une réponse
-                vous sera communiquée dans votre espace Mes demandes.
+                Posez votre question&nbsp;: notre équipe la traitera et vous répondra directement
+                dans votre espace Mes demandes.
               </>
             )}
           </DialogDescription>

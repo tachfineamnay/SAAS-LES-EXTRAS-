@@ -7,6 +7,8 @@ import {
   deleteMission,
   getAdminMissionDetail,
   getAdminMissions,
+  reassignMission,
+  sendAdminOutreach,
   type AdminMissionDetail,
   type AdminMissionRow,
 } from "@/app/actions/admin";
@@ -38,21 +40,23 @@ export function MissionsTable({ missions }: MissionsTableProps) {
     setRows(nextRows);
   };
 
+  const loadMissionDetails = async (missionId: string) => {
+    setIsDetailsLoading(true);
+
+    try {
+      const nextMission = await getAdminMissionDetail(missionId);
+      setSelectedMission(nextMission);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Impossible de charger la mission.");
+    } finally {
+      setIsDetailsLoading(false);
+    }
+  };
+
   const handleOpenDetails = (missionId: string) => {
     setIsSheetOpen(true);
-    setIsDetailsLoading(true);
     setSelectedMission(null);
-
-    void getAdminMissionDetail(missionId)
-      .then((nextMission) => {
-        setSelectedMission(nextMission);
-      })
-      .catch((error) => {
-        toast.error(error instanceof Error ? error.message : "Impossible de charger la mission.");
-      })
-      .finally(() => {
-        setIsDetailsLoading(false);
-      });
+    void loadMissionDetails(missionId);
   };
 
   const handleDelete = (missionId: string) => {
@@ -70,6 +74,37 @@ export function MissionsTable({ missions }: MissionsTableProps) {
           toast.success("Mission supprimée.");
         } catch (error) {
           toast.error(error instanceof Error ? error.message : "Impossible de supprimer la mission.");
+        }
+      })();
+    });
+  };
+
+  const handleReassign = (missionId: string, bookingId: string) => {
+    startTransition(() => {
+      void (async () => {
+        try {
+          await reassignMission(missionId, bookingId);
+          await refreshRows();
+          await loadMissionDetails(missionId);
+          toast.success("Attribution Desk mise à jour.");
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : "Arbitrage impossible.");
+        }
+      })();
+    });
+  };
+
+  const handleNotifyStakeholder = (userId: string, missionId: string, message: string) => {
+    startTransition(() => {
+      void (async () => {
+        try {
+          await sendAdminOutreach(userId, message, {
+            origin: "MISSION_DETAIL",
+            contextId: missionId,
+          });
+          toast.success("Message Desk transmis.");
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : "Envoi impossible.");
         }
       })();
     });
@@ -120,6 +155,8 @@ export function MissionsTable({ missions }: MissionsTableProps) {
         isLoading={isDetailsLoading}
         isPending={isPending}
         onDelete={handleDelete}
+        onReassign={handleReassign}
+        onNotifyStakeholder={handleNotifyStakeholder}
       />
     </>
   );
