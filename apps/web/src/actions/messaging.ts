@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { getSession } from "@/lib/session";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, toUserFacingApiError } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 
 const sendMessageSchema = z.object({
@@ -36,7 +36,7 @@ export async function sendMessage(data: SendMessageData) {
         return { success: true };
     } catch (error) {
         console.error("SendMessage error:", error);
-        return { error: "Erreur lors de l'envoi du message" };
+        return { error: toUserFacingApiError(error, "Erreur lors de l'envoi du message") };
     }
 }
 

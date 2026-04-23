@@ -140,6 +140,10 @@ export function OrderTrackerClient({
   const isProvider = provider.id === currentUserId;
   const currentParticipant = isProvider ? provider : requester;
   const counterpart = isProvider ? requester : provider;
+  const counterpartDisplayName =
+    `${counterpart.firstName ?? ""} ${counterpart.lastName ?? ""}`.trim() ||
+    counterpart.companyName ||
+    "Interlocuteur";
   const reviewConfig = getReviewConfig(currentParticipant, counterpart);
   const title = mission?.title ?? service?.title ?? "Commande";
   const statusConfig = STATUS_MAP[booking.status] ?? { label: booking.status, variant: "quiet" as const };
@@ -159,6 +163,7 @@ export function OrderTrackerClient({
       const result = await sendOrderMessage(counterpart.id, content, booking.id);
       if (result.error) {
         setDraft(content);
+        toast.error(result.error);
         return;
       }
       // Optimistic: append message locally
@@ -411,7 +416,7 @@ export function OrderTrackerClient({
         )}
         <Separator />
         <div className="text-sm">
-          <p className="font-medium">{counterpart.firstName ?? ""} {counterpart.lastName ?? ""}</p>
+          <p className="font-medium">{counterpartDisplayName}</p>
           {counterpart.companyName && <p className="text-muted-foreground">{counterpart.companyName}</p>}
           <p className="text-muted-foreground">{counterpart.email}</p>
         </div>
@@ -631,7 +636,7 @@ export function OrderTrackerClient({
       <ReviewModal
         open={showReviewModal}
         onOpenChange={setShowReviewModal}
-        targetName={counterpart.firstName ? `${counterpart.firstName} ${counterpart.lastName ?? ""}`.trim() : counterpart.email}
+        targetName={counterpartDisplayName}
         context={title}
         reviewerSide={reviewConfig?.reviewerSide ?? "freelance"}
         onSubmit={(reviewData) => {

@@ -23,7 +23,10 @@ vi.mock("next/cache", () => ({
 const {
   assignDeskRequest,
   featureService,
+  getAdminMissionDetail,
   getAdminOverview,
+  getAdminServiceDetail,
+  getContactBypassEvents,
   getDeskRequests,
   hideService,
   respondToDeskRequest,
@@ -208,6 +211,84 @@ describe("moderation services (admin)", () => {
     expect(mockRevalidatePath).toHaveBeenCalledWith("/admin/services");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/admin");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/marketplace");
+  });
+});
+
+describe("admin detail fetchers", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetAdminSessionToken.mockResolvedValue("admin-tok");
+  });
+
+  it("charge le détail d'une mission via GET /admin/missions/:id", async () => {
+    mockApiRequest.mockResolvedValue({
+      id: "mission-1",
+      title: "Mission de nuit",
+      status: "OPEN",
+      establishmentName: "Luc Martin",
+      establishmentEmail: "est@test.fr",
+      address: "12 rue des Lilas",
+      dateStart: "2026-04-20T08:00:00.000Z",
+      dateEnd: "2026-04-20T16:00:00.000Z",
+      hourlyRate: 28,
+      candidatesCount: 2,
+      linkedDeskRequests: [],
+    });
+
+    await getAdminMissionDetail("mission-1");
+
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/missions/mission-1",
+      expect.objectContaining({ method: "GET", token: "admin-tok" }),
+    );
+  });
+
+  it("charge le détail d'un service via GET /admin/services/:id", async () => {
+    mockApiRequest.mockResolvedValue({
+      id: "service-1",
+      title: "Atelier mémoire",
+      type: "WORKSHOP",
+      price: 140,
+      freelanceName: "Nora Diallo",
+      freelanceEmail: "nora@test.fr",
+      isFeatured: false,
+      isHidden: false,
+      description: "Description",
+      createdAt: "2026-04-10T08:00:00.000Z",
+    });
+
+    await getAdminServiceDetail("service-1");
+
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/services/service-1",
+      expect.objectContaining({ method: "GET", token: "admin-tok" }),
+    );
+  });
+
+  it("charge les événements de contournement via GET /admin/contact-bypass-events", async () => {
+    mockApiRequest.mockResolvedValue([
+      {
+        id: "event-1",
+        conversationId: "conv-1",
+        blockedReason: "EMAIL",
+        rawExcerpt: "jo@example.com",
+        createdAt: "2026-04-23T09:00:00.000Z",
+        sender: {
+          id: "user-1",
+          name: "Aya Benali",
+          email: "aya@test.fr",
+        },
+      },
+    ]);
+
+    const result = await getContactBypassEvents();
+
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/contact-bypass-events",
+      expect.objectContaining({ method: "GET", token: "admin-tok" }),
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0]!.blockedReason).toBe("EMAIL");
   });
 });
 

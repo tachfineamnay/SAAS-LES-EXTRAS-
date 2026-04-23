@@ -20,7 +20,11 @@ describe('BookingsService', () => {
       update: jest.fn(),
       updateMany: jest.fn(),
     },
+    conversation: {
+      updateMany: jest.fn(),
+    },
     reliefMission: {
+      findUnique: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
     },
@@ -174,7 +178,7 @@ describe('BookingsService', () => {
 
       expect(mockPrisma.booking.update).toHaveBeenCalledWith({
         where: { id: 'booking-1' },
-        data: { paymentStatus: 'PAID' },
+        data: { paymentStatus: 'PAID', status: 'PAID' },
       });
       expect(mockPrisma.invoice.update).toHaveBeenCalledWith({
         where: { id: 'inv-1' },
@@ -615,7 +619,8 @@ describe('BookingsService', () => {
         lineId: 'mission-open-1',
         lineType: 'MISSION',
         typeLabel: 'Mission SOS',
-        interlocutor: 'ime@example.com',
+        interlocutor: 'Coordonnées disponibles après confirmation',
+        contactEmail: 'Coordonnées disponibles après confirmation',
         status: BookingStatus.PENDING,
         viewerSide: 'PROVIDER',
       });
@@ -657,14 +662,109 @@ describe('BookingsService', () => {
         lineId: 'booking-service-1',
         lineType: 'SERVICE_BOOKING',
         typeLabel: 'Formation',
-        interlocutor: 'provider@test.com',
+        interlocutor: 'Coordonnées disponibles après confirmation',
+        contactEmail: 'Coordonnées disponibles après confirmation',
         viewerSide: 'REQUESTER',
       });
     });
   });
 
+  describe('getBookingLineDetails', () => {
+    it('masque les coordonnées directes avant confirmation sur une mission', async () => {
+      mockPrisma.reliefMission.findUnique.mockResolvedValue({
+        establishmentId: 'est-1',
+        address: '12 rue des Lilas',
+        title: 'Renfort éducateur',
+        dateStart: new Date('2026-04-20T10:00:00Z'),
+        dateEnd: new Date('2026-04-20T18:00:00Z'),
+        slots: null,
+        shift: null,
+        hourlyRate: 28,
+        exactAddress: null,
+        accessInstructions: 'Code 1234',
+        hasTransmissions: true,
+        transmissionTime: '15 min',
+        perks: ['Repas'],
+        establishment: {
+          email: 'ime@example.com',
+          profile: { firstName: 'Claire', lastName: 'Martin', phone: '0601020304', companyName: 'IME' },
+        },
+        bookings: [
+          {
+            id: 'booking-1',
+            status: BookingStatus.PENDING,
+            freelanceId: 'free-1',
+            freelanceAcknowledged: false,
+            freelance: {
+              email: 'free@example.com',
+              profile: { firstName: 'Nora', lastName: 'Diallo', phone: '0601020304' },
+            },
+          },
+        ],
+      });
+
+      const result = await service.getBookingLineDetails('MISSION', 'mission-1', {
+        id: 'free-1',
+        email: 'free@example.com',
+        role: UserRole.FREELANCE,
+        status: UserStatus.VERIFIED,
+        onboardingStep: 4,
+      });
+
+      expect(result.contactEmail).toBe('Coordonnées disponibles après confirmation');
+      expect(result.contactPhone).toBeUndefined();
+      expect(result.accessInstructions).toBeUndefined();
+    });
+
+    it('expose les coordonnées directes après confirmation sur une mission', async () => {
+      mockPrisma.reliefMission.findUnique.mockResolvedValue({
+        establishmentId: 'est-1',
+        address: '12 rue des Lilas',
+        title: 'Renfort éducateur',
+        dateStart: new Date('2026-04-20T10:00:00Z'),
+        dateEnd: new Date('2026-04-20T18:00:00Z'),
+        slots: null,
+        shift: null,
+        hourlyRate: 28,
+        exactAddress: null,
+        accessInstructions: 'Code 1234',
+        hasTransmissions: true,
+        transmissionTime: '15 min',
+        perks: ['Repas'],
+        establishment: {
+          email: 'ime@example.com',
+          profile: { firstName: 'Claire', lastName: 'Martin', phone: '0601020304', companyName: 'IME' },
+        },
+        bookings: [
+          {
+            id: 'booking-1',
+            status: BookingStatus.IN_PROGRESS,
+            freelanceId: 'free-1',
+            freelanceAcknowledged: true,
+            freelance: {
+              email: 'free@example.com',
+              profile: { firstName: 'Nora', lastName: 'Diallo', phone: '0601020304' },
+            },
+          },
+        ],
+      });
+
+      const result = await service.getBookingLineDetails('MISSION', 'mission-1', {
+        id: 'free-1',
+        email: 'free@example.com',
+        role: UserRole.FREELANCE,
+        status: UserStatus.VERIFIED,
+        onboardingStep: 4,
+      });
+
+      expect(result.contactEmail).toBe('ime@example.com');
+      expect(result.contactPhone).toBe('0601020304');
+      expect(result.accessInstructions).toBe('Code 1234');
+    });
+  });
+
   describe('getOrderTracker', () => {
-    it('expose requester/provider avec les rôles réels pour une réservation de service', async () => {
+    it('masque requester/provider avant confirmation pour une réservation de service', async () => {
       const requester = {
         id: 'free-requester',
         email: 'requester@test.com',
@@ -729,12 +829,69 @@ describe('BookingsService', () => {
       expect(result.requester).toMatchObject({
         id: 'free-requester',
         role: 'FREELANCE',
-        email: 'requester@test.com',
+        email: 'Coordonnées disponibles après confirmation',
       });
       expect(result.provider).toMatchObject({
         id: 'free-provider',
         role: 'FREELANCE',
-        email: 'provider@test.com',
+        email: 'Coordonnées disponibles après confirmation',
+      });
+    });
+
+    it('réaffiche email et téléphone dans le tracker après confirmation', async () => {
+      mockPrisma.booking.findUnique.mockResolvedValue({
+        id: 'booking-2',
+        status: BookingStatus.CONFIRMED,
+        paymentStatus: 'UNPAID',
+        message: null,
+        scheduledAt: new Date('2026-04-20T10:00:00Z'),
+        nbParticipants: 2,
+        createdAt: new Date('2026-04-10T08:00:00Z'),
+        establishmentId: 'est-1',
+        freelanceId: 'free-1',
+        establishment: {
+          id: 'est-1',
+          email: 'est@test.com',
+          role: UserRole.ESTABLISHMENT,
+          profile: {
+            firstName: 'Claire',
+            lastName: 'Martin',
+            companyName: 'IME',
+            avatar: null,
+            phone: '0601020304',
+          },
+        },
+        freelance: {
+          id: 'free-1',
+          email: 'free@test.com',
+          role: UserRole.FREELANCE,
+          profile: {
+            firstName: 'Nora',
+            lastName: 'Diallo',
+            companyName: null,
+            avatar: null,
+            phone: '0605060708',
+          },
+        },
+        reliefMission: null,
+        service: null,
+        invoice: null,
+        reviews: [],
+        quotes: [],
+        conversation: null,
+      });
+
+      const result = await service.getOrderTracker('booking-2', {
+        id: 'est-1',
+        email: 'est@test.com',
+        role: UserRole.ESTABLISHMENT,
+        status: UserStatus.VERIFIED,
+        onboardingStep: 3,
+      });
+
+      expect(result.provider).toMatchObject({
+        email: 'free@test.com',
+        phone: '0605060708',
       });
     });
   });

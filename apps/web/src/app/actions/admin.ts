@@ -43,6 +43,28 @@ export type AdminMissionRow = {
   candidatesCount: number;
 };
 
+export type AdminMissionLinkedDeskRequest = {
+  id: string;
+  status: "OPEN" | "IN_PROGRESS" | "ANSWERED" | "CLOSED";
+  priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  createdAt: string;
+  messageExcerpt: string;
+};
+
+export type AdminMissionDetail = {
+  id: string;
+  title: string;
+  status: "OPEN" | "ASSIGNED" | "COMPLETED" | "CANCELLED";
+  establishmentName: string;
+  establishmentEmail: string;
+  address: string;
+  dateStart: string;
+  dateEnd: string;
+  hourlyRate: number;
+  candidatesCount: number;
+  linkedDeskRequests: AdminMissionLinkedDeskRequest[];
+};
+
 export type AdminServiceRow = {
   id: string;
   title: string;
@@ -54,6 +76,19 @@ export type AdminServiceRow = {
   createdAt: string;
   freelanceName: string;
   freelanceEmail: string;
+};
+
+export type AdminServiceDetail = {
+  id: string;
+  title: string;
+  type: "WORKSHOP" | "TRAINING";
+  price: number;
+  freelanceName: string;
+  freelanceEmail: string;
+  isFeatured: boolean;
+  isHidden: boolean;
+  description: string | null;
+  createdAt: string;
 };
 
 export type AdminOverviewData = {
@@ -172,6 +207,18 @@ export async function getAdminMissions(): Promise<AdminMissionRow[]> {
   }));
 }
 
+export async function getAdminMissionDetail(missionId: string): Promise<AdminMissionDetail> {
+  if (!missionId) {
+    throw new Error("Mission introuvable.");
+  }
+
+  const token = await getAdminToken();
+  return apiRequest<AdminMissionDetail>(`/admin/missions/${missionId}`, {
+    method: "GET",
+    token,
+  });
+}
+
 export async function deleteMission(missionId: string): Promise<{ ok: true }> {
   if (!missionId) {
     throw new Error("Mission introuvable.");
@@ -193,6 +240,18 @@ export async function deleteMission(missionId: string): Promise<{ ok: true }> {
 export async function getAdminServices(): Promise<AdminServiceRow[]> {
   const token = await getAdminToken();
   return apiRequest<AdminServiceRow[]>("/admin/services", {
+    method: "GET",
+    token,
+  });
+}
+
+export async function getAdminServiceDetail(serviceId: string): Promise<AdminServiceDetail> {
+  if (!serviceId) {
+    throw new Error("Service introuvable.");
+  }
+
+  const token = await getAdminToken();
+  return apiRequest<AdminServiceDetail>(`/admin/services/${serviceId}`, {
     method: "GET",
     token,
   });
@@ -239,6 +298,12 @@ export async function hideService(serviceId: string): Promise<{ ok: true }> {
 export type DeskRequestStatus = "OPEN" | "IN_PROGRESS" | "ANSWERED" | "CLOSED";
 export type DeskRequestType = "MISSION_INFO_REQUEST";
 export type DeskRequestPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
+export type ContactBypassBlockedReason =
+  | "EMAIL"
+  | "PHONE"
+  | "WHATSAPP"
+  | "TELEGRAM"
+  | "EXTERNAL_URL";
 
 type DeskAdminSummary = {
   id: string;
@@ -266,10 +331,35 @@ export type DeskRequestRow = {
   answeredBy: DeskAdminSummary | null;
 };
 
+export type ContactBypassEventRow = {
+  id: string;
+  conversationId: string | null;
+  blockedReason: ContactBypassBlockedReason;
+  rawExcerpt: string;
+  createdAt: string;
+  sender: {
+    id: string;
+    email: string;
+    name: string;
+  };
+};
+
 export async function getDeskRequests(): Promise<DeskRequestRow[]> {
   try {
     const token = await getAdminToken();
     return await apiRequest<DeskRequestRow[]>("/admin/desk-requests", {
+      method: "GET",
+      token,
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function getContactBypassEvents(): Promise<ContactBypassEventRow[]> {
+  try {
+    const token = await getAdminToken();
+    return await apiRequest<ContactBypassEventRow[]>("/admin/contact-bypass-events", {
       method: "GET",
       token,
     });

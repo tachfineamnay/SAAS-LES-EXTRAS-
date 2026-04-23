@@ -108,6 +108,14 @@ enum DeskRequestPriority {
   URGENT
 }
 
+enum ContactBypassBlockedReason {
+  EMAIL
+  PHONE
+  WHATSAPP
+  TELEGRAM
+  EXTERNAL_URL
+}
+
 // ─────────────────────────────────────────────
 // CORE IDENTITY
 // ─────────────────────────────────────────────
@@ -144,6 +152,7 @@ model User {
   deskRequests          DeskRequest[]   @relation("UserDeskRequests")
   answeredDeskRequests  DeskRequest[]   @relation("DeskRequestAnsweredBy")
   assignedDeskRequests  DeskRequest[]   @relation("DeskRequestAssignedToAdmin")
+  contactBypassEvents   ContactBypassEvent[] @relation("ContactBypassSender")
 }
 
 model Profile {
@@ -189,6 +198,7 @@ model Conversation {
   participantBUser User      @relation("ConversationParticipantB", fields: [participantBId], references: [id], onDelete: Cascade)
   booking          Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
   messages         Message[]
+  contactBypassEvents ContactBypassEvent[]
 
   @@unique([participantAId, participantBId])
   @@index([participantAId])
@@ -514,4 +524,21 @@ model DeskRequest {
   @@index([type])
   @@index([priority])
   @@index([assignedToAdminId])
+}
+
+model ContactBypassEvent {
+  id            String                     @id @default(cuid())
+  conversationId String?
+  senderId      String
+  blockedReason ContactBypassBlockedReason
+  rawExcerpt    String                     @db.Text
+  createdAt     DateTime                   @default(now())
+
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  sender       User          @relation("ContactBypassSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([blockedReason])
+  @@index([senderId])
+  @@index([conversationId])
 }

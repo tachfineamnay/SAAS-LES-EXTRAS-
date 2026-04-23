@@ -24,6 +24,17 @@ const ANSWERED_BY_SELECT = {
 
 const ADMIN_SELECT = ANSWERED_BY_SELECT;
 
+function getDisplayName(user: {
+  email: string;
+  profile: { firstName: string; lastName: string } | null;
+}) {
+  if (user.profile) {
+    return `${user.profile.firstName} ${user.profile.lastName}`.trim();
+  }
+
+  return user.email;
+}
+
 @Injectable()
 export class DeskService {
   constructor(private readonly prisma: PrismaService) {}
@@ -49,6 +60,34 @@ export class DeskService {
         answeredBy: { select: ANSWERED_BY_SELECT },
       },
     });
+  }
+
+  async findContactBypassEvents() {
+    const events = await this.prisma.contactBypassEvent.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      select: {
+        id: true,
+        conversationId: true,
+        blockedReason: true,
+        rawExcerpt: true,
+        createdAt: true,
+        sender: { select: REQUESTER_SELECT },
+      },
+    });
+
+    return events.map((event) => ({
+      id: event.id,
+      conversationId: event.conversationId,
+      blockedReason: event.blockedReason,
+      rawExcerpt: event.rawExcerpt,
+      createdAt: event.createdAt.toISOString(),
+      sender: {
+        id: event.sender.id,
+        email: event.sender.email,
+        name: getDisplayName(event.sender),
+      },
+    }));
   }
 
   async updateStatus(id: string, adminId: string, dto: UpdateDeskRequestStatusDto) {

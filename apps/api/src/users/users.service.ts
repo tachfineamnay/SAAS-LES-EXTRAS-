@@ -265,8 +265,17 @@ export class UsersService {
                 role: "FREELANCE",
                 status: "VERIFIED",
             },
-            include: {
-                profile: true,
+            select: {
+                id: true,
+                profile: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        avatar: true,
+                        jobTitle: true,
+                        city: true,
+                    },
+                },
             },
             orderBy: {
                 createdAt: "desc",
@@ -277,8 +286,22 @@ export class UsersService {
     async findFreelanceById(id: string) {
         const user = await this.prisma.user.findUnique({
             where: { id, role: "FREELANCE" },
-            include: {
-                profile: true,
+            select: {
+                id: true,
+                isAvailable: true,
+                profile: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        avatar: true,
+                        jobTitle: true,
+                        bio: true,
+                        city: true,
+                        skills: true,
+                        siret: true,
+                        availableDays: true,
+                    },
+                },
                 reviewsReceived: {
                     include: {
                         author: {

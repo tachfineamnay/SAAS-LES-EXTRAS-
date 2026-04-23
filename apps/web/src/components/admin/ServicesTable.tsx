@@ -1,35 +1,25 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Star, EyeOff, Eye, UserRound } from "lucide-react";
+import { Eye, EyeOff, Star } from "lucide-react";
 import { toast } from "sonner";
 import {
   featureService,
+  getAdminServiceDetail,
   getAdminServices,
   hideService,
+  type AdminServiceDetail,
   type AdminServiceRow,
 } from "@/app/actions/admin";
+import { ServiceDetailSheet } from "@/components/admin/ServiceDetailSheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableShell } from "@/components/data/DataTableShell";
 import { TableCell, TableRow } from "@/components/ui/table";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 
 type ServicesTableProps = {
   services: AdminServiceRow[];
 };
-
-const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
 
 const moneyFormatter = new Intl.NumberFormat("fr-FR", {
   style: "currency",
@@ -43,45 +33,65 @@ function getTypeLabel(type: AdminServiceRow["type"]): string {
 
 export function ServicesTable({ services }: ServicesTableProps) {
   const [rows, setRows] = useState<AdminServiceRow[]>(services);
-  const [selectedService, setSelectedService] = useState<AdminServiceRow | null>(null);
+  const [selectedService, setSelectedService] = useState<AdminServiceDetail | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const handleOpenDetails = (service: AdminServiceRow) => {
-    setSelectedService(service);
-    setIsSheetOpen(true);
-  };
+  const refreshRows = async (serviceId?: string | null) => {
+    const [nextRows, nextDetail] = await Promise.all([
+      getAdminServices(),
+      serviceId ? getAdminServiceDetail(serviceId) : Promise.resolve(null),
+    ]);
 
-  const refreshRows = async () => {
-    const nextRows = await getAdminServices();
     setRows(nextRows);
-    if (selectedService) {
-      const nextSelected = nextRows.find((item) => item.id === selectedService.id) ?? null;
-      setSelectedService(nextSelected);
+    if (serviceId) {
+      setSelectedService(nextDetail);
     }
   };
 
+  const handleOpenDetails = (serviceId: string) => {
+    setIsSheetOpen(true);
+    setIsDetailsLoading(true);
+    setSelectedService(null);
+
+    void getAdminServiceDetail(serviceId)
+      .then((nextService) => {
+        setSelectedService(nextService);
+      })
+      .catch((error) => {
+        toast.error(error instanceof Error ? error.message : "Impossible de charger le service.");
+      })
+      .finally(() => {
+        setIsDetailsLoading(false);
+      });
+  };
+
   const handleToggleFeature = (serviceId: string) => {
-    startTransition(async () => {
-      try {
-        await featureService(serviceId);
-        await refreshRows();
-        toast.success("Mise en avant mise à jour.");
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Impossible de modifier la mise en avant.");
-      }
+    startTransition(() => {
+      void (async () => {
+        try {
+          await featureService(serviceId);
+          await refreshRows(selectedService?.id === serviceId ? serviceId : null);
+          toast.success("Mise en avant mise à jour.");
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : "Impossible de modifier la mise en avant.");
+        }
+      })();
     });
   };
 
   const handleToggleHide = (serviceId: string) => {
-    startTransition(async () => {
-      try {
-        await hideService(serviceId);
-        await refreshRows();
-        toast.success("Visibilité du service mise à jour.");
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Impossible de modifier la visibilité.");
-      }
+    startTransition(() => {
+      void (async () => {
+        try {
+          await hideService(serviceId);
+          await refreshRows(selectedService?.id === serviceId ? serviceId : null);
+          toast.success("Visibilité du service mise à jour.");
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : "Impossible de modifier la visibilité.");
+        }
+      })();
     });
   };
 
@@ -96,7 +106,7 @@ export function ServicesTable({ services }: ServicesTableProps) {
           <TableRow
             key={service.id}
             className="cursor-pointer"
-            onClick={() => handleOpenDetails(service)}
+            onClick={() => handleOpenDetails(service.id)}
           >
             <TableCell className="font-medium text-foreground">{service.title}</TableCell>
             <TableCell className="text-sm text-muted-foreground">{service.freelanceName}</TableCell>
@@ -138,60 +148,15 @@ export function ServicesTable({ services }: ServicesTableProps) {
         ))}
       </DataTableShell>
 
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-lg glass-surface">
-          <SheetHeader>
-            <SheetTitle>Détail service</SheetTitle>
-            <SheetDescription>Lecture rapide du contenu publié.</SheetDescription>
-          </SheetHeader>
-
-          {selectedService ? (
-            <div className="mt-6 space-y-4 text-sm">
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Titre</p>
-                <p className="text-base font-medium text-foreground">{selectedService.title}</p>
-              </div>
-
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <UserRound className="h-4 w-4" aria-hidden="true" />
-                <span>
-                  {selectedService.freelanceName} ({selectedService.freelanceEmail})
-                </span>
-              </div>
-
-              <div className="rounded-md border border-border/50 bg-muted/50 p-3">
-                <p className="text-xs text-muted-foreground">Description complète</p>
-                <p className="mt-1 text-foreground">
-                  {selectedService.description?.trim() || "Aucune description fournie."}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 rounded-md border border-border/50 bg-muted/50 p-3">
-                <div>
-                  <p className="text-xs text-muted-foreground">Prix</p>
-                  <p className="font-medium text-foreground">{moneyFormatter.format(selectedService.price)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Type</p>
-                  <p className="font-medium text-foreground">{getTypeLabel(selectedService.type)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Mise en avant</p>
-                  <p className="font-medium text-foreground">{selectedService.isFeatured ? "Oui" : "Non"}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Visibilité</p>
-                  <p className="font-medium text-foreground">{selectedService.isHidden ? "Masqué" : "Visible"}</p>
-                </div>
-              </div>
-
-              <div className="text-xs text-muted-foreground">
-                Publié le {dateFormatter.format(new Date(selectedService.createdAt))}
-              </div>
-            </div>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+      <ServiceDetailSheet
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+        service={selectedService}
+        isLoading={isDetailsLoading}
+        isPending={isPending}
+        onToggleFeature={handleToggleFeature}
+        onToggleHide={handleToggleHide}
+      />
     </>
   );
 }

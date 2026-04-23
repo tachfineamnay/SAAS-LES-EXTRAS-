@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { BookingStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SendMessageDto } from './dto/conversations.dto';
 import { MailService } from '../mail/mail.service';
 import { EventsService } from '../events/events.service';
+import { detectContactBypass } from './contact-bypass';
 
 @Injectable()
 export class ConversationsService {
@@ -97,10 +103,28 @@ export class ConversationsService {
   }
 
   async getOrCreateConversation(userAId: string, userBId: string) {
+    const conversation = await this.findConversationBetweenUsers(userAId, userBId);
+
+    if (conversation) {
+      return conversation;
+    }
+
     const [participantAId, participantBId] =
       userAId < userBId ? [userAId, userBId] : [userBId, userAId];
 
-    let conversation = await this.prisma.conversation.findUnique({
+    return this.prisma.conversation.create({
+      data: {
+        participantAId,
+        participantBId,
+      },
+    });
+  }
+
+  private async findConversationBetweenUsers(userAId: string, userBId: string) {
+    const [participantAId, participantBId] =
+      userAId < userBId ? [userAId, userBId] : [userBId, userAId];
+
+    return this.prisma.conversation.findUnique({
       where: {
         participantAId_participantBId: {
           participantAId,
@@ -108,17 +132,6 @@ export class ConversationsService {
         },
       },
     });
-
-    if (!conversation) {
-      conversation = await this.prisma.conversation.create({
-        data: {
-          participantAId,
-          participantBId,
-        },
-      });
-    }
-
-    return conversation;
   }
 
   async sendMessage(senderId: string, dto: SendMessageDto) {
@@ -146,6 +159,22 @@ export class ConversationsService {
     });
     if (!receiver) {
       throw new NotFoundException('Receiver not found');
+    }
+
+    const blockedAttempt = detectContactBypass(content);
+    if (blockedAttempt) {
+      const existingConversation = await this.findConversationBetweenUsers(senderId, receiverId);
+
+      await this.prisma.contactBypassEvent.create({
+        data: {
+          conversationId: existingConversation?.id ?? null,
+          senderId,
+          blockedReason: blockedAttempt.reason,
+          rawExcerpt: content.trim().slice(0, 240),
+        },
+      });
+
+      throw new BadRequestException(blockedAttempt.message);
     }
 
     const conversation = await this.getOrCreateConversation(senderId, receiverId);

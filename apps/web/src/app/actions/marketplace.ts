@@ -145,7 +145,6 @@ export type SerializedMission = {
 
 export type SerializedFreelance = {
   id: string;
-  email: string;
   profile?: {
     firstName: string;
     lastName: string;
@@ -173,7 +172,6 @@ export type SerializedReview = {
 
 export type SerializedFreelanceDetail = {
   id: string;
-  email: string;
   isAvailable: boolean;
   profile?: {
     firstName: string;

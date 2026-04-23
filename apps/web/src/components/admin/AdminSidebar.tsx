@@ -7,6 +7,7 @@ import {
   GraduationCap,
   Inbox,
   LayoutDashboard,
+  ShieldAlert,
   TriangleAlert,
   Users,
   Wallet,
@@ -51,6 +52,11 @@ const links = [
     href: "/admin/demandes",
     label: "Demandes Info",
     icon: Inbox,
+  },
+  {
+    href: "/admin/contournements",
+    label: "Contournements",
+    icon: ShieldAlert,
   },
 ];
 

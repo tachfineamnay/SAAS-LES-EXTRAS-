@@ -21,6 +21,12 @@ export class DeskController {
     return this.deskService.findAll();
   }
 
+  @Get("admin/contact-bypass-events")
+  @Roles(UserRole.ADMIN)
+  findContactBypassEvents() {
+    return this.deskService.findContactBypassEvents();
+  }
+
   @Patch("admin/desk-requests/:id/status")
   @Roles(UserRole.ADMIN)
   updateStatus(

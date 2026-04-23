@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, toUserFacingApiError } from "@/lib/api";
 import { getSession } from "@/lib/session";
 
 // ── Types ──
@@ -159,7 +159,7 @@ export async function sendOrderMessage(receiverId: string, content: string, book
     return { success: true };
   } catch (e) {
     console.error("sendOrderMessage error:", e);
-    return { error: "Erreur lors de l'envoi du message" };
+    return { error: toUserFacingApiError(e, "Erreur lors de l'envoi du message") };
   }
 }
 

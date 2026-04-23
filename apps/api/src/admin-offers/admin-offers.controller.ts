@@ -18,6 +18,11 @@ export class AdminOffersController {
     return this.adminOffersService.getMissions();
   }
 
+  @Get("missions/:missionId")
+  getMissionById(@Param("missionId") missionId: string) {
+    return this.adminOffersService.getMissionById(missionId);
+  }
+
   @Post("missions/:missionId/delete")
   deleteMission(
     @Param("missionId") missionId: string,
@@ -29,6 +34,11 @@ export class AdminOffersController {
   @Get("services")
   getServices() {
     return this.adminOffersService.getServices();
+  }
+
+  @Get("services/:serviceId")
+  getServiceById(@Param("serviceId") serviceId: string) {
+    return this.adminOffersService.getServiceById(serviceId);
   }
 
   @Post("services/:serviceId/feature")

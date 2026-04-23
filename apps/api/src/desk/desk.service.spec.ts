@@ -9,6 +9,9 @@ describe("DeskService", () => {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
+    contactBypassEvent: {
+      findMany: jest.fn(),
+    },
     user: {
       findFirst: jest.fn(),
     },
@@ -152,5 +155,40 @@ describe("DeskService", () => {
     await expect(
       service.updateStatus("missing", "admin-1", { status: DeskRequestStatus.CLOSED }),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  it("retourne les événements de contournement avec le résumé expéditeur", async () => {
+    prisma.contactBypassEvent.findMany.mockResolvedValue([
+      {
+        id: "event-1",
+        conversationId: "conv-1",
+        blockedReason: "EMAIL",
+        rawExcerpt: "jo@example.com",
+        createdAt: new Date("2026-04-23T09:00:00.000Z"),
+        sender: {
+          id: "user-1",
+          email: "sender@example.com",
+          profile: {
+            firstName: "Aya",
+            lastName: "Benali",
+          },
+        },
+      },
+    ]);
+
+    await expect(service.findContactBypassEvents()).resolves.toEqual([
+      {
+        id: "event-1",
+        conversationId: "conv-1",
+        blockedReason: "EMAIL",
+        rawExcerpt: "jo@example.com",
+        createdAt: "2026-04-23T09:00:00.000Z",
+        sender: {
+          id: "user-1",
+          email: "sender@example.com",
+          name: "Aya Benali",
+        },
+      },
+    ]);
   });
 });

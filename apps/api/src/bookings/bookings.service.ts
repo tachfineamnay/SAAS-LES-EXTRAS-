@@ -31,7 +31,15 @@ import {
 
 const UNKNOWN_COUNTERPART = "À confirmer";
 const SERVICE_ADDRESS_PLACEHOLDER = "Adresse non renseignée";
+const CONTACT_DETAILS_LOCKED = "Coordonnées disponibles après confirmation";
 const COMMISSION_RATE = 0.15;
+const DIRECT_CONTACT_ALLOWED_STATUSES = new Set<BookingStatus>([
+  BookingStatus.CONFIRMED,
+  BookingStatus.IN_PROGRESS,
+  BookingStatus.COMPLETED,
+  BookingStatus.AWAITING_PAYMENT,
+  BookingStatus.PAID,
+]);
 
 const NEXT_STEP_STATUSES = new Set<BookingLineStatus>([
   "PENDING",
@@ -85,6 +93,21 @@ function parseLineType(value: string): BookingLineType {
 
 function getServiceTypeLabel(type?: ServiceType | null): "Atelier" | "Formation" {
   return type === "TRAINING" ? "Formation" : "Atelier";
+}
+
+function hasConfirmedEngagement(status?: BookingStatus | null): boolean {
+  return status ? DIRECT_CONTACT_ALLOWED_STATUSES.has(status) : false;
+}
+
+function getDirectContactValue(
+  email: string | null | undefined,
+  allowDirectContact: boolean,
+): string {
+  if (!allowDirectContact) {
+    return CONTACT_DETAILS_LOCKED;
+  }
+
+  return email ?? UNKNOWN_COUNTERPART;
 }
 
 @Injectable()
@@ -356,11 +379,14 @@ export class BookingsService {
       ]);
 
       for (const mission of missions) {
-        const activeBooking = mission.bookings.find(
+        const confirmedBooking = mission.bookings.find(
           (booking) =>
-            booking.status !== BookingStatus.CANCELLED && Boolean(booking.freelance?.email),
+            hasConfirmedEngagement(booking.status) && Boolean(booking.freelance?.email),
         );
-        const interlocutor = activeBooking?.freelance?.email ?? UNKNOWN_COUNTERPART;
+        const interlocutor = getDirectContactValue(
+          confirmedBooking?.freelance?.email,
+          Boolean(confirmedBooking),
+        );
         const planning = this.getMissionPlanningSummary(mission);
 
         lines.push({
@@ -372,18 +398,22 @@ export class BookingsService {
           status: normalizeMissionStatus(mission.status),
           address: mission.address,
           contactEmail: interlocutor,
-          relatedBookingId: activeBooking?.id,
+          relatedBookingId: confirmedBooking?.id,
           title: mission.title,
           amount: this.calculateMissionAmount(mission),
           viewerSide: "REQUESTER",
-          hasReview: (activeBooking?.reviews?.length ?? 0) > 0,
-          invoiceUrl: activeBooking?.invoice ? `/invoices/${activeBooking.invoice.id}/download` : undefined,
+          hasReview: (confirmedBooking?.reviews?.length ?? 0) > 0,
+          invoiceUrl: confirmedBooking?.invoice ? `/invoices/${confirmedBooking.invoice.id}/download` : undefined,
         });
       }
 
       for (const booking of serviceBookings) {
+        const allowDirectContact = hasConfirmedEngagement(booking.status);
         const interlocutor =
-          booking.service?.owner.email ?? booking.freelance?.email ?? UNKNOWN_COUNTERPART;
+          getDirectContactValue(
+            booking.service?.owner.email ?? booking.freelance?.email,
+            allowDirectContact,
+          );
 
         lines.push({
           lineId: booking.id,
@@ -496,7 +526,11 @@ export class BookingsService {
           continue;
         }
 
-        const interlocutor = mb.reliefMission.establishment.email ?? UNKNOWN_COUNTERPART;
+        const allowDirectContact = hasConfirmedEngagement(mb.status);
+        const interlocutor = getDirectContactValue(
+          mb.reliefMission.establishment.email,
+          allowDirectContact,
+        );
         const planning = this.getMissionPlanningSummary(mb.reliefMission);
 
         lines.push({
@@ -519,9 +553,10 @@ export class BookingsService {
 
       for (const booking of serviceBookings) {
         const isRequester = booking.establishmentId === user.id;
+        const allowDirectContact = hasConfirmedEngagement(booking.status);
         const interlocutor = isRequester
-          ? (booking.service?.owner.email ?? UNKNOWN_COUNTERPART)
-          : (booking.establishment.email ?? UNKNOWN_COUNTERPART);
+          ? getDirectContactValue(booking.service?.owner.email, allowDirectContact)
+          : getDirectContactValue(booking.establishment.email, allowDirectContact);
         lines.push({
           lineId: booking.id,
           lineType: "SERVICE_BOOKING",
@@ -748,21 +783,28 @@ export class BookingsService {
 
       const confirmedBooking = mission.bookings.find(
         (booking) =>
-          booking.status !== BookingStatus.CANCELLED && Boolean(booking.freelance?.email),
+          hasConfirmedEngagement(booking.status) && Boolean(booking.freelance?.email),
       );
+
+      const allowMissionDirectContact =
+        user.role === UserRole.ESTABLISHMENT
+          ? Boolean(confirmedBooking)
+          : Boolean(
+              confirmedBooking &&
+              confirmedBooking.freelanceId === user.id &&
+              hasConfirmedEngagement(confirmedBooking.status),
+            );
 
       const contactEmail =
         user.role === UserRole.ESTABLISHMENT
-          ? (confirmedBooking?.freelance?.email ?? UNKNOWN_COUNTERPART)
-          : (mission.establishment.email ?? UNKNOWN_COUNTERPART);
+          ? getDirectContactValue(confirmedBooking?.freelance?.email, allowMissionDirectContact)
+          : getDirectContactValue(mission.establishment.email, allowMissionDirectContact);
 
       // Check if the freelance is the confirmed one (for terrain info visibility)
       const isConfirmedFreelance =
         user.role === UserRole.FREELANCE &&
         confirmedBooking?.freelanceId === user.id &&
-        confirmedBooking?.status === BookingStatus.CONFIRMED;
-
-      const isEstablishmentOwner = user.role === UserRole.ESTABLISHMENT;
+        hasConfirmedEngagement(confirmedBooking?.status);
 
       const details: BookingDetails = {
         address: mission.address,
@@ -776,8 +818,8 @@ export class BookingsService {
       };
 
       // Expose terrain/contact details only to confirmed parties
-      if (isConfirmedFreelance || isEstablishmentOwner) {
-        const counterProfile = isEstablishmentOwner
+      if (allowMissionDirectContact) {
+        const counterProfile = user.role === UserRole.ESTABLISHMENT
           ? confirmedBooking?.freelance?.profile
           : mission.establishment.profile;
 
@@ -803,6 +845,7 @@ export class BookingsService {
       select: {
         establishmentId: true,
         freelanceId: true,
+        status: true,
         establishment: {
           select: {
             email: true,
@@ -832,9 +875,10 @@ export class BookingsService {
       throw new ForbiddenException("You cannot view this booking");
     }
 
+    const allowServiceDirectContact = hasConfirmedEngagement(booking.status);
     const contactEmail = isEstablishmentOwner
-      ? (booking.service?.owner.email ?? UNKNOWN_COUNTERPART)
-      : (booking.establishment.email ?? UNKNOWN_COUNTERPART);
+      ? getDirectContactValue(booking.service?.owner.email, allowServiceDirectContact)
+      : getDirectContactValue(booking.establishment.email, allowServiceDirectContact);
 
     return {
       address: SERVICE_ADDRESS_PLACEHOLDER,
@@ -1268,11 +1312,17 @@ export class BookingsService {
       throw new ForbiddenException("You cannot view this order");
     }
 
+    const allowDirectContact = hasConfirmedEngagement(booking.status);
+
     // Build participants
-    const requester = this.toParticipant(booking.establishment, booking.establishment.role);
+    const requester = this.toParticipant(
+      booking.establishment,
+      booking.establishment.role,
+      allowDirectContact,
+    );
     const provider = booking.freelance
-      ? this.toParticipant(booking.freelance, booking.freelance.role)
-      : { id: "", email: "", role: "FREELANCE" };
+      ? this.toParticipant(booking.freelance, booking.freelance.role, allowDirectContact)
+      : { id: "", email: CONTACT_DETAILS_LOCKED, role: "FREELANCE" };
 
     // Build quotes
     const quotes = booking.quotes.map((q) => {
@@ -1400,16 +1450,17 @@ export class BookingsService {
   private toParticipant(
     user: { id: string; email: string; profile?: { firstName: string; lastName: string; companyName?: string | null; avatar?: string | null; phone?: string | null } | null },
     role: string,
+    allowDirectContact: boolean,
   ) {
     return {
       id: user.id,
-      email: user.email,
+      email: getDirectContactValue(user.email, allowDirectContact),
       role,
       firstName: user.profile?.firstName,
       lastName: user.profile?.lastName,
       companyName: user.profile?.companyName ?? undefined,
       avatar: user.profile?.avatar ?? undefined,
-      phone: user.profile?.phone ?? undefined,
+      phone: allowDirectContact ? (user.profile?.phone ?? undefined) : undefined,
     };
   }
 

@@ -1,7 +1,12 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { BookingStatus, ReliefMissionStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { AdminMissionRow, AdminServiceRow } from "./types/admin-offers.types";
+import {
+  AdminMissionDetail,
+  AdminMissionRow,
+  AdminServiceDetail,
+  AdminServiceRow,
+} from "./types/admin-offers.types";
 
 function getDisplayName(
   firstName: string | null | undefined,
@@ -10,6 +15,15 @@ function getDisplayName(
 ) {
   const name = [firstName, lastName].filter(Boolean).join(" ").trim();
   return name || email;
+}
+
+function toMessageExcerpt(message: string, maxLength = 140) {
+  const normalized = message.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
 @Injectable()
@@ -76,6 +90,82 @@ export class AdminOffersService {
       establishmentEmail: mission.establishment.email,
       candidatesCount: mission.bookings.length,
     }));
+  }
+
+  async getMissionById(missionId: string): Promise<AdminMissionDetail> {
+    const mission = await this.prisma.reliefMission.findUnique({
+      where: { id: missionId },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        address: true,
+        dateStart: true,
+        dateEnd: true,
+        hourlyRate: true,
+        establishment: {
+          select: {
+            email: true,
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+        bookings: {
+          where: {
+            status: {
+              not: BookingStatus.CANCELLED,
+            },
+          },
+          select: {
+            id: true,
+          },
+        },
+        deskRequests: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          select: {
+            id: true,
+            status: true,
+            priority: true,
+            createdAt: true,
+            message: true,
+          },
+        },
+      },
+    });
+
+    if (!mission) {
+      throw new NotFoundException("Mission not found");
+    }
+
+    return {
+      id: mission.id,
+      title: mission.title,
+      status: mission.status,
+      establishmentName: getDisplayName(
+        mission.establishment.profile?.firstName,
+        mission.establishment.profile?.lastName,
+        mission.establishment.email,
+      ),
+      establishmentEmail: mission.establishment.email,
+      address: mission.address,
+      dateStart: mission.dateStart.toISOString(),
+      dateEnd: mission.dateEnd.toISOString(),
+      hourlyRate: mission.hourlyRate,
+      candidatesCount: mission.bookings.length,
+      linkedDeskRequests: mission.deskRequests.map((deskRequest) => ({
+        id: deskRequest.id,
+        status: deskRequest.status,
+        priority: deskRequest.priority,
+        createdAt: deskRequest.createdAt.toISOString(),
+        messageExcerpt: toMessageExcerpt(deskRequest.message),
+      })),
+    };
   }
 
   async deleteMission(missionId: string, adminId: string): Promise<{ ok: true }> {
@@ -184,6 +274,54 @@ export class AdminOffersService {
       ),
       freelanceEmail: service.owner.email,
     }));
+  }
+
+  async getServiceById(serviceId: string): Promise<AdminServiceDetail> {
+    const service = await this.prisma.service.findUnique({
+      where: { id: serviceId },
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        price: true,
+        isFeatured: true,
+        isHidden: true,
+        description: true,
+        createdAt: true,
+        owner: {
+          select: {
+            email: true,
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!service) {
+      throw new NotFoundException("Service not found");
+    }
+
+    return {
+      id: service.id,
+      title: service.title,
+      type: service.type,
+      price: service.price,
+      freelanceName: getDisplayName(
+        service.owner.profile?.firstName,
+        service.owner.profile?.lastName,
+        service.owner.email,
+      ),
+      freelanceEmail: service.owner.email,
+      isFeatured: service.isFeatured,
+      isHidden: service.isHidden,
+      description: service.description,
+      createdAt: service.createdAt.toISOString(),
+    };
   }
 
   async featureService(serviceId: string, adminId: string): Promise<{ ok: true }> {

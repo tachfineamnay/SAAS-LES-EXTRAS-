@@ -64,6 +64,56 @@ describe("AdminOffersService", () => {
     });
   });
 
+  it("retourne le détail d'une mission avec ses demandes Desk liées", async () => {
+    prisma.reliefMission.findUnique.mockResolvedValue({
+      id: "mission-1",
+      title: "Mission de nuit",
+      status: ReliefMissionStatus.OPEN,
+      address: "12 rue du Test, Paris",
+      dateStart: new Date("2026-04-20T08:00:00.000Z"),
+      dateEnd: new Date("2026-04-20T16:00:00.000Z"),
+      hourlyRate: 28,
+      establishment: {
+        email: "est@example.com",
+        profile: {
+          firstName: "Luc",
+          lastName: "Martin",
+        },
+      },
+      bookings: [{ id: "booking-1" }, { id: "booking-2" }],
+      deskRequests: [
+        {
+          id: "desk-1",
+          status: "OPEN",
+          priority: "HIGH",
+          createdAt: new Date("2026-04-18T10:00:00.000Z"),
+          message: "Bonjour, je voudrais des informations complémentaires sur le rythme de nuit prévu sur cette mission.",
+        },
+      ],
+    });
+
+    await expect(service.getMissionById("mission-1")).resolves.toEqual({
+      id: "mission-1",
+      title: "Mission de nuit",
+      status: ReliefMissionStatus.OPEN,
+      establishmentName: "Luc Martin",
+      establishmentEmail: "est@example.com",
+      address: "12 rue du Test, Paris",
+      dateStart: "2026-04-20T08:00:00.000Z",
+      dateEnd: "2026-04-20T16:00:00.000Z",
+      hourlyRate: 28,
+      candidatesCount: 2,
+      linkedDeskRequests: [
+        expect.objectContaining({
+          id: "desk-1",
+          status: "OPEN",
+          priority: "HIGH",
+          createdAt: "2026-04-18T10:00:00.000Z",
+        }),
+      ],
+    });
+  });
+
   it("toggle isFeatured et journalise l'action", async () => {
     prisma.service.findUnique.mockResolvedValue({
       id: "service-1",
@@ -89,6 +139,39 @@ describe("AdminOffersService", () => {
           nextIsFeatured: true,
         },
       }),
+    });
+  });
+
+  it("retourne le détail d'un service", async () => {
+    prisma.service.findUnique.mockResolvedValue({
+      id: "service-1",
+      title: "Atelier mémoire",
+      type: "WORKSHOP",
+      price: 140,
+      isFeatured: true,
+      isHidden: false,
+      description: "Un atelier en petit groupe.",
+      createdAt: new Date("2026-04-10T08:00:00.000Z"),
+      owner: {
+        email: "freelance@example.com",
+        profile: {
+          firstName: "Nora",
+          lastName: "Diallo",
+        },
+      },
+    });
+
+    await expect(service.getServiceById("service-1")).resolves.toEqual({
+      id: "service-1",
+      title: "Atelier mémoire",
+      type: "WORKSHOP",
+      price: 140,
+      freelanceName: "Nora Diallo",
+      freelanceEmail: "freelance@example.com",
+      isFeatured: true,
+      isHidden: false,
+      description: "Un atelier en petit groupe.",
+      createdAt: "2026-04-10T08:00:00.000Z",
     });
   });
 
