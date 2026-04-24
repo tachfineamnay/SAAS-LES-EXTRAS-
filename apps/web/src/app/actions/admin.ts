@@ -15,6 +15,7 @@ export type AdminUserRow = {
   role: AdminUserRole;
   status: AdminUserStatus;
   createdAt: string;
+  kyc?: KycSummary | null;
 };
 
 export type AdminUserProfileDetails = {
@@ -48,10 +49,12 @@ export type AdminMissionRow = {
 
 export type AdminMissionLinkedDeskRequest = {
   id: string;
+  type: DeskRequestType;
   status: "OPEN" | "IN_PROGRESS" | "ANSWERED" | "CLOSED";
   priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
   createdAt: string;
   messageExcerpt: string;
+  requester: AdminMissionStakeholder | null;
 };
 
 export type AdminMissionStakeholder = {
@@ -90,7 +93,7 @@ export type AdminMissionLinkedBooking = {
   invoice:
     | {
         id: string;
-        status: string;
+        status: AdminFinanceInvoiceStatus;
         amount: number;
         invoiceNumber: string | null;
         createdAt: string;
@@ -225,6 +228,7 @@ export type AdminFinanceSummary = {
 export type AdminFinanceBookingType = "MISSION" | "SERVICE";
 export type AdminFinanceQuoteStatus = "DRAFT" | "SENT" | "ACCEPTED" | "REJECTED" | "REVISED";
 export type AdminFinancePaymentStatus = "PENDING" | "PAID" | "CANCELLED";
+export type AdminFinanceInvoiceStatus = "UNPAID" | "PAID";
 export type AdminFinanceBookingStatus =
   | "PENDING"
   | "QUOTE_SENT"
@@ -239,7 +243,7 @@ export type AdminFinanceBookingStatus =
 export type AdminFinanceInvoiceRow = {
   id: string;
   invoiceNumber: string | null;
-  status: string;
+  status: AdminFinanceInvoiceStatus;
   amount: number;
   createdAt: string;
   bookingId: string;
@@ -573,9 +577,16 @@ export type DeskRequestType =
   | "PAYMENT_ISSUE"
   | "BOOKING_FAILURE"
   | "PACK_PURCHASE_FAILURE"
-  | "MISSION_PUBLISH_FAILURE";
+  | "MISSION_PUBLISH_FAILURE"
+  | "TECHNICAL_ISSUE"
+  | "USER_REPORT"
+  | "LITIGE";
 
-export type FinanceIncidentType = Exclude<DeskRequestType, "MISSION_INFO_REQUEST">;
+export type FinanceIncidentType =
+  | "PAYMENT_ISSUE"
+  | "BOOKING_FAILURE"
+  | "PACK_PURCHASE_FAILURE"
+  | "MISSION_PUBLISH_FAILURE";
 export type DeskRequestPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
 export type AdminOutreachOrigin = "USER_PROFILE" | "CONTACT_BYPASS" | "MISSION_DETAIL";
 export type ContactBypassBlockedReason =
@@ -689,6 +700,9 @@ export async function sendAdminOutreach(
     },
   });
 
+  revalidatePath("/dashboard/inbox");
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/missions");
   return { ok: true };
 }
 
@@ -720,6 +734,8 @@ export async function updateDeskRequestStatus(
   revalidatePath("/admin/demandes");
   revalidatePath("/admin/incidents");
   revalidatePath("/admin");
+  revalidatePath("/dashboard/demandes");
+  revalidatePath("/dashboard/inbox");
   return { ok: true };
 }
 
@@ -735,6 +751,7 @@ export async function assignDeskRequest(
   });
   revalidatePath("/admin/demandes");
   revalidatePath("/admin/incidents");
+  revalidatePath("/dashboard/demandes");
   return { ok: true };
 }
 
@@ -751,6 +768,8 @@ export async function respondToDeskRequest(
   revalidatePath("/admin/demandes");
   revalidatePath("/admin/incidents");
   revalidatePath("/admin");
+  revalidatePath("/dashboard/demandes");
+  revalidatePath("/dashboard/inbox");
   return { ok: true };
 }
 

@@ -12,6 +12,7 @@ export type AdminUserRow = {
   role: UserRole;
   status: UserStatus;
   createdAt: string;
+  kyc: AdminUserKycSummary | null;
 };
 
 export type AdminUserKycDocument = {

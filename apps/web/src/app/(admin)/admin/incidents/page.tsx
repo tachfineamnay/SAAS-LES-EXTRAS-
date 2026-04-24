@@ -1,14 +1,10 @@
 import { getDeskRequests, getAdminUsers } from "@/app/actions/admin";
 import { FinanceIncidentsTable } from "@/components/admin/FinanceIncidentsTable";
+import { FINANCE_DESK_REQUEST_TYPES } from "@/lib/desk-labels";
 
 export const dynamic = "force-dynamic";
 
-const FINANCE_TYPES = new Set([
-  "PAYMENT_ISSUE",
-  "BOOKING_FAILURE",
-  "PACK_PURCHASE_FAILURE",
-  "MISSION_PUBLISH_FAILURE",
-]);
+const FINANCE_TYPES = new Set<string>(FINANCE_DESK_REQUEST_TYPES);
 
 export default async function AdminIncidentsPage() {
   const [allRequests, admins] = await Promise.all([

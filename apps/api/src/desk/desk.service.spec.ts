@@ -18,6 +18,9 @@ describe("DeskService", () => {
       findFirst: jest.fn(),
       findUnique: jest.fn(),
     },
+    booking: {
+      findFirst: jest.fn(),
+    },
     notification: {
       create: jest.fn(),
     },
@@ -211,6 +214,74 @@ describe("DeskService", () => {
   });
 
   // ─── findContactBypassEvents ────────────────────────────────────────────────
+
+  it("crée une demande utilisateur générique et la rattache au requérant", async () => {
+    prisma.deskRequest.create.mockResolvedValue({
+      id: "desk-generic-1",
+      type: "TECHNICAL_ISSUE",
+      requesterId: "free-1",
+    });
+
+    await expect(
+      service.createUserRequest("free-1", {
+        type: "TECHNICAL_ISSUE",
+        message: "Impossible de déposer mon document KYC.",
+      }),
+    ).resolves.toMatchObject({
+      id: "desk-generic-1",
+      type: "TECHNICAL_ISSUE",
+    });
+
+    expect(prisma.booking.findFirst).not.toHaveBeenCalled();
+    expect(prisma.deskRequest.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        type: "TECHNICAL_ISSUE",
+        requesterId: "free-1",
+        bookingId: null,
+        priority: "NORMAL",
+        message: "Impossible de déposer mon document KYC.",
+      }),
+    });
+  });
+
+  it("vérifie qu'une réservation liée appartient au requérant", async () => {
+    prisma.booking.findFirst.mockResolvedValue({ id: "booking-1" });
+    prisma.deskRequest.create.mockResolvedValue({ id: "desk-litige-1", type: "LITIGE" });
+
+    await expect(
+      service.createUserRequest("est-1", {
+        type: "LITIGE",
+        message: "Je souhaite ouvrir un litige sur cette réservation.",
+        bookingId: "booking-1",
+      }),
+    ).resolves.toMatchObject({ id: "desk-litige-1" });
+
+    expect(prisma.booking.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "booking-1",
+        OR: [
+          { establishmentId: "est-1" },
+          { freelanceId: "est-1" },
+          { service: { ownerId: "est-1" } },
+        ],
+      },
+      select: { id: true },
+    });
+  });
+
+  it("refuse une réservation liée hors périmètre utilisateur", async () => {
+    prisma.booking.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.createUserRequest("free-1", {
+        type: "USER_REPORT",
+        message: "Signalement lié à une réservation.",
+        bookingId: "booking-private",
+      }),
+    ).rejects.toThrow(NotFoundException);
+
+    expect(prisma.deskRequest.create).not.toHaveBeenCalled();
+  });
 
   it("retourne les événements de contournement avec le résumé expéditeur", async () => {
     prisma.contactBypassEvent.findMany.mockResolvedValue([

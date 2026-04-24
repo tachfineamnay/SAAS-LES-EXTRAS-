@@ -62,7 +62,7 @@ const links = [
   },
   {
     href: "/admin/demandes",
-    label: "Demandes Info",
+    label: "Inbox Desk",
     icon: Inbox,
   },
   {

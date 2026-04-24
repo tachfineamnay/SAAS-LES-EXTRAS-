@@ -72,6 +72,18 @@ export class AdminUsersService {
             lastName: true,
           },
         },
+        documents: {
+          where: {
+            serviceId: null,
+            type: {
+              in: [...FREELANCE_KYC_DOCUMENT_TYPES],
+            },
+          },
+          select: {
+            type: true,
+            status: true,
+          },
+        },
       },
     });
 
@@ -82,6 +94,17 @@ export class AdminUsersService {
       role: user.role,
       status: user.status,
       createdAt: user.createdAt.toISOString(),
+      kyc:
+        user.role === UserRole.FREELANCE
+          ? buildFreelanceKycSummary(
+              user.documents
+                .filter((document: any) => isFreelanceKycDocumentType(document.type))
+                .map((document: any) => ({
+                  type: document.type,
+                  status: document.status,
+                })),
+            )
+          : null,
     }));
   }
 

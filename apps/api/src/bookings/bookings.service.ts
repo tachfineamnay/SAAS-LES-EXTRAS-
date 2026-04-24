@@ -5,7 +5,14 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { randomUUID } from "crypto";
-import { BookingStatus, Prisma, ReliefMissionStatus, ServiceType, UserRole } from "@prisma/client";
+import {
+  BookingStatus,
+  InvoiceStatus,
+  Prisma,
+  ReliefMissionStatus,
+  ServiceType,
+  UserRole,
+} from "@prisma/client";
 import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
 import { PrismaService } from "../prisma/prisma.service";
 import { CancelBookingLineDto } from "./dto/cancel-booking-line.dto";
@@ -267,7 +274,7 @@ export class BookingsService {
         bookingId: booking.id,
         amount,
         invoiceNumber: this.generateInvoiceNumber(),
-        status: "UNPAID",
+        status: InvoiceStatus.UNPAID,
       },
     });
   }
@@ -1195,7 +1202,7 @@ export class BookingsService {
     if (booking.invoice) {
       await this.prisma.invoice.update({
         where: { id: booking.invoice.id },
-        data: { status: "PAID" },
+        data: { status: InvoiceStatus.PAID },
       });
     }
 

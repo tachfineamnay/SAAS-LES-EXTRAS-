@@ -5,6 +5,8 @@ import { CheckCircle2, Clock, Inbox, MessageSquare } from "lucide-react";
 import { getSession, deleteSession } from "@/lib/session";
 import { getMyDeskRequestsSafe, type MyDeskRequest, type MyDeskRequestStatus } from "@/app/actions/desk";
 import { Badge } from "@/components/ui/badge";
+import { UserDeskRequestForm } from "@/components/dashboard/UserDeskRequestForm";
+import { getDeskContextLabel, getDeskRequestTypeLabel } from "@/lib/desk-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -31,11 +33,16 @@ function StatusIcon({ status }: { status: MyDeskRequestStatus }) {
 }
 
 function DeskRequestCard({ req }: { req: MyDeskRequest }) {
+  const contextLabel = getDeskContextLabel(req);
+
   return (
     <article className="rounded-xl border bg-card p-5 space-y-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="space-y-0.5">
-          <p className="font-semibold text-sm">{req.mission?.title ?? "—"}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline">{getDeskRequestTypeLabel(req.type)}</Badge>
+            <p className="font-semibold text-sm">{contextLabel}</p>
+          </div>
           <p className="text-xs text-muted-foreground">
             {format(new Date(req.createdAt), "d MMMM yyyy", { locale: fr })}
           </p>
@@ -77,7 +84,7 @@ function DeskRequestCard({ req }: { req: MyDeskRequest }) {
 export default async function MesDemandesPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.user.role !== "FREELANCE") redirect("/dashboard");
+  if (session.user.role !== "FREELANCE" && session.user.role !== "ESTABLISHMENT") redirect("/dashboard");
 
   const result = await getMyDeskRequestsSafe(session.token);
   if (!result.ok && result.unauthorized) {
@@ -93,9 +100,11 @@ export default async function MesDemandesPage() {
       <header className="space-y-1">
         <h1 className="text-2xl font-bold tracking-tight">Mes demandes</h1>
         <p className="text-sm text-muted-foreground">
-          Retrouvez vos demandes d&apos;informations sur les missions et les réponses de l&apos;équipe.
+          Retrouvez vos tickets Desk, vos demandes d&apos;informations et les réponses de l&apos;équipe.
         </p>
       </header>
+
+      <UserDeskRequestForm />
 
       {loadError && (
         <div className="rounded-xl border border-[hsl(var(--color-amber-300))] bg-[hsl(var(--color-amber-50))] p-4 text-sm text-[hsl(var(--color-amber-800))]">
@@ -110,7 +119,7 @@ export default async function MesDemandesPage() {
             {loadError ? "Nous ne pouvons pas afficher vos demandes pour le moment." : "Aucune demande pour le moment."}
           </p>
           <p className="text-xs text-muted-foreground">
-            Vous pouvez en soumettre depuis la fiche d&apos;une mission via &laquo; Demander plus d&apos;informations &raquo;.
+            Vous pouvez soumettre une demande depuis une mission ou créer une demande générale depuis cette page.
           </p>
         </div>
       ) : (

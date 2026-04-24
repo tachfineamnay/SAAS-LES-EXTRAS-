@@ -171,10 +171,16 @@ describe("AdminOffersService", () => {
       deskRequests: [
         {
           id: "desk-1",
+          type: "MISSION_INFO_REQUEST",
           status: "OPEN",
           priority: "HIGH",
           createdAt: new Date("2026-04-18T10:00:00.000Z"),
           message: "Bonjour, je voudrais des informations complémentaires sur le rythme de nuit prévu sur cette mission.",
+          requester: {
+            id: "free-1",
+            email: "free-1@test.fr",
+            profile: { firstName: "Aya", lastName: "Benali", companyName: null },
+          },
         },
       ],
     });
@@ -246,9 +252,15 @@ describe("AdminOffersService", () => {
       linkedDeskRequests: [
         expect.objectContaining({
           id: "desk-1",
+          type: "MISSION_INFO_REQUEST",
           status: "OPEN",
           priority: "HIGH",
           createdAt: "2026-04-18T10:00:00.000Z",
+          requester: {
+            id: "free-1",
+            name: "Aya Benali",
+            email: "free-1@test.fr",
+          },
         }),
       ],
     });

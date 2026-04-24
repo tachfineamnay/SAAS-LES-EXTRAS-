@@ -2,6 +2,8 @@ import {
   BookingStatus,
   DeskRequestPriority,
   DeskRequestStatus,
+  DeskRequestType,
+  InvoiceStatus,
   PaymentStatus,
   QuoteStatus,
   ReliefMissionStatus,
@@ -37,10 +39,12 @@ export type AdminServiceRow = {
 
 export type AdminMissionLinkedDeskRequest = {
   id: string;
+  type: DeskRequestType;
   status: DeskRequestStatus;
   priority: DeskRequestPriority;
   createdAt: string;
   messageExcerpt: string;
+  requester: AdminMissionStakeholder | null;
 };
 
 export type AdminMissionDetail = {
@@ -116,7 +120,7 @@ export type AdminMissionLinkedBooking = {
   invoice:
     | {
         id: string;
-        status: string;
+        status: InvoiceStatus;
         amount: number;
         invoiceNumber: string | null;
         createdAt: string;

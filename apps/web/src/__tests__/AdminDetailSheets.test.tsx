@@ -81,10 +81,16 @@ describe("MissionDetailSheet", () => {
           linkedDeskRequests: [
             {
               id: "desk-1",
+              type: "MISSION_INFO_REQUEST",
               status: "OPEN",
               priority: "HIGH",
               createdAt: "2026-04-18T10:00:00.000Z",
               messageExcerpt: "Question sur les transmissions.",
+              requester: {
+                id: "free-1",
+                name: "Aya Benali",
+                email: "aya@test.fr",
+              },
             },
           ],
         }}

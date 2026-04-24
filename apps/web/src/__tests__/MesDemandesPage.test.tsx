@@ -19,6 +19,7 @@ vi.mock("@/lib/session", () => ({
 
 vi.mock("@/app/actions/desk", () => ({
   getMyDeskRequestsSafe: (token?: string) => mockGetMyDeskRequests(token),
+  createUserDeskRequest: vi.fn(),
 }));
 
 const { default: MesDemandesPage } = await import("@/app/(dashboard)/dashboard/demandes/page");
@@ -39,6 +40,7 @@ describe("MesDemandesPage", () => {
       data: [
         {
           id: "desk-1",
+          type: "MISSION_INFO_REQUEST",
           status: "ANSWERED",
           message: "Pouvez-vous préciser les horaires ?",
           response: "La mission commence à 8h.",
@@ -48,6 +50,8 @@ describe("MesDemandesPage", () => {
             id: "mission-1",
             title: "Renfort éducateur",
           },
+          booking: null,
+          answeredBy: null,
         },
       ],
     });
@@ -60,6 +64,21 @@ describe("MesDemandesPage", () => {
     expect(screen.getByText("Renfort éducateur")).toBeInTheDocument();
     expect(screen.getByText("La mission commence à 8h.")).toBeInTheDocument();
     expect(mockGetMyDeskRequests).toHaveBeenCalledWith("freelance-token");
+  });
+
+  it("rend aussi la page pour un établissement", async () => {
+    mockGetSession.mockResolvedValue({
+      token: "establishment-token",
+      user: {
+        id: "est-1",
+        role: "ESTABLISHMENT",
+      },
+    });
+
+    render(await MesDemandesPage());
+
+    expect(screen.getByText("Créer une demande Desk")).toBeInTheDocument();
+    expect(mockGetMyDeskRequests).toHaveBeenCalledWith("establishment-token");
   });
 
   it("affiche un état dégradé quand les demandes sont indisponibles", async () => {

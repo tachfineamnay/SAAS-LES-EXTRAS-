@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import {
   BookingStatus,
+  DeskRequestType,
+  InvoiceStatus,
   PaymentStatus,
   QuoteStatus,
   ReliefMissionStatus,
@@ -329,10 +331,24 @@ export class AdminOffersService {
           },
           select: {
             id: true,
+            type: true,
             status: true,
             priority: true,
             createdAt: true,
             message: true,
+            requester: {
+              select: {
+                id: true,
+                email: true,
+                profile: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                    companyName: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -435,10 +451,12 @@ export class AdminOffersService {
       }),
       linkedDeskRequests: mission.deskRequests.map((deskRequest) => ({
         id: deskRequest.id,
+        type: deskRequest.type,
         status: deskRequest.status,
         priority: deskRequest.priority,
         createdAt: deskRequest.createdAt.toISOString(),
         messageExcerpt: toMessageExcerpt(deskRequest.message),
+        requester: getStakeholder(deskRequest.requester),
       })),
     };
   }
@@ -454,7 +472,7 @@ export class AdminOffersService {
     createdAt: Date;
     invoice: {
       id: string;
-      status: string;
+      status: InvoiceStatus;
       amount: number;
       invoiceNumber: string | null;
       createdAt: Date;
@@ -637,9 +655,19 @@ export class AdminOffersService {
     }>;
     deskRequests: Array<{
       id: string;
+      type: DeskRequestType;
       status: string;
       priority: string;
       createdAt: Date;
+      requester?: {
+        id: string;
+        email: string;
+        profile: {
+          firstName: string | null;
+          lastName: string | null;
+          companyName?: string | null;
+        } | null;
+      } | null;
     }>;
   }): AdminMissionTimelineEvent[] {
     const events: AdminMissionTimelineEvent[] = [
@@ -725,7 +753,7 @@ export class AdminOffersService {
         id: `desk-${deskRequest.id}`,
         type: "DESK_REQUEST_OPENED",
         label: "Ticket Desk ouvert",
-        description: `${deskRequest.priority.toLowerCase()} / ${deskRequest.status.toLowerCase()}`,
+        description: `${deskRequest.type.toLowerCase()} / ${deskRequest.priority.toLowerCase()} / ${deskRequest.status.toLowerCase()}`,
         timestamp: deskRequest.createdAt.toISOString(),
       });
     });

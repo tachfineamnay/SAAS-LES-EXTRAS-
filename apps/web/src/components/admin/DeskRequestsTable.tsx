@@ -13,6 +13,11 @@ import {
   updateDeskRequestStatus,
   respondToDeskRequest,
 } from "@/app/actions/admin";
+import {
+  DESK_REQUEST_TYPE_LABELS,
+  getDeskContextLabel,
+  getDeskRequestTypeLabel,
+} from "@/lib/desk-labels";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -60,14 +65,6 @@ const STATUS_VARIANTS: Record<DeskRequestStatus, "default" | "outline" | "second
   CLOSED: "outline",
 };
 
-const TYPE_LABELS: Record<DeskRequestRow["type"], string> = {
-  MISSION_INFO_REQUEST: "Info mission",
-  PAYMENT_ISSUE: "Problème paiement",
-  BOOKING_FAILURE: "Réservation échouée",
-  PACK_PURCHASE_FAILURE: "Achat pack échoué",
-  MISSION_PUBLISH_FAILURE: "Publication mission échouée",
-};
-
 const PRIORITY_LABELS: Record<DeskRequestPriority, string> = {
   LOW: "Basse",
   NORMAL: "Normale",
@@ -86,8 +83,8 @@ const FILTERS: FilterDefinition[] = [
   {
     key: "type",
     label: "Tous les types",
-    options: (Object.keys(TYPE_LABELS) as DeskRequestRow["type"][]).map((key) => ({
-      label: TYPE_LABELS[key],
+    options: (Object.keys(DESK_REQUEST_TYPE_LABELS) as DeskRequestRow["type"][]).map((key) => ({
+      label: getDeskRequestTypeLabel(key),
       value: key,
     })),
   },
@@ -214,7 +211,7 @@ export function DeskRequestsTable({ requests, admins }: DeskRequestsTableProps) 
     startTransition(async () => {
       try {
         await respondToDeskRequest(selected.id, replyText.trim());
-        toast.success("Réponse envoyée — le candidat a été notifié");
+        toast.success("Réponse envoyée — l'utilisateur a été notifié");
         closeSheet();
         router.refresh();
       } catch {
@@ -226,7 +223,7 @@ export function DeskRequestsTable({ requests, admins }: DeskRequestsTableProps) 
   if (requests.length === 0) {
     return (
       <div className="rounded-xl border bg-card p-10 text-center text-sm text-muted-foreground">
-        Aucune demande d&apos;informations pour le moment.
+        Aucun ticket Desk pour le moment.
       </div>
     );
   }
@@ -249,8 +246,9 @@ export function DeskRequestsTable({ requests, admins }: DeskRequestsTableProps) 
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Mission</TableHead>
-              <TableHead>Candidat</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Contexte</TableHead>
+              <TableHead>Utilisateur</TableHead>
               <TableHead>Message</TableHead>
               <TableHead>Priorité</TableHead>
               <TableHead>Statut</TableHead>
@@ -262,14 +260,17 @@ export function DeskRequestsTable({ requests, admins }: DeskRequestsTableProps) 
           <TableBody>
             {filteredRequests.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">
                   Aucune demande ne correspond aux filtres.
                 </TableCell>
               </TableRow>
             ) : filteredRequests.map((req) => (
               <TableRow key={req.id}>
+                <TableCell className="font-medium max-w-[150px] truncate">
+                  {getDeskRequestTypeLabel(req.type)}
+                </TableCell>
                 <TableCell className="font-medium max-w-[160px] truncate">
-                  {req.mission?.title ?? "—"}
+                  {getDeskContextLabel(req)}
                 </TableCell>
                 <TableCell className="max-w-[140px] truncate">
                   {getRequesterName(req.requester)}
@@ -318,11 +319,9 @@ export function DeskRequestsTable({ requests, admins }: DeskRequestsTableProps) 
           {selected && (
             <>
               <SheetHeader>
-                <SheetTitle>{TYPE_LABELS[selected.type]}</SheetTitle>
+                <SheetTitle>{getDeskRequestTypeLabel(selected.type)}</SheetTitle>
                 <SheetDescription>
-                  {selected.mission?.title
-                    ? `Mission : ${selected.mission.title} — `
-                    : ""}
+                  {getDeskContextLabel(selected)} —{" "}
                   {getRequesterName(selected.requester)}
                 </SheetDescription>
               </SheetHeader>
@@ -378,7 +377,7 @@ export function DeskRequestsTable({ requests, admins }: DeskRequestsTableProps) 
                 {/* Message candidat */}
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    Message du candidat
+                    Message utilisateur
                   </p>
                   <div className="rounded-lg border bg-muted/30 p-4 text-sm whitespace-pre-wrap">
                     {selected.message}

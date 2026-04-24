@@ -78,6 +78,11 @@ enum PaymentStatus {
   CANCELLED
 }
 
+enum InvoiceStatus {
+  UNPAID
+  PAID
+}
+
 enum ReviewType {
   ESTABLISHMENT_TO_FREELANCE
   FREELANCE_TO_ESTABLISHMENT
@@ -115,6 +120,9 @@ enum DeskRequestType {
   BOOKING_FAILURE
   PACK_PURCHASE_FAILURE
   MISSION_PUBLISH_FAILURE
+  TECHNICAL_ISSUE
+  USER_REPORT
+  LITIGE
 }
 
 enum DeskRequestPriority {
@@ -410,13 +418,13 @@ model Booking {
 // ─────────────────────────────────────────────
 
 model Invoice {
-  id            String   @id @default(cuid())
-  bookingId     String   @unique
+  id            String        @id @default(cuid())
+  bookingId     String        @unique
   amount        Float
-  status        String   @default("UNPAID")
+  status        InvoiceStatus @default(UNPAID)
   invoiceNumber String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }

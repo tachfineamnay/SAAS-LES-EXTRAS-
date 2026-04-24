@@ -19,6 +19,7 @@ import {
   type AdminMissionDetail,
   type AdminMissionLinkedDeskRequest,
 } from "@/app/actions/admin";
+import { getDeskRequestTypeLabel } from "@/lib/desk-labels";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -602,12 +603,18 @@ export function MissionDetailSheet({
                       className="rounded-lg border border-border/50 bg-muted/20 p-4"
                     >
                       <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline">{getDeskRequestTypeLabel(request.type)}</Badge>
                         <Badge variant={status.variant}>{status.label}</Badge>
                         <Badge variant={priority.variant}>{priority.label}</Badge>
                         <span className="text-xs text-muted-foreground">
                           {dateTimeFormatter.format(new Date(request.createdAt))}
                         </span>
                       </div>
+                      {request.requester ? (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Demandeur : {request.requester.name} ({request.requester.email})
+                        </p>
+                      ) : null}
                       <p className="mt-3 text-sm text-foreground">{request.messageExcerpt}</p>
                     </div>
                   );

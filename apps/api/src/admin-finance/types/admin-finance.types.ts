@@ -1,4 +1,4 @@
-import { BookingStatus, PaymentStatus, QuoteStatus } from "@prisma/client";
+import { BookingStatus, InvoiceStatus, PaymentStatus, QuoteStatus } from "@prisma/client";
 
 export type AdminFinanceSummary = {
   invoicesCount: number;
@@ -17,7 +17,7 @@ export type AdminFinanceBookingType = "MISSION" | "SERVICE";
 export type AdminFinanceInvoiceRow = {
   id: string;
   invoiceNumber: string | null;
-  status: string;
+  status: InvoiceStatus;
   amount: number;
   createdAt: string;
   bookingId: string;

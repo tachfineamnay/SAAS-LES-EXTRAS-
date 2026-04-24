@@ -39,7 +39,7 @@ const {
   updateDeskRequestStatus,
 } =
   await import("@/app/actions/admin");
-const { getMyDeskRequests } = await import("@/app/actions/desk");
+const { createUserDeskRequest, getMyDeskRequests } = await import("@/app/actions/desk");
 
 const fakeDeskRequest = {
   id: "dr-1",
@@ -370,6 +370,12 @@ describe("sendAdminOutreach (admin)", () => {
       }),
     );
   });
+
+  it("revalide l'inbox utilisateur après outreach", async () => {
+    await sendAdminOutreach("user-1", "Message du Desk.");
+
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/inbox");
+  });
 });
 
 describe("KYC admin actions", () => {
@@ -525,6 +531,34 @@ describe("getMyDeskRequests (freelance)", () => {
     mockApiRequest.mockRejectedValue(new Error("Forbidden"));
     const result = await getMyDeskRequests();
     expect(result).toEqual([]);
+  });
+});
+
+describe("createUserDeskRequest (user)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ token: "user-tok", user: { id: "u-1", role: "ESTABLISHMENT" } });
+    mockApiRequest.mockResolvedValue({ id: "desk-new" });
+  });
+
+  it("crée un ticket Desk générique via POST /desk-requests", async () => {
+    const result = await createUserDeskRequest("TECHNICAL_ISSUE", "Le chargement du KYC bloque.");
+
+    expect(result).toEqual({ ok: true });
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/desk-requests",
+      expect.objectContaining({
+        method: "POST",
+        token: "user-tok",
+        body: {
+          type: "TECHNICAL_ISSUE",
+          message: "Le chargement du KYC bloque.",
+          bookingId: undefined,
+        },
+        label: "desk.create-user-request",
+      }),
+    );
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/demandes");
   });
 });
 

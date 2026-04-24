@@ -36,6 +36,7 @@ const ESTABLISHMENT_LINKS = [
   { href: "/marketplace",        label: "Marketplace",     icon: ShoppingBag },
   { href: "/dashboard/packs",    label: "Crédits",         icon: WalletCards },
   { href: "/dashboard/renforts", label: "Mes Renforts",    icon: Briefcase },
+  { href: "/dashboard/demandes", label: "Mes demandes",    icon: Inbox },
   { href: "/orders",             label: "Mes Commandes",   icon: Package },
   { href: "/dashboard/inbox",    label: "Messagerie",      icon: Mail },
 ];

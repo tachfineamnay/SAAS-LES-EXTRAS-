@@ -15,6 +15,10 @@ import {
   type DeskRequestStatus,
   type FinanceIncidentType,
 } from "@/app/actions/admin";
+import {
+  FINANCE_DESK_REQUEST_TYPES,
+  getDeskRequestTypeLabel,
+} from "@/lib/desk-labels";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,13 +77,6 @@ const STATUS_VARIANTS: Record<DeskRequestStatus, "default" | "outline" | "second
   CLOSED: "outline",
 };
 
-const TYPE_LABELS: Record<FinanceIncidentType, string> = {
-  PAYMENT_ISSUE: "Problème paiement",
-  BOOKING_FAILURE: "Réservation échouée",
-  PACK_PURCHASE_FAILURE: "Achat pack échoué",
-  MISSION_PUBLISH_FAILURE: "Publication mission échouée",
-};
-
 const PRIORITY_LABELS: Record<DeskRequestPriority, string> = {
   LOW: "Basse",
   NORMAL: "Normale",
@@ -110,8 +107,8 @@ const FILTERS: FilterDefinition[] = [
   {
     key: "type",
     label: "Tous les types",
-    options: (Object.keys(TYPE_LABELS) as FinanceIncidentType[]).map((key) => ({
-      label: TYPE_LABELS[key],
+    options: FINANCE_DESK_REQUEST_TYPES.map((key) => ({
+      label: getDeskRequestTypeLabel(key),
       value: key,
     })),
   },
@@ -236,9 +233,9 @@ function CreateIncidentSheet({ open, onClose }: CreateSheetProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(TYPE_LABELS) as FinanceIncidentType[]).map((key) => (
+                {FINANCE_DESK_REQUEST_TYPES.map((key) => (
                   <SelectItem key={key} value={key}>
-                    {TYPE_LABELS[key]}
+                    {getDeskRequestTypeLabel(key)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -375,7 +372,7 @@ function IncidentDetailSheet({ selected, admins, onClose }: DetailSheetProps) {
   if (!selected) return null;
 
   const bookingContext = getBookingContext(selected.booking);
-  const typeLabel = TYPE_LABELS[selected.type as FinanceIncidentType] ?? selected.type;
+  const typeLabel = getDeskRequestTypeLabel(selected.type);
 
   return (
     <Sheet open={!!selected} onOpenChange={(open) => !open && onClose()}>
@@ -594,7 +591,7 @@ export function FinanceIncidentsTable({ requests, admins }: FinanceIncidentsTabl
                   return (
                     <TableRow key={req.id}>
                       <TableCell className="font-medium text-sm whitespace-nowrap">
-                        {TYPE_LABELS[req.type as FinanceIncidentType] ?? req.type}
+                        {getDeskRequestTypeLabel(req.type)}
                       </TableCell>
                       <TableCell className="max-w-[140px] truncate">
                         {getRequesterName(req.requester)}

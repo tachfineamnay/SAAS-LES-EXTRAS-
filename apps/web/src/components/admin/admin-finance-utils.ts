@@ -76,6 +76,10 @@ export function getInvoiceStatusMeta(status: string): {
     return { label: "Impayée", variant: "warning" };
   }
 
+  if (status === "PENDING_PAYMENT") {
+    return { label: "Impayée", variant: "warning" };
+  }
+
   return { label: status, variant: "outline" };
 }
 

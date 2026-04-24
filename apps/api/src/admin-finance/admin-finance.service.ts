@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { BookingStatus, QuoteStatus } from "@prisma/client";
+import { BookingStatus, InvoiceStatus, QuoteStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   AdminAwaitingPaymentBookingRow,
@@ -91,17 +91,17 @@ export class AdminFinanceService {
       }),
       this.prisma.invoice.count({
         where: {
-          status: "PAID",
+          status: InvoiceStatus.PAID,
         },
       }),
       this.prisma.invoice.count({
         where: {
-          status: "UNPAID",
+          status: InvoiceStatus.UNPAID,
         },
       }),
       this.prisma.invoice.aggregate({
         where: {
-          status: "PAID",
+          status: InvoiceStatus.PAID,
         },
         _sum: {
           amount: true,
@@ -109,7 +109,7 @@ export class AdminFinanceService {
       }),
       this.prisma.invoice.aggregate({
         where: {
-          status: "UNPAID",
+          status: InvoiceStatus.UNPAID,
         },
         _sum: {
           amount: true,

@@ -27,6 +27,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   establishment: "Mon Établissement",
   missions: "Missions",
   services: "Services",
+  demandes: "Demandes",
 };
 
 function Breadcrumbs() {
@@ -158,22 +159,16 @@ export function Header({ onOpenMobileSidebar, headerOpacity, borderOpacity }: He
               <div className="px-4 py-3 border-b border-border/60">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Notifications</p>
               </div>
-              <div className="p-2">
-                <DropdownMenuItem className="rounded-xl py-3 px-3 cursor-pointer">
-                  <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-xl icon-teal flex items-center justify-center shrink-0 mt-0.5">
-                      <Bell className="h-3.5 w-3.5" />
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-medium text-sm">Nouveau message</span>
-                      <span className="text-xs text-muted-foreground">Jean Dupont vous a envoyé un message.</span>
-                    </div>
-                  </div>
-                </DropdownMenuItem>
+              <div className="px-4 py-4">
+                <p className="text-xs text-muted-foreground">
+                  Les notifications réelles sont disponibles dans votre messagerie.
+                </p>
               </div>
               <div className="border-t border-border/60 p-2">
-                <DropdownMenuItem className="justify-center text-xs text-[hsl(var(--teal))] font-medium rounded-xl py-2">
+                <DropdownMenuItem asChild className="justify-center text-xs text-[hsl(var(--teal))] font-medium rounded-xl py-2">
+                  <Link href="/dashboard/inbox">
                   Voir toutes les notifications
+                  </Link>
                 </DropdownMenuItem>
               </div>
             </DropdownMenuContent>

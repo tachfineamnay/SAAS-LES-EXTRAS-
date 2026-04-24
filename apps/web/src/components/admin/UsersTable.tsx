@@ -30,6 +30,10 @@ import { DataTableShell } from "@/components/data/DataTableShell";
 import { FilterBar, type FilterDefinition } from "@/components/data/FilterBar";
 import { AdminKycDocumentsPanel } from "@/components/admin/AdminKycDocumentsPanel";
 import {
+  getKycGlobalStatusLabel,
+  getKycStatusBadgeVariant,
+} from "@/lib/kyc-documents";
+import {
   TableCell,
   TableRow,
 } from "@/components/ui/table";
@@ -233,6 +237,11 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
             </TableCell>
             <TableCell>
               <StatusPill status={getStatusKey(user.status)} label={user.status} />
+              {user.role === "FREELANCE" && user.kyc ? (
+                <Badge className="mt-1" variant={getKycStatusBadgeVariant(user.kyc.globalStatus)}>
+                  KYC {getKycGlobalStatusLabel(user.kyc.globalStatus)}
+                </Badge>
+              ) : null}
             </TableCell>
             <TableCell className="text-muted-foreground">
               {dateFormatter.format(new Date(user.createdAt))}

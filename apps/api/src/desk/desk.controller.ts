@@ -7,6 +7,7 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
 import { DeskService } from "./desk.service";
 import { AssignDeskRequestDto } from "./dto/assign-desk-request.dto";
+import { CreateDeskRequestDto } from "./dto/create-desk-request.dto";
 import { CreateFinanceIncidentDto } from "./dto/create-finance-incident.dto";
 import { SendAdminOutreachDto } from "./dto/send-admin-outreach.dto";
 import { UpdateDeskRequestStatusDto } from "./dto/update-desk-request-status.dto";
@@ -87,8 +88,17 @@ export class DeskController {
     return this.deskService.respond(id, user.id, dto);
   }
 
+  @Post("desk-requests")
+  @Roles(UserRole.FREELANCE, UserRole.ESTABLISHMENT)
+  createUserRequest(
+    @Body() dto: CreateDeskRequestDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.deskService.createUserRequest(user.id, dto);
+  }
+
   @Get("desk-requests/mine")
-  @Roles(UserRole.FREELANCE)
+  @Roles(UserRole.FREELANCE, UserRole.ESTABLISHMENT)
   findMine(@CurrentUser() user: AuthenticatedUser) {
     return this.deskService.findMine(user.id);
   }

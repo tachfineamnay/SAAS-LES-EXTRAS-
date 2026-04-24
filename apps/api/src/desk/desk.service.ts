@@ -7,6 +7,10 @@ import { DeskRequestPriority, DeskRequestStatus, DeskRequestType, UserRole } fro
 import { MailService } from "../mail/mail.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { AssignDeskRequestDto } from "./dto/assign-desk-request.dto";
+import {
+  CreateDeskRequestDto,
+  USER_DESK_REQUEST_TYPES,
+} from "./dto/create-desk-request.dto";
 import { CreateFinanceIncidentDto } from "./dto/create-finance-incident.dto";
 import { SendAdminOutreachDto } from "./dto/send-admin-outreach.dto";
 import { UpdateDeskRequestStatusDto } from "./dto/update-desk-request-status.dto";
@@ -78,6 +82,9 @@ function getIncidentContextLabel(request: {
     BOOKING_FAILURE: "votre incident de réservation",
     PACK_PURCHASE_FAILURE: "votre incident d'achat de pack",
     MISSION_PUBLISH_FAILURE: "votre incident de publication de mission",
+    TECHNICAL_ISSUE: "votre demande technique",
+    USER_REPORT: "votre signalement",
+    LITIGE: "votre litige",
   };
   return labels[request.type] ?? "votre demande";
 }
@@ -108,8 +115,57 @@ export class DeskService {
       orderBy: { createdAt: "desc" },
       include: {
         mission: { select: MISSION_SELECT },
-        booking: { select: { id: true, status: true } },
+        booking: {
+          select: {
+            id: true,
+            status: true,
+            paymentStatus: true,
+            reliefMission: { select: { title: true } },
+            service: { select: { title: true } },
+          },
+        },
         answeredBy: { select: ANSWERED_BY_SELECT },
+      },
+    });
+  }
+
+  async createUserRequest(requesterId: string, dto: CreateDeskRequestDto) {
+    const type = dto.type as DeskRequestType;
+    if (
+      !USER_DESK_REQUEST_TYPES.includes(
+        dto.type as (typeof USER_DESK_REQUEST_TYPES)[number],
+      )
+    ) {
+      throw new BadRequestException("Type de demande invalide pour ce canal");
+    }
+
+    const bookingId = dto.bookingId?.trim() || null;
+
+    if (bookingId) {
+      const booking = await this.prisma.booking.findFirst({
+        where: {
+          id: bookingId,
+          OR: [
+            { establishmentId: requesterId },
+            { freelanceId: requesterId },
+            { service: { ownerId: requesterId } },
+          ],
+        },
+        select: { id: true },
+      });
+
+      if (!booking) {
+        throw new NotFoundException("Réservation liée introuvable");
+      }
+    }
+
+    return this.prisma.deskRequest.create({
+      data: {
+        type,
+        requesterId,
+        bookingId,
+        priority: DeskRequestPriority.NORMAL,
+        message: dto.message.trim(),
       },
     });
   }

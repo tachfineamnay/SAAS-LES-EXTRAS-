@@ -2,6 +2,7 @@ import { AlertCircle, Inbox, UserCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { GlassCard, GlassCardContent, GlassCardHeader } from "@/components/ui/glass-card";
 import { StatusPill } from "@/components/ui/status-pill";
+import { getDeskContextLabel, getDeskRequestTypeLabel } from "@/lib/desk-labels";
 import type { AdminUserRow, DeskRequestRow } from "@/app/actions/admin";
 
 type RequiredActionsProps = {
@@ -71,10 +72,10 @@ export function RequiredActions({ pendingUsers, openDeskRequests }: RequiredActi
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">
-                      {request.mission?.title ?? "—"}
+                      {getDeskContextLabel(request)}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {getRequesterName(request.requester)}
+                      {getDeskRequestTypeLabel(request.type)} · {getRequesterName(request.requester)}
                     </p>
                   </div>
                   <Badge variant={request.priority === "URGENT" ? "coral" : "quiet"}>

@@ -94,6 +94,43 @@ describe("AdminUsersService", () => {
     await expect(service.verifyUser("missing", "admin-1")).rejects.toThrow(NotFoundException);
   });
 
+  it("expose le statut KYC global dans la liste utilisateurs admin", async () => {
+    prisma.user.findMany.mockResolvedValue([
+      {
+        id: "free-1",
+        email: "free@test.fr",
+        role: UserRole.FREELANCE,
+        status: UserStatus.PENDING,
+        createdAt: new Date("2026-04-20T08:00:00.000Z"),
+        profile: { firstName: "Nora", lastName: "Diallo" },
+        documents: [
+          { type: "CV", status: "APPROVED" },
+          { type: "DIPLOMA", status: "PENDING" },
+        ],
+      },
+      {
+        id: "est-1",
+        email: "est@test.fr",
+        role: UserRole.ESTABLISHMENT,
+        status: UserStatus.VERIFIED,
+        createdAt: new Date("2026-04-20T08:00:00.000Z"),
+        profile: { firstName: "Luc", lastName: "Martin" },
+        documents: [],
+      },
+    ]);
+
+    const result = await service.listUsers({});
+
+    expect(result[0]!.kyc).toEqual(
+      expect.objectContaining({
+        globalStatus: "MISSING",
+        uploadedDocuments: 2,
+        pendingDocuments: 1,
+      }),
+    );
+    expect(result[1]!.kyc).toBeNull();
+  });
+
   it("retourne les documents KYC en attente", async () => {
     prisma.document.findMany.mockResolvedValue([
       {

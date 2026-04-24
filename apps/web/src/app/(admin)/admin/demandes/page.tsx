@@ -12,9 +12,9 @@ export default async function AdminDemandesPage() {
   return (
     <section className="space-y-5">
       <header className="space-y-1">
-        <h2 className="font-display text-heading-xl tracking-tight">Demandes d&apos;informations</h2>
+        <h2 className="font-display text-heading-xl tracking-tight">Inbox Desk</h2>
         <p className="text-sm text-muted-foreground">
-          Demandes envoyées par les candidats sur les missions Renfort. Traitez, répondez et suivez leur statut.
+          Tickets utilisateurs, demandes mission et signalements non-finance à traiter par la plateforme.
         </p>
       </header>
 
