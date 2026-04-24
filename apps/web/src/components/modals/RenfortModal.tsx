@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -59,6 +59,50 @@ import { cn } from "@/lib/utils";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
+const CUSTOM_METIER_ID = "autre";
+const PLATFORM_COMMISSION_RATE = 0.03;
+
+function normalizeFreeText(value: string | undefined): string {
+  return (value ?? "").trim().replace(/\s+/g, " ");
+}
+
+function tagsMatch(left: string, right: string): boolean {
+  return normalizeFreeText(left).toLocaleLowerCase("fr") === normalizeFreeText(right).toLocaleLowerCase("fr");
+}
+
+function appendUniqueTag(tags: string[], rawValue: string): string[] {
+  const value = normalizeFreeText(rawValue);
+  if (!value || tags.some((tag) => tagsMatch(tag, value))) return tags;
+  return [...tags, value];
+}
+
+function uniqueTags(tags: string[]): string[] {
+  return tags.reduce<string[]>((acc, tag) => appendUniqueTag(acc, tag), []);
+}
+
+function getResolvedMetierLabel(metier: string, customMetier?: string): string {
+  const normalizedCustomMetier = normalizeFreeText(customMetier);
+  if (metier === CUSTOM_METIER_ID && normalizedCustomMetier) {
+    return normalizedCustomMetier;
+  }
+
+  return getMetierLabel(metier);
+}
+
+function getRenfortPricing(hourlyRate: number) {
+  return {
+    commission: hourlyRate * PLATFORM_COMMISSION_RATE,
+    total: hourlyRate * (1 + PLATFORM_COMMISSION_RATE),
+  };
+}
+
+function formatHourlyRate(value: number): string {
+  return `${value.toLocaleString("fr-FR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} € / h`;
+}
+
 const planningLineSchema = z
   .object({
     dateStart: z.string().min(1, "Date de début requise"),
@@ -71,6 +115,7 @@ const renfortSchema = z
   .object({
     // Step 0 — Profil
     metier: z.string().min(1, "Veuillez sélectionner un métier"),
+    customMetier: z.string().optional(),
     diplomaRequired: z.boolean(),
     requiredSkills: z.array(z.string()),
     // Step 1 — Contexte
@@ -94,6 +139,14 @@ const renfortSchema = z
     accessInstructions: z.string().optional(),
   })
   .superRefine((data, ctx) => {
+    if (data.metier === CUSTOM_METIER_ID && !normalizeFreeText(data.customMetier)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Précisez le métier recherché",
+        path: ["customMetier"],
+      });
+    }
+
     if (data.hasTransmissions && !data.transmissionTime) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -117,7 +170,7 @@ type RenfortForm = z.infer<typeof renfortSchema>;
 const STEPS = ["Profil", "Contexte", "Planification", "Rémunération", "Localisation", "Récap"] as const;
 
 const STEP_FIELDS: Record<number, (keyof RenfortForm)[]> = {
-  0: ["metier"],
+  0: ["metier", "customMetier"],
   1: ["establishmentType", "targetPublic"],
   2: ["publicationMode", "planning", "hasTransmissions", "transmissionTime"],
   3: ["shift", "hourlyRate"],
@@ -140,11 +193,13 @@ export function RenfortModal() {
   const isOpen = useUIStore((state) => state.isRenfortModalOpen);
   const openRenfortModal = useUIStore((state) => state.openRenfortModal);
   const closeRenfortModal = useUIStore((state) => state.closeRenfortModal);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm<RenfortForm>({
     resolver: zodResolver(renfortSchema),
     defaultValues: {
       metier: "",
+      customMetier: "",
       diplomaRequired: true,
       requiredSkills: [],
       establishmentType: "",
@@ -190,18 +245,24 @@ export function RenfortModal() {
 
   const handleClose = useCallback(() => {
     closeRenfortModal();
+    setSubmitError(null);
     form.reset();
     setStep(0);
   }, [closeRenfortModal, form, setStep]);
 
   const onSubmit = form.handleSubmit(async (data) => {
+    setSubmitError(null);
     try {
       const sortedPlanning = sortMissionPlanning(data.planning);
       const envelope = deriveMissionEnvelopeFromPlanning(sortedPlanning);
       if (!envelope) throw new Error("Au moins une plage valide est requise.");
 
+      const metierLabel = getResolvedMetierLabel(data.metier, data.customMetier);
+      const requiredSkills = uniqueTags(data.requiredSkills);
+      const targetPublic = uniqueTags(data.targetPublic);
+
       const result = await createMissionFromRenfort({
-        title: getMetierLabel(data.metier),
+        title: metierLabel,
         dateStart: envelope.dateStart,
         dateEnd: envelope.dateEnd,
         address: `${data.exactAddress}, ${data.zipCode} ${data.city}`,
@@ -216,9 +277,9 @@ export function RenfortModal() {
         zipCode: data.zipCode,
         description: data.description || undefined,
         establishmentType: data.establishmentType,
-        targetPublic: data.targetPublic,
+        targetPublic,
         unitSize: data.unitSize || undefined,
-        requiredSkills: data.requiredSkills,
+        requiredSkills,
         diplomaRequired: data.diplomaRequired,
         hasTransmissions: data.hasTransmissions,
         transmissionTime: data.transmissionTime || undefined,
@@ -228,6 +289,7 @@ export function RenfortModal() {
       });
 
       if (!result.ok) {
+        setSubmitError(result.error);
         toast.error(result.error);
         return;
       }
@@ -235,15 +297,17 @@ export function RenfortModal() {
       toast.success("Renfort publié !", {
         description:
           data.publicationMode === "MULTI_MISSION_BATCH"
-            ? `${getMetierLabel(data.metier)} · ${sortedPlanning.length} mission(s)`
-            : `${getMetierLabel(data.metier)} · 1 mission sur ${sortedPlanning.length} plage(s)`,
+            ? `${metierLabel} · ${sortedPlanning.length} mission(s)`
+            : `${metierLabel} · 1 mission sur ${sortedPlanning.length} plage(s)`,
       });
 
       handleClose();
       router.push("/dashboard/renforts");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Impossible de créer la demande.");
+      const message = error instanceof Error ? error.message : "Impossible de créer la demande.";
+      setSubmitError(message);
+      toast.error(message);
     }
   });
 
@@ -296,12 +360,24 @@ export function RenfortModal() {
               {step === 0 && (
                 <StepProfil
                   metier={values.metier}
-                  onMetierChange={(id) => form.setValue("metier", id, { shouldValidate: true })}
+                  customMetier={values.customMetier ?? ""}
+                  onMetierChange={(id) => {
+                    form.setValue("metier", id, { shouldValidate: true });
+                    if (id !== CUSTOM_METIER_ID) {
+                      form.setValue("customMetier", "");
+                    }
+                  }}
+                  onCustomMetierChange={(value) =>
+                    form.setValue("customMetier", value, { shouldValidate: values.metier === CUSTOM_METIER_ID })
+                  }
                   diplomaRequired={values.diplomaRequired}
                   onDiplomaChange={(v) => form.setValue("diplomaRequired", v)}
                   requiredSkills={values.requiredSkills}
                   onSkillsChange={(v) => form.setValue("requiredSkills", v)}
-                  errors={{ metier: form.formState.errors.metier?.message }}
+                  errors={{
+                    metier: form.formState.errors.metier?.message,
+                    customMetier: form.formState.errors.customMetier?.message,
+                  }}
                 />
               )}
 
@@ -412,6 +488,16 @@ export function RenfortModal() {
             </motion.div>
           </AnimatePresence>
 
+          {submitError && (
+            <div
+              role="alert"
+              className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              <p className="font-semibold">Publication impossible</p>
+              <p className="mt-1">{submitError}</p>
+            </div>
+          )}
+
           {/* Footer navigation */}
           <div className="flex justify-between mt-6 pt-4 border-t">
             <Button
@@ -454,24 +540,36 @@ export function RenfortModal() {
 // ─── Step 0 — Profil Recherché ────────────────────────────────────────────────
 
 function StepProfil({
-  metier, onMetierChange,
+  metier, customMetier, onMetierChange, onCustomMetierChange,
   diplomaRequired, onDiplomaChange,
   requiredSkills, onSkillsChange,
   errors,
 }: {
   metier: string;
+  customMetier: string;
   onMetierChange: (id: string) => void;
+  onCustomMetierChange: (value: string) => void;
   diplomaRequired: boolean;
   onDiplomaChange: (v: boolean) => void;
   requiredSkills: string[];
   onSkillsChange: (v: string[]) => void;
-  errors: { metier?: string };
+  errors: { metier?: string; customMetier?: string };
 }) {
+  const [customSkill, setCustomSkill] = useState("");
+
   const toggleSkill = (skill: string) => {
-    const next = requiredSkills.includes(skill)
-      ? requiredSkills.filter((s) => s !== skill)
-      : [...requiredSkills, skill];
+    const active = requiredSkills.some((selectedSkill) => tagsMatch(selectedSkill, skill));
+    const next = active
+      ? requiredSkills.filter((selectedSkill) => !tagsMatch(selectedSkill, skill))
+      : appendUniqueTag(requiredSkills, skill);
     onSkillsChange(next);
+  };
+
+  const addCustomSkill = () => {
+    const skill = normalizeFreeText(customSkill);
+    if (!skill) return;
+    onSkillsChange(appendUniqueTag(requiredSkills, skill));
+    setCustomSkill("");
   };
 
   return (
@@ -509,6 +607,22 @@ function StepProfil({
           </div>
         ))}
         {errors.metier && <p className="text-sm text-destructive">{errors.metier}</p>}
+        {metier === CUSTOM_METIER_ID && (
+          <div className="space-y-2">
+            <Label htmlFor="customMetier" className="text-sm font-semibold">
+              Précisez le métier recherché *
+            </Label>
+            <Input
+              id="customMetier"
+              value={customMetier}
+              placeholder="Ex: Médiateur familial, ergothérapeute..."
+              onChange={(event) => onCustomMetierChange(event.target.value)}
+            />
+            {errors.customMetier && (
+              <p className="text-xs text-destructive">{errors.customMetier}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Diplôme */}
@@ -544,7 +658,7 @@ function StepProfil({
         </Label>
         <div className="flex flex-wrap gap-2">
           {SKILLS_OPTIONS.map((skill) => {
-            const active = requiredSkills.includes(skill);
+            const active = requiredSkills.some((selectedSkill) => tagsMatch(selectedSkill, skill));
             return (
               <button
                 key={skill}
@@ -562,6 +676,30 @@ function StepProfil({
             );
           })}
         </div>
+        <div className="flex gap-2">
+          <Input
+            value={customSkill}
+            placeholder="Ajouter une compétence"
+            aria-label="Ajouter une compétence"
+            onChange={(event) => setCustomSkill(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                addCustomSkill();
+              }
+            }}
+          />
+          <Button type="button" variant="outline" onClick={addCustomSkill}>
+            Ajouter
+          </Button>
+        </div>
+        {requiredSkills.length > 0 && (
+          <SelectedTags
+            tags={requiredSkills}
+            onRemove={(tag) => onSkillsChange(requiredSkills.filter((skill) => skill !== tag))}
+            ariaLabelPrefix="Retirer la compétence"
+          />
+        )}
       </div>
     </div>
   );
@@ -586,11 +724,21 @@ function StepContext({
   onDescriptionChange: (v: string) => void;
   errors: { establishmentType?: string; targetPublic?: string };
 }) {
+  const [customPublic, setCustomPublic] = useState("");
+
   const togglePublic = (val: string) => {
-    const next = targetPublic.includes(val)
-      ? targetPublic.filter((p) => p !== val)
-      : [...targetPublic, val];
+    const active = targetPublic.some((selectedPublic) => tagsMatch(selectedPublic, val));
+    const next = active
+      ? targetPublic.filter((selectedPublic) => !tagsMatch(selectedPublic, val))
+      : appendUniqueTag(targetPublic, val);
     onPublicChange(next);
+  };
+
+  const addCustomPublic = () => {
+    const publicLabel = normalizeFreeText(customPublic);
+    if (!publicLabel) return;
+    onPublicChange(appendUniqueTag(targetPublic, publicLabel));
+    setCustomPublic("");
   };
 
   return (
@@ -618,7 +766,7 @@ function StepContext({
         <Label className="text-sm font-semibold">Public accompagné *</Label>
         <div className="flex flex-wrap gap-2">
           {PUBLIC_CIBLE_OPTIONS.map((pub) => {
-            const active = targetPublic.includes(pub);
+            const active = targetPublic.some((selectedPublic) => tagsMatch(selectedPublic, pub));
             return (
               <button
                 key={pub}
@@ -636,6 +784,30 @@ function StepContext({
             );
           })}
         </div>
+        <div className="flex gap-2">
+          <Input
+            value={customPublic}
+            placeholder="Ajouter un public"
+            aria-label="Ajouter un public"
+            onChange={(event) => setCustomPublic(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                addCustomPublic();
+              }
+            }}
+          />
+          <Button type="button" variant="outline" onClick={addCustomPublic}>
+            Ajouter
+          </Button>
+        </div>
+        {targetPublic.length > 0 && (
+          <SelectedTags
+            tags={targetPublic}
+            onRemove={(tag) => onPublicChange(targetPublic.filter((publicItem) => publicItem !== tag))}
+            ariaLabelPrefix="Retirer le public"
+          />
+        )}
         {errors.targetPublic && (
           <p className="text-xs text-destructive">{errors.targetPublic}</p>
         )}
@@ -870,6 +1042,8 @@ function StepRemuneration({
   perks: string[];
   onPerksChange: (v: string[]) => void;
 }) {
+  const pricing = getRenfortPricing(hourlyRate);
+
   const togglePerk = (id: string) => {
     const next = perks.includes(id) ? perks.filter((p) => p !== id) : [...perks, id];
     onPerksChange(next);
@@ -903,8 +1077,12 @@ function StepRemuneration({
       {/* Taux horaire */}
       <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <Label className="text-sm font-semibold">Taux horaire brut</Label>
-          <span className="text-lg font-bold text-[hsl(var(--teal-text))]">{hourlyRate} €/h</span>
+          <Label className="text-sm font-semibold">
+            Tarif proposé au freelance — TTC / heure
+          </Label>
+          <span className="text-lg font-bold text-[hsl(var(--teal-text))]">
+            {formatHourlyRate(hourlyRate)}
+          </span>
         </div>
         <input
           type="range"
@@ -913,12 +1091,28 @@ function StepRemuneration({
           step={1}
           value={hourlyRate}
           onChange={(e) => onRateChange(Number(e.target.value))}
-          aria-label={`Taux horaire brut : ${hourlyRate} €/h`}
+          aria-label={`Tarif proposé au freelance TTC : ${formatHourlyRate(hourlyRate)}`}
           className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-primary"
         />
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>{HOURLY_RATE_MIN} €</span>
           <span>{HOURLY_RATE_MAX} €</span>
+        </div>
+        <div className="rounded-lg border bg-muted/30 p-3 space-y-2 text-sm">
+          <div className="flex justify-between gap-3">
+            <span className="text-muted-foreground">Tarif freelance TTC / h</span>
+            <span className="font-medium">{formatHourlyRate(hourlyRate)}</span>
+          </div>
+          <div className="flex justify-between gap-3">
+            <span className="text-muted-foreground">Commission plateforme 3 %</span>
+            <span className="font-medium">{formatHourlyRate(pricing.commission)}</span>
+          </div>
+          <div className="flex justify-between gap-3 border-t pt-2">
+            <span className="font-semibold">Coût total établissement TTC / h</span>
+            <span className="font-bold text-[hsl(var(--teal-text))]">
+              {formatHourlyRate(pricing.total)}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -1039,9 +1233,10 @@ function StepLocalisation({
 // ─── Step 5 — Récapitulatif ──────────────────────────────────────────────────
 
 function StepRecap({ values }: { values: RenfortForm }) {
-  const metierLabel = getMetierLabel(values.metier);
+  const metierLabel = getResolvedMetierLabel(values.metier, values.customMetier);
   const perksMap = Object.fromEntries(PERKS_OPTIONS.map((p) => [p.id, p.label]));
   const sortedPlanning = getNormalizedMissionPlanning({ planning: values.planning });
+  const pricing = getRenfortPricing(values.hourlyRate);
 
   return (
     <div className="space-y-4">
@@ -1049,7 +1244,7 @@ function StepRecap({ values }: { values: RenfortForm }) {
       <div className="rounded-lg border divide-y text-sm">
         {/* Profil */}
         <SectionHeader label="Profil" />
-        <Row label="Métier" value={metierLabel} />
+        <Row label="Métier recherché" value={metierLabel} />
         <Row label="Diplôme" value={values.diplomaRequired ? "Exigé" : "Non requis"} />
         {values.requiredSkills.length > 0 && (
           <RowTags label="Compétences" tags={values.requiredSkills} />
@@ -1088,7 +1283,9 @@ function StepRecap({ values }: { values: RenfortForm }) {
         {/* Rémunération */}
         <SectionHeader label="Rémunération" />
         <Row label="Poste" value={values.shift === "JOUR" ? "Jour" : "Nuit"} />
-        <Row label="Taux horaire" value={`${values.hourlyRate} €/h`} />
+        <Row label="Tarif freelance TTC" value={formatHourlyRate(values.hourlyRate)} />
+        <Row label="Commission plateforme 3 %" value={formatHourlyRate(pricing.commission)} />
+        <Row label="Coût total établissement TTC" value={formatHourlyRate(pricing.total)} />
         {values.perks.length > 0 && (
           <RowTags label="Avantages" tags={values.perks.map((id) => perksMap[id] ?? id)} />
         )}
@@ -1122,6 +1319,34 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between px-3 py-2 gap-2">
       <span className="text-muted-foreground shrink-0">{label}</span>
       <span className="font-medium text-right">{value}</span>
+    </div>
+  );
+}
+
+function SelectedTags({
+  tags,
+  onRemove,
+  ariaLabelPrefix,
+}: {
+  tags: string[];
+  onRemove: (tag: string) => void;
+  ariaLabelPrefix: string;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {tags.map((tag) => (
+        <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+          <span>{tag}</span>
+          <button
+            type="button"
+            onClick={() => onRemove(tag)}
+            aria-label={`${ariaLabelPrefix} ${tag}`}
+            className="rounded-full px-1 text-muted-foreground hover:text-foreground"
+          >
+            x
+          </button>
+        </Badge>
+      ))}
     </div>
   );
 }

@@ -1,18 +1,18 @@
 import {
-  Stethoscope,
-  Heart,
+  Activity,
   BookOpen,
-  Users,
-  Baby,
   Brain,
-  ChefHat,
+  Dumbbell,
+  GraduationCap,
+  HeartHandshake,
   Moon,
-  Settings,
-  Briefcase,
+  Palette,
+  Sparkles,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
-export type MetierCategory = "soin" | "educatif" | "support";
+export type MetierCategory = "soin_psychique" | "educatif" | "animation";
 
 export interface Metier {
   id: string;
@@ -22,93 +22,93 @@ export interface Metier {
 }
 
 export const METIERS: Metier[] = [
-  // Soin
+  // Soin psychique / relationnel
   {
-    id: "aide-soignant",
-    label: "Aide-soignant(e)",
-    icon: Heart,
-    category: "soin",
+    id: "psychologue",
+    label: "Psychologue",
+    icon: Brain,
+    category: "soin_psychique",
   },
   {
-    id: "infirmier",
-    label: "Infirmier(ère)",
-    icon: Stethoscope,
-    category: "soin",
+    id: "art-therapeute",
+    label: "Art thérapeute",
+    icon: Palette,
+    category: "soin_psychique",
   },
   {
-    id: "amp-aes",
-    label: "AMP / AES",
-    icon: Users,
-    category: "soin",
+    id: "psychomotricien",
+    label: "Psychomotricien",
+    icon: Activity,
+    category: "soin_psychique",
   },
   {
-    id: "accompagnant-educatif",
-    label: "Accompagnant(e) éducatif et social",
-    icon: Baby,
-    category: "soin",
+    id: "sophrologue",
+    label: "Sophrologue",
+    icon: Sparkles,
+    category: "soin_psychique",
   },
-  // Éducatif
+  // Éducatif / accompagnement
   {
     id: "educateur-specialise",
-    label: "Éducateur(trice) spécialisé(e)",
+    label: "Éducateur spécialisé",
     icon: BookOpen,
     category: "educatif",
   },
   {
     id: "moniteur-educateur",
-    label: "Moniteur(trice)-éducateur(trice)",
+    label: "Moniteur éducateur",
     icon: BookOpen,
     category: "educatif",
   },
   {
-    id: "psychologue",
-    label: "Psychologue",
-    icon: Brain,
-    category: "educatif",
-  },
-  {
-    id: "chef-de-service",
-    label: "Chef de service",
-    icon: Briefcase,
-    category: "educatif",
-  },
-  // Support
-  {
-    id: "maitresse-de-maison",
-    label: "Maîtresse de maison",
-    icon: Settings,
-    category: "support",
-  },
-  {
-    id: "agent-de-service",
-    label: "Agent de service",
-    icon: Settings,
-    category: "support",
-  },
-  {
-    id: "cuisinier",
-    label: "Cuisinier(ère)",
-    icon: ChefHat,
-    category: "support",
-  },
-  {
-    id: "veilleur-de-nuit",
-    label: "Veilleur(euse) de nuit",
+    id: "surveillant-de-nuit",
+    label: "Surveillant de nuit",
     icon: Moon,
-    category: "support",
+    category: "educatif",
+  },
+  {
+    id: "auxiliaire-de-vie",
+    label: "Auxiliaire de vie",
+    icon: HeartHandshake,
+    category: "educatif",
+  },
+  // Animation / formation
+  {
+    id: "educateur-sportif",
+    label: "Éducateur sportif",
+    icon: Dumbbell,
+    category: "animation",
+  },
+  {
+    id: "formateur",
+    label: "Formateur",
+    icon: GraduationCap,
+    category: "animation",
+  },
+  {
+    id: "intervenant-bien-etre",
+    label: "Intervenant bien-être",
+    icon: Sparkles,
+    category: "animation",
+  },
+  {
+    id: "autre",
+    label: "Autre",
+    icon: Users,
+    category: "animation",
   },
 ];
 
 export const METIERS_BY_CATEGORY: Record<MetierCategory, Metier[]> = {
-  soin: METIERS.filter((m) => m.category === "soin"),
+  soin_psychique: METIERS.filter((m) => m.category === "soin_psychique"),
   educatif: METIERS.filter((m) => m.category === "educatif"),
-  support: METIERS.filter((m) => m.category === "support"),
+  animation: METIERS.filter((m) => m.category === "animation"),
 };
 
 export const CATEGORY_LABELS: Record<MetierCategory, string> = {
-  soin: "Soins",
-  educatif: "Éducatif",
-  support: "Support",
+  soin_psychique: "Soin psychique / relationnel",
+  educatif: "Éducatif / accompagnement",
+  animation: "Animation / formation",
 };
 
 export const HOURLY_RATE_MIN = 15;
@@ -120,8 +120,29 @@ export function getMetierById(id: string): Metier | undefined {
   return METIERS.find((m) => m.id === id);
 }
 
+const LEGACY_METIER_LABELS: Record<string, string> = {
+  "aide-soignant": "Aide-soignant(e)",
+  AIDE_SOIGNANT: "Aide-soignant(e)",
+  infirmier: "Infirmier(ère)",
+  INFIRMIER: "Infirmier(ère)",
+  "amp-aes": "AMP / AES",
+  AMP_AES: "AMP / AES",
+  "accompagnant-educatif": "Accompagnant(e) éducatif et social",
+  ACCOMPAGNANT_EDUCATIF: "Accompagnant(e) éducatif et social",
+  "chef-de-service": "Chef de service",
+  CHEF_DE_SERVICE: "Chef de service",
+  "maitresse-de-maison": "Maîtresse de maison",
+  MAITRESSE_DE_MAISON: "Maîtresse de maison",
+  "agent-de-service": "Agent de service",
+  AGENT_DE_SERVICE: "Agent de service",
+  cuisinier: "Cuisinier(ère)",
+  CUISINIER: "Cuisinier(ère)",
+  "veilleur-de-nuit": "Veilleur(euse) de nuit",
+  VEILLEUR_DE_NUIT: "Veilleur(euse) de nuit",
+};
+
 export function getMetierLabel(id: string): string {
-  return getMetierById(id)?.label ?? id;
+  return getMetierById(id)?.label ?? LEGACY_METIER_LABELS[id] ?? id;
 }
 
 // ─── SOS Renfort v2 — Dictionnaires ──────────────────────────────────────────
@@ -140,12 +161,18 @@ export const TYPES_ETABLISSEMENTS = [
 ] as const;
 
 export const PUBLIC_CIBLE_OPTIONS = [
+  "Enfants",
+  "Adolescents",
+  "Adultes",
   "Personnes âgées",
-  "Polyhandicap",
-  "Autisme (TSA)",
-  "Santé mentale",
-  "Protection de l'enfance",
+  "Handicap psychique",
   "Handicap moteur",
+  "TSA / autisme",
+  "Troubles cognitifs",
+  "Protection de l'enfance",
+  "Addictions",
+  "Précarité",
+  "Rééducation",
 ] as const;
 
 export const PERKS_OPTIONS = [
@@ -157,15 +184,20 @@ export const PERKS_OPTIONS = [
 ] as const;
 
 export const SKILLS_OPTIONS = [
-  "Aspiration endo-trachéale",
-  "Lève-personne",
-  "Nursing lourd",
-  "Méthode ABA",
-  "Logiciel NetSoins",
-  "Contention",
-  "Prise en charge douleur",
-  "Soins palliatifs",
-  "PEC démences",
+  "Accompagnement éducatif",
+  "Troubles du comportement",
+  "Handicap psychique",
+  "Handicap moteur",
+  "TSA / autisme",
+  "Addictions",
+  "Protection de l'enfance",
+  "Médiation artistique",
+  "Médiation corporelle",
+  "Animation de groupe",
+  "Gestion de crise",
+  "Travail de nuit",
+  "Transmission équipe",
+  "Rééducation",
 ] as const;
 
 export const TRANSMISSION_TIMES = [

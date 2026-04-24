@@ -161,7 +161,7 @@ async function renderPlanningStep() {
 async function reachPlanningStep() {
   const view = render(<RenfortModal />);
 
-  fireEvent.click(screen.getByRole("button", { name: /aide-soignant/i }));
+  fireEvent.click(screen.getByRole("button", { name: /psychologue/i }));
   fireEvent.click(screen.getByRole("button", { name: /suivant/i }));
 
   await waitFor(() => {
@@ -364,5 +364,92 @@ describe("RenfortModal", () => {
       expect(mockPush).toHaveBeenCalledWith("/dashboard/renforts");
       expect(mockRefresh).toHaveBeenCalled();
     });
+  }, 10000);
+
+  it("soumet un métier, une compétence et un public libres sans doublons", async () => {
+    const { container } = render(<RenfortModal />);
+    const startDay = addDaysFromNow(16);
+
+    fireEvent.click(screen.getByRole("button", { name: /^autre$/i }));
+    fireEvent.change(screen.getByLabelText(/précisez le métier recherché/i), {
+      target: { value: "  Médiateur familial  " },
+    });
+    fireEvent.change(screen.getByLabelText(/ajouter une compétence/i), {
+      target: { value: " Approche systémique " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^ajouter$/i }));
+    fireEvent.change(screen.getByLabelText(/ajouter une compétence/i), {
+      target: { value: "approche systémique" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^ajouter$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /suivant/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/type d'établissement/i)).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("IME"));
+    fireEvent.change(screen.getByLabelText(/ajouter un public/i), {
+      target: { value: " Jeunes majeurs " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^ajouter$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /suivant/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/renseignez chaque plage avec un vrai début/i)).toBeInTheDocument();
+    });
+
+    fillPlanningSlot(container, 0, {
+      dateStart: toInputDate(startDay),
+      heureDebut: "09:00",
+      heureFin: "17:00",
+    });
+
+    const recapText = await reachRecapStep(container);
+    expect(recapText).toContain("Médiateur familial");
+    expect(recapText).toContain("Approche systémique");
+    expect(recapText).toContain("Jeunes majeurs");
+    expect(recapText).toContain("Commission plateforme 3 %");
+    expect(recapText).toContain("0,60 € / h");
+    expect(recapText).toContain("20,60 € / h");
+
+    fireEvent.click(screen.getByRole("button", { name: /publier le sos/i }));
+
+    await waitFor(() => {
+      expect(mockCreateMissionFromRenfort).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Médiateur familial",
+          metier: "autre",
+          requiredSkills: ["Approche systémique"],
+          targetPublic: ["Jeunes majeurs"],
+        }),
+      );
+    });
+  }, 10000);
+
+  it("affiche une erreur persistante et garde le modal ouvert si la publication échoue", async () => {
+    mockCreateMissionFromRenfort.mockResolvedValueOnce({
+      ok: false,
+      error: "Le planning est invalide.",
+    });
+
+    const { container } = await reachPlanningStep();
+    const startDay = addDaysFromNow(18);
+
+    fillPlanningSlot(container, 0, {
+      dateStart: toInputDate(startDay),
+      heureDebut: "09:00",
+      heureFin: "17:00",
+    });
+
+    await reachRecapStep(container);
+    fireEvent.click(screen.getByRole("button", { name: /publier le sos/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Publication impossible");
+      expect(screen.getByRole("alert")).toHaveTextContent("Le planning est invalide.");
+    });
+    expect(useUIStore.getState().isRenfortModalOpen).toBe(true);
+    expect(mockPush).not.toHaveBeenCalled();
   }, 10000);
 });

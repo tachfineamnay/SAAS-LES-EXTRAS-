@@ -3,8 +3,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockApiRequest = vi.fn();
 const mockGetSession = vi.fn().mockResolvedValue({ token: "test-token" });
 const mockRevalidatePath = vi.fn();
+const mockToUserFacingApiError = vi.fn((error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback,
+);
+const mockConsoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-vi.mock("@/lib/api", () => ({ apiRequest: (...args: unknown[]) => mockApiRequest(...args) }));
+vi.mock("@/lib/api", () => ({
+  apiRequest: (...args: unknown[]) => mockApiRequest(...args),
+  toUserFacingApiError: (...args: [unknown, string]) => mockToUserFacingApiError(...args),
+}));
 vi.mock("@/lib/session", () => ({ getSession: () => mockGetSession() }));
 vi.mock("next/cache", () => ({ revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args) }));
 
@@ -34,6 +41,9 @@ describe("createMissionFromRenfort", () => {
     vi.clearAllMocks();
     mockGetSession.mockResolvedValue({ token: "test-token" });
     mockApiRequest.mockResolvedValue({ id: "new-mission-id" });
+    mockToUserFacingApiError.mockImplementation((error: unknown, fallback: string) =>
+      error instanceof Error ? error.message : fallback,
+    );
   });
 
   it("appelle POST /missions avec les données correctes", async () => {
@@ -42,6 +52,7 @@ describe("createMissionFromRenfort", () => {
       "/missions",
       expect.objectContaining({
         method: "POST",
+        label: "renfort.publish",
         body: expect.objectContaining({
           title: "Infirmier de nuit",
           isRenfort: true,
@@ -75,6 +86,29 @@ describe("createMissionFromRenfort", () => {
     mockGetSession.mockResolvedValue(null);
     const result = await createMissionFromRenfort(baseInput);
     expect(result).toEqual({ ok: false, error: "Non connecté" });
+  });
+
+  it("retourne une erreur lisible et logue le contexte si POST /missions échoue", async () => {
+    const error = new Error("Planning invalide");
+    mockApiRequest.mockRejectedValueOnce(error);
+    mockToUserFacingApiError.mockReturnValueOnce("Planning invalide");
+
+    const result = await createMissionFromRenfort(baseInput);
+
+    expect(result).toEqual({ ok: false, error: "Planning invalide" });
+    expect(mockToUserFacingApiError).toHaveBeenCalledWith(
+      error,
+      "Impossible de publier le renfort pour le moment.",
+    );
+    expect(mockConsoleError).toHaveBeenCalledWith(
+      "createMissionFromRenfort error",
+      expect.objectContaining({
+        title: "Infirmier de nuit",
+        city: "Paris",
+        planningCount: 0,
+        error: "Planning invalide",
+      }),
+    );
   });
 });
 

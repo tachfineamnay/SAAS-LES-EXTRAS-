@@ -474,8 +474,17 @@ export async function createMissionFromRenfort(
       method: "POST",
       token: session.token,
       body: input,
+      label: "renfort.publish",
     });
   } catch (error) {
+    console.error("createMissionFromRenfort error", {
+      title: input.title,
+      publicationMode: input.publicationMode,
+      city: input.city,
+      planningCount: input.planning?.length ?? input.slots?.length ?? 0,
+      error: error instanceof Error ? error.message : error,
+    });
+    // TODO: créer un incident Desk MISSION_PUBLISH_FAILURE via un endpoint établissement dédié.
     return {
       ok: false,
       error: toUserFacingApiError(error, "Impossible de publier le renfort pour le moment."),
