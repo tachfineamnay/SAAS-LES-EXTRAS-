@@ -93,7 +93,7 @@ export const METIERS: Metier[] = [
   },
   {
     id: "autre",
-    label: "Autre",
+    label: "Autre métier",
     icon: Users,
     category: "animation",
   },

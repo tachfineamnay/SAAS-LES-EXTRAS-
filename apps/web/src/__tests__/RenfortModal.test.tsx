@@ -370,10 +370,14 @@ describe("RenfortModal", () => {
     const { container } = render(<RenfortModal />);
     const startDay = addDaysFromNow(16);
 
-    fireEvent.click(screen.getByRole("button", { name: /^autre$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /autre métier/i }));
     fireEvent.change(screen.getByLabelText(/précisez le métier recherché/i), {
       target: { value: "  Médiateur familial  " },
     });
+    fireEvent.change(screen.getByLabelText(/ajouter une compétence/i), {
+      target: { value: " A " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^ajouter$/i }));
     fireEvent.change(screen.getByLabelText(/ajouter une compétence/i), {
       target: { value: " Approche systémique " },
     });
@@ -389,6 +393,10 @@ describe("RenfortModal", () => {
     });
 
     fireEvent.click(screen.getByText("IME"));
+    fireEvent.change(screen.getByLabelText(/ajouter un public/i), {
+      target: { value: " B " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^ajouter$/i }));
     fireEvent.change(screen.getByLabelText(/ajouter un public/i), {
       target: { value: " Jeunes majeurs " },
     });
@@ -410,6 +418,7 @@ describe("RenfortModal", () => {
     expect(recapText).toContain("Approche systémique");
     expect(recapText).toContain("Jeunes majeurs");
     expect(recapText).toContain("Commission plateforme 3 %");
+    expect(recapText).toContain("Coût estimé établissement TTC");
     expect(recapText).toContain("0,60 € / h");
     expect(recapText).toContain("20,60 € / h");
 

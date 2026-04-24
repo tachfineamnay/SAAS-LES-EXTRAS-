@@ -484,7 +484,7 @@ export async function createMissionFromRenfort(
       planningCount: input.planning?.length ?? input.slots?.length ?? 0,
       error: error instanceof Error ? error.message : error,
     });
-    // TODO: créer un incident Desk MISSION_PUBLISH_FAILURE via un endpoint établissement dédié.
+    // TODO: créer un endpoint user-safe POST /desk-requests acceptant MISSION_PUBLISH_FAILURE.
     return {
       ok: false,
       error: toUserFacingApiError(error, "Impossible de publier le renfort pour le moment."),

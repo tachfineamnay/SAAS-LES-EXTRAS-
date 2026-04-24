@@ -61,6 +61,7 @@ import { cn } from "@/lib/utils";
 
 const CUSTOM_METIER_ID = "autre";
 const PLATFORM_COMMISSION_RATE = 0.03;
+const MIN_FREE_TEXT_LENGTH = 2;
 
 function normalizeFreeText(value: string | undefined): string {
   return (value ?? "").trim().replace(/\s+/g, " ");
@@ -72,7 +73,7 @@ function tagsMatch(left: string, right: string): boolean {
 
 function appendUniqueTag(tags: string[], rawValue: string): string[] {
   const value = normalizeFreeText(rawValue);
-  if (!value || tags.some((tag) => tagsMatch(tag, value))) return tags;
+  if (value.length < MIN_FREE_TEXT_LENGTH || tags.some((tag) => tagsMatch(tag, value))) return tags;
   return [...tags, value];
 }
 
@@ -139,10 +140,13 @@ const renfortSchema = z
     accessInstructions: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.metier === CUSTOM_METIER_ID && !normalizeFreeText(data.customMetier)) {
+    if (
+      data.metier === CUSTOM_METIER_ID &&
+      normalizeFreeText(data.customMetier).length < MIN_FREE_TEXT_LENGTH
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Précisez le métier recherché",
+        message: "Précisez au moins 2 caractères pour le métier recherché",
         path: ["customMetier"],
       });
     }
@@ -567,7 +571,7 @@ function StepProfil({
 
   const addCustomSkill = () => {
     const skill = normalizeFreeText(customSkill);
-    if (!skill) return;
+    if (skill.length < MIN_FREE_TEXT_LENGTH) return;
     onSkillsChange(appendUniqueTag(requiredSkills, skill));
     setCustomSkill("");
   };
@@ -736,7 +740,7 @@ function StepContext({
 
   const addCustomPublic = () => {
     const publicLabel = normalizeFreeText(customPublic);
-    if (!publicLabel) return;
+    if (publicLabel.length < MIN_FREE_TEXT_LENGTH) return;
     onPublicChange(appendUniqueTag(targetPublic, publicLabel));
     setCustomPublic("");
   };
@@ -1108,7 +1112,7 @@ function StepRemuneration({
             <span className="font-medium">{formatHourlyRate(pricing.commission)}</span>
           </div>
           <div className="flex justify-between gap-3 border-t pt-2">
-            <span className="font-semibold">Coût total établissement TTC / h</span>
+            <span className="font-semibold">Coût estimé établissement TTC / h</span>
             <span className="font-bold text-[hsl(var(--teal-text))]">
               {formatHourlyRate(pricing.total)}
             </span>
@@ -1285,7 +1289,7 @@ function StepRecap({ values }: { values: RenfortForm }) {
         <Row label="Poste" value={values.shift === "JOUR" ? "Jour" : "Nuit"} />
         <Row label="Tarif freelance TTC" value={formatHourlyRate(values.hourlyRate)} />
         <Row label="Commission plateforme 3 %" value={formatHourlyRate(pricing.commission)} />
-        <Row label="Coût total établissement TTC" value={formatHourlyRate(pricing.total)} />
+        <Row label="Coût estimé établissement TTC" value={formatHourlyRate(pricing.total)} />
         {values.perks.length > 0 && (
           <RowTags label="Avantages" tags={values.perks.map((id) => perksMap[id] ?? id)} />
         )}
