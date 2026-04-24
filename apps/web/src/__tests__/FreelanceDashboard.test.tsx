@@ -79,6 +79,7 @@ const deskRequest: MyDeskRequest = {
   answeredAt: null,
   createdAt: "2026-04-10T10:00:00.000Z",
   mission: { id: "m-1", title: "Renfort éducateur spécialisé" },
+  booking: null,
   answeredBy: null,
 };
 

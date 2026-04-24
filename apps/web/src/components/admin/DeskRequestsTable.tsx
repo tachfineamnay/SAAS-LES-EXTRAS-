@@ -62,6 +62,10 @@ const STATUS_VARIANTS: Record<DeskRequestStatus, "default" | "outline" | "second
 
 const TYPE_LABELS: Record<DeskRequestRow["type"], string> = {
   MISSION_INFO_REQUEST: "Info mission",
+  PAYMENT_ISSUE: "Problème paiement",
+  BOOKING_FAILURE: "Réservation échouée",
+  PACK_PURCHASE_FAILURE: "Achat pack échoué",
+  MISSION_PUBLISH_FAILURE: "Publication mission échouée",
 };
 
 const PRIORITY_LABELS: Record<DeskRequestPriority, string> = {
@@ -82,7 +86,10 @@ const FILTERS: FilterDefinition[] = [
   {
     key: "type",
     label: "Tous les types",
-    options: [{ label: TYPE_LABELS.MISSION_INFO_REQUEST, value: "MISSION_INFO_REQUEST" }],
+    options: (Object.keys(TYPE_LABELS) as DeskRequestRow["type"][]).map((key) => ({
+      label: TYPE_LABELS[key],
+      value: key,
+    })),
   },
   {
     key: "priority",
@@ -262,7 +269,7 @@ export function DeskRequestsTable({ requests, admins }: DeskRequestsTableProps) 
             ) : filteredRequests.map((req) => (
               <TableRow key={req.id}>
                 <TableCell className="font-medium max-w-[160px] truncate">
-                  {req.mission.title}
+                  {req.mission?.title ?? "—"}
                 </TableCell>
                 <TableCell className="max-w-[140px] truncate">
                   {getRequesterName(req.requester)}
@@ -311,9 +318,12 @@ export function DeskRequestsTable({ requests, admins }: DeskRequestsTableProps) 
           {selected && (
             <>
               <SheetHeader>
-                <SheetTitle>Demande d&apos;information</SheetTitle>
+                <SheetTitle>{TYPE_LABELS[selected.type]}</SheetTitle>
                 <SheetDescription>
-                  Mission : {selected.mission.title} — {getRequesterName(selected.requester)}
+                  {selected.mission?.title
+                    ? `Mission : ${selected.mission.title} — `
+                    : ""}
+                  {getRequesterName(selected.requester)}
                 </SheetDescription>
               </SheetHeader>
 
@@ -399,12 +409,12 @@ export function DeskRequestsTable({ requests, admins }: DeskRequestsTableProps) 
                 {/* Zone de réponse */}
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    {selected.response ? "Modifier la réponse" : "Répondre au candidat"}
+                    {selected.response ? "Modifier la réponse" : "Répondre à l'utilisateur"}
                   </p>
                   <Textarea
                     rows={5}
                     className="resize-none"
-                    placeholder="Rédigez votre réponse… Elle sera visible par le candidat dans son espace."
+                    placeholder="Rédigez votre réponse… Elle sera visible par l'utilisateur dans son espace."
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                   />

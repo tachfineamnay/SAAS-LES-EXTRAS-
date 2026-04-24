@@ -111,6 +111,10 @@ enum DeskRequestStatus {
 
 enum DeskRequestType {
   MISSION_INFO_REQUEST
+  PAYMENT_ISSUE
+  BOOKING_FAILURE
+  PACK_PURCHASE_FAILURE
+  MISSION_PUBLISH_FAILURE
 }
 
 enum DeskRequestPriority {
@@ -393,6 +397,7 @@ model Booking {
   reviews        Review[]
   quotes         Quote[]
   conversation   Conversation?
+  deskRequests   DeskRequest[]  @relation("BookingDeskRequests")
 
   @@index([establishmentId])
   @@index([freelanceId])
@@ -525,7 +530,8 @@ model DeskRequest {
   type              DeskRequestType
   priority          DeskRequestPriority @default(NORMAL)
   status            DeskRequestStatus   @default(OPEN)
-  missionId         String
+  missionId         String?
+  bookingId         String?
   requesterId       String
   assignedToAdminId String?
   message           String              @db.Text
@@ -535,13 +541,15 @@ model DeskRequest {
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
 
-  mission         ReliefMission @relation("MissionDeskRequests", fields: [missionId], references: [id], onDelete: Cascade)
-  requester       User          @relation("UserDeskRequests", fields: [requesterId], references: [id], onDelete: Cascade)
-  assignedToAdmin User?         @relation("DeskRequestAssignedToAdmin", fields: [assignedToAdminId], references: [id], onDelete: SetNull)
-  answeredBy      User?         @relation("DeskRequestAnsweredBy", fields: [answeredById], references: [id], onDelete: SetNull)
+  mission         ReliefMission? @relation("MissionDeskRequests", fields: [missionId], references: [id], onDelete: SetNull)
+  booking         Booking?       @relation("BookingDeskRequests", fields: [bookingId], references: [id], onDelete: SetNull)
+  requester       User           @relation("UserDeskRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+  assignedToAdmin User?          @relation("DeskRequestAssignedToAdmin", fields: [assignedToAdminId], references: [id], onDelete: SetNull)
+  answeredBy      User?          @relation("DeskRequestAnsweredBy", fields: [answeredById], references: [id], onDelete: SetNull)
 
   @@index([requesterId])
   @@index([missionId])
+  @@index([bookingId])
   @@index([status])
   @@index([type])
   @@index([priority])

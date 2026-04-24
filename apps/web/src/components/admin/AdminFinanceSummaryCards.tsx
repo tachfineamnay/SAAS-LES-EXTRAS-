@@ -21,13 +21,15 @@ export function AdminFinanceSummaryCards({ summary }: AdminFinanceSummaryCardsPr
         }
       />
       <KpiTile
-        label="Montant facturé"
+        label="Montant facturé (TTC)"
         value={moneyFormatter.format(summary.totalInvoicedAmount)}
         icon={Wallet}
         iconColor="amber"
+        trendLabel="Commission 3 % incluse"
+        trend="flat"
       />
       <KpiTile
-        label="Montant encaissé"
+        label="Montant encaissé (TTC)"
         value={moneyFormatter.format(summary.totalPaidAmount)}
         icon={BadgeCheck}
         iconColor="emerald"
@@ -37,7 +39,7 @@ export function AdminFinanceSummaryCards({ summary }: AdminFinanceSummaryCardsPr
         }
       />
       <KpiTile
-        label="Solde en attente"
+        label="Solde en attente (TTC)"
         value={moneyFormatter.format(summary.totalOutstandingAmount)}
         icon={Clock3}
         iconColor="coral"

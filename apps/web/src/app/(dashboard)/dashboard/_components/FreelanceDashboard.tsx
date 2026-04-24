@@ -279,7 +279,7 @@ export function FreelanceDashboard({
                             </div>
                             <p className="text-sm text-muted-foreground">
                                 {latestDeskRequest
-                                    ? `Dernière demande : ${latestDeskRequest.mission.title}`
+                                    ? `Dernière demande : ${latestDeskRequest.mission?.title ?? "—"}`
                                     : "Aucune demande d'information en cours."}
                             </p>
                             <Button variant="glass" size="sm" className="w-full min-h-[44px]" asChild>

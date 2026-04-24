@@ -71,7 +71,7 @@ export function RequiredActions({ pendingUsers, openDeskRequests }: RequiredActi
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">
-                      {request.mission.title}
+                      {request.mission?.title ?? "—"}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
                       {getRequesterName(request.requester)}

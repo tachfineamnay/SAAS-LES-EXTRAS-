@@ -568,7 +568,14 @@ export async function hideService(serviceId: string): Promise<{ ok: true }> {
 // ─────────────────────────────────────────────
 
 export type DeskRequestStatus = "OPEN" | "IN_PROGRESS" | "ANSWERED" | "CLOSED";
-export type DeskRequestType = "MISSION_INFO_REQUEST";
+export type DeskRequestType =
+  | "MISSION_INFO_REQUEST"
+  | "PAYMENT_ISSUE"
+  | "BOOKING_FAILURE"
+  | "PACK_PURCHASE_FAILURE"
+  | "MISSION_PUBLISH_FAILURE";
+
+export type FinanceIncidentType = Exclude<DeskRequestType, "MISSION_INFO_REQUEST">;
 export type DeskRequestPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
 export type AdminOutreachOrigin = "USER_PROFILE" | "CONTACT_BYPASS" | "MISSION_DETAIL";
 export type ContactBypassBlockedReason =
@@ -594,10 +601,23 @@ export type DeskRequestRow = {
   response: string | null;
   answeredAt: string | null;
   createdAt: string;
-  mission: { id: string; title: string };
+  mission: { id: string; title: string } | null;
+  booking: {
+    id: string;
+    status: string;
+    paymentStatus: string;
+    reliefMission: { title: string } | null;
+    service: { title: string } | null;
+    establishment: {
+      id: string;
+      email: string;
+      profile: { firstName: string; lastName: string } | null;
+    } | null;
+  } | null;
   requester: {
     id: string;
     email: string;
+    role?: string;
     profile: { firstName: string; lastName: string } | null;
   };
   assignedToAdmin: DeskAdminSummary | null;
@@ -698,6 +718,7 @@ export async function updateDeskRequestStatus(
     body: { status },
   });
   revalidatePath("/admin/demandes");
+  revalidatePath("/admin/incidents");
   revalidatePath("/admin");
   return { ok: true };
 }
@@ -713,6 +734,7 @@ export async function assignDeskRequest(
     body: { adminId },
   });
   revalidatePath("/admin/demandes");
+  revalidatePath("/admin/incidents");
   return { ok: true };
 }
 
@@ -727,6 +749,24 @@ export async function respondToDeskRequest(
     body: { response },
   });
   revalidatePath("/admin/demandes");
+  revalidatePath("/admin/incidents");
   revalidatePath("/admin");
   return { ok: true };
+}
+
+export async function createFinanceIncident(dto: {
+  type: FinanceIncidentType;
+  priority?: DeskRequestPriority;
+  message: string;
+  requesterEmail: string;
+  bookingId?: string;
+}): Promise<{ id: string }> {
+  const token = await getAdminToken();
+  const result = await apiRequest<{ id: string }>("/admin/desk-requests/finance", {
+    method: "POST",
+    token,
+    body: dto,
+  });
+  revalidatePath("/admin/incidents");
+  return result;
 }

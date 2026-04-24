@@ -7,6 +7,7 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 import { AuthenticatedUser } from "../auth/types/jwt-payload.type";
 import { DeskService } from "./desk.service";
 import { AssignDeskRequestDto } from "./dto/assign-desk-request.dto";
+import { CreateFinanceIncidentDto } from "./dto/create-finance-incident.dto";
 import { SendAdminOutreachDto } from "./dto/send-admin-outreach.dto";
 import { UpdateDeskRequestStatusDto } from "./dto/update-desk-request-status.dto";
 import { RespondDeskRequestDto } from "./dto/respond-desk-request.dto";
@@ -20,6 +21,15 @@ export class DeskController {
   @Roles(UserRole.ADMIN)
   findAll() {
     return this.deskService.findAll();
+  }
+
+  @Post("admin/desk-requests/finance")
+  @Roles(UserRole.ADMIN)
+  createFinanceIncident(
+    @Body() dto: CreateFinanceIncidentDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.deskService.createFinanceIncident(user.id, dto);
   }
 
   @Get("admin/contact-bypass-events")

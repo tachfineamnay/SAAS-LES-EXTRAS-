@@ -4,22 +4,53 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { DeskRequestStatus, UserRole } from "@prisma/client";
+// Extended types — will be fully resolved after prisma generate post-migration
+type ExtendedDeskRequestType =
+  | "MISSION_INFO_REQUEST"
+  | "PAYMENT_ISSUE"
+  | "BOOKING_FAILURE"
+  | "PACK_PURCHASE_FAILURE"
+  | "MISSION_PUBLISH_FAILURE";
 import { MailService } from "../mail/mail.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { AssignDeskRequestDto } from "./dto/assign-desk-request.dto";
+import { CreateFinanceIncidentDto } from "./dto/create-finance-incident.dto";
 import { SendAdminOutreachDto } from "./dto/send-admin-outreach.dto";
 import { UpdateDeskRequestStatusDto } from "./dto/update-desk-request-status.dto";
 import { RespondDeskRequestDto } from "./dto/respond-desk-request.dto";
 
+const FINANCE_INCIDENT_TYPES: ExtendedDeskRequestType[] = [
+  "PAYMENT_ISSUE",
+  "BOOKING_FAILURE",
+  "PACK_PURCHASE_FAILURE",
+  "MISSION_PUBLISH_FAILURE",
+];
+
 const REQUESTER_SELECT = {
   id: true,
   email: true,
+  role: true,
   profile: { select: { firstName: true, lastName: true } },
 };
 
 const MISSION_SELECT = {
   id: true,
   title: true,
+};
+
+const BOOKING_SELECT = {
+  id: true,
+  status: true,
+  paymentStatus: true,
+  reliefMission: { select: { title: true } },
+  service: { select: { title: true } },
+  establishment: {
+    select: {
+      id: true,
+      email: true,
+      profile: { select: { firstName: true, lastName: true } },
+    },
+  },
 };
 
 const ANSWERED_BY_SELECT = {
@@ -41,6 +72,23 @@ function getDisplayName(user: {
   return user.email;
 }
 
+function getIncidentContextLabel(request: {
+  mission: { title: string } | null;
+  type: string;
+}) {
+  if (request.mission?.title) {
+    return `la mission « ${request.mission.title} »`;
+  }
+  const labels: Record<string, string> = {
+    MISSION_INFO_REQUEST: "votre demande",
+    PAYMENT_ISSUE: "votre incident de paiement",
+    BOOKING_FAILURE: "votre incident de réservation",
+    PACK_PURCHASE_FAILURE: "votre incident d'achat de pack",
+    MISSION_PUBLISH_FAILURE: "votre incident de publication de mission",
+  };
+  return labels[request.type] ?? "votre demande";
+}
+
 @Injectable()
 export class DeskService {
   constructor(
@@ -49,10 +97,12 @@ export class DeskService {
   ) {}
 
   async findAll() {
-    return this.prisma.deskRequest.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (this.prisma.deskRequest as any).findMany({
       orderBy: { createdAt: "desc" },
       include: {
         mission: { select: MISSION_SELECT },
+        booking: { select: BOOKING_SELECT },
         requester: { select: REQUESTER_SELECT },
         assignedToAdmin: { select: ADMIN_SELECT },
         answeredBy: { select: ANSWERED_BY_SELECT },
@@ -61,11 +111,13 @@ export class DeskService {
   }
 
   async findMine(requesterId: string) {
-    return this.prisma.deskRequest.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (this.prisma.deskRequest as any).findMany({
       where: { requesterId },
       orderBy: { createdAt: "desc" },
       include: {
         mission: { select: MISSION_SELECT },
+        booking: { select: { id: true, status: true } },
         answeredBy: { select: ANSWERED_BY_SELECT },
       },
     });
@@ -107,6 +159,56 @@ export class DeskService {
         status: event.sender.status,
       },
     }));
+  }
+
+  async createFinanceIncident(adminId: string, dto: CreateFinanceIncidentDto) {
+    if (!FINANCE_INCIDENT_TYPES.includes(dto.type as ExtendedDeskRequestType)) {
+      throw new BadRequestException("Type d'incident invalide pour ce canal");
+    }
+
+    const requester = await this.prisma.user.findFirst({
+      where: { email: dto.requesterEmail },
+      select: { id: true, role: true, email: true },
+    });
+
+    if (!requester) {
+      throw new NotFoundException(`Utilisateur introuvable : ${dto.requesterEmail}`);
+    }
+
+    if (requester.role === UserRole.ADMIN) {
+      throw new BadRequestException("Un admin ne peut pas être le requérant d'un incident");
+    }
+
+    const incident = await this.prisma.$transaction(async (tx) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const created = await (tx.deskRequest as any).create({
+        data: {
+          type: dto.type,
+          priority: dto.priority ?? "NORMAL",
+          message: dto.message.trim(),
+          requesterId: requester.id,
+          bookingId: dto.bookingId?.trim() || null,
+        },
+      });
+
+      await tx.adminActionLog.create({
+        data: {
+          adminId,
+          entityType: "DESK_REQUEST",
+          entityId: created.id,
+          action: "FINANCE_INCIDENT_CREATE",
+          meta: {
+            type: dto.type,
+            requesterEmail: requester.email,
+            bookingId: dto.bookingId ?? null,
+          },
+        },
+      });
+
+      return created;
+    });
+
+    return incident;
   }
 
   async sendAdminOutreach(userId: string, adminId: string, dto: SendAdminOutreachDto) {
@@ -281,12 +383,15 @@ export class DeskService {
         id: true,
         requesterId: true,
         missionId: true,
+        type: true,
         status: true,
         response: true,
         mission: { select: { title: true } },
       },
     });
     if (!request) throw new NotFoundException("Demande introuvable");
+
+    const contextLabel = getIncidentContextLabel(request);
 
     const [updated] = await this.prisma.$transaction([
       this.prisma.deskRequest.update({
@@ -302,7 +407,7 @@ export class DeskService {
         data: {
           userId: request.requesterId,
           type: "INFO",
-          message: `Votre demande sur la mission « ${request.mission.title} » a reçu une réponse. Consultez-la dans votre espace Mes demandes.`,
+          message: `Votre demande concernant ${contextLabel} a reçu une réponse. Consultez-la dans votre espace Mes demandes.`,
         },
       }),
       this.prisma.adminActionLog.create({

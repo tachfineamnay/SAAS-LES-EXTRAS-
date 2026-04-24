@@ -51,6 +51,7 @@ const fakeDeskRequest = {
   answeredAt: null,
   createdAt: new Date().toISOString(),
   mission: { id: "m-1", title: "Infirmier urgences" },
+  booking: null,
   requester: {
     id: "u-1",
     email: "karim@test.fr",
@@ -84,7 +85,7 @@ describe("getDeskRequests (admin)", () => {
     expect(result).toHaveLength(1);
     const first = result[0]!;
     expect(first.id).toBe("dr-1");
-    expect(first.mission.title).toBe("Infirmier urgences");
+    expect(first.mission?.title).toBe("Infirmier urgences");
     expect(first.requester.email).toBe("karim@test.fr");
   });
 
@@ -508,7 +509,7 @@ describe("getMyDeskRequests (freelance)", () => {
   it("retourne uniquement les demandes du candidat connecté", async () => {
     const result = await getMyDeskRequests();
     expect(result).toHaveLength(1);
-    expect(result[0]!.mission.title).toBe("Infirmier urgences");
+    expect(result[0]!.mission?.title).toBe("Infirmier urgences");
   });
 
   it("retourne un tableau vide si pas de session", async () => {

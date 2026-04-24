@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
+  AlertCircle,
   FileText,
   GraduationCap,
   Inbox,
@@ -53,6 +54,11 @@ const links = [
     href: "/admin/finance",
     label: "Finance",
     icon: Wallet,
+  },
+  {
+    href: "/admin/incidents",
+    label: "Incidents Finance",
+    icon: AlertCircle,
   },
   {
     href: "/admin/demandes",
