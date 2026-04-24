@@ -15,13 +15,13 @@ import { fetchSafe } from "@/lib/widget-result";
 import { UnauthorizedError } from "@/lib/api";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { getMetierLabel } from "@/lib/sos-config";
 import type { MatchingMission } from "@/components/dashboard/MatchingMissionsWidget";
 import { getCurrentUser } from "@/app/actions/user";
 import { EstablishmentDashboard } from "./_components/EstablishmentDashboard";
 import { FreelanceDashboard } from "./_components/FreelanceDashboard";
 import type { ReviewItem } from "./_components/FreelanceDashboard";
 import { getMissionPlanning } from "@/lib/mission-planning";
+import { getMissionDisplayTitle } from "@/lib/mission-display";
 
 export const dynamic = "force-dynamic";
 
@@ -188,7 +188,7 @@ async function fetchFreelanceData(token: string, userId: string) {
 
             return {
                 id: m.id,
-                title: m.metier ? getMetierLabel(m.metier) : m.title,
+                title: getMissionDisplayTitle(m),
                 establishment: m.establishment?.profile?.companyName ?? "Établissement",
                 city: m.city ?? m.establishment?.profile?.city ?? "",
                 dates: firstSlot ? format(firstSlot.start, "dd MMM", { locale: fr }) : undefined,

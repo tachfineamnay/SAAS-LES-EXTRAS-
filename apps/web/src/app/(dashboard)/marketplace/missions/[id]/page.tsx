@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { MissionApplyButton } from "@/components/marketplace/MissionApplyButton";
 import { RequestMissionInfoModal } from "@/components/modals/RequestMissionInfoModal";
 import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
+import { getMissionDisplayTitle } from "@/lib/mission-display";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,7 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
 
   const metier = mission.metier ? getMetierById(mission.metier) : null;
   const MetierIcon = metier?.icon;
+  const displayTitle = getMissionDisplayTitle(mission);
 
   const establishmentName =
     mission.establishment?.profile?.companyName || "Établissement confidentiel";
@@ -85,7 +87,7 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
             {/* Title */}
             <h1 className="text-2xl font-bold flex items-center gap-2">
               {MetierIcon && <MetierIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />}
-              {metier ? metier.label : mission.title}
+              {displayTitle}
             </h1>
 
             {/* Establishment + city */}
@@ -215,7 +217,7 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
             <MissionApplyButton missionId={mission.id} />
             <RequestMissionInfoModal
               missionId={mission.id}
-              missionTitle={mission.title}
+              missionTitle={displayTitle}
               triggerClassName="w-full"
             />
             <p className="text-xs text-center text-muted-foreground">

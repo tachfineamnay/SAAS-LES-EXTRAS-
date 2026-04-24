@@ -33,6 +33,45 @@ describe("MissionCard", () => {
     expect(screen.getByRole("heading")).toBeInTheDocument();
   });
 
+  it("affiche le titre libre si le métier est autre", () => {
+    render(
+      <MissionCard
+        mission={{
+          ...mission,
+          title: "Médiateur familial",
+          metier: "autre",
+        }}
+      />,
+    );
+    expect(screen.getByRole("heading", { name: "Médiateur familial" })).toBeInTheDocument();
+  });
+
+  it("affiche le label métier si le métier est connu", () => {
+    render(
+      <MissionCard
+        mission={{
+          ...mission,
+          title: "Titre technique",
+          metier: "psychologue",
+        }}
+      />,
+    );
+    expect(screen.getByRole("heading", { name: "Psychologue" })).toBeInTheDocument();
+  });
+
+  it("affiche le titre si aucun métier n'est renseigné", () => {
+    render(
+      <MissionCard
+        mission={{
+          ...mission,
+          title: "Renfort accompagnement",
+          metier: null,
+        }}
+      />,
+    );
+    expect(screen.getByRole("heading", { name: "Renfort accompagnement" })).toBeInTheDocument();
+  });
+
   it("le titre est un lien vers la page de détail", () => {
     render(<MissionCard mission={mission} />);
     const link = screen.getByRole("link");

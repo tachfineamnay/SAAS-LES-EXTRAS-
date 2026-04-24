@@ -32,6 +32,7 @@ import {
 import { format, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
+import { getMissionDisplayTitle } from "@/lib/mission-display";
 
 export interface EstablishmentDashboardProps {
     activeMissions: EstablishmentMission[];
@@ -120,7 +121,7 @@ export function EstablishmentDashboard({
             {nextMission && (
                 <NextMissionCard
                     detailsHref="/dashboard/renforts"
-                    title={nextMission.metierLabel ?? nextMission.title}
+                    title={getMissionDisplayTitle(nextMission)}
                     establishment={nextMissionFreelance}
                     city={nextMission.city ?? nextMission.address ?? ""}
                     scheduledAt={nextMissionDate?.toISOString() ?? nextMission.dateStart}

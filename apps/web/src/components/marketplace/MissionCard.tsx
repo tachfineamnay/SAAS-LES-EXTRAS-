@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMetierById } from "@/lib/sos-config";
 import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
+import { getMissionDisplayTitle } from "@/lib/mission-display";
 
 interface MissionCardProps {
   mission: SerializedMission;
@@ -34,6 +35,7 @@ export function MissionCard({
 
   const metier = mission.metier ? getMetierById(mission.metier) : null;
   const MetierIcon = metier?.icon;
+  const displayTitle = getMissionDisplayTitle(mission);
 
   const planning = getMissionPlanning(mission);
 
@@ -83,7 +85,7 @@ export function MissionCard({
         >
           <h3 className="font-bold text-base leading-tight line-clamp-2 flex items-center gap-2 group-hover:underline">
             {MetierIcon && <MetierIcon className="h-4 w-4 shrink-0 text-primary" />}
-            {metier ? metier.label : mission.title}
+            {displayTitle}
           </h3>
         </Link>
 

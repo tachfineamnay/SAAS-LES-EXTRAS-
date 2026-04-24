@@ -11,8 +11,8 @@ import { RenfortsEmptyState } from "@/components/dashboard/establishment/Renfort
 import { Calendar, Clock, MapPin, Sun, Moon, Siren } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { getMetierLabel } from "@/lib/sos-config";
 import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
+import { getMissionDisplayTitle } from "@/lib/mission-display";
 
 export const dynamic = "force-dynamic";
 
@@ -85,9 +85,7 @@ export default async function SosDashboardPage() {
                       {/* Title + badges */}
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-heading-sm font-display">
-                          {mission.metier
-                            ? getMetierLabel(mission.metier)
-                            : mission.title}
+                          {getMissionDisplayTitle(mission)}
                         </h2>
                         <Badge
                           variant={

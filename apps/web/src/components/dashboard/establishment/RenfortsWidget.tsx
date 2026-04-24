@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import type { EstablishmentMission } from "@/app/actions/missions";
 import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
+import { getMissionDisplayTitle } from "@/lib/mission-display";
 
 interface RenfortsWidgetProps {
     missions: EstablishmentMission[];
@@ -72,7 +73,7 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
                             <div className="flex-1 min-w-0 space-y-1.5">
                                 <div className="flex flex-wrap items-center gap-2">
                                     <span className="font-semibold text-sm truncate">
-                                        {mission.metierLabel ?? mission.title}
+                                        {getMissionDisplayTitle(mission)}
                                     </span>
                                     <Badge variant={STATUS_VARIANT[mission.status] ?? "secondary"}>
                                         {STATUS_LABEL[mission.status] ?? mission.status}

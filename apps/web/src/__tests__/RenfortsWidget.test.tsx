@@ -42,8 +42,26 @@ describe("RenfortsWidget", () => {
   });
 
   it("affiche le titre de la mission", () => {
-    render(<RenfortsWidget missions={[makeMission({ title: "Aide-soignant jour" })]} />);
+    render(<RenfortsWidget missions={[makeMission({ title: "Aide-soignant jour", metier: null })]} />);
     expect(screen.getByText(/aide-soignant jour/i)).toBeInTheDocument();
+  });
+
+  it("affiche le titre libre si le métier est autre", () => {
+    render(
+      <RenfortsWidget
+        missions={[makeMission({ title: "Médiateur familial", metier: "autre" })]}
+      />,
+    );
+    expect(screen.getByText("Médiateur familial")).toBeInTheDocument();
+  });
+
+  it("affiche le label métier si le métier est connu", () => {
+    render(
+      <RenfortsWidget
+        missions={[makeMission({ title: "Titre technique", metier: "psychologue" })]}
+      />,
+    );
+    expect(screen.getByText("Psychologue")).toBeInTheDocument();
   });
 
   it("affiche le badge de statut OPEN comme 'Ouverte'", () => {
@@ -58,7 +76,7 @@ describe("RenfortsWidget", () => {
 
   it("affiche toutes les missions jusqu'à 5", () => {
     const missions = Array.from({ length: 5 }, (_, i) =>
-      makeMission({ id: `mission-${i}`, title: `Mission ${i + 1}` }),
+      makeMission({ id: `mission-${i}`, title: `Mission ${i + 1}`, metier: null }),
     );
     render(<RenfortsWidget missions={missions} />);
     for (let i = 1; i <= 5; i++) {

@@ -11,6 +11,7 @@ import {
   getMissionPlanning,
   isMissionPlanningLineMultiDay,
 } from "@/lib/mission-planning";
+import { getMissionDisplayTitle } from "@/lib/mission-display";
 
 import {
   Tooltip,
@@ -48,6 +49,7 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
     mission.city ||
     mission.establishment?.profile?.city ||
     "Localisation communiquée après validation";
+  const displayTitle = getMissionDisplayTitle(mission);
 
   const handleApply = () => {
     if (!isVerified || applied || isPending) return;
@@ -65,7 +67,7 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1">
             <h3 className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors">
-              {mission.title}
+              {displayTitle}
             </h3>
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Building2 className="h-3.5 w-3.5" />
