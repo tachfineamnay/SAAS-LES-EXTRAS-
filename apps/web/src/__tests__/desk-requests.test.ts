@@ -22,6 +22,7 @@ vi.mock("next/cache", () => ({
 
 const {
   assignDeskRequest,
+  createFinanceIncident,
   featureService,
   getAdminMissionDetail,
   getAdminOverview,
@@ -471,9 +472,11 @@ describe("respondToDeskRequest (admin)", () => {
     );
   });
 
-  it("revalide la page /admin/demandes après réponse", async () => {
+  it("revalide /admin/demandes et /admin/incidents après réponse", async () => {
     await respondToDeskRequest("dr-1", "Réponse complète.");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/admin/demandes");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin/incidents");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin");
   });
 });
 
@@ -522,6 +525,58 @@ describe("getMyDeskRequests (freelance)", () => {
     mockApiRequest.mockRejectedValue(new Error("Forbidden"));
     const result = await getMyDeskRequests();
     expect(result).toEqual([]);
+  });
+});
+
+// ─────────────────────────────────────────────
+// Admin — createFinanceIncident
+// ─────────────────────────────────────────────
+
+describe("createFinanceIncident (admin)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetAdminSessionToken.mockResolvedValue("admin-tok");
+    mockApiRequest.mockResolvedValue({ id: "incident-new" });
+  });
+
+  it("appelle POST /admin/desk-requests/finance avec le bon payload", async () => {
+    await createFinanceIncident({
+      type: "PAYMENT_ISSUE",
+      priority: "HIGH",
+      message: "Paiement bloqué depuis 5 jours.",
+      requesterEmail: "direction@mecs.fr",
+      bookingId: "booking-42",
+    });
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/admin/desk-requests/finance",
+      expect.objectContaining({
+        method: "POST",
+        token: "admin-tok",
+        body: expect.objectContaining({
+          type: "PAYMENT_ISSUE",
+          requesterEmail: "direction@mecs.fr",
+          bookingId: "booking-42",
+        }),
+      }),
+    );
+  });
+
+  it("revalide /admin/incidents après création", async () => {
+    await createFinanceIncident({
+      type: "BOOKING_FAILURE",
+      message: "La réservation n'a pas abouti.",
+      requesterEmail: "user@test.fr",
+    });
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin/incidents");
+  });
+
+  it("retourne l'id de l'incident créé", async () => {
+    const result = await createFinanceIncident({
+      type: "PACK_PURCHASE_FAILURE",
+      message: "L'achat de pack a échoué.",
+      requesterEmail: "estab@test.fr",
+    });
+    expect(result).toEqual({ id: "incident-new" });
   });
 });
 

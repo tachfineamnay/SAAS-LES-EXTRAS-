@@ -8,6 +8,7 @@ describe("DeskService", () => {
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      create: jest.fn(),
     },
     contactBypassEvent: {
       findMany: jest.fn(),
@@ -23,8 +24,16 @@ describe("DeskService", () => {
     adminActionLog: {
       create: jest.fn(),
     },
-    $transaction: jest.fn((queries: Array<Promise<unknown>>) => Promise.all(queries)),
+    $transaction: jest.fn((queriesOrFn: unknown) => {
+      if (typeof queriesOrFn === "function") {
+        // callback form — pass prisma as the transaction client
+        return (queriesOrFn as (tx: unknown) => Promise<unknown>)(prisma);
+      }
+      // array form
+      return Promise.all(queriesOrFn as Array<Promise<unknown>>);
+    }),
   } as any;
+
   const mailService = {
     sendAdminOutreachEmail: jest.fn().mockResolvedValue(undefined),
   };
@@ -35,6 +44,8 @@ describe("DeskService", () => {
     jest.clearAllMocks();
     service = new DeskService(prisma, mailService as any);
   });
+
+  // ─── updateStatus ──────────────────────────────────────────────────────────
 
   it("met à jour le statut et journalise l'action", async () => {
     prisma.deskRequest.findUnique.mockResolvedValue({
@@ -68,6 +79,8 @@ describe("DeskService", () => {
       }),
     });
   });
+
+  // ─── assign ────────────────────────────────────────────────────────────────
 
   it("assigne une demande à un admin et journalise l'action", async () => {
     prisma.deskRequest.findUnique.mockResolvedValue({
@@ -104,11 +117,14 @@ describe("DeskService", () => {
     });
   });
 
-  it("répond à une demande, notifie le candidat et journalise l'action", async () => {
+  // ─── respond ───────────────────────────────────────────────────────────────
+
+  it("répond à une demande mission, notifie le candidat et journalise l'action", async () => {
     prisma.deskRequest.findUnique.mockResolvedValue({
       id: "desk-1",
       requesterId: "free-1",
       missionId: "mission-1",
+      type: "MISSION_INFO_REQUEST",
       status: DeskRequestStatus.IN_PROGRESS,
       response: null,
       mission: { title: "Mission de nuit" },
@@ -137,6 +153,7 @@ describe("DeskService", () => {
       data: expect.objectContaining({
         userId: "free-1",
         type: "INFO",
+        message: expect.stringContaining("Mission de nuit"),
       }),
     });
     expect(prisma.adminActionLog.create).toHaveBeenCalledWith({
@@ -154,6 +171,37 @@ describe("DeskService", () => {
     });
   });
 
+  it("répond à un incident finance (mission null) et utilise un label générique", async () => {
+    prisma.deskRequest.findUnique.mockResolvedValue({
+      id: "desk-2",
+      requesterId: "estab-1",
+      missionId: null,
+      type: "PAYMENT_ISSUE",
+      status: DeskRequestStatus.OPEN,
+      response: null,
+      mission: null,
+    });
+    prisma.deskRequest.update.mockResolvedValue({
+      id: "desk-2",
+      status: DeskRequestStatus.ANSWERED,
+    });
+    prisma.notification.create.mockResolvedValue({});
+    prisma.adminActionLog.create.mockResolvedValue({});
+
+    await expect(
+      service.respond("desk-2", "admin-1", { response: "Paiement régularisé." }),
+    ).resolves.toMatchObject({ status: DeskRequestStatus.ANSWERED });
+
+    expect(prisma.notification.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: "estab-1",
+        message: expect.stringContaining("incident de paiement"),
+      }),
+    });
+  });
+
+  // ─── NotFoundException ──────────────────────────────────────────────────────
+
   it("lève NotFoundException si la demande n'existe pas", async () => {
     prisma.deskRequest.findUnique.mockResolvedValue(null);
 
@@ -161,6 +209,8 @@ describe("DeskService", () => {
       service.updateStatus("missing", "admin-1", { status: DeskRequestStatus.CLOSED }),
     ).rejects.toThrow(NotFoundException);
   });
+
+  // ─── findContactBypassEvents ────────────────────────────────────────────────
 
   it("retourne les événements de contournement avec le résumé expéditeur", async () => {
     prisma.contactBypassEvent.findMany.mockResolvedValue([
@@ -176,10 +226,7 @@ describe("DeskService", () => {
           email: "sender@example.com",
           role: "FREELANCE",
           status: "VERIFIED",
-          profile: {
-            firstName: "Aya",
-            lastName: "Benali",
-          },
+          profile: { firstName: "Aya", lastName: "Benali" },
         },
       },
     ]);
@@ -203,16 +250,15 @@ describe("DeskService", () => {
     ]);
   });
 
+  // ─── sendAdminOutreach ──────────────────────────────────────────────────────
+
   it("envoie un outreach Desk, notifie le user et journalise l'action", async () => {
     prisma.user.findUnique.mockResolvedValue({
       id: "user-1",
       email: "aya@example.com",
       role: "FREELANCE",
       status: "VERIFIED",
-      profile: {
-        firstName: "Aya",
-        lastName: "Benali",
-      },
+      profile: { firstName: "Aya", lastName: "Benali" },
     });
     prisma.notification.create.mockResolvedValue({});
     prisma.adminActionLog.create.mockResolvedValue({});
@@ -261,6 +307,8 @@ describe("DeskService", () => {
     ).rejects.toThrow(BadRequestException);
   });
 
+  // ─── monitorContactBypassEvent ─────────────────────────────────────────────
+
   it("journalise la mise sous surveillance d'un contournement", async () => {
     prisma.contactBypassEvent.findUnique.mockResolvedValue({
       id: "event-1",
@@ -287,5 +335,115 @@ describe("DeskService", () => {
         },
       },
     });
+  });
+
+  // ─── createFinanceIncident ─────────────────────────────────────────────────
+
+  it("crée un incident finance et journalise l'action admin", async () => {
+    prisma.user.findFirst.mockResolvedValue({
+      id: "estab-1",
+      role: "ESTABLISHMENT",
+      email: "direction@mecs.fr",
+    });
+    prisma.deskRequest.create.mockResolvedValue({
+      id: "incident-1",
+      type: "PAYMENT_ISSUE",
+      priority: "HIGH",
+    });
+    prisma.adminActionLog.create.mockResolvedValue({});
+
+    const result = await service.createFinanceIncident("admin-1", {
+      type: "PAYMENT_ISSUE",
+      priority: "HIGH",
+      message: "L'établissement signale un paiement bloqué depuis 5 jours.",
+      requesterEmail: "direction@mecs.fr",
+      bookingId: "booking-42",
+    });
+
+    expect(result).toMatchObject({ id: "incident-1", type: "PAYMENT_ISSUE" });
+
+    expect(prisma.user.findFirst).toHaveBeenCalledWith({
+      where: { email: "direction@mecs.fr" },
+      select: { id: true, role: true, email: true },
+    });
+    expect(prisma.deskRequest.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        type: "PAYMENT_ISSUE",
+        priority: "HIGH",
+        requesterId: "estab-1",
+        bookingId: "booking-42",
+      }),
+    });
+    expect(prisma.adminActionLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        adminId: "admin-1",
+        entityType: "DESK_REQUEST",
+        entityId: "incident-1",
+        action: "FINANCE_INCIDENT_CREATE",
+        meta: expect.objectContaining({ type: "PAYMENT_ISSUE" }),
+      }),
+    });
+  });
+
+  it("crée un incident finance sans bookingId", async () => {
+    prisma.user.findFirst.mockResolvedValue({
+      id: "free-1",
+      role: "FREELANCE",
+      email: "karim@test.fr",
+    });
+    prisma.deskRequest.create.mockResolvedValue({ id: "incident-2", type: "PACK_PURCHASE_FAILURE" });
+    prisma.adminActionLog.create.mockResolvedValue({});
+
+    await expect(
+      service.createFinanceIncident("admin-1", {
+        type: "PACK_PURCHASE_FAILURE",
+        message: "L'achat de pack n'a pas abouti.",
+        requesterEmail: "karim@test.fr",
+      }),
+    ).resolves.toMatchObject({ id: "incident-2" });
+
+    expect(prisma.deskRequest.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ bookingId: null }),
+    });
+  });
+
+  it("refuse de créer un incident finance si le type est MISSION_INFO_REQUEST", async () => {
+    await expect(
+      service.createFinanceIncident("admin-1", {
+        type: "MISSION_INFO_REQUEST",
+        message: "Test invalide.",
+        requesterEmail: "user@test.fr",
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(prisma.user.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("refuse de créer un incident si l'utilisateur est introuvable", async () => {
+    prisma.user.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.createFinanceIncident("admin-1", {
+        type: "BOOKING_FAILURE",
+        message: "Réservation échouée.",
+        requesterEmail: "inconnu@test.fr",
+      }),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it("refuse de créer un incident si le requérant est un admin", async () => {
+    prisma.user.findFirst.mockResolvedValue({
+      id: "admin-2",
+      role: "ADMIN",
+      email: "admin2@lesextras.local",
+    });
+
+    await expect(
+      service.createFinanceIncident("admin-1", {
+        type: "PAYMENT_ISSUE",
+        message: "Test interdit.",
+        requesterEmail: "admin2@lesextras.local",
+      }),
+    ).rejects.toThrow(BadRequestException);
   });
 });

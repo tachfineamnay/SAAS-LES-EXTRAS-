@@ -3,14 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { DeskRequestStatus, UserRole } from "@prisma/client";
-// Extended types — will be fully resolved after prisma generate post-migration
-type ExtendedDeskRequestType =
-  | "MISSION_INFO_REQUEST"
-  | "PAYMENT_ISSUE"
-  | "BOOKING_FAILURE"
-  | "PACK_PURCHASE_FAILURE"
-  | "MISSION_PUBLISH_FAILURE";
+import { DeskRequestPriority, DeskRequestStatus, DeskRequestType, UserRole } from "@prisma/client";
 import { MailService } from "../mail/mail.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { AssignDeskRequestDto } from "./dto/assign-desk-request.dto";
@@ -19,11 +12,11 @@ import { SendAdminOutreachDto } from "./dto/send-admin-outreach.dto";
 import { UpdateDeskRequestStatusDto } from "./dto/update-desk-request-status.dto";
 import { RespondDeskRequestDto } from "./dto/respond-desk-request.dto";
 
-const FINANCE_INCIDENT_TYPES: ExtendedDeskRequestType[] = [
-  "PAYMENT_ISSUE",
-  "BOOKING_FAILURE",
-  "PACK_PURCHASE_FAILURE",
-  "MISSION_PUBLISH_FAILURE",
+const FINANCE_INCIDENT_TYPES: DeskRequestType[] = [
+  DeskRequestType.PAYMENT_ISSUE,
+  DeskRequestType.BOOKING_FAILURE,
+  DeskRequestType.PACK_PURCHASE_FAILURE,
+  DeskRequestType.MISSION_PUBLISH_FAILURE,
 ];
 
 const REQUESTER_SELECT = {
@@ -97,8 +90,7 @@ export class DeskService {
   ) {}
 
   async findAll() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (this.prisma.deskRequest as any).findMany({
+    return this.prisma.deskRequest.findMany({
       orderBy: { createdAt: "desc" },
       include: {
         mission: { select: MISSION_SELECT },
@@ -111,8 +103,7 @@ export class DeskService {
   }
 
   async findMine(requesterId: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (this.prisma.deskRequest as any).findMany({
+    return this.prisma.deskRequest.findMany({
       where: { requesterId },
       orderBy: { createdAt: "desc" },
       include: {
@@ -162,7 +153,8 @@ export class DeskService {
   }
 
   async createFinanceIncident(adminId: string, dto: CreateFinanceIncidentDto) {
-    if (!FINANCE_INCIDENT_TYPES.includes(dto.type as ExtendedDeskRequestType)) {
+    const type = dto.type as DeskRequestType;
+    if (!FINANCE_INCIDENT_TYPES.includes(type)) {
       throw new BadRequestException("Type d'incident invalide pour ce canal");
     }
 
@@ -180,11 +172,10 @@ export class DeskService {
     }
 
     const incident = await this.prisma.$transaction(async (tx) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const created = await (tx.deskRequest as any).create({
+      const created = await tx.deskRequest.create({
         data: {
-          type: dto.type,
-          priority: dto.priority ?? "NORMAL",
+          type,
+          priority: (dto.priority as DeskRequestPriority) ?? DeskRequestPriority.NORMAL,
           message: dto.message.trim(),
           requesterId: requester.id,
           bookingId: dto.bookingId?.trim() || null,

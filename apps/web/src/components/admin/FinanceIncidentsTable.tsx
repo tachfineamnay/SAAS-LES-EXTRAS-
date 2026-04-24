@@ -191,10 +191,8 @@ function CreateIncidentSheet({ open, onClose }: CreateSheetProps) {
     onClose();
   };
 
-  const canSubmit =
-    !isPending &&
-    requesterEmail.trim().includes("@") &&
-    message.trim().length >= 5;
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(requesterEmail.trim());
+  const canSubmit = !isPending && isValidEmail && message.trim().length >= 5;
 
   const handleSubmit = () => {
     if (!canSubmit) return;

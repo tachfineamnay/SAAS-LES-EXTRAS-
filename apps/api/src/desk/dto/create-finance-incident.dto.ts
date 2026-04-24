@@ -15,7 +15,7 @@ export class CreateFinanceIncidentDto {
 
   @IsOptional()
   @IsIn(PRIORITIES)
-  declare priority: string | undefined;
+  declare priority?: string;
 
   @IsString()
   @MinLength(5)
@@ -26,5 +26,5 @@ export class CreateFinanceIncidentDto {
 
   @IsOptional()
   @IsString()
-  declare bookingId: string | undefined;
+  declare bookingId?: string;
 }
