@@ -21,6 +21,9 @@ describe("DeskService", () => {
     booking: {
       findFirst: jest.fn(),
     },
+    reliefMission: {
+      findFirst: jest.fn(),
+    },
     notification: {
       create: jest.fn(),
     },
@@ -238,10 +241,94 @@ describe("DeskService", () => {
         type: "TECHNICAL_ISSUE",
         requesterId: "free-1",
         bookingId: null,
+        missionId: null,
         priority: "NORMAL",
+        status: "OPEN",
         message: "Impossible de déposer mon document KYC.",
       }),
     });
+  });
+
+  it("autorise un incident utilisateur opérationnel sans exposer PAYMENT_ISSUE", async () => {
+    prisma.deskRequest.create.mockResolvedValue({
+      id: "desk-publish-failure-1",
+      type: "MISSION_PUBLISH_FAILURE",
+    });
+
+    await expect(
+      service.createUserRequest("est-1", {
+        type: "MISSION_PUBLISH_FAILURE",
+        message: "La publication du renfort a échoué.",
+      }),
+    ).resolves.toMatchObject({
+      id: "desk-publish-failure-1",
+      type: "MISSION_PUBLISH_FAILURE",
+    });
+
+    await expect(
+      service.createUserRequest("est-1", {
+        type: "PAYMENT_ISSUE",
+        message: "Paiement bloqué.",
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it("vérifie qu'une mission liée est accessible au requérant", async () => {
+    prisma.reliefMission.findFirst.mockResolvedValue({ id: "mission-1" });
+    prisma.deskRequest.create.mockResolvedValue({
+      id: "desk-mission-1",
+      type: "MISSION_INFO_REQUEST",
+    });
+
+    await expect(
+      service.createUserRequest("free-1", {
+        type: "MISSION_INFO_REQUEST",
+        message: "Pouvez-vous préciser le contexte ?",
+        missionId: "mission-1",
+      }),
+    ).resolves.toMatchObject({ id: "desk-mission-1" });
+
+    expect(prisma.reliefMission.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "mission-1",
+        OR: [
+          { establishmentId: "free-1" },
+          { status: "OPEN" },
+          {
+            bookings: {
+              some: {
+                OR: [
+                  { establishmentId: "free-1" },
+                  { freelanceId: "free-1" },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
+    expect(prisma.deskRequest.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        requesterId: "free-1",
+        missionId: "mission-1",
+        status: "OPEN",
+      }),
+    });
+  });
+
+  it("refuse une mission liée hors périmètre utilisateur", async () => {
+    prisma.reliefMission.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.createUserRequest("free-1", {
+        type: "MISSION_INFO_REQUEST",
+        message: "Demande liée à une mission privée.",
+        missionId: "mission-private",
+      }),
+    ).rejects.toThrow(NotFoundException);
+
+    expect(prisma.deskRequest.create).not.toHaveBeenCalled();
   });
 
   it("vérifie qu'une réservation liée appartient au requérant", async () => {

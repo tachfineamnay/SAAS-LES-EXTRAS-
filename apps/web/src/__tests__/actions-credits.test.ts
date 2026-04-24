@@ -4,6 +4,7 @@ const mockApiRequest = vi.fn();
 const mockSafeApiRequest = vi.fn();
 const mockGetSession = vi.fn().mockResolvedValue({ token: "credits-token" });
 const mockRevalidatePath = vi.fn();
+const mockCreateUserDeskRequest = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   apiRequest: (...args: unknown[]) => mockApiRequest(...args),
@@ -19,6 +20,9 @@ vi.mock("@/lib/session", () => ({
 vi.mock("next/cache", () => ({
   revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args),
 }));
+vi.mock("@/app/actions/desk", () => ({
+  createUserDeskRequest: (...args: unknown[]) => mockCreateUserDeskRequest(...args),
+}));
 
 const { buyPack, getCredits, getCreditPurchaseHistory, getCreditsSummarySafe } =
   await import("@/actions/credits");
@@ -28,6 +32,7 @@ describe("credits actions", () => {
     vi.clearAllMocks();
     mockGetSession.mockResolvedValue({ token: "credits-token" });
     mockSafeApiRequest.mockResolvedValue({ ok: true, data: {} });
+    mockCreateUserDeskRequest.mockResolvedValue({ ok: true });
   });
 
   it("achète un pack et retourne le nouveau solde", async () => {
@@ -55,7 +60,11 @@ describe("credits actions", () => {
 
     const result = await buyPack("ENTERPRISE");
 
-    expect(result).toEqual({ error: "Pack de crédits invalide." });
+    expect(result).toEqual({ error: "Pack de crédits invalide. Le Desk a été prévenu." });
+    expect(mockCreateUserDeskRequest).toHaveBeenCalledWith(
+      "PACK_PURCHASE_FAILURE",
+      expect.stringContaining("Pack: ENTERPRISE"),
+    );
   });
 
   it("sanitise les erreurs techniques lors de l'achat d'un pack", async () => {
@@ -63,7 +72,18 @@ describe("credits actions", () => {
 
     const result = await buyPack("PRO");
 
-    expect(result).toEqual({ error: "Impossible d'ajouter ce pack pour le moment." });
+    expect(result).toEqual({
+      error: "Impossible d'ajouter ce pack pour le moment. Le Desk a été prévenu.",
+    });
+  });
+
+  it("ne masque pas l'erreur pack si le ticket Desk échoue", async () => {
+    mockApiRequest.mockRejectedValue(new Error("Pack de crédits invalide."));
+    mockCreateUserDeskRequest.mockResolvedValueOnce({ ok: false, error: "Desk indisponible" });
+
+    const result = await buyPack("PRO");
+
+    expect(result).toEqual({ error: "Pack de crédits invalide." });
   });
 
   it("lit le vrai endpoint crédits", async () => {

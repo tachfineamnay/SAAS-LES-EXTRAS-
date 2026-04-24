@@ -28,7 +28,14 @@ export const dynamic = "force-dynamic";
 // ─── Data fetching helpers ──────────────────────────────────────
 
 async function fetchEstablishmentData(token: string, userId: string) {
-    const [bookingsResult, missionsResult, invoicesResult, creditsResult, reviewsResult] =
+    const [
+        bookingsResult,
+        missionsResult,
+        invoicesResult,
+        creditsResult,
+        reviewsResult,
+        deskRequestsResult,
+    ] =
         await Promise.all([
             fetchSafe<BookingsPageData>(
                 () => getBookingsPageData(token),
@@ -51,6 +58,17 @@ async function fetchEstablishmentData(token: string, userId: string) {
                 "Crédits",
             ),
             fetchReviews(userId, token),
+            fetchSafe<MyDeskRequest[]>(
+                async () => {
+                    const result = await getMyDeskRequestsSafe(token);
+                    if (!result.ok) {
+                        throw new Error(result.error);
+                    }
+                    return result.data;
+                },
+                [],
+                "Demandes",
+            ),
         ]);
 
     // Quotes endpoint not yet implemented — use empty placeholder
@@ -76,6 +94,9 @@ async function fetchEstablishmentData(token: string, userId: string) {
         (b) => b.status === "COMPLETED" || b.status === "PAID",
     );
     const pendingQuotes = (quotesResult.data ?? []).filter((q) => q.status === "PENDING");
+    const openDeskRequests = (deskRequestsResult.data ?? []).filter(
+        (request) => request.status === "OPEN" || request.status === "IN_PROGRESS",
+    );
 
     // Find the next upcoming mission (earliest dateStart among ASSIGNED or OPEN)
     const now = new Date();
@@ -108,6 +129,8 @@ async function fetchEstablishmentData(token: string, userId: string) {
         nextMission,
         recentReviews: reviewsResult.data,
         recentReviewsError: reviewsResult.error,
+        openDeskRequests,
+        deskRequestsError: deskRequestsResult.error,
     };
 }
 

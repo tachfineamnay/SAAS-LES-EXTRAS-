@@ -92,6 +92,18 @@ describe("EstablishmentCatalogue - ateliers", () => {
     expect(screen.getByText(/formation posture professionnelle/i)).toBeInTheDocument();
   });
 
+  it("peut ouvrir directement l'onglet Formations", () => {
+    render(
+      <EstablishmentCatalogue
+        services={servicesWithTraining}
+        freelances={[]}
+        initialTab="trainings"
+      />,
+    );
+
+    expect(screen.getByText(/formation posture professionnelle/i)).toBeInTheDocument();
+  });
+
   it("affiche un état vide quand aucun atelier n'est disponible", () => {
     render(<EstablishmentCatalogue services={[]} freelances={[]} />);
     expect(screen.getByText(/aucun atelier disponible/i)).toBeInTheDocument();

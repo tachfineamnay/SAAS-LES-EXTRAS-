@@ -554,11 +554,35 @@ describe("createUserDeskRequest (user)", () => {
           type: "TECHNICAL_ISSUE",
           message: "Le chargement du KYC bloque.",
           bookingId: undefined,
+          missionId: undefined,
         },
         label: "desk.create-user-request",
       }),
     );
     expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/demandes");
+  });
+
+  it("crée un ticket Desk opérationnel avec mission liée", async () => {
+    const result = await createUserDeskRequest(
+      "MISSION_PUBLISH_FAILURE",
+      "Publication impossible depuis le formulaire renfort.",
+      { missionId: "mission-1" },
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/desk-requests",
+      expect.objectContaining({
+        method: "POST",
+        token: "user-tok",
+        body: {
+          type: "MISSION_PUBLISH_FAILURE",
+          message: "Publication impossible depuis le formulaire renfort.",
+          bookingId: undefined,
+          missionId: "mission-1",
+        },
+      }),
+    );
   });
 });
 

@@ -19,6 +19,7 @@ import {
   type AdminMissionDetail,
   type AdminMissionLinkedDeskRequest,
 } from "@/app/actions/admin";
+import { getInvoiceStatusMeta } from "@/components/admin/admin-finance-utils";
 import { getDeskRequestTypeLabel } from "@/lib/desk-labels";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -353,7 +354,7 @@ export function MissionDetailSheet({
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {mission.linkedBooking.invoice
-                              ? `${mission.linkedBooking.invoice.status} · ${moneyFormatter.format(
+                              ? `${getInvoiceStatusMeta(mission.linkedBooking.invoice.status).label} · ${moneyFormatter.format(
                                   mission.linkedBooking.invoice.amount,
                                 )}`
                               : "Aucune facture liée"}

@@ -3,6 +3,7 @@ import type { EstablishmentMission } from "@/app/actions/missions";
 import type { SerializedQuote } from "@/actions/quotes";
 import type { SerializedInvoice } from "@/actions/finance";
 import type { BookingLine } from "@/app/actions/bookings";
+import type { MyDeskRequest } from "@/app/actions/desk";
 import type { ReviewItem } from "./FreelanceDashboard";
 import { BentoSection } from "@/components/layout/BentoSection";
 import { EstablishmentKpiGrid } from "@/components/dashboard/EstablishmentKpiGrid";
@@ -31,6 +32,7 @@ import {
     GraduationCap,
     CreditCard,
     LifeBuoy,
+    Inbox,
 } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -54,6 +56,8 @@ export interface EstablishmentDashboardProps {
     nextMission: EstablishmentMission | null;
     recentReviews: ReviewItem[];
     recentReviewsError: string | null;
+    openDeskRequests: MyDeskRequest[];
+    deskRequestsError: string | null;
 }
 
 export function EstablishmentDashboard({
@@ -73,6 +77,8 @@ export function EstablishmentDashboard({
     nextMission,
     recentReviews,
     recentReviewsError,
+    openDeskRequests,
+    deskRequestsError,
 }: EstablishmentDashboardProps) {
     const confirmedMissionBookings = confirmedBookings.filter((b) => b.lineType === "MISSION");
     const confirmedServiceBookings = confirmedBookings.filter((b) => b.lineType === "SERVICE_BOOKING");
@@ -132,7 +138,7 @@ export function EstablishmentDashboard({
 
                     {/* Réserver un atelier */}
                     <Link
-                        href="/marketplace"
+                        href="/marketplace?tab=workshops"
                         className="flex flex-col items-start gap-2 rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-colors"
                     >
                         <Sparkles className="h-5 w-5 text-[hsl(var(--teal))]" aria-hidden="true" />
@@ -141,11 +147,13 @@ export function EstablishmentDashboard({
 
                     {/* Formations */}
                     <Link
-                        href="/marketplace"
+                        href="/marketplace?tab=trainings"
                         className="flex flex-col items-start gap-2 rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-colors"
                     >
                         <GraduationCap className="h-5 w-5 text-[hsl(var(--teal))]" aria-hidden="true" />
-                        <span className="text-sm font-semibold">Formations</span>
+                        <span className="text-sm font-semibold leading-snug">
+                            Réserver une formation pour vos équipes
+                        </span>
                     </Link>
 
                     {/* Gérer mes crédits */}
@@ -159,7 +167,7 @@ export function EstablishmentDashboard({
 
                     {/* Signaler un problème */}
                     <Link
-                        href="mailto:support@les-extras.com"
+                        href="/dashboard/demandes"
                         className="flex flex-col items-start gap-2 rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-colors"
                     >
                         <LifeBuoy className="h-5 w-5 text-[hsl(var(--teal))]" aria-hidden="true" />
@@ -189,7 +197,7 @@ export function EstablishmentDashboard({
                     />
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                     {/* Candidatures en attente */}
                     <DashboardWidget
                         icon={Users}
@@ -240,6 +248,39 @@ export function EstablishmentDashboard({
                     >
                         <QuoteListWidget quotes={pendingQuotes} error={quotesError} />
                     </DashboardWidget>
+
+                    {/* Demandes Desk ouvertes */}
+                    <DashboardWidget
+                        icon={Inbox}
+                        iconColor="teal"
+                        title="Demandes Desk ouvertes"
+                        subtitle="Signalements et tickets"
+                        viewAllHref="/dashboard/demandes"
+                    >
+                        {deskRequestsError ? (
+                            <p className="text-sm text-muted-foreground">{deskRequestsError}</p>
+                        ) : openDeskRequests.length > 0 ? (
+                            <div className="space-y-3">
+                                <p className="text-3xl font-bold text-[hsl(var(--teal))]">
+                                    {openDeskRequests.length}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    demande{openDeskRequests.length > 1 ? "s" : ""} en cours de
+                                    traitement par Le Desk
+                                </p>
+                                <Link
+                                    href="/dashboard/demandes"
+                                    className="block w-full text-center text-xs font-medium text-[hsl(var(--teal))] hover:underline"
+                                >
+                                    Suivre mes demandes →
+                                </Link>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">
+                                Aucun ticket ouvert.
+                            </p>
+                        )}
+                    </DashboardWidget>
                 </div>
             </section>
 
@@ -276,7 +317,7 @@ export function EstablishmentDashboard({
                         iconColor="teal"
                         title="Ateliers & Formations"
                         subtitle="Réservations confirmées"
-                        viewAllHref="/marketplace"
+                        viewAllHref="/marketplace?tab=trainings"
                     >
                         {confirmedServiceBookings.length > 0 ? (
                             <BookingListWidget
@@ -291,7 +332,7 @@ export function EstablishmentDashboard({
                                     Aucun atelier ou formation en cours.
                                 </p>
                                 <Link
-                                    href="/marketplace"
+                                    href="/marketplace?tab=trainings"
                                     className="block w-full text-center text-xs font-medium text-[hsl(var(--teal))] hover:underline"
                                 >
                                     Explorer le catalogue →

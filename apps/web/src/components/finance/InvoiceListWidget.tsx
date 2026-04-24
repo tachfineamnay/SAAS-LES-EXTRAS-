@@ -19,6 +19,12 @@ interface InvoiceListProps {
 export function InvoiceListWidget({ invoices }: InvoiceListProps) {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+    const getStatusLabel = (status: string) => {
+        if (status === "PAID") return "Payé";
+        if (status === "UNPAID" || status === "PENDING_PAYMENT") return "Impayée";
+        return status;
+    };
+
     const getClientLabel = (invoice: any) => {
         const profile = invoice.booking?.establishment?.profile;
         if (profile?.companyName) return profile.companyName;
@@ -66,7 +72,7 @@ export function InvoiceListWidget({ invoices }: InvoiceListProps) {
                             <TableCell>{invoice.amount.toFixed(2)} €</TableCell>
                             <TableCell>
                                 <Badge variant={invoice.status === "PAID" ? "default" : "outline"} className={invoice.status === "PAID" ? "bg-green-600 hover:bg-green-700" : "text-amber-600 border-amber-600"}>
-                                    {invoice.status === "PAID" ? "Payé" : "En attente"}
+                                    {getStatusLabel(invoice.status)}
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-right">

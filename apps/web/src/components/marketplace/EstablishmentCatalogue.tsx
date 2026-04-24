@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 interface EstablishmentCatalogueProps {
   services: SerializedService[];
   freelances: SerializedFreelance[];
+  initialTab?: "workshops" | "trainings" | "freelances";
   servicesError?: string | null;
   freelancesError?: string | null;
   catalogueError?: string | null;
@@ -21,6 +22,7 @@ interface EstablishmentCatalogueProps {
 export function EstablishmentCatalogue({
   services,
   freelances,
+  initialTab = "workshops",
   servicesError,
   freelancesError,
   catalogueError,
@@ -218,7 +220,7 @@ export function EstablishmentCatalogue({
         </p>
       </header>
 
-      <Tabs defaultValue="workshops" className="w-full">
+      <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="h-auto min-h-11 flex-wrap justify-start glass-surface border border-border/40">
           <TabsTrigger value="workshops" className="gap-2 min-h-[40px]">
             <BookOpen className="h-4 w-4" aria-hidden="true" />

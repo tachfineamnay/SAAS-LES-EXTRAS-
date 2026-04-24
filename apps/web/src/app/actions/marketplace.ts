@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { apiRequest, toUserFacingApiError } from "@/lib/api";
+import { createUserDeskRequest } from "@/app/actions/desk";
 import { getSession } from "@/lib/session";
 import { atelierInvalidationPaths } from "@/lib/atelier-query-keys";
 import type { ServiceSlot } from "@/lib/atelier-config";
@@ -196,6 +197,10 @@ function sortMarketplaceMissions(missions: SerializedMission[]): SerializedMissi
     const rightDate = right.nextSlot?.start ?? right.firstSlot?.start ?? new Date(b.dateStart);
     return leftDate.getTime() - rightDate.getTime();
   });
+}
+
+function withDeskNotification(message: string, deskNotified: boolean): string {
+  return deskNotified ? `${message} Le Desk a été prévenu.` : message;
 }
 
 export async function getAvailableMissionsStrict(token?: string): Promise<SerializedMission[]> {
@@ -484,10 +489,22 @@ export async function createMissionFromRenfort(
       planningCount: input.planning?.length ?? input.slots?.length ?? 0,
       error: error instanceof Error ? error.message : error,
     });
-    // TODO: créer un endpoint user-safe POST /desk-requests acceptant MISSION_PUBLISH_FAILURE.
+    const userMessage = toUserFacingApiError(error, "Impossible de publier le renfort pour le moment.");
+    const deskResult = await createUserDeskRequest(
+      "MISSION_PUBLISH_FAILURE",
+      [
+        "Échec de publication d'un renfort.",
+        `Titre: ${input.title}`,
+        `Mode: ${input.publicationMode ?? "SINGLE_MISSION"}`,
+        `Ville: ${input.city ?? "Non renseignée"}`,
+        `Plages: ${input.planning?.length ?? input.slots?.length ?? 0}`,
+        `Erreur: ${userMessage}`,
+      ].join("\n"),
+    );
+
     return {
       ok: false,
-      error: toUserFacingApiError(error, "Impossible de publier le renfort pour le moment."),
+      error: withDeskNotification(userMessage, deskResult.ok),
     };
   }
 
@@ -584,6 +601,18 @@ export async function bookService(
     revalidatePath(atelierInvalidationPaths.mesAteliers);
     return { ok: true };
   } catch (error) {
-    return { error: getServiceBookingErrorMessage(error) };
+    const userMessage = getServiceBookingErrorMessage(error);
+    const deskResult = await createUserDeskRequest(
+      "BOOKING_FAILURE",
+      [
+        "Échec de réservation atelier/formation.",
+        `Service: ${serviceId}`,
+        `Date demandée: ${date.toISOString()}`,
+        `Participants: ${nbParticipants ?? "Non renseigné"}`,
+        `Erreur: ${userMessage}`,
+      ].join("\n"),
+    );
+
+    return { error: withDeskNotification(userMessage, deskResult.ok) };
   }
 }

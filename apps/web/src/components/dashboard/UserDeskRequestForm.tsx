@@ -8,7 +8,7 @@ import {
   type UserDeskRequestType,
 } from "@/app/actions/desk";
 import {
-  USER_DESK_REQUEST_TYPES,
+  USER_MANUAL_DESK_REQUEST_TYPES,
   getDeskRequestTypeLabel,
 } from "@/lib/desk-labels";
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,7 @@ export function UserDeskRequestForm() {
             value={type}
             onChange={(event) => setType(event.target.value as UserDeskRequestType)}
           >
-            {USER_DESK_REQUEST_TYPES.map((requestType) => (
+            {USER_MANUAL_DESK_REQUEST_TYPES.map((requestType) => (
               <option key={requestType} value={requestType}>
                 {getDeskRequestTypeLabel(requestType)}
               </option>

@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockApiRequest = vi.fn();
 const mockGetSession = vi.fn().mockResolvedValue({ token: "test-token" });
 const mockRevalidatePath = vi.fn();
+const mockCreateUserDeskRequest = vi.fn();
 const mockToUserFacingApiError = vi.fn((error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback,
 );
@@ -14,9 +15,13 @@ vi.mock("@/lib/api", () => ({
 }));
 vi.mock("@/lib/session", () => ({ getSession: () => mockGetSession() }));
 vi.mock("next/cache", () => ({ revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args) }));
+vi.mock("@/app/actions/desk", () => ({
+  createUserDeskRequest: (...args: unknown[]) => mockCreateUserDeskRequest(...args),
+}));
 
 const {
   createMissionFromRenfort,
+  bookService,
   getMyAteliers,
   createServiceFromPublish,
   updateServiceAction,
@@ -41,6 +46,7 @@ describe("createMissionFromRenfort", () => {
     vi.clearAllMocks();
     mockGetSession.mockResolvedValue({ token: "test-token" });
     mockApiRequest.mockResolvedValue({ id: "new-mission-id" });
+    mockCreateUserDeskRequest.mockResolvedValue({ ok: true });
     mockToUserFacingApiError.mockImplementation((error: unknown, fallback: string) =>
       error instanceof Error ? error.message : fallback,
     );
@@ -95,7 +101,7 @@ describe("createMissionFromRenfort", () => {
 
     const result = await createMissionFromRenfort(baseInput);
 
-    expect(result).toEqual({ ok: false, error: "Planning invalide" });
+    expect(result).toEqual({ ok: false, error: "Planning invalide Le Desk a été prévenu." });
     expect(mockToUserFacingApiError).toHaveBeenCalledWith(
       error,
       "Impossible de publier le renfort pour le moment.",
@@ -108,6 +114,41 @@ describe("createMissionFromRenfort", () => {
         planningCount: 0,
         error: "Planning invalide",
       }),
+    );
+    expect(mockCreateUserDeskRequest).toHaveBeenCalledWith(
+      "MISSION_PUBLISH_FAILURE",
+      expect.stringContaining("Échec de publication d'un renfort."),
+    );
+  });
+
+  it("ne masque pas l'erreur publication si le ticket Desk échoue aussi", async () => {
+    mockApiRequest.mockRejectedValueOnce(new Error("Planning invalide"));
+    mockToUserFacingApiError.mockReturnValueOnce("Planning invalide");
+    mockCreateUserDeskRequest.mockResolvedValueOnce({ ok: false, error: "Desk indisponible" });
+
+    const result = await createMissionFromRenfort(baseInput);
+
+    expect(result).toEqual({ ok: false, error: "Planning invalide" });
+  });
+});
+
+describe("bookService", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ token: "test-token" });
+    mockCreateUserDeskRequest.mockResolvedValue({ ok: true });
+  });
+
+  it("crée un ticket Desk si la réservation atelier échoue", async () => {
+    const date = new Date("2026-05-10T09:00:00.000Z");
+    mockApiRequest.mockRejectedValueOnce(new Error("Service indisponible"));
+
+    const result = await bookService("service-1", date, undefined, 3);
+
+    expect(result).toEqual({ error: "Service indisponible Le Desk a été prévenu." });
+    expect(mockCreateUserDeskRequest).toHaveBeenCalledWith(
+      "BOOKING_FAILURE",
+      expect.stringContaining("Service: service-1"),
     );
   });
 });

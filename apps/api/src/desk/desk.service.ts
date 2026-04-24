@@ -3,7 +3,13 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { DeskRequestPriority, DeskRequestStatus, DeskRequestType, UserRole } from "@prisma/client";
+import {
+  DeskRequestPriority,
+  DeskRequestStatus,
+  DeskRequestType,
+  ReliefMissionStatus,
+  UserRole,
+} from "@prisma/client";
 import { MailService } from "../mail/mail.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { AssignDeskRequestDto } from "./dto/assign-desk-request.dto";
@@ -140,6 +146,7 @@ export class DeskService {
     }
 
     const bookingId = dto.bookingId?.trim() || null;
+    const missionId = dto.missionId?.trim() || null;
 
     if (bookingId) {
       const booking = await this.prisma.booking.findFirst({
@@ -159,12 +166,41 @@ export class DeskService {
       }
     }
 
+    if (missionId) {
+      const mission = await this.prisma.reliefMission.findFirst({
+        where: {
+          id: missionId,
+          OR: [
+            { establishmentId: requesterId },
+            { status: ReliefMissionStatus.OPEN },
+            {
+              bookings: {
+                some: {
+                  OR: [
+                    { establishmentId: requesterId },
+                    { freelanceId: requesterId },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+        select: { id: true },
+      });
+
+      if (!mission) {
+        throw new NotFoundException("Mission liée introuvable");
+      }
+    }
+
     return this.prisma.deskRequest.create({
       data: {
         type,
         requesterId,
         bookingId,
+        missionId,
         priority: DeskRequestPriority.NORMAL,
+        status: DeskRequestStatus.OPEN,
         message: dto.message.trim(),
       },
     });

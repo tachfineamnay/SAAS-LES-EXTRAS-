@@ -16,7 +16,19 @@ export type MyDeskRequestType =
   | "USER_REPORT"
   | "LITIGE";
 
-export type UserDeskRequestType = "TECHNICAL_ISSUE" | "USER_REPORT" | "LITIGE";
+export type UserDeskRequestType =
+  | "MISSION_INFO_REQUEST"
+  | "BOOKING_FAILURE"
+  | "PACK_PURCHASE_FAILURE"
+  | "MISSION_PUBLISH_FAILURE"
+  | "TECHNICAL_ISSUE"
+  | "USER_REPORT"
+  | "LITIGE";
+
+export type UserDeskRequestContext = {
+  missionId?: string;
+  bookingId?: string;
+};
 
 export type MyDeskRequest = {
   id: string;
@@ -44,7 +56,7 @@ export type MyDeskRequest = {
 export async function createUserDeskRequest(
   type: UserDeskRequestType,
   message: string,
-  bookingId?: string,
+  context?: UserDeskRequestContext,
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     const session = await getSession();
@@ -56,7 +68,8 @@ export async function createUserDeskRequest(
       body: {
         type,
         message,
-        bookingId,
+        bookingId: context?.bookingId,
+        missionId: context?.missionId,
       },
       label: "desk.create-user-request",
     });

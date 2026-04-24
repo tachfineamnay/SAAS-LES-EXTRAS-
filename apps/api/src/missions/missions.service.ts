@@ -194,6 +194,9 @@ export class MissionsService {
   }
 
   async apply(missionId: string, freelanceId: string, dto: ApplyMissionDto = {}) {
+    // P1 V2: "premier candidat = mission prise" doit rester transactionnel:
+    // verrouiller mission OPEN, créer le booking, assigner la mission, puis statuer
+    // produit sur crédits/facture/conversation avant de remplacer ce flux candidature.
     const mission = await this.prisma.reliefMission.findUnique({
       where: { id: missionId },
       select: {

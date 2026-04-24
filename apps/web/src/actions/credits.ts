@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/session";
 import { apiRequest, safeApiRequest, toUserFacingApiError } from "@/lib/api";
+import { createUserDeskRequest } from "@/app/actions/desk";
 import type { CreditPackId } from "@/lib/credit-packs";
 
 export type PackType = CreditPackId;
@@ -51,11 +52,21 @@ export async function buyPack(packType: PackType): Promise<BuyPackResult> {
 
         return { ok: true, availableCredits: response.availableCredits };
     } catch (error) {
+        const userMessage = toUserFacingApiError(
+            error,
+            "Impossible d'ajouter ce pack pour le moment.",
+        );
+        const deskResult = await createUserDeskRequest(
+            "PACK_PURCHASE_FAILURE",
+            [
+                "Échec d'achat de pack.",
+                `Pack: ${packType}`,
+                `Erreur: ${userMessage}`,
+            ].join("\n"),
+        );
+
         return {
-            error: toUserFacingApiError(
-                error,
-                "Impossible d'ajouter ce pack pour le moment.",
-            ),
+            error: deskResult.ok ? `${userMessage} Le Desk a été prévenu.` : userMessage,
         };
     }
 }

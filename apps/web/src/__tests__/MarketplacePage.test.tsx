@@ -40,9 +40,10 @@ vi.mock("@/components/marketplace/FreelanceMarketplace", () => ({
 }));
 
 vi.mock("@/components/marketplace/EstablishmentCatalogue", () => ({
-  EstablishmentCatalogue: ({ services, freelances, servicesError, freelancesError }: {
+  EstablishmentCatalogue: ({ services, freelances, initialTab, servicesError, freelancesError }: {
     services: unknown[];
     freelances: unknown[];
+    initialTab?: string;
     servicesError?: string | null;
     freelancesError?: string | null;
   }) => (
@@ -50,6 +51,7 @@ vi.mock("@/components/marketplace/EstablishmentCatalogue", () => ({
       <p>Establishment Catalogue</p>
       <p>services:{services.length}</p>
       <p>freelances:{freelances.length}</p>
+      {initialTab && <p>tab:{initialTab}</p>}
       {servicesError && <p>{servicesError}</p>}
       {freelancesError && <p>{freelancesError}</p>}
     </div>
@@ -74,7 +76,7 @@ describe("MarketplacePage", () => {
     mockGetServicesCatalogue.mockRejectedValue(new Error("API request failed (503)"));
     mockGetFreelancesStrict.mockResolvedValue([{ id: "free-1" }]);
 
-    render(await MarketplacePage());
+    render(await MarketplacePage({}));
 
     expect(screen.getByText("Establishment Catalogue")).toBeInTheDocument();
     expect(screen.getByText("services:0")).toBeInTheDocument();
@@ -92,7 +94,7 @@ describe("MarketplacePage", () => {
     mockGetServicesCatalogue.mockResolvedValue([{ id: "service-1" }]);
     mockGetFreelancesStrict.mockRejectedValue(new Error("API request failed (502)"));
 
-    render(await MarketplacePage());
+    render(await MarketplacePage({}));
 
     expect(screen.getByText("services:1")).toBeInTheDocument();
     expect(screen.getByText("freelances:0")).toBeInTheDocument();
@@ -108,7 +110,7 @@ describe("MarketplacePage", () => {
   it("redirige l'établissement vers le login si la session API est expirée", async () => {
     mockGetServicesCatalogue.mockRejectedValue(new UnauthorizedError());
 
-    await expect(MarketplacePage()).rejects.toThrow("NEXT_REDIRECT:/login");
+    await expect(MarketplacePage({})).rejects.toThrow("NEXT_REDIRECT:/login");
 
     expect(mockDeleteSession).toHaveBeenCalledTimes(1);
     expect(mockRedirect).toHaveBeenCalledWith("/login");
@@ -121,9 +123,15 @@ describe("MarketplacePage", () => {
     });
     mockGetAvailableMissionsStrict.mockRejectedValue(new UnauthorizedError());
 
-    await expect(MarketplacePage()).rejects.toThrow("NEXT_REDIRECT:/login");
+    await expect(MarketplacePage({})).rejects.toThrow("NEXT_REDIRECT:/login");
 
     expect(mockDeleteSession).toHaveBeenCalledTimes(1);
     expect(mockRedirect).toHaveBeenCalledWith("/login");
+  });
+
+  it("passe l'onglet Formations au catalogue établissement", async () => {
+    render(await MarketplacePage({ searchParams: { tab: "trainings" } }));
+
+    expect(screen.getByText("tab:trainings")).toBeInTheDocument();
   });
 });

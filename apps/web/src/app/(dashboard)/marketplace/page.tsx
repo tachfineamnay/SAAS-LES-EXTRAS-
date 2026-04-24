@@ -11,11 +11,24 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+type MarketplaceTab = "workshops" | "trainings" | "freelances";
+
 function isRejectedUnauthorized(result: PromiseSettledResult<unknown>) {
   return result.status === "rejected" && result.reason instanceof UnauthorizedError;
 }
 
-export default async function MarketplacePage() {
+function getInitialMarketplaceTab(tab?: string | string[]): MarketplaceTab | undefined {
+  const value = Array.isArray(tab) ? tab[0] : tab;
+  return value === "workshops" || value === "trainings" || value === "freelances"
+    ? value
+    : undefined;
+}
+
+export default async function MarketplacePage({
+  searchParams,
+}: {
+  searchParams?: { tab?: string | string[] };
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
 
@@ -63,6 +76,7 @@ export default async function MarketplacePage() {
       <EstablishmentCatalogue
         services={servicesResult.status === "fulfilled" ? servicesResult.value : []}
         freelances={freelancesResult.status === "fulfilled" ? freelancesResult.value : []}
+        initialTab={getInitialMarketplaceTab(searchParams?.tab)}
         servicesError={
           servicesResult.status === "rejected"
             ? "Impossible de charger les ateliers et formations pour le moment."
