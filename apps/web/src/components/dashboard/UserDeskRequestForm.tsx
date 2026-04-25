@@ -39,7 +39,7 @@ export function UserDeskRequestForm() {
   };
 
   return (
-    <section className="rounded-xl border bg-card p-5 space-y-4">
+    <section className="rounded-xl border bg-card p-5 shadow-sm space-y-4">
       <div className="space-y-1">
         <h2 className="text-sm font-semibold text-foreground">Créer une demande Desk</h2>
         <p className="text-xs text-muted-foreground">
@@ -47,7 +47,7 @@ export function UserDeskRequestForm() {
         </p>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-[220px_1fr]">
+      <div className="grid gap-3">
         <label className="space-y-1 text-sm">
           <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Type
@@ -70,7 +70,7 @@ export function UserDeskRequestForm() {
             Message
           </span>
           <Textarea
-            rows={3}
+            rows={5}
             value={message}
             onChange={(event) => setMessage(event.target.value)}
             placeholder="Décrivez le blocage ou le contexte utile au Desk…"
