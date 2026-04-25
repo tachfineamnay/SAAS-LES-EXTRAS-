@@ -205,6 +205,7 @@ export function EstablishmentDashboard({
                         title="Candidatures en attente"
                         subtitle="En attente de décision"
                         viewAllHref="/dashboard/renforts"
+                        viewAllLabel="Voir toutes les candidatures en attente"
                     >
                         {pendingCandidatures > 0 ? (
                             <div className="space-y-3">
@@ -256,6 +257,7 @@ export function EstablishmentDashboard({
                         title="Demandes Desk ouvertes"
                         subtitle="Signalements et tickets"
                         viewAllHref="/dashboard/demandes"
+                        viewAllLabel="Voir toutes les demandes Desk ouvertes"
                     >
                         {deskRequestsError ? (
                             <p className="text-sm text-muted-foreground">{deskRequestsError}</p>
@@ -306,6 +308,7 @@ export function EstablishmentDashboard({
                         title="Mes réservations de renfort"
                         subtitle="Missions en cours et ouvertes"
                         viewAllHref="/dashboard/renforts"
+                        viewAllLabel="Voir toutes mes réservations de renfort"
                         wide
                     >
                         <RenfortsWidget missions={activeMissions} error={missionsError} />
@@ -318,6 +321,7 @@ export function EstablishmentDashboard({
                         title="Ateliers & Formations"
                         subtitle="Réservations confirmées"
                         viewAllHref="/marketplace?tab=trainings"
+                        viewAllLabel="Voir tous les ateliers et formations"
                     >
                         {confirmedServiceBookings.length > 0 ? (
                             <BookingListWidget
@@ -348,6 +352,7 @@ export function EstablishmentDashboard({
                         title="Agenda"
                         subtitle="Missions confirmées à venir"
                         viewAllHref="/bookings"
+                        viewAllLabel="Voir tout mon agenda"
                         wide
                     >
                         <BookingListWidget
@@ -377,6 +382,7 @@ export function EstablishmentDashboard({
                         title="Mes Crédits"
                         subtitle="Solde renforts et services"
                         viewAllHref="/dashboard/packs"
+                        viewAllLabel="Voir tous mes crédits"
                     >
                         <CreditsWidget credits={availableCredits} error={creditsError} />
                     </DashboardWidget>
@@ -388,6 +394,7 @@ export function EstablishmentDashboard({
                         title="Mes Factures"
                         subtitle="Historique de facturation"
                         viewAllHref="/finance"
+                        viewAllLabel="Voir toutes mes factures"
                         wide
                     >
                         <EstablishmentInvoicesWidget invoices={invoices} error={invoicesError} />
@@ -409,6 +416,7 @@ export function EstablishmentDashboard({
                         title="Historique & Archives"
                         subtitle="Missions terminées"
                         viewAllHref="/bookings"
+                        viewAllLabel="Voir tout mon historique et mes archives"
                         wide
                     >
                         <BookingListWidget

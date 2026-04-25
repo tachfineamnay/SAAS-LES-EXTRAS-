@@ -180,6 +180,7 @@ export function FreelanceDashboard({
                     title="Mes services"
                     subtitle="Ateliers et formations proposés"
                     viewAllHref="/dashboard/ateliers"
+                    viewAllLabel="Voir tous mes services"
                 >
                     {servicesError ? (
                         <div className="flex h-28 items-center justify-center rounded-lg border border-dashed bg-muted/50 text-sm text-muted-foreground">
@@ -260,6 +261,7 @@ export function FreelanceDashboard({
                     title="Mes demandes"
                     subtitle="Réponses de l'équipe"
                     viewAllHref="/dashboard/demandes"
+                    viewAllLabel="Voir toutes mes demandes"
                 >
                     {deskRequestsError ? (
                         <div className="flex h-28 items-center justify-center rounded-lg border border-dashed bg-muted/50 text-sm text-muted-foreground">

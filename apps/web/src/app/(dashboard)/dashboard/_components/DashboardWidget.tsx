@@ -14,6 +14,7 @@ interface DashboardWidgetProps {
     title: string;
     subtitle?: string;
     viewAllHref?: string;
+    viewAllLabel?: string;
     wide?: boolean;
     children: React.ReactNode;
 }
@@ -32,6 +33,7 @@ export function DashboardWidget({
     title,
     subtitle,
     viewAllHref,
+    viewAllLabel,
     wide,
     children,
 }: DashboardWidgetProps) {
@@ -57,6 +59,7 @@ export function DashboardWidget({
                     {viewAllHref && (
                         <Link
                             href={viewAllHref}
+                            aria-label={viewAllLabel ?? `Voir tout : ${title}`}
                             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                         >
                             Voir tout →
