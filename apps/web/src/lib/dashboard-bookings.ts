@@ -16,7 +16,7 @@ export function getNextUpcomingBooking(
             const date = new Date(booking.date);
             if (Number.isNaN(date.getTime())) return false;
 
-            return date.getTime() > now.getTime();
+            return date.getTime() >= now.getTime();
         })
         .sort((left, right) => {
             return new Date(left.date).getTime() - new Date(right.date).getTime();

@@ -53,6 +53,28 @@ describe("getNextUpcomingBooking", () => {
     expect(nextBooking?.lineId).toBe("future-nearest");
   });
 
+  it("retient aussi une mission prévue exactement maintenant", () => {
+    const now = new Date("2026-04-25T10:00:00.000Z");
+
+    const nextBooking = getNextUpcomingBooking(
+      [
+        {
+          ...baseMission,
+          lineId: "equal-now",
+          date: "2026-04-25T10:00:00.000Z",
+        },
+        {
+          ...baseMission,
+          lineId: "future-after",
+          date: "2026-04-25T10:30:00.000Z",
+        },
+      ],
+      now,
+    );
+
+    expect(nextBooking?.lineId).toBe("equal-now");
+  });
+
   it("retourne undefined quand aucune mission future confirmée ou assignée n'existe", () => {
     const now = new Date("2026-04-25T10:00:00.000Z");
 
