@@ -4,6 +4,7 @@ import { FreelanceDashboard } from "@/app/(dashboard)/dashboard/_components/Free
 import type { BookingLine } from "@/app/actions/bookings";
 import type { MyDeskRequest } from "@/app/actions/desk";
 import type { MesAtelierItem } from "@/app/actions/marketplace";
+import type { FreelanceTrustProfile } from "@/lib/freelance-trust";
 
 vi.mock("@/components/dashboard/MatchingMissionsWidget", () => ({
   MatchingMissionsWidget: () => <div>Missions ciblées</div>,
@@ -90,6 +91,22 @@ const deskRequest: MyDeskRequest = {
   answeredBy: null,
 };
 
+const trustProfile: FreelanceTrustProfile = {
+  progress: 50,
+  completedCount: 4,
+  totalCount: 8,
+  steps: [
+    { id: "identity", label: "Identité renseignée", status: "COMPLETED" },
+    { id: "bio", label: "Présentation ajoutée", status: "COMPLETED" },
+    { id: "skills", label: "Compétences renseignées", status: "COMPLETED" },
+    { id: "phone", label: "Téléphone renseigné", status: "COMPLETED" },
+    { id: "siret", label: "SIRET renseigné", status: "MISSING", actionLabel: "Compléter", href: "/account" },
+    { id: "location", label: "Adresse et ville renseignées", status: "PENDING", actionLabel: "Compléter", href: "/account" },
+    { id: "availableDays", label: "Disponibilités définies", status: "MISSING", actionLabel: "Compléter", href: "/account" },
+    { id: "availability", label: "Profil ouvert aux missions", status: "MISSING", actionLabel: "Activer", href: "/account" },
+  ],
+};
+
 describe("FreelanceDashboard", () => {
   it("met en avant la plateforme hybride, les services et les demandes Desk", () => {
     render(
@@ -103,6 +120,7 @@ describe("FreelanceDashboard", () => {
         recentReviews={[]}
         recentReviewsError={null}
         isAvailable
+        trustProfile={trustProfile}
         services={[service, draftService]}
         servicesError={null}
         deskRequests={[deskRequest]}

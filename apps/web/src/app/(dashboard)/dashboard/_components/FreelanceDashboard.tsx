@@ -7,6 +7,7 @@ import { BentoItem, BentoSection } from "@/components/layout/BentoSection";
 import { FreelanceKpiGrid } from "@/components/dashboard/FreelanceKpiGrid";
 import { BookingListWidget } from "@/components/dashboard/BookingListWidget";
 import { TrustChecklistWidget } from "@/components/dashboard/TrustChecklistWidget";
+import type { FreelanceTrustProfile } from "@/lib/freelance-trust";
 import { NextMissionCard } from "@/components/dashboard/NextMissionCard";
 import { MatchingMissionsWidget } from "@/components/dashboard/MatchingMissionsWidget";
 import { RecentReviewsWidget } from "@/components/dashboard/RecentReviewsWidget";
@@ -42,6 +43,7 @@ export interface FreelanceDashboardProps {
     recentReviews: ReviewItem[];
     recentReviewsError: string | null;
     isAvailable?: boolean;
+    trustProfile: FreelanceTrustProfile;
     services: MesAtelierItem[];
     servicesError: string | null;
     deskRequests: MyDeskRequest[];
@@ -64,6 +66,7 @@ export function FreelanceDashboard({
     recentReviews,
     recentReviewsError,
     isAvailable,
+    trustProfile,
     services,
     servicesError,
     deskRequests,
@@ -166,7 +169,7 @@ export function FreelanceDashboard({
                     iconColor="emerald"
                     title="Profil & Confiance"
                 >
-                    <TrustChecklistWidget />
+                    <TrustChecklistWidget trustProfile={trustProfile} />
                 </DashboardWidget>
 
                 {/* Services */}

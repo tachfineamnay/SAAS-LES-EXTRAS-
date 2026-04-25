@@ -23,6 +23,7 @@ import type { ReviewItem } from "./_components/FreelanceDashboard";
 import { getMissionPlanning } from "@/lib/mission-planning";
 import { getMissionDisplayTitle } from "@/lib/mission-display";
 import { getNextUpcomingBooking } from "@/lib/dashboard-bookings";
+import { computeFreelanceTrustProfile } from "@/lib/freelance-trust";
 
 export const dynamic = "force-dynamic";
 
@@ -140,7 +141,7 @@ async function fetchFreelanceData(token: string, userId: string) {
         bookingsResult,
         missionsResult,
         reviewsResult,
-        availabilityResult,
+        userResult,
         servicesResult,
         deskRequestsResult,
     ] = await Promise.all([
@@ -158,7 +159,7 @@ async function fetchFreelanceData(token: string, userId: string) {
         fetchSafe(
             () => getCurrentUser(),
             null,
-            "Disponibilité",
+            "Profil freelance",
         ),
         fetchSafe<MesAtelierItem[]>(
             () => getMyAteliers(token),
@@ -194,6 +195,7 @@ async function fetchFreelanceData(token: string, userId: string) {
     const pendingServiceRequests = serviceBookings.filter(
         (booking) => booking.viewerSide === "PROVIDER" && booking.status === "PENDING",
     ).length;
+    const currentUser = userResult.data;
     const services = servicesResult.data ?? [];
     const deskRequests = deskRequestsResult.data ?? [];
     const openDeskRequests = deskRequests.filter(
@@ -227,7 +229,8 @@ async function fetchFreelanceData(token: string, userId: string) {
         nextMission: getNextUpcomingBooking(missionBookings, now),
         recentReviews: reviewsResult.data,
         recentReviewsError: reviewsResult.error,
-        isAvailable: availabilityResult.data?.isAvailable ?? false,
+        isAvailable: currentUser?.isAvailable ?? false,
+        trustProfile: computeFreelanceTrustProfile(currentUser),
         services,
         servicesError: servicesResult.error,
         deskRequests,

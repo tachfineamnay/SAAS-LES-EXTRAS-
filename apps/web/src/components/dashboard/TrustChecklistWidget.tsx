@@ -1,50 +1,36 @@
 "use client";
 
-import { CheckCircle2, Circle, Upload, User, FileText, GraduationCap, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, FileText, MapPin, Phone, ShieldCheck, Sparkles, User, CalendarDays, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import type { FreelanceTrustProfile, FreelanceTrustStep } from "@/lib/freelance-trust";
 import { cn } from "@/lib/utils";
 import { SPRING_BOUNCY, EASE_PREMIUM, STAGGER_DEFAULT } from "@/lib/motion";
 
-type StepStatus = "COMPLETED" | "PENDING" | "MISSING";
-
-type VerificationStep = {
-    id: string;
-    label: string;
-    icon: React.ReactNode;
-    status: StepStatus;
+const STEP_ICONS: Record<FreelanceTrustStep["id"], React.ReactNode> = {
+    identity: <User className="h-4 w-4" />,
+    bio: <FileText className="h-4 w-4" />,
+    skills: <Sparkles className="h-4 w-4" />,
+    phone: <Phone className="h-4 w-4" />,
+    siret: <Briefcase className="h-4 w-4" />,
+    location: <MapPin className="h-4 w-4" />,
+    availableDays: <CalendarDays className="h-4 w-4" />,
+    availability: <ShieldCheck className="h-4 w-4" />,
 };
 
-const STEPS: VerificationStep[] = [
-    {
-        id: "photo",
-        label: "Photo de profil",
-        icon: <User className="h-4 w-4" />,
-        status: "COMPLETED",
-    },
-    {
-        id: "bio",
-        label: "Biographie",
-        icon: <FileText className="h-4 w-4" />,
-        status: "COMPLETED",
-    },
-    {
-        id: "diploma",
-        label: "Diplômes",
-        icon: <GraduationCap className="h-4 w-4" />,
-        status: "MISSING",
-    },
-    {
-        id: "identity",
-        label: "Pièce d'identité",
-        icon: <ShieldCheck className="h-4 w-4" />,
-        status: "PENDING",
-    },
-];
-
-export function TrustChecklistWidget() {
-    const completedCount = STEPS.filter((s) => s.status === "COMPLETED").length;
-    const progress = Math.round((completedCount / STEPS.length) * 100);
+export function TrustChecklistWidget({
+    trustProfile,
+}: {
+    trustProfile: FreelanceTrustProfile;
+}) {
+    const { progress, completedCount, totalCount, steps } = trustProfile;
+    const helperText =
+        completedCount === 0
+            ? "Commencez par renseigner votre profil pour améliorer votre visibilité."
+            : progress === 100
+              ? "Votre profil est prêt pour les nouvelles missions."
+              : `${completedCount} étape${completedCount > 1 ? "s" : ""} sur ${totalCount} complétée${completedCount > 1 ? "s" : ""}.`;
 
     return (
         <div className="h-full flex flex-col justify-between space-y-4">
@@ -72,7 +58,7 @@ export function TrustChecklistWidget() {
                     visible: { opacity: 1, transition: { staggerChildren: STAGGER_DEFAULT } },
                 }}
             >
-                {STEPS.map((step) => (
+                {steps.map((step) => (
                     <motion.div
                         key={step.id}
                         className="flex items-center justify-between group"
@@ -87,13 +73,15 @@ export function TrustChecklistWidget() {
                                     "flex h-8 w-8 items-center justify-center rounded-full border",
                                     step.status === "COMPLETED"
                                         ? "border-[hsl(var(--emerald))] bg-[hsl(var(--color-emerald-50))] text-[hsl(var(--emerald))]"
-                                        : "border-muted bg-background text-muted-foreground",
+                                        : step.status === "PENDING"
+                                          ? "border-[hsl(var(--coral)/0.25)] bg-[hsl(var(--color-coral-50))] text-[hsl(var(--coral))]"
+                                          : "border-muted bg-background text-muted-foreground",
                                 )}
                             >
                                 {step.status === "COMPLETED" ? (
                                     <CheckCircle2 className="h-4 w-4" />
                                 ) : (
-                                    step.icon
+                                    STEP_ICONS[step.id]
                                 )}
                             </div>
                             <span
@@ -105,17 +93,25 @@ export function TrustChecklistWidget() {
                                 {step.label}
                             </span>
                         </div>
-                        {step.status !== "COMPLETED" && (
-                            <Button variant="ghost" size="sm" className="h-7 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                {step.status === "PENDING" ? "En cours" : "Ajouter"}
+                        {step.status !== "COMPLETED" && step.href && step.actionLabel && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                asChild
+                            >
+                                <Link href={step.href}>{step.actionLabel}</Link>
                             </Button>
                         )}
                     </motion.div>
                 ))}
             </motion.div>
 
-            <div className="rounded-md bg-[hsl(var(--color-teal-50))] p-3 text-xs text-[hsl(var(--color-teal-700))]">
-                <p>Un profil vérifié à 100% augmente vos chances d'être sélectionné par les établissements.</p>
+            <div className="space-y-3 rounded-md bg-[hsl(var(--color-teal-50))] p-3 text-xs text-[hsl(var(--color-teal-700))]">
+                <p>{helperText}</p>
+                <Button variant="glass" size="sm" className="w-full min-h-[40px]" asChild>
+                    <Link href="/account">Compléter mon profil</Link>
+                </Button>
             </div>
         </div>
     );
