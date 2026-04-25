@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/session";
 import { apiRequest } from "@/lib/api";
 
@@ -40,5 +41,40 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
         });
     } catch {
         return null;
+    }
+}
+
+export async function updateAvailabilityAction(
+    isAvailable: boolean,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+    const session = await getSession();
+
+    if (!session) {
+        return { ok: false, error: "Non connecté" };
+    }
+
+    if (session.user.role !== "FREELANCE") {
+        return { ok: false, error: "Action réservée aux freelances." };
+    }
+
+    try {
+        await apiRequest("/users/me", {
+            method: "PATCH",
+            token: session.token,
+            body: { isAvailable },
+            label: "user.update-availability",
+        });
+
+        revalidatePath("/dashboard");
+        revalidatePath("/account");
+
+        return { ok: true };
+    } catch (error) {
+        return {
+            ok: false,
+            error: error instanceof Error
+                ? error.message
+                : "Impossible de mettre à jour votre disponibilité.",
+        };
     }
 }

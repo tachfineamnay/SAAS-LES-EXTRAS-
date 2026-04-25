@@ -12,6 +12,7 @@ import { MatchingMissionsWidget } from "@/components/dashboard/MatchingMissionsW
 import { RecentReviewsWidget } from "@/components/dashboard/RecentReviewsWidget";
 import { Button } from "@/components/ui/button";
 import { DashboardWidget } from "./DashboardWidget";
+import { FreelanceAvailabilityToggle } from "./FreelanceAvailabilityToggle";
 import {
     Calendar,
     Briefcase,
@@ -92,14 +93,7 @@ export function FreelanceDashboard({
                     <h1 className="font-display text-heading-xl tracking-tight">
                         Mon Tableau de bord
                     </h1>
-                    <div className="flex items-center gap-2">
-                        <span className={`relative flex h-2.5 w-2.5 rounded-full ${isAvailable ? "bg-emerald-500" : "bg-red-500"}`}>
-                            {isAvailable && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />}
-                        </span>
-                        <p className="text-body-sm font-medium">
-                            {isAvailable ? "Disponible" : "Indisponible"}
-                        </p>
-                    </div>
+                    <FreelanceAvailabilityToggle initialIsAvailable={Boolean(isAvailable)} />
                     <p className="text-body-md text-muted-foreground">
                         Pilotez vos missions de renfort, vos services et vos échanges avec l&apos;équipe.
                     </p>
