@@ -2,14 +2,13 @@
 
 import { useState, useMemo } from "react";
 import { SerializedMission } from "@/app/actions/marketplace";
-import { MissionCard } from "./MissionCard";
+import { MissionCard } from "@/components/cards/MissionCard";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Search, Briefcase, Sun, Moon, X } from "lucide-react";
 import { METIERS } from "@/lib/sos-config";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useApplyToMission } from "@/lib/hooks/useApplyToMission";
 
 interface FreelanceJobBoardProps {
   missions: SerializedMission[];
@@ -22,7 +21,6 @@ export function FreelanceJobBoard({ missions, hideHeader }: FreelanceJobBoardPro
   const [search, setSearch] = useState("");
   const [selectedMetier, setSelectedMetier] = useState<string | null>(null);
   const [shiftFilter, setShiftFilter] = useState<ShiftFilter>("ALL");
-  const { apply, isPending, hasApplied } = useApplyToMission();
 
   // Sort by newest first
   const sortedMissions = useMemo(
@@ -162,13 +160,7 @@ export function FreelanceJobBoard({ missions, hideHeader }: FreelanceJobBoardPro
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredMissions.map((mission) => (
-            <MissionCard
-              key={mission.id}
-              mission={mission}
-              onApply={(m) => apply(m.id)}
-              isPending={isPending}
-              hasApplied={hasApplied(mission.id)}
-            />
+            <MissionCard key={mission.id} mission={mission} />
           ))}
         </div>
       )}
