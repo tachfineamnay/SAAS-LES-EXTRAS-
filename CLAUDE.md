@@ -22,7 +22,7 @@ Deux piliers :
 
 **Vocabulaire obligatoire** : `FREELANCE` / `ESTABLISHMENT` (jamais talent/client/candidat/formateur).  
 **Mode** : **Dark-first** — `[data-theme="dark"]` sur `<html>`. Tokens clairs conservés dans `:root`, tokens sombres dans `[data-theme="dark"]`.  
-**Design system** : Direction « Quietly Bold After Dark » — surfaces teal-noir (`rgba(13,44,52,.72)`), glassmorphism, coral UNIQUEMENT pour urgences/badges Urgent/boutons Postuler, teal `#0A6870` pour toutes les actions primaires (voir `PHASE2_DESIGN_SYSTEM.md`).
+**Design system** : Direction « Quietly Bold After Dark » — surfaces teal-noir (`rgba(13,44,52,.72)`), glassmorphism, coral UNIQUEMENT pour urgences/badges Urgent/boutons Postuler, teal `#0A6870` pour toutes les actions primaires.
 
 ---
 
