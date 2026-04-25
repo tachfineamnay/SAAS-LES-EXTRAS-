@@ -29,6 +29,7 @@ vi.mock("@/components/dashboard/RecentReviewsWidget", () => ({
 
 vi.mock("@/components/layout/BentoSection", () => ({
   BentoSection: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  BentoItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 const service: MesAtelierItem = {
@@ -57,24 +58,6 @@ const draftService: MesAtelierItem = {
   title: "Formation posture professionnelle",
   type: "TRAINING",
   status: "DRAFT",
-};
-
-const serviceBooking: BookingLine = {
-  lineId: "sb-1",
-  lineType: "SERVICE_BOOKING",
-  date: "2026-04-12",
-  typeLabel: "Atelier",
-  interlocutor: "EHPAD A",
-  status: "PENDING",
-  address: "Paris",
-  contactEmail: "contact@example.com",
-  viewerSide: "PROVIDER",
-};
-
-const requesterServiceBooking: BookingLine = {
-  ...serviceBooking,
-  lineId: "sb-2",
-  viewerSide: "REQUESTER",
 };
 
 const upcomingMission: BookingLine = {
@@ -113,7 +96,6 @@ describe("FreelanceDashboard", () => {
       <FreelanceDashboard
         confirmedBookings={[upcomingMission]}
         pendingBookings={[pendingApplication]}
-        serviceBookings={[serviceBooking, requesterServiceBooking]}
         bookingsError={null}
         matchingMissions={[]}
         availableMissionsError={null}
@@ -170,11 +152,17 @@ describe("FreelanceDashboard", () => {
     expect(screen.queryByText(/profil complété/i)).not.toBeInTheDocument();
 
     expect(screen.getByRole("heading", { name: /mes services/i })).toBeInTheDocument();
+    expect(screen.getByText(/missions disponibles/i)).toBeInTheDocument();
+    expect(screen.queryByText(/correspondant à votre profil/i)).not.toBeInTheDocument();
     expect(screen.getByText(/1 brouillon à finaliser/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /gérer mes services/i })).toHaveAttribute(
       "href",
       "/dashboard/ateliers",
     );
+    expect(screen.getByText("à traiter")).toBeInTheDocument();
+    expect(
+      screen.getByText("à traiter").parentElement?.querySelector("p.text-2xl"),
+    ).toHaveTextContent("1");
 
     expect(screen.getByRole("heading", { name: /mes demandes/i })).toBeInTheDocument();
     expect(screen.getByText(/dernière demande : renfort éducateur spécialisé/i)).toBeInTheDocument();

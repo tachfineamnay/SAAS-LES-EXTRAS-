@@ -13,6 +13,12 @@ export interface BentoSectionProps extends React.HTMLAttributes<HTMLElement> {
     action?: React.ReactNode;
 }
 
+export interface BentoItemProps {
+    span?: 1 | 2 | 3;
+    className?: string;
+    children: React.ReactNode;
+}
+
 const gapMap = {
     sm: "gap-3",
     md: "gap-4",
@@ -24,6 +30,32 @@ const colsMap = {
     3: "md:grid-cols-2 lg:grid-cols-3",
     4: "md:grid-cols-2 xl:grid-cols-4",
 } as const;
+
+const spanMap = {
+    1: "",
+    2: "md:col-span-2",
+    3: "md:col-span-2 lg:col-span-3",
+} as const;
+
+export function BentoItem({ children }: BentoItemProps) {
+    return <>{children}</>;
+}
+
+BentoItem.displayName = "BentoItem";
+
+function resolveBentoChild(child: React.ReactNode) {
+    if (React.isValidElement<BentoItemProps>(child) && child.type === BentoItem) {
+        return {
+            className: cn(spanMap[child.props.span ?? 1], child.props.className),
+            content: child.props.children,
+        };
+    }
+
+    return {
+        className: undefined,
+        content: child,
+    };
+}
 
 export function BentoSection({
     cols = 3,
@@ -65,11 +97,15 @@ export function BentoSection({
                     gapMap[gap]
                 )}
             >
-                {childArray.map((child, i) => (
-                    <motion.div key={i} variants={itemFadeUp}>
-                        {child}
-                    </motion.div>
-                ))}
+                {childArray.map((child, i) => {
+                    const { className: itemClassName, content } = resolveBentoChild(child);
+
+                    return (
+                        <motion.div key={i} className={itemClassName} variants={itemFadeUp}>
+                            {content}
+                        </motion.div>
+                    );
+                })}
             </motion.div>
         </section>
     );

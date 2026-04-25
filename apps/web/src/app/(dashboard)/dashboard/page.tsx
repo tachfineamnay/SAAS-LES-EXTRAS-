@@ -22,6 +22,7 @@ import { FreelanceDashboard } from "./_components/FreelanceDashboard";
 import type { ReviewItem } from "./_components/FreelanceDashboard";
 import { getMissionPlanning } from "@/lib/mission-planning";
 import { getMissionDisplayTitle } from "@/lib/mission-display";
+import { getNextUpcomingBooking } from "@/lib/dashboard-bookings";
 
 export const dynamic = "force-dynamic";
 
@@ -220,11 +221,10 @@ async function fetchFreelanceData(token: string, userId: string) {
     return {
         confirmedBookings,
         pendingBookings: missionBookings.filter((b) => b.status === "PENDING"),
-        serviceBookings,
         bookingsError: bookingsResult.error,
         matchingMissions,
         availableMissionsError: missionsResult.error,
-        nextMission: confirmedBookings[0],
+        nextMission: getNextUpcomingBooking(missionBookings, now),
         recentReviews: reviewsResult.data,
         recentReviewsError: reviewsResult.error,
         isAvailable: availabilityResult.data?.isAvailable ?? false,

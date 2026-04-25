@@ -150,6 +150,9 @@ describe("DashboardPage freelance KPI data", () => {
         pendingApplications: 1,
         pendingServiceRequests: 1,
         averageRating: 3.6,
+        nextMission: expect.objectContaining({
+          lineId: "mission-future",
+        }),
       }),
     );
   });

@@ -3,7 +3,7 @@ import type { BookingLine } from "@/app/actions/bookings";
 import type { MyDeskRequest } from "@/app/actions/desk";
 import type { MesAtelierItem } from "@/app/actions/marketplace";
 import type { MatchingMission } from "@/components/dashboard/MatchingMissionsWidget";
-import { BentoSection } from "@/components/layout/BentoSection";
+import { BentoItem, BentoSection } from "@/components/layout/BentoSection";
 import { FreelanceKpiGrid } from "@/components/dashboard/FreelanceKpiGrid";
 import { BookingListWidget } from "@/components/dashboard/BookingListWidget";
 import { TrustChecklistWidget } from "@/components/dashboard/TrustChecklistWidget";
@@ -35,7 +35,6 @@ export interface ReviewItem {
 export interface FreelanceDashboardProps {
     confirmedBookings: BookingLine[];
     pendingBookings: BookingLine[];
-    serviceBookings: BookingLine[];
     bookingsError: string | null;
     matchingMissions: MatchingMission[];
     availableMissionsError: string | null;
@@ -58,7 +57,6 @@ export interface FreelanceDashboardProps {
 export function FreelanceDashboard({
     confirmedBookings,
     pendingBookings,
-    serviceBookings,
     bookingsError,
     matchingMissions,
     availableMissionsError,
@@ -82,9 +80,6 @@ export function FreelanceDashboard({
             ? `/bookings/${nextMission.lineType}/${nextMission.lineId}`
             : "/bookings";
     const draftServices = services.filter((service) => service.status === "DRAFT").length;
-    const pendingServiceBookings = serviceBookings.filter(
-        (booking) => booking.viewerSide === "PROVIDER" && booking.status === "PENDING",
-    ).length;
     const answeredDeskRequests = deskRequests.filter((request) => request.status === "ANSWERED").length;
     const latestDeskRequest = deskRequests[0];
 
@@ -151,18 +146,19 @@ export function FreelanceDashboard({
             {/* Main bento */}
             <BentoSection cols={3} gap="md">
                 {/* Matching missions */}
-                <DashboardWidget
-                    icon={Sparkles}
-                    iconColor="coral"
-                    title="Nouvelles missions"
-                    subtitle="Correspondant à votre profil"
-                    wide
-                >
-                    <MatchingMissionsWidget
-                        missions={matchingMissions}
-                        error={availableMissionsError}
-                    />
-                </DashboardWidget>
+                <BentoItem span={2}>
+                    <DashboardWidget
+                        icon={Sparkles}
+                        iconColor="coral"
+                        title="Nouvelles missions"
+                        subtitle="Missions disponibles"
+                    >
+                        <MatchingMissionsWidget
+                            missions={matchingMissions}
+                            error={availableMissionsError}
+                        />
+                    </DashboardWidget>
+                </BentoItem>
 
                 {/* Trust progress */}
                 <DashboardWidget
@@ -198,8 +194,8 @@ export function FreelanceDashboard({
                                     <p className="text-xs text-muted-foreground">actifs</p>
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-bold">{pendingServiceBookings}</p>
-                                    <p className="text-xs text-muted-foreground">demandes</p>
+                                    <p className="text-2xl font-bold">{pendingServiceRequests}</p>
+                                    <p className="text-xs text-muted-foreground">à traiter</p>
                                 </div>
                             </div>
                             <p className="text-sm text-muted-foreground">
@@ -215,20 +211,21 @@ export function FreelanceDashboard({
                 </DashboardWidget>
 
                 {/* Agenda */}
-                <DashboardWidget
-                    icon={Calendar}
-                    iconColor="teal"
-                    title="Mon Agenda"
-                    subtitle="Missions confirmées"
-                    wide
-                >
-                    <BookingListWidget
-                        bookings={confirmedBookings}
-                        emptyMessage="Aucune mission prévue."
-                        viewAllLink="/bookings"
-                        error={bookingsError}
-                    />
-                </DashboardWidget>
+                <BentoItem span={2}>
+                    <DashboardWidget
+                        icon={Calendar}
+                        iconColor="teal"
+                        title="Mon Agenda"
+                        subtitle="Missions confirmées"
+                    >
+                        <BookingListWidget
+                            bookings={confirmedBookings}
+                            emptyMessage="Aucune mission prévue."
+                            viewAllLink="/bookings"
+                            error={bookingsError}
+                        />
+                    </DashboardWidget>
+                </BentoItem>
 
                 {/* Recent reviews */}
                 <DashboardWidget icon={Star} iconColor="amber" title="Derniers avis">
@@ -239,20 +236,21 @@ export function FreelanceDashboard({
                 </DashboardWidget>
 
                 {/* Candidatures */}
-                <DashboardWidget
-                    icon={Briefcase}
-                    iconColor="coral"
-                    title="Mes Candidatures"
-                    subtitle="En cours de traitement"
-                    wide
-                >
-                    <BookingListWidget
-                        bookings={pendingBookings}
-                        emptyMessage="Aucune candidature en cours."
-                        viewAllLink="/bookings"
-                        error={bookingsError}
-                    />
-                </DashboardWidget>
+                <BentoItem span={2}>
+                    <DashboardWidget
+                        icon={Briefcase}
+                        iconColor="coral"
+                        title="Mes Candidatures"
+                        subtitle="En cours de traitement"
+                    >
+                        <BookingListWidget
+                            bookings={pendingBookings}
+                            emptyMessage="Aucune candidature en cours."
+                            viewAllLink="/bookings"
+                            error={bookingsError}
+                        />
+                    </DashboardWidget>
+                </BentoItem>
 
                 {/* Desk requests */}
                 <DashboardWidget
