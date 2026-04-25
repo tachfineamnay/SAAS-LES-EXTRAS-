@@ -21,12 +21,20 @@ export interface MatchingMission {
   hours?: string;
   rate?: string;
   urgent?: boolean;
+  matchScore?: number;
+  matchReasons?: string[];
 }
 
 interface MatchingMissionsWidgetProps {
   missions: MatchingMission[];
   error?: string | null;
 }
+
+const DISPLAY_MATCH_REASONS = new Set([
+  "Même ville",
+  "Compétence proche",
+  "Disponible ce jour",
+]);
 
 export function MatchingMissionsWidget({ missions, error }: MatchingMissionsWidgetProps) {
   const { apply, isPending, hasApplied } = useApplyToMission();
@@ -68,6 +76,7 @@ export function MatchingMissionsWidget({ missions, error }: MatchingMissionsWidg
               dates={m.dates}
               hours={m.hours}
               rate={m.rate}
+              badges={m.matchReasons?.filter((reason) => DISPLAY_MATCH_REASONS.has(reason)).slice(0, 2)}
               actionLabel={applied ? "Candidature envoyée" : isPending ? "Envoi…" : "Postuler"}
               actionDisabled={applied || isPending}
               onAction={() => {

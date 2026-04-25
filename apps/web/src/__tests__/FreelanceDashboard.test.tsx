@@ -192,4 +192,42 @@ describe("FreelanceDashboard", () => {
     expect(screen.queryByText(/voir les missions/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/total gagné/i)).not.toBeInTheDocument();
   });
+
+  it("ne parle de profil que lorsqu'une mission a un score positif", () => {
+    render(
+      <FreelanceDashboard
+        confirmedBookings={[]}
+        pendingBookings={[]}
+        bookingsError={null}
+        matchingMissions={[
+          {
+            id: "matched-mission",
+            title: "Éducateur spécialisé",
+            establishment: "EHPAD B",
+            city: "Lyon",
+            matchScore: 40,
+            matchReasons: ["Même ville"],
+          },
+        ]}
+        availableMissionsError={null}
+        nextMission={undefined}
+        recentReviews={[]}
+        recentReviewsError={null}
+        isAvailable
+        trustProfile={trustProfile}
+        services={[]}
+        servicesError={null}
+        deskRequests={[]}
+        deskRequestsError={null}
+        upcomingMissions={0}
+        pendingApplications={0}
+        pendingServiceRequests={0}
+        activeServices={0}
+        openDeskRequests={0}
+        averageRating={null}
+      />,
+    );
+
+    expect(screen.getByText(/sélectionnées pour votre profil/i)).toBeInTheDocument();
+  });
 });

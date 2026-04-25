@@ -82,6 +82,9 @@ export function FreelanceDashboard({
         nextMission?.lineType && nextMission?.lineId
             ? `/bookings/${nextMission.lineType}/${nextMission.lineId}`
             : "/bookings";
+    const matchingMissionsSubtitle = matchingMissions.some((mission) => (mission.matchScore ?? 0) > 0)
+        ? "Sélectionnées pour votre profil"
+        : "Missions disponibles";
     const draftServices = services.filter((service) => service.status === "DRAFT").length;
     const answeredDeskRequests = deskRequests.filter((request) => request.status === "ANSWERED").length;
     const latestDeskRequest = deskRequests[0];
@@ -154,7 +157,7 @@ export function FreelanceDashboard({
                         icon={Sparkles}
                         iconColor="coral"
                         title="Nouvelles missions"
-                        subtitle="Missions disponibles"
+                        subtitle={matchingMissionsSubtitle}
                     >
                         <MatchingMissionsWidget
                             missions={matchingMissions}

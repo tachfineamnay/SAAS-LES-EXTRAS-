@@ -19,7 +19,14 @@ vi.mock("@/app/actions/missions", () => ({
 }));
 
 const missions: MatchingMission[] = [
-  { id: "m-1", title: "Aide-soignant(e)", establishment: "EHPAD A", city: "Paris", urgent: false },
+  {
+    id: "m-1",
+    title: "Aide-soignant(e)",
+    establishment: "EHPAD A",
+    city: "Paris",
+    urgent: false,
+    matchReasons: ["Même ville", "Compétence proche", "Disponible ce jour"],
+  },
   { id: "m-2", title: "Infirmier(e)", establishment: "Clinique B", city: "Lyon", urgent: true },
   { id: "m-3", title: "ASH", establishment: "MAS C", city: "Bordeaux" },
 ];
@@ -77,5 +84,13 @@ describe("MatchingMissionsWidget", () => {
     render(<MatchingMissionsWidget missions={many} />);
     const cards = screen.getAllByRole("article");
     expect(cards).toHaveLength(3);
+  });
+
+  it("affiche au maximum deux raisons de matching par carte", () => {
+    render(<MatchingMissionsWidget missions={missions} />);
+
+    expect(screen.getByText("Même ville")).toBeInTheDocument();
+    expect(screen.getByText("Compétence proche")).toBeInTheDocument();
+    expect(screen.queryByText("Disponible ce jour")).not.toBeInTheDocument();
   });
 });

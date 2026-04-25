@@ -24,6 +24,7 @@ import { getMissionPlanning } from "@/lib/mission-planning";
 import { getMissionDisplayTitle } from "@/lib/mission-display";
 import { getNextUpcomingBooking } from "@/lib/dashboard-bookings";
 import { computeFreelanceTrustProfile } from "@/lib/freelance-trust";
+import { getTopMatchingMissions } from "@/lib/mission-matching";
 
 export const dynamic = "force-dynamic";
 
@@ -202,9 +203,12 @@ async function fetchFreelanceData(token: string, userId: string) {
         (request) => request.status === "OPEN" || request.status === "IN_PROGRESS",
     ).length;
 
-    const matchingMissions: MatchingMission[] = (missionsResult.data ?? [])
-        .slice(0, 3)
-        .map((m) => {
+    const matchingMissions: MatchingMission[] = getTopMatchingMissions(
+        missionsResult.data ?? [],
+        currentUser,
+        3,
+    )
+        .map(({ mission: m, score, reasons }) => {
             const planning = getMissionPlanning(m);
             const firstSlot = planning.firstSlot;
 
@@ -217,6 +221,8 @@ async function fetchFreelanceData(token: string, userId: string) {
                 hours: firstSlot ? `${firstSlot.heureDebut} – ${firstSlot.heureFin}` : undefined,
                 rate: `${m.hourlyRate}\u00a0€/h`,
                 urgent: m.isUrgent ?? false,
+                matchScore: score,
+                matchReasons: reasons,
             };
         });
 
