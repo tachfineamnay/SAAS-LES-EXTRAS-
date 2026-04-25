@@ -85,5 +85,18 @@ describe("Sidebar", () => {
       "href",
       "/dashboard/demandes",
     );
+    expect(screen.queryByRole("link", { name: /crédits/i })).not.toBeInTheDocument();
+  });
+
+  it("conserve le lien Crédits pour un établissement", () => {
+    store.userRole = "ESTABLISHMENT";
+    store.pathname = "/dashboard/packs";
+
+    render(<Sidebar isMobileOpen={false} onMobileOpenChange={() => undefined} />);
+
+    expect(screen.getByRole("link", { name: /crédits/i })).toHaveAttribute(
+      "href",
+      "/dashboard/packs",
+    );
   });
 });
