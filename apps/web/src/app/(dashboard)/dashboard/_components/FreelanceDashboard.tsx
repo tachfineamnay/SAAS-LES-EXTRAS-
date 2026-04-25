@@ -47,7 +47,9 @@ export interface FreelanceDashboardProps {
     servicesError: string | null;
     deskRequests: MyDeskRequest[];
     deskRequestsError: string | null;
-    completedMissionsThisMonth: number;
+    upcomingMissions: number;
+    pendingApplications: number;
+    pendingServiceRequests: number;
     activeServices: number;
     openDeskRequests: number;
     averageRating: number | null;
@@ -68,7 +70,9 @@ export function FreelanceDashboard({
     servicesError,
     deskRequests,
     deskRequestsError,
-    completedMissionsThisMonth,
+    upcomingMissions,
+    pendingApplications,
+    pendingServiceRequests,
     activeServices,
     openDeskRequests,
     averageRating,
@@ -78,7 +82,9 @@ export function FreelanceDashboard({
             ? `/bookings/${nextMission.lineType}/${nextMission.lineId}`
             : "/bookings";
     const draftServices = services.filter((service) => service.status === "DRAFT").length;
-    const pendingServiceBookings = serviceBookings.filter((booking) => booking.status === "PENDING").length;
+    const pendingServiceBookings = serviceBookings.filter(
+        (booking) => booking.viewerSide === "PROVIDER" && booking.status === "PENDING",
+    ).length;
     const answeredDeskRequests = deskRequests.filter((request) => request.status === "ANSWERED").length;
     const latestDeskRequest = deskRequests[0];
 
@@ -136,9 +142,9 @@ export function FreelanceDashboard({
 
             {/* KPI row */}
             <FreelanceKpiGrid
-                completedMissionsThisMonth={completedMissionsThisMonth}
-                activeServices={activeServices}
-                openDeskRequests={openDeskRequests}
+                upcomingMissions={upcomingMissions}
+                pendingApplications={pendingApplications}
+                pendingServiceRequests={pendingServiceRequests}
                 averageRating={averageRating}
             />
 

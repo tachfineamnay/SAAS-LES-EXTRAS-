@@ -1,46 +1,50 @@
 "use client";
 
-import { BookOpen, CheckCircle, Inbox, Star } from "lucide-react";
+import { BookOpen, Briefcase, CalendarClock, Star } from "lucide-react";
 import { KpiTile } from "./KpiTile";
 
 interface FreelanceKpiGridProps {
-    completedMissionsThisMonth: number;
-    activeServices: number;
-    openDeskRequests: number;
+    upcomingMissions: number;
+    pendingApplications: number;
+    pendingServiceRequests: number;
     averageRating: number | null;
 }
 
 export function FreelanceKpiGrid({
-    completedMissionsThisMonth,
-    activeServices,
-    openDeskRequests,
+    upcomingMissions,
+    pendingApplications,
+    pendingServiceRequests,
     averageRating,
 }: FreelanceKpiGridProps) {
     return (
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
             <KpiTile
-                label="Missions ce mois"
-                value={completedMissionsThisMonth}
-                icon={CheckCircle}
+                label="Missions à venir"
+                value={upcomingMissions}
+                icon={CalendarClock}
                 iconColor="teal"
+                href="/bookings"
             />
             <KpiTile
-                label="Services actifs"
-                value={activeServices}
+                label="Candidatures en attente"
+                value={pendingApplications}
+                icon={Briefcase}
+                iconColor="coral"
+                href="/bookings"
+            />
+            <KpiTile
+                label="Services à traiter"
+                value={pendingServiceRequests}
                 icon={BookOpen}
                 iconColor="emerald"
-            />
-            <KpiTile
-                label="Demandes ouvertes"
-                value={openDeskRequests}
-                icon={Inbox}
-                iconColor="coral"
+                href="/dashboard/ateliers"
             />
             <KpiTile
                 label="Note moyenne"
                 value={averageRating != null ? `${averageRating.toFixed(1)}/5` : "–"}
                 icon={Star}
                 iconColor="amber"
+                href="/account"
             />
         </div>
     );

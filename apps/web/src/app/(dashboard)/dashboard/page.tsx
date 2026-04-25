@@ -183,25 +183,21 @@ async function fetchFreelanceData(token: string, userId: string) {
     const confirmedBookings = missionBookings.filter(
         (b) => b.status === "CONFIRMED" || b.status === "ASSIGNED",
     );
-    const completedBookings = missionBookings.filter(
-        (b) => b.status === "COMPLETED" || b.status === "PAID",
-    );
     const now = new Date();
-    const completedMissionsThisMonth = completedBookings.filter((booking) => {
+    const upcomingMissions = confirmedBookings.filter((booking) => {
         const date = new Date(booking.date);
         if (Number.isNaN(date.getTime())) return false;
-        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+        return date.getTime() > now.getTime();
     }).length;
+    const pendingApplications = missionBookings.filter((booking) => booking.status === "PENDING").length;
+    const pendingServiceRequests = serviceBookings.filter(
+        (booking) => booking.viewerSide === "PROVIDER" && booking.status === "PENDING",
+    ).length;
     const services = servicesResult.data ?? [];
     const deskRequests = deskRequestsResult.data ?? [];
     const openDeskRequests = deskRequests.filter(
         (request) => request.status === "OPEN" || request.status === "IN_PROGRESS",
     ).length;
-    const averageRating =
-        reviewsResult.data.length > 0
-            ? reviewsResult.data.reduce((acc, review) => acc + review.rating, 0) /
-              reviewsResult.data.length
-            : null;
 
     const matchingMissions: MatchingMission[] = (missionsResult.data ?? [])
         .slice(0, 3)
@@ -236,19 +232,25 @@ async function fetchFreelanceData(token: string, userId: string) {
         servicesError: servicesResult.error,
         deskRequests,
         deskRequestsError: deskRequestsResult.error,
-        completedMissionsThisMonth,
+        upcomingMissions,
+        pendingApplications,
+        pendingServiceRequests,
         activeServices: services.filter((service) => service.status === "ACTIVE").length,
         openDeskRequests,
-        averageRating,
+        averageRating: reviewsResult.averageRating,
     };
 }
 
 async function fetchReviews(
     userId: string,
     token: string,
-): Promise<{ data: ReviewItem[]; error: string | null }> {
+): Promise<{ data: ReviewItem[]; error: string | null; averageRating: number | null }> {
     try {
         const rawReviews = await getReviewsByTarget(userId, token);
+        const averageRating =
+            rawReviews.length > 0
+                ? rawReviews.reduce((acc: number, review: any) => acc + review.rating, 0) / rawReviews.length
+                : null;
         const data: ReviewItem[] = rawReviews.slice(0, 4).map((review: any) => {
             const authorProfile = review.author?.profile;
             const authorName = authorProfile
@@ -267,13 +269,13 @@ async function fetchReviews(
                 }),
             };
         });
-        return { data, error: null };
+        return { data, error: null, averageRating };
     } catch (error) {
         if (error instanceof UnauthorizedError) {
             throw error;
         }
 
-        return { data: [], error: "Impossible de charger les avis pour le moment." };
+        return { data: [], error: "Impossible de charger les avis pour le moment.", averageRating: null };
     }
 }
 

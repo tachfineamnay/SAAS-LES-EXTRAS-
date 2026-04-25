@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ export interface KpiTileProps extends Omit<
     iconColor?: "teal" | "coral" | "sand" | "violet" | "emerald" | "amber" | "gray";
     /** Stagger entrance delay index */
     index?: number;
+    href?: string;
 }
 
 const iconContainerMap: Record<string, string> = {
@@ -48,6 +50,7 @@ export function KpiTile({
     trendLabel,
     iconColor = "teal",
     index = 0,
+    href,
     className,
     ...props
 }: KpiTileProps) {
@@ -57,7 +60,7 @@ export function KpiTile({
     const iconClass = iconContainerMap[iconColor] ?? "icon-teal";
     const staggerDelay = index * STAGGER_DEFAULT;
 
-    return (
+    const tile = (
         <motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
@@ -70,7 +73,8 @@ export function KpiTile({
             className={cn(
                 "bg-card card-shadow border border-border rounded-2xl",
                 "focus-within:ring-2 focus-within:ring-ring",
-                "p-6 cursor-default relative overflow-hidden",
+                "p-6 relative overflow-hidden h-full",
+                href ? "cursor-pointer" : "cursor-default",
                 className
             )}
             {...props}
@@ -122,4 +126,18 @@ export function KpiTile({
             )}
         </motion.div>
     );
+
+    if (href) {
+        return (
+            <Link
+                href={href}
+                className="block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                aria-label={`${label} — ouvrir la page associée`}
+            >
+                {tile}
+            </Link>
+        );
+    }
+
+    return tile;
 }

@@ -68,6 +68,30 @@ const serviceBooking: BookingLine = {
   status: "PENDING",
   address: "Paris",
   contactEmail: "contact@example.com",
+  viewerSide: "PROVIDER",
+};
+
+const requesterServiceBooking: BookingLine = {
+  ...serviceBooking,
+  lineId: "sb-2",
+  viewerSide: "REQUESTER",
+};
+
+const upcomingMission: BookingLine = {
+  lineId: "mission-1",
+  lineType: "MISSION",
+  date: "2027-04-12T10:00:00.000Z",
+  typeLabel: "Mission SOS",
+  interlocutor: "EHPAD B",
+  status: "CONFIRMED",
+  address: "Lyon",
+  contactEmail: "contact@example.com",
+};
+
+const pendingApplication: BookingLine = {
+  ...upcomingMission,
+  lineId: "mission-2",
+  status: "PENDING",
 };
 
 const deskRequest: MyDeskRequest = {
@@ -87,13 +111,13 @@ describe("FreelanceDashboard", () => {
   it("met en avant la plateforme hybride, les services et les demandes Desk", () => {
     render(
       <FreelanceDashboard
-        confirmedBookings={[]}
-        pendingBookings={[]}
-        serviceBookings={[serviceBooking]}
+        confirmedBookings={[upcomingMission]}
+        pendingBookings={[pendingApplication]}
+        serviceBookings={[serviceBooking, requesterServiceBooking]}
         bookingsError={null}
         matchingMissions={[]}
         availableMissionsError={null}
-        nextMission={undefined}
+        nextMission={upcomingMission}
         recentReviews={[]}
         recentReviewsError={null}
         isAvailable
@@ -101,7 +125,9 @@ describe("FreelanceDashboard", () => {
         servicesError={null}
         deskRequests={[deskRequest]}
         deskRequestsError={null}
-        completedMissionsThisMonth={1}
+        upcomingMissions={1}
+        pendingApplications={1}
+        pendingServiceRequests={1}
         activeServices={1}
         openDeskRequests={1}
         averageRating={4.5}
@@ -120,10 +146,25 @@ describe("FreelanceDashboard", () => {
       "/dashboard/ateliers",
     );
 
-    expect(screen.getByText(/missions ce mois/i)).toBeInTheDocument();
-    expect(screen.getByText(/services actifs/i)).toBeInTheDocument();
-    expect(screen.getByText(/demandes ouvertes/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /missions à venir/i })).toHaveAttribute(
+      "href",
+      "/bookings",
+    );
+    expect(screen.getByRole("link", { name: /candidatures en attente/i })).toHaveAttribute(
+      "href",
+      "/bookings",
+    );
+    expect(screen.getByRole("link", { name: /services à traiter/i })).toHaveAttribute(
+      "href",
+      "/dashboard/ateliers",
+    );
+    expect(screen.getByRole("link", { name: /note moyenne/i })).toHaveAttribute(
+      "href",
+      "/account",
+    );
     expect(screen.getByText(/note moyenne/i)).toBeInTheDocument();
+    expect(screen.queryByText(/missions ce mois/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/services actifs/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/ca ce mois/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/\+12%/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/profil complété/i)).not.toBeInTheDocument();
