@@ -22,7 +22,7 @@ import { FreelanceDashboard } from "./_components/FreelanceDashboard";
 import type { ReviewItem } from "./_components/FreelanceDashboard";
 import { getMissionPlanning } from "@/lib/mission-planning";
 import { getMissionDisplayTitle } from "@/lib/mission-display";
-import { getNextUpcomingBooking } from "@/lib/dashboard-bookings";
+import { getNextUpcomingBooking, isUpcomingBooking } from "@/lib/dashboard-bookings";
 import { computeFreelanceTrustProfile } from "@/lib/freelance-trust";
 import { getTopMatchingMissions } from "@/lib/mission-matching";
 
@@ -187,12 +187,9 @@ async function fetchFreelanceData(token: string, userId: string) {
         (b) => b.status === "CONFIRMED" || b.status === "ASSIGNED",
     );
     const now = new Date();
-    const upcomingMissions = confirmedBookings.filter((booking) => {
-        const date = new Date(booking.date);
-        if (Number.isNaN(date.getTime())) return false;
-        return date.getTime() > now.getTime();
-    }).length;
+    const upcomingMissions = confirmedBookings.filter((booking) => isUpcomingBooking(booking, now)).length;
     const pendingApplications = missionBookings.filter((booking) => booking.status === "PENDING").length;
+    // TODO(Sprint métier): confirmer si QUOTE_ACCEPTED doit aussi être considéré comme "à traiter" côté PROVIDER.
     const pendingServiceRequests = serviceBookings.filter(
         (booking) => booking.viewerSide === "PROVIDER" && booking.status === "PENDING",
     ).length;

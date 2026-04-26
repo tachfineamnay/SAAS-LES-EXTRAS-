@@ -1,16 +1,12 @@
-import { describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { FicheFreelanceClient } from "@/app/freelances/[id]/FicheFreelanceClient";
 
-const mockPush = vi.fn();
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
-}));
+const mockOpenRenfortModal = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/stores/useUIStore", () => ({
   useUIStore: (selector: (s: { openRenfortModal: () => void }) => unknown) =>
-    selector({ openRenfortModal: vi.fn() }),
+    selector({ openRenfortModal: mockOpenRenfortModal }),
 }));
 
 const freelance = {
@@ -77,6 +73,10 @@ const freelance = {
 };
 
 describe("FicheFreelanceClient", () => {
+  beforeEach(() => {
+    mockOpenRenfortModal.mockClear();
+  });
+
   it("affiche les informations publiques utiles", () => {
     render(
       <FicheFreelanceClient
@@ -95,7 +95,7 @@ describe("FicheFreelanceClient", () => {
     expect(screen.getByText(/Très professionnelle/i)).toBeInTheDocument();
   });
 
-  it("navigue vers la messagerie au clic sur Contacter", () => {
+  it("ouvre la modale de mission au clic sur Proposer une mission", () => {
     render(
       <FicheFreelanceClient
         freelance={freelance as never}
@@ -106,9 +106,7 @@ describe("FicheFreelanceClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Contacter/i }));
-    expect(mockPush).toHaveBeenCalledWith(
-      "/dashboard/inbox?counterpartId=freelance-1&counterpartName=Nora%20Martin",
-    );
+    fireEvent.click(screen.getByRole("button", { name: /Proposer une mission/i }));
+    expect(mockOpenRenfortModal).toHaveBeenCalledTimes(1);
   });
 });

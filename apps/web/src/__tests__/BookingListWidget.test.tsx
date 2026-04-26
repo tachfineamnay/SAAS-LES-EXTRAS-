@@ -18,13 +18,9 @@ describe("BookingListWidget", () => {
   it("génère un lien détails canonique vers /bookings/[lineType]/[lineId]", () => {
     render(<BookingListWidget bookings={[booking]} />);
 
-    const detailsLink = screen
-      .getAllByRole("link")
-      .find((link) =>
-        link.getAttribute("href") === "/bookings/MISSION/line-1",
-      );
+    const detailsLink = screen.getByRole("link", { name: /voir le détail : mission sos/i });
 
-    expect(detailsLink).toBeDefined();
+    expect(detailsLink).toHaveAttribute("href", "/bookings/MISSION/line-1");
   });
 
   it("affiche le libellé centralisé du statut", () => {
@@ -32,5 +28,19 @@ describe("BookingListWidget", () => {
 
     expect(screen.getByText("Devis envoyé")).toBeInTheDocument();
     expect(screen.queryByText("En attente")).not.toBeInTheDocument();
+  });
+
+  it("expose un libellé accessible contextualisé pour le lien Voir tout", () => {
+    render(
+      <BookingListWidget
+        bookings={[booking]}
+        viewAllLink="/bookings"
+        viewAllLabel="Voir tout mon agenda"
+      />,
+    );
+
+    const viewAllLink = screen.getByRole("link", { name: "Voir tout mon agenda" });
+    expect(viewAllLink).toHaveAttribute("href", "/bookings");
+    expect(viewAllLink).toHaveTextContent("Voir tout");
   });
 });

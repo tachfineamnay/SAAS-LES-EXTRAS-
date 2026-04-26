@@ -54,8 +54,14 @@ const FILTERS: Array<{ value: DeskRequestFilter; label: string }> = [
   { value: "CLOSED", label: "Clôturées" },
 ];
 
-const dateTimeFormatter = (value: string) =>
-  format(new Date(value), "d MMMM yyyy 'à' HH:mm", { locale: fr });
+const dateTimeFormatter = (value: string | null | undefined) => {
+  if (!value) return "date indisponible";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "date indisponible";
+
+  return format(date, "d MMMM yyyy 'à' HH:mm", { locale: fr });
+};
 
 function StatusIcon({ status }: { status: MyDeskRequestStatus }) {
   if (status === "ANSWERED") {

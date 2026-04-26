@@ -228,6 +228,7 @@ export function FreelanceDashboard({
                             bookings={confirmedBookings}
                             emptyMessage="Aucune mission prévue."
                             viewAllLink="/bookings"
+                            viewAllLabel="Voir tout mon agenda"
                             error={bookingsError}
                         />
                     </DashboardWidget>
@@ -253,6 +254,7 @@ export function FreelanceDashboard({
                             bookings={pendingBookings}
                             emptyMessage="Aucune candidature en cours."
                             viewAllLink="/bookings"
+                            viewAllLabel="Voir toutes mes candidatures"
                             error={bookingsError}
                         />
                     </DashboardWidget>

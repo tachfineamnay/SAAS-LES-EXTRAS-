@@ -5,7 +5,7 @@ import type { SerializedInvoice } from "@/actions/finance";
 import type { BookingLine } from "@/app/actions/bookings";
 import type { MyDeskRequest } from "@/app/actions/desk";
 import type { ReviewItem } from "./FreelanceDashboard";
-import { BentoSection } from "@/components/layout/BentoSection";
+import { BentoItem, BentoSection } from "@/components/layout/BentoSection";
 import { EstablishmentKpiGrid } from "@/components/dashboard/EstablishmentKpiGrid";
 import { CreditsWidget } from "@/components/dashboard/CreditsWidget";
 import { QuoteListWidget } from "@/components/dashboard/QuoteListWidget";
@@ -302,17 +302,18 @@ export function EstablishmentDashboard({
                 </p>
                 <BentoSection cols={3} gap="md">
                     {/* Mes réservations de renfort */}
-                    <DashboardWidget
-                        icon={Siren}
-                        iconColor="coral"
-                        title="Mes réservations de renfort"
-                        subtitle="Missions en cours et ouvertes"
-                        viewAllHref="/dashboard/renforts"
-                        viewAllLabel="Voir toutes mes réservations de renfort"
-                        wide
-                    >
-                        <RenfortsWidget missions={activeMissions} error={missionsError} />
-                    </DashboardWidget>
+                    <BentoItem span={2}>
+                        <DashboardWidget
+                            icon={Siren}
+                            iconColor="coral"
+                            title="Mes réservations de renfort"
+                            subtitle="Missions en cours et ouvertes"
+                            viewAllHref="/dashboard/renforts"
+                            viewAllLabel="Voir toutes mes réservations de renfort"
+                        >
+                            <RenfortsWidget missions={activeMissions} error={missionsError} />
+                        </DashboardWidget>
+                    </BentoItem>
 
                     {/* Ateliers & Formations */}
                     <DashboardWidget
@@ -328,6 +329,7 @@ export function EstablishmentDashboard({
                                 bookings={confirmedServiceBookings}
                                 emptyMessage="Aucun atelier ou formation confirmé."
                                 viewAllLink="/marketplace"
+                                viewAllLabel="Voir tous les ateliers et formations"
                                 error={bookingsError}
                             />
                         ) : (
@@ -346,22 +348,24 @@ export function EstablishmentDashboard({
                     </DashboardWidget>
 
                     {/* Agenda — missions confirmées */}
-                    <DashboardWidget
-                        icon={Calendar}
-                        iconColor="teal"
-                        title="Agenda"
-                        subtitle="Missions confirmées à venir"
-                        viewAllHref="/bookings"
-                        viewAllLabel="Voir tout mon agenda"
-                        wide
-                    >
-                        <BookingListWidget
-                            bookings={confirmedMissionBookings}
-                            emptyMessage="Aucune mission confirmée à venir."
-                            viewAllLink="/bookings"
-                            error={bookingsError}
-                        />
-                    </DashboardWidget>
+                    <BentoItem span={2}>
+                        <DashboardWidget
+                            icon={Calendar}
+                            iconColor="teal"
+                            title="Agenda"
+                            subtitle="Missions confirmées à venir"
+                            viewAllHref="/bookings"
+                            viewAllLabel="Voir tout mon agenda"
+                        >
+                            <BookingListWidget
+                                bookings={confirmedMissionBookings}
+                                emptyMessage="Aucune mission confirmée à venir."
+                                viewAllLink="/bookings"
+                                viewAllLabel="Voir tout mon agenda"
+                                error={bookingsError}
+                            />
+                        </DashboardWidget>
+                    </BentoItem>
 
                     {/* Avis des freelances */}
                     <DashboardWidget
@@ -388,17 +392,18 @@ export function EstablishmentDashboard({
                     </DashboardWidget>
 
                     {/* Mes Factures */}
-                    <DashboardWidget
-                        icon={FileText}
-                        iconColor="gray"
-                        title="Mes Factures"
-                        subtitle="Historique de facturation"
-                        viewAllHref="/finance"
-                        viewAllLabel="Voir toutes mes factures"
-                        wide
-                    >
-                        <EstablishmentInvoicesWidget invoices={invoices} error={invoicesError} />
-                    </DashboardWidget>
+                    <BentoItem span={2}>
+                        <DashboardWidget
+                            icon={FileText}
+                            iconColor="gray"
+                            title="Mes Factures"
+                            subtitle="Historique de facturation"
+                            viewAllHref="/finance"
+                            viewAllLabel="Voir toutes mes factures"
+                        >
+                            <EstablishmentInvoicesWidget invoices={invoices} error={invoicesError} />
+                        </DashboardWidget>
+                    </BentoItem>
 
                     {/* Fiche établissement */}
                     <DashboardWidget
@@ -410,22 +415,24 @@ export function EstablishmentDashboard({
                     </DashboardWidget>
 
                     {/* Historique & Archives */}
-                    <DashboardWidget
-                        icon={Briefcase}
-                        iconColor="gray"
-                        title="Historique & Archives"
-                        subtitle="Missions terminées"
-                        viewAllHref="/bookings"
-                        viewAllLabel="Voir tout mon historique et mes archives"
-                        wide
-                    >
-                        <BookingListWidget
-                            bookings={completedBookings}
-                            emptyMessage="Aucune mission archivée."
-                            viewAllLink="/bookings"
-                            error={bookingsError}
-                        />
-                    </DashboardWidget>
+                    <BentoItem span={2}>
+                        <DashboardWidget
+                            icon={Briefcase}
+                            iconColor="gray"
+                            title="Historique & Archives"
+                            subtitle="Missions terminées"
+                            viewAllHref="/bookings"
+                            viewAllLabel="Voir tout mon historique et mes archives"
+                        >
+                            <BookingListWidget
+                                bookings={completedBookings}
+                                emptyMessage="Aucune mission archivée."
+                                viewAllLink="/bookings"
+                                viewAllLabel="Voir tout mon historique et mes archives"
+                                error={bookingsError}
+                            />
+                        </DashboardWidget>
+                    </BentoItem>
                 </BentoSection>
             </section>
         </div>

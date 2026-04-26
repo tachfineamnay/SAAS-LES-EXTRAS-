@@ -27,11 +27,29 @@ const expectedStatuses: Array<{
   { status: "CANCELLED", label: "Annulé", variant: "red", active: false, cancellable: false },
 ];
 
+const validBadgeVariants = new Set(["amber", "teal", "emerald", "red", "info", "outline", "quiet"]);
+
 describe("booking-status", () => {
   it("centralise les labels et variants des statuts connus", () => {
     for (const expected of expectedStatuses) {
       expect(getBookingStatusLabel(expected.status)).toBe(expected.label);
       expect(getBookingStatusVariant(expected.status)).toBe(expected.variant);
+    }
+  });
+
+  it("retourne un label français pour chaque statut connu", () => {
+    for (const expected of expectedStatuses) {
+      const label = getBookingStatusLabel(expected.status);
+
+      expect(label).toBe(expected.label);
+      expect(label).not.toBe(expected.status);
+      expect(label).not.toMatch(/_/);
+    }
+  });
+
+  it("retourne un variant Badge valide pour chaque statut connu", () => {
+    for (const expected of expectedStatuses) {
+      expect(validBadgeVariants.has(getBookingStatusVariant(expected.status))).toBe(true);
     }
   });
 

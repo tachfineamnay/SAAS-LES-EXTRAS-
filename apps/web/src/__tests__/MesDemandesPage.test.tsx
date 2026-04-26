@@ -10,6 +10,7 @@ const mockRedirect = vi.fn((path: string) => {
 
 vi.mock("next/navigation", () => ({
   redirect: (path: string) => mockRedirect(path),
+  useRouter: () => ({ refresh: vi.fn() }),
 }));
 
 vi.mock("@/lib/session", () => ({

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BookingLine } from "@/app/actions/bookings";
-import { getNextUpcomingBooking } from "@/lib/dashboard-bookings";
+import { getNextUpcomingBooking, isUpcomingBooking } from "@/lib/dashboard-bookings";
 
 const baseMission: BookingLine = {
   lineId: "mission-base",
@@ -96,5 +96,14 @@ describe("getNextUpcomingBooking", () => {
         now,
       ),
     ).toBeUndefined();
+  });
+
+  it("expose le même prédicat pour les compteurs de missions à venir", () => {
+    const now = new Date("2026-04-25T10:00:00.000Z");
+
+    expect(isUpcomingBooking({ ...baseMission, date: "2026-04-25T10:00:00.000Z" }, now)).toBe(true);
+    expect(isUpcomingBooking({ ...baseMission, date: "2026-04-25T09:59:59.000Z" }, now)).toBe(false);
+    expect(isUpcomingBooking({ ...baseMission, status: "PENDING" }, now)).toBe(false);
+    expect(isUpcomingBooking({ ...baseMission, date: "not-a-date" }, now)).toBe(false);
   });
 });

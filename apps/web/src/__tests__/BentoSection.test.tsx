@@ -44,4 +44,19 @@ describe("BentoSection", () => {
     expect(screen.getByTestId("wide-widget").parentElement).toHaveClass("md:col-span-2");
     expect(screen.getByTestId("regular-widget").parentElement).not.toHaveClass("md:col-span-2");
   });
+
+  it("applique le span 3 en md puis lg sur le wrapper de grille", () => {
+    render(
+      <BentoSection cols={3}>
+        <BentoItem span={3}>
+          <div data-testid="full-widget">Très large</div>
+        </BentoItem>
+      </BentoSection>,
+    );
+
+    expect(screen.getByTestId("full-widget").parentElement).toHaveClass(
+      "md:col-span-2",
+      "lg:col-span-3",
+    );
+  });
 });

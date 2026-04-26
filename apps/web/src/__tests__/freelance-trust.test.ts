@@ -79,4 +79,65 @@ describe("computeFreelanceTrustProfile", () => {
     expect(trustProfile.totalCount).toBe(8);
     expect(trustProfile.steps.every((step) => step.status === "MISSING")).toBe(true);
   });
+
+  it("marque les competences comme manquantes quand elles sont absentes", () => {
+    const trustProfile = computeFreelanceTrustProfile({
+      ...baseUser,
+      profile: {
+        ...baseUser.profile!,
+        skills: undefined as unknown as string[],
+      },
+    });
+
+    expect(trustProfile.progress).toBe(88);
+    expect(trustProfile.steps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "skills",
+          label: "Compétences renseignées",
+          status: "MISSING",
+          actionLabel: "Compléter",
+          href: "/account",
+        }),
+      ]),
+    );
+  });
+
+  it("marque la disponibilite comme manquante quand la donnee est absente", () => {
+    const trustProfile = computeFreelanceTrustProfile({
+      ...baseUser,
+      isAvailable: undefined as unknown as boolean,
+    });
+
+    expect(trustProfile.progress).toBe(88);
+    expect(trustProfile.steps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "availability",
+          label: "Profil ouvert aux missions",
+          status: "MISSING",
+          actionLabel: "Activer",
+          href: "/account",
+        }),
+      ]),
+    );
+  });
+
+  it("n'ajoute pas d'etape document quand aucune donnee document n'est disponible", () => {
+    const trustProfile = computeFreelanceTrustProfile(baseUser);
+
+    expect(trustProfile.steps.map((step) => step.id)).toEqual([
+      "identity",
+      "bio",
+      "skills",
+      "phone",
+      "siret",
+      "location",
+      "availableDays",
+      "availability",
+    ]);
+    expect(trustProfile.steps.map((step) => step.label).join(" ")).not.toMatch(
+      /pièce|identité vérifiée|diplôme|document/i,
+    );
+  });
 });

@@ -1,10 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { FreelanceDashboard } from "@/app/(dashboard)/dashboard/_components/FreelanceDashboard";
 import type { BookingLine } from "@/app/actions/bookings";
 import type { MyDeskRequest } from "@/app/actions/desk";
 import type { MesAtelierItem } from "@/app/actions/marketplace";
 import type { FreelanceTrustProfile } from "@/lib/freelance-trust";
+
+const trustChecklistWidgetSpy = vi.hoisted(() => vi.fn());
 
 vi.mock("@/components/dashboard/MatchingMissionsWidget", () => ({
   MatchingMissionsWidget: () => <div>Missions ciblées</div>,
@@ -17,7 +19,10 @@ vi.mock("@/components/dashboard/BookingListWidget", () => ({
 }));
 
 vi.mock("@/components/dashboard/TrustChecklistWidget", () => ({
-  TrustChecklistWidget: () => <div>Confiance freelance</div>,
+  TrustChecklistWidget: (props: { trustProfile: unknown }) => {
+    trustChecklistWidgetSpy(props);
+    return <div>Confiance freelance</div>;
+  },
 }));
 
 vi.mock("@/components/dashboard/NextMissionCard", () => ({
@@ -108,6 +113,10 @@ const trustProfile: FreelanceTrustProfile = {
 };
 
 describe("FreelanceDashboard", () => {
+  beforeEach(() => {
+    trustChecklistWidgetSpy.mockClear();
+  });
+
   it("met en avant la plateforme hybride, les services et les demandes Desk", () => {
     render(
       <FreelanceDashboard
@@ -193,6 +202,53 @@ describe("FreelanceDashboard", () => {
     expect(screen.queryByText(/total gagné/i)).not.toBeInTheDocument();
   });
 
+  it("transmet le profil de confiance reçu au TrustChecklistWidget", () => {
+    const dynamicTrustProfile: FreelanceTrustProfile = {
+      progress: 13,
+      completedCount: 1,
+      totalCount: 8,
+      steps: [
+        { id: "identity", label: "Identité API", status: "COMPLETED" },
+        { id: "bio", label: "Bio API", status: "MISSING", actionLabel: "Compléter", href: "/account" },
+        { id: "skills", label: "Compétences API", status: "MISSING", actionLabel: "Compléter", href: "/account" },
+        { id: "phone", label: "Téléphone API", status: "MISSING", actionLabel: "Compléter", href: "/account" },
+        { id: "siret", label: "SIRET API", status: "MISSING", actionLabel: "Compléter", href: "/account" },
+        { id: "location", label: "Localisation API", status: "MISSING", actionLabel: "Compléter", href: "/account" },
+        { id: "availableDays", label: "Jours API", status: "MISSING", actionLabel: "Compléter", href: "/account" },
+        { id: "availability", label: "Disponibilité API", status: "MISSING", actionLabel: "Activer", href: "/account" },
+      ],
+    };
+
+    render(
+      <FreelanceDashboard
+        confirmedBookings={[]}
+        pendingBookings={[]}
+        bookingsError={null}
+        matchingMissions={[]}
+        availableMissionsError={null}
+        nextMission={undefined}
+        recentReviews={[]}
+        recentReviewsError={null}
+        isAvailable={false}
+        trustProfile={dynamicTrustProfile}
+        services={[]}
+        servicesError={null}
+        deskRequests={[]}
+        deskRequestsError={null}
+        upcomingMissions={0}
+        pendingApplications={0}
+        pendingServiceRequests={0}
+        activeServices={0}
+        openDeskRequests={0}
+        averageRating={null}
+      />,
+    );
+
+    expect(trustChecklistWidgetSpy).toHaveBeenCalledWith({
+      trustProfile: dynamicTrustProfile,
+    });
+  });
+
   it("ne parle de profil que lorsqu'une mission a un score positif", () => {
     render(
       <FreelanceDashboard
@@ -229,5 +285,73 @@ describe("FreelanceDashboard", () => {
     );
 
     expect(screen.getByText(/sélectionnées pour votre profil/i)).toBeInTheDocument();
+  });
+
+  it("garde le sous-titre missions disponibles quand aucun score positif n'existe", () => {
+    render(
+      <FreelanceDashboard
+        confirmedBookings={[]}
+        pendingBookings={[]}
+        bookingsError={null}
+        matchingMissions={[
+          {
+            id: "available-mission",
+            title: "Mission disponible",
+            establishment: "EHPAD B",
+            city: "Lyon",
+            matchScore: 0,
+            matchReasons: [],
+          },
+        ]}
+        availableMissionsError={null}
+        nextMission={undefined}
+        recentReviews={[]}
+        recentReviewsError={null}
+        isAvailable
+        trustProfile={trustProfile}
+        services={[]}
+        servicesError={null}
+        deskRequests={[]}
+        deskRequestsError={null}
+        upcomingMissions={0}
+        pendingApplications={0}
+        pendingServiceRequests={0}
+        activeServices={0}
+        openDeskRequests={0}
+        averageRating={null}
+      />,
+    );
+
+    expect(screen.getByText(/missions disponibles/i)).toBeInTheDocument();
+    expect(screen.queryByText(/sélectionnées pour votre profil/i)).not.toBeInTheDocument();
+  });
+
+  it("n'affiche pas la carte prochaine mission quand aucune mission future n'est fournie", () => {
+    render(
+      <FreelanceDashboard
+        confirmedBookings={[]}
+        pendingBookings={[]}
+        bookingsError={null}
+        matchingMissions={[]}
+        availableMissionsError={null}
+        nextMission={undefined}
+        recentReviews={[]}
+        recentReviewsError={null}
+        isAvailable
+        trustProfile={trustProfile}
+        services={[]}
+        servicesError={null}
+        deskRequests={[]}
+        deskRequestsError={null}
+        upcomingMissions={0}
+        pendingApplications={0}
+        pendingServiceRequests={0}
+        activeServices={0}
+        openDeskRequests={0}
+        averageRating={null}
+      />,
+    );
+
+    expect(screen.queryByText("Prochaine mission")).not.toBeInTheDocument();
   });
 });

@@ -3,13 +3,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
+const jwtVerifyMock = vi.hoisted(() => vi.fn());
+
 vi.mock("jose", () => ({
-  jwtVerify: vi.fn().mockRejectedValue(new Error("invalid")),
+  jwtVerify: jwtVerifyMock,
 }));
 
 // Mock env
 vi.stubEnv("APP_RUNTIME", "front");
-vi.stubEnv("JWT_SECRET", "test-secret");
+vi.stubEnv("SESSION_SECRET", "test-secret");
 
 const { middleware } = await import("@/middleware");
 
@@ -28,6 +30,8 @@ describe("middleware — front runtime", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("APP_RUNTIME", "front");
+    vi.stubEnv("SESSION_SECRET", "test-secret");
+    jwtVerifyMock.mockResolvedValue({ payload: { role: "FREELANCE" } });
   });
 
   it("/health passe toujours", async () => {

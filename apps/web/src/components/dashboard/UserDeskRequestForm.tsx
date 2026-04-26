@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Send } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 export function UserDeskRequestForm() {
+  const router = useRouter();
   const [type, setType] = useState<UserDeskRequestType>("TECHNICAL_ISSUE");
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -35,6 +37,7 @@ export function UserDeskRequestForm() {
       toast.success("Votre demande a été transmise au Desk.");
       setType("TECHNICAL_ISSUE");
       setMessage("");
+      router.refresh();
     });
   };
 

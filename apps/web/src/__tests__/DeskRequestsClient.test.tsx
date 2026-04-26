@@ -37,9 +37,15 @@ describe("DeskRequestsClient", () => {
 
     expect(screen.getByText("Demande encore ouverte")).toBeInTheDocument();
     expect(screen.getByText("Demande déjà répondue")).toBeInTheDocument();
+    expect(screen.getAllByText("Ouvertes")[0]?.closest(".flex")).toHaveTextContent("1");
+    expect(screen.getAllByText("Répondues")[0]?.closest(".flex")).toHaveTextContent("1");
 
-    fireEvent.click(screen.getByRole("button", { name: /répondues/i }));
+    const answeredFilter = screen.getByRole("button", { name: /répondues/i });
+    expect(answeredFilter).toHaveAttribute("aria-pressed", "false");
 
+    fireEvent.click(answeredFilter);
+
+    expect(answeredFilter).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByText("Demande encore ouverte")).not.toBeInTheDocument();
     expect(screen.getByText("Demande déjà répondue")).toBeInTheDocument();
     expect(screen.getByText("Réponse transmise par le Desk.")).toBeInTheDocument();
@@ -63,5 +69,26 @@ describe("DeskRequestsClient", () => {
 
     expect(screen.getByText("Aucune demande dans ce statut")).toBeInTheDocument();
     expect(screen.queryByText("Demande encore ouverte")).not.toBeInTheDocument();
+  });
+
+  it("ne casse pas le rendu quand une date Desk est invalide", () => {
+    render(
+      <DeskRequestsClient
+        requests={[
+          {
+            ...baseRequest,
+            id: "invalid-date",
+            status: "ANSWERED",
+            message: "Demande avec date invalide",
+            response: "Réponse malgré une date invalide.",
+            createdAt: "not-a-date",
+            answeredAt: "also-invalid",
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Demande avec date invalide")).toBeInTheDocument();
+    expect(screen.getAllByText(/date indisponible/i)).toHaveLength(2);
   });
 });

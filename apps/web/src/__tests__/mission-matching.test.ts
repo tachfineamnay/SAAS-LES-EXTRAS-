@@ -47,6 +47,39 @@ const baseMission: SerializedMission = {
   isUrgent: true,
 };
 
+type Profile = NonNullable<UserProfile["profile"]>;
+
+function createNeutralUser(profileOverrides: Partial<Profile> = {}): UserProfile {
+  return {
+    ...baseUser,
+    profile: {
+      ...baseUser.profile!,
+      jobTitle: "Psychologue",
+      skills: ["Médiation artistique"],
+      city: "Marseille",
+      availableDays: ["Ven"],
+      ...profileOverrides,
+    },
+  };
+}
+
+function createNeutralMission(overrides: Partial<SerializedMission> = {}): SerializedMission {
+  return {
+    ...baseMission,
+    id: "neutral-mission",
+    title: "Mission cuisine",
+    metier: null,
+    city: "Paris",
+    requiredSkills: [],
+    diplomaRequired: false,
+    requiredDiploma: [],
+    isUrgent: false,
+    dateStart: "2026-04-29T10:00:00.000Z",
+    dateEnd: "2026-04-29T18:00:00.000Z",
+    ...overrides,
+  };
+}
+
 describe("scoreMissionForFreelance", () => {
   it("score une mission avec métier, compétence, ville, disponibilité et urgence", () => {
     const result = scoreMissionForFreelance(baseMission, baseUser);
@@ -59,6 +92,59 @@ describe("scoreMissionForFreelance", () => {
       "Disponible ce jour",
       "Mission urgente",
     ]);
+  });
+
+  it("ajoute le score métier quand le titre de mission correspond au métier freelance", () => {
+    const result = scoreMissionForFreelance(
+      createNeutralMission({ title: "Psychologue en foyer" }),
+      createNeutralUser({ jobTitle: "Psychologue", skills: [] }),
+    );
+
+    expect(result.score).toBe(30);
+    expect(result.reasons).toEqual(["Métier proche"]);
+  });
+
+  it("ajoute le score compétences quand une compétence requise correspond", () => {
+    const result = scoreMissionForFreelance(
+      createNeutralMission({ requiredSkills: ["Gestion de crise"] }),
+      createNeutralUser({ jobTitle: "Psychologue", skills: ["Gestion crise"] }),
+    );
+
+    expect(result.score).toBe(25);
+    expect(result.reasons).toEqual(["Compétence proche"]);
+  });
+
+  it("ajoute le score ville quand la mission est dans la même ville", () => {
+    const result = scoreMissionForFreelance(
+      createNeutralMission({ city: "Lyon" }),
+      createNeutralUser({ skills: [], city: "Lyon" }),
+    );
+
+    expect(result.score).toBe(15);
+    expect(result.reasons).toEqual(["Même ville"]);
+  });
+
+  it("ajoute le score disponibilité quand le freelance est disponible le jour de mission", () => {
+    const result = scoreMissionForFreelance(
+      createNeutralMission({
+        dateStart: "2026-04-27T10:00:00.000Z",
+        dateEnd: "2026-04-27T18:00:00.000Z",
+      }),
+      createNeutralUser({ skills: [], availableDays: ["Lundi"] }),
+    );
+
+    expect(result.score).toBe(10);
+    expect(result.reasons).toEqual(["Disponible ce jour"]);
+  });
+
+  it("ajoute le score urgence quand la mission est urgente", () => {
+    const result = scoreMissionForFreelance(
+      createNeutralMission({ isUrgent: true }),
+      createNeutralUser({ skills: [] }),
+    );
+
+    expect(result.score).toBe(5);
+    expect(result.reasons).toEqual(["Mission urgente"]);
   });
 
   it("applique une pénalité quand un diplôme est requis sans donnée diplôme connue", () => {

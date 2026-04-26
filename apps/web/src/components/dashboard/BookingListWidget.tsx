@@ -34,6 +34,7 @@ type BookingListWidgetProps = {
     bookings: BookingLine[];
     emptyMessage?: string;
     viewAllLink?: string;
+    viewAllLabel?: string;
     className?: string;
     error?: string | null;
 };
@@ -42,6 +43,7 @@ export function BookingListWidget({
     bookings,
     emptyMessage = "Aucune donnée disponible.",
     viewAllLink = "/bookings",
+    viewAllLabel = "Voir toutes les réservations",
     className,
     error,
 }: BookingListWidgetProps) {
@@ -114,8 +116,11 @@ export function BookingListWidget({
                                         </div>
                                     )}
                                     <Button variant="ghost" size="icon" asChild>
-                                        <Link href={`/bookings/${booking.lineType}/${booking.lineId}`}>
-                                            <ChevronRight className="h-4 w-4" />
+                                        <Link
+                                            href={`/bookings/${booking.lineType}/${booking.lineId}`}
+                                            aria-label={`Voir le détail : ${booking.typeLabel}`}
+                                        >
+                                            <ChevronRight className="h-4 w-4" aria-hidden="true" />
                                         </Link>
                                     </Button>
                                 </div>
@@ -127,8 +132,8 @@ export function BookingListWidget({
             {bookings.length > 0 && (
                 <div className="mt-4 pt-4 border-t flex justify-end">
                     <Button variant="link" size="sm" asChild className="px-0">
-                        <Link href={viewAllLink}>
-                            Voir tout <ChevronRight className="ml-1 h-3 w-3" />
+                        <Link href={viewAllLink} aria-label={viewAllLabel}>
+                            Voir tout <ChevronRight className="ml-1 h-3 w-3" aria-hidden="true" />
                         </Link>
                     </Button>
                 </div>

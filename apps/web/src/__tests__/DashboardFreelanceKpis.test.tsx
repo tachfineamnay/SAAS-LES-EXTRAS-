@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockGetSession = vi.fn();
 const mockDeleteSession = vi.fn();
@@ -83,6 +83,10 @@ describe("DashboardPage freelance KPI data", () => {
     ]);
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("calcule les KPI actionnables sans mélanger requester et provider", async () => {
     mockGetBookingsPageData.mockResolvedValue({
       nextStep: null,
@@ -152,6 +156,38 @@ describe("DashboardPage freelance KPI data", () => {
         averageRating: 3.6,
         nextMission: expect.objectContaining({
           lineId: "mission-future",
+        }),
+      }),
+    );
+  });
+
+  it("compte une mission confirmée prévue exactement maintenant comme à venir", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2099-04-12T10:00:00.000Z"));
+
+    mockGetBookingsPageData.mockResolvedValue({
+      nextStep: null,
+      lines: [
+        {
+          lineId: "mission-now",
+          lineType: "MISSION",
+          date: "2099-04-12T10:00:00.000Z",
+          typeLabel: "Mission SOS",
+          interlocutor: "EHPAD A",
+          status: "CONFIRMED",
+          address: "Paris",
+          contactEmail: "contact@example.com",
+        },
+      ],
+    });
+
+    const element = await DashboardPage() as { props?: Record<string, unknown> };
+
+    expect(element.props).toEqual(
+      expect.objectContaining({
+        upcomingMissions: 1,
+        nextMission: expect.objectContaining({
+          lineId: "mission-now",
         }),
       }),
     );
