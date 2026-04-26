@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download, FileText } from "lucide-react";
 import type { SerializedInvoice } from "@/actions/finance";
+import { formatFinanceDate } from "@/lib/establishment-finance";
 
 interface EstablishmentInvoicesWidgetProps {
     invoices: SerializedInvoice[];
@@ -16,9 +18,9 @@ export function EstablishmentInvoicesWidget({ invoices, error }: EstablishmentIn
         // Simple client-side CSV export
         const headers = ["Numero", "Date", "Freelance", "Montant", "Statut"];
         const rows = invoices.map(inv => [
-            inv.invoiceNumber,
-            new Date(inv.createdAt).toLocaleDateString(),
-            inv.booking?.freelance?.profile?.lastName || "Inconnu",
+            inv.invoiceNumber ?? inv.id,
+            formatFinanceDate(inv.createdAt),
+            getFreelanceName(inv),
             inv.amount + " €",
             inv.status
         ]);
@@ -47,9 +49,15 @@ export function EstablishmentInvoicesWidget({ invoices, error }: EstablishmentIn
 
     if (invoices.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-center p-4 text-muted-foreground">
+            <div className="flex flex-col items-center justify-center h-full text-center p-4 text-muted-foreground gap-3">
                 <FileText className="h-8 w-8 mb-2 opacity-50" />
-                <p>Aucune facture disponible.</p>
+                <div className="space-y-1">
+                    <p className="font-medium text-foreground">Aucune facture disponible.</p>
+                    <p className="text-sm">Les factures apparaîtront après les paiements autorisés.</p>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                    <Link href="/finance">Voir l'espace finance</Link>
+                </Button>
             </div>
         );
     }
@@ -75,25 +83,32 @@ export function EstablishmentInvoicesWidget({ invoices, error }: EstablishmentIn
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {invoices.map((invoice) => (
+                        {invoices.slice(0, 5).map((invoice) => (
                             <TableRow key={invoice.id}>
-                                <TableCell className="font-medium text-xs">{invoice.invoiceNumber}</TableCell>
+                                <TableCell className="font-medium text-xs">{invoice.invoiceNumber ?? invoice.id}</TableCell>
                                 <TableCell className="text-xs">
-                                    {new Date(invoice.createdAt).toLocaleDateString("fr-FR", { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                                    {formatFinanceDate(invoice.createdAt)}
                                 </TableCell>
                                 <TableCell className="text-xs">
-                                    {invoice.booking?.freelance?.profile?.firstName} {invoice.booking?.freelance?.profile?.lastName?.charAt(0)}.
+                                    {getFreelanceName(invoice)}
                                 </TableCell>
                                 <TableCell className="text-right text-xs font-medium">
                                     {invoice.amount.toFixed(2)} €
                                 </TableCell>
                                 <TableCell>
-                                    <Button variant="ghost" size="icon" asChild title="Télécharger la facture">
-                                        <a href={invoice.pdfUrl} target="_blank" rel="noopener noreferrer" title="Télécharger la facture">
+                                    {invoice.pdfUrl ? (
+                                        <Button variant="ghost" size="icon" asChild title="Télécharger la facture">
+                                            <a href={invoice.pdfUrl} target="_blank" rel="noopener noreferrer" title="Télécharger la facture">
+                                                <Download className="h-4 w-4" />
+                                                <span className="sr-only">Télécharger la facture</span>
+                                            </a>
+                                        </Button>
+                                    ) : (
+                                        <Button variant="ghost" size="icon" disabled title="Facture indisponible">
                                             <Download className="h-4 w-4" />
-                                            <span className="sr-only">Télécharger la facture</span>
-                                        </a>
-                                    </Button>
+                                            <span className="sr-only">Facture indisponible</span>
+                                        </Button>
+                                    )}
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -102,4 +117,11 @@ export function EstablishmentInvoicesWidget({ invoices, error }: EstablishmentIn
             </ScrollArea>
         </div>
     );
+}
+
+function getFreelanceName(invoice: SerializedInvoice) {
+    const profile = invoice.booking?.freelance?.profile;
+    const fullName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim();
+
+    return fullName || profile?.companyName || "Freelance";
 }

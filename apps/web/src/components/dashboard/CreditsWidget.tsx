@@ -1,75 +1,92 @@
 "use client";
 
-import { GlassCard } from "@/components/ui/glass-card";
-import { Button } from "@/components/ui/button";
-import { Coins, Plus } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
+import { AlertCircle, Check, Coins, Plus } from "lucide-react";
 import { buyPack, type PackType } from "@/actions/credits";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { toast } from "sonner";
 import { AnimatedNumber } from "@/components/ui/animated-number";
-import { CREDIT_PACKS } from "@/lib/credit-packs";
-
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-import { Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { GlassCard } from "@/components/ui/glass-card";
+import { toast } from "sonner";
+import { CREDIT_PACKS, type CreditPackDefinition } from "@/lib/credit-packs";
+import { cn } from "@/lib/utils";
 
 interface CreditsWidgetProps {
     credits: number | null;
     error?: string | null;
 }
 
+function getCreditState(credits: number | null) {
+    if (credits === null) return "unknown";
+    if (credits === 0) return "empty";
+    if (credits <= 2) return "low";
+    return "normal";
+}
+
 export function CreditsWidget({ credits, error = null }: CreditsWidgetProps) {
     const [open, setOpen] = useState(false);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [selectedPack, setSelectedPack] = useState<CreditPackDefinition | null>(null);
     const [isPending, startTransition] = useTransition();
-    const [displayCredits, setDisplayCredits] = useState(credits);
+    const [displayCredits, setDisplayCredits] = useState<number | null>(credits);
+    const creditState = getCreditState(displayCredits);
 
     useEffect(() => {
         setDisplayCredits(credits);
     }, [credits]);
 
-    const handleBuyPack = (packId: PackType, packName: string, price: number) => {
-        if (confirm(`Confirmer l'ajout du pack '${packName}' pour ${price}€ ?`)) {
-            startTransition(async () => {
-                const result = await buyPack(packId);
-                if ("error" in result) {
-                    toast.error(result.error);
-                } else {
-                    setDisplayCredits(result.availableCredits);
-                    toast.success(`Pack ${packName} ajouté au solde avec succès !`);
-                    setOpen(false);
-                }
-            });
-        }
+    const requestBuyPack = (pack: CreditPackDefinition) => {
+        setSelectedPack(pack);
+        setConfirmOpen(true);
+    };
+
+    const handleConfirmBuyPack = () => {
+        if (!selectedPack) return;
+
+        startTransition(async () => {
+            const result = await buyPack(selectedPack.id as PackType);
+            if ("error" in result) {
+                toast.error(result.error);
+                return;
+            }
+
+            setDisplayCredits(result.availableCredits);
+            toast.success(`Pack ${selectedPack.name} ajouté au solde.`);
+            setConfirmOpen(false);
+            setOpen(false);
+            setSelectedPack(null);
+        });
     };
 
     return (
         <div className="space-y-4">
-            <GlassCard variant={displayCredits === 0 ? "glass" : "interactive"} className={displayCredits === 0 ? "border-[hsl(var(--destructive)/0.6)]" : ""}>
+            <GlassCard
+                variant={creditState === "normal" ? "interactive" : "glass"}
+                className={cn(
+                    creditState === "empty" && "border-[hsl(var(--destructive)/0.5)]",
+                    creditState === "low" && "border-[hsl(var(--amber)/0.45)]",
+                )}
+            >
                 <div className="p-6">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="mb-2 flex items-center justify-between">
                         <span className="text-sm font-medium">Crédits</span>
-                        <Coins className="h-4 w-4 text-muted-foreground" />
+                        <Coins className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     </div>
                     {typeof displayCredits === "number" ? (
                         <AnimatedNumber value={displayCredits} className="text-2xl font-bold" />
                     ) : (
                         <div className="text-2xl font-bold">—</div>
                     )}
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="mt-1 text-xs text-muted-foreground">
                         Solde disponible pour vos validations de réservation
                     </p>
 
                     <Dialog open={open} onOpenChange={setOpen}>
                         <DialogTrigger asChild>
-                            <Button className="w-full mt-4" size="sm">
-                                <Plus className="mr-2 h-4 w-4" /> Acheter des crédits
+                            <Button className="mt-4 w-full" size="sm" variant="teal">
+                                <Plus className="h-4 w-4" aria-hidden="true" />
+                                Acheter des crédits
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[800px]">
@@ -80,47 +97,81 @@ export function CreditsWidget({ credits, error = null }: CreditsWidgetProps) {
                                 </DialogDescription>
                             </DialogHeader>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
+                            <div className="grid grid-cols-1 gap-4 py-4 md:grid-cols-3">
                                 {CREDIT_PACKS.map((pack) => (
                                     <div
                                         key={pack.id}
-                                        className={`relative flex flex-col rounded-2xl p-4 transition-all duration-200 ${pack.popular ? 'bg-card border border-[hsl(var(--teal)/0.3)] card-shadow-md' : 'bg-card border border-border hover:card-shadow-md'}`}
+                                        className={cn(
+                                            "relative flex flex-col rounded-2xl border bg-card p-4 transition-all duration-200",
+                                            pack.popular
+                                                ? "border-[hsl(var(--teal)/0.35)] card-shadow-md"
+                                                : "border-border hover:card-shadow-md",
+                                        )}
                                     >
                                         {pack.popular && (
-                                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full shadow-[0_0_12px_hsl(var(--teal)/0.3)]">
+                                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow-[0_0_12px_hsl(var(--teal)/0.3)]">
                                                 Populaire
                                             </div>
                                         )}
                                         <div className="mb-4">
-                                            <h3 className="font-bold text-lg">{pack.name}</h3>
-                                            <div className="flex items-baseline mt-2">
-                                                <span className="text-2xl font-bold">{pack.price}€</span>
+                                            <h3 className="text-lg font-bold">{pack.name}</h3>
+                                            <div className="mt-2 flex items-baseline">
+                                                <span className="text-2xl font-bold">{pack.price} €</span>
                                             </div>
-                                            <p className="text-sm font-medium mt-1 text-primary">
-                                                {pack.credits} crédit{pack.credits > 1 ? 's' : ''}
+                                            <p className="mt-1 text-sm font-medium text-primary">
+                                                {pack.credits} crédit{pack.credits > 1 ? "s" : ""}
                                             </p>
                                         </div>
 
-                                        <ul className="space-y-2 mb-6 flex-1">
-                                            {pack.features.map((feature, i) => (
-                                                <li key={i} className="text-xs flex items-center text-muted-foreground">
-                                                    <Check className="h-3 w-3 mr-2 text-[hsl(var(--emerald))]" />
+                                        <ul className="mb-6 flex-1 space-y-2">
+                                            {pack.features.map((feature) => (
+                                                <li key={feature} className="flex items-center text-xs text-muted-foreground">
+                                                    <Check className="mr-2 h-3 w-3 text-[hsl(var(--emerald))]" aria-hidden="true" />
                                                     {feature}
                                                 </li>
                                             ))}
                                         </ul>
 
                                         <Button
-                                            className={`w-full ${pack.popular ? '' : 'variant-outline'}`}
-                                            onClick={() => handleBuyPack(pack.id, pack.name, pack.price)}
+                                            className="w-full"
+                                            onClick={() => requestBuyPack(pack)}
                                             disabled={isPending}
-                                            variant={pack.popular ? "default" : "outline"}
+                                            variant={pack.popular ? "teal" : "outline"}
                                         >
-                                            {isPending ? "..." : "Choisir"}
+                                            Choisir
                                         </Button>
                                     </div>
                                 ))}
                             </div>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Confirmer l&apos;achat</DialogTitle>
+                                <DialogDescription>
+                                    {selectedPack
+                                        ? `Ajouter le pack ${selectedPack.name} (${selectedPack.credits} crédit${selectedPack.credits > 1 ? "s" : ""}) pour ${selectedPack.price} € ?`
+                                        : "Confirmez l'ajout de crédits à votre solde."}
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setConfirmOpen(false)}
+                                    disabled={isPending}
+                                >
+                                    Annuler
+                                </Button>
+                                <Button
+                                    variant="teal"
+                                    onClick={handleConfirmBuyPack}
+                                    disabled={isPending || !selectedPack}
+                                >
+                                    {isPending ? "Ajout..." : "Confirmer l'achat"}
+                                </Button>
+                            </DialogFooter>
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -128,18 +179,38 @@ export function CreditsWidget({ credits, error = null }: CreditsWidgetProps) {
 
             {error && (
                 <Alert variant="destructive">
-                    <Coins className="h-4 w-4" />
+                    <AlertCircle className="h-4 w-4" aria-hidden="true" />
                     <AlertTitle>Solde indisponible</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
             )}
 
-            {!error && displayCredits === 0 && (
+            {!error && creditState === "unknown" && (
+                <Alert>
+                    <Coins className="h-4 w-4" aria-hidden="true" />
+                    <AlertTitle>Solde indisponible</AlertTitle>
+                    <AlertDescription>
+                        Le solde de crédits ne peut pas être affiché pour le moment.
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {!error && creditState === "empty" && (
                 <Alert variant="destructive">
-                    <Coins className="h-4 w-4" />
+                    <AlertCircle className="h-4 w-4" aria-hidden="true" />
                     <AlertTitle>Solde épuisé</AlertTitle>
                     <AlertDescription>
-                        Votre solde de crédits est à zéro. Ajoutez un pack pour préparer vos prochains recrutements.
+                        Votre solde est à zéro. Ajoutez un pack avant vos prochaines validations.
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {!error && creditState === "low" && (
+                <Alert className="border-[hsl(var(--amber)/0.35)] bg-[hsl(var(--amber)/0.08)]">
+                    <Coins className="h-4 w-4" aria-hidden="true" />
+                    <AlertTitle>Crédits faibles</AlertTitle>
+                    <AlertDescription>
+                        Il vous reste peu de crédits. Pensez à recharger votre solde.
                     </AlertDescription>
                 </Alert>
             )}
