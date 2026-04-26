@@ -1,8 +1,16 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle, MessageSquareReply, Plus, UserRound } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  MessageSquareReply,
+  Plus,
+  UserRound,
+  Zap,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   assignDeskRequest,
@@ -19,6 +27,16 @@ import {
   FINANCE_DESK_REQUEST_TYPES,
   getDeskRequestTypeLabel,
 } from "@/lib/desk-labels";
+import {
+  getDeskPriorityLabel,
+  getDeskPriorityVariant,
+  getDeskStatusLabel,
+  getDeskStatusVariant,
+  isDeskRequestLate,
+  isDeskRequestOpen,
+  sortDeskRequestsByPriority,
+} from "@/lib/desk-status";
+import { getBookingStatusLabel } from "@/lib/booking-status";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +71,7 @@ import { FilterBar, type FilterDefinition } from "@/components/data/FilterBar";
 type FinanceIncidentsTableProps = {
   requests: DeskRequestRow[];
   admins: AdminUserRow[];
+  currentAdminId?: string;
 };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -63,45 +82,13 @@ const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   year: "numeric",
 });
 
-const STATUS_LABELS: Record<DeskRequestStatus, string> = {
-  OPEN: "Ouverte",
-  IN_PROGRESS: "En cours",
-  ANSWERED: "Répondue",
-  CLOSED: "Clôturée",
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Paiement en attente",
+  PAID: "Payé",
+  CANCELLED: "Paiement annulé",
 };
 
-const STATUS_VARIANTS: Record<DeskRequestStatus, "default" | "outline" | "secondary"> = {
-  OPEN: "default",
-  IN_PROGRESS: "secondary",
-  ANSWERED: "outline",
-  CLOSED: "outline",
-};
-
-const PRIORITY_LABELS: Record<DeskRequestPriority, string> = {
-  LOW: "Basse",
-  NORMAL: "Normale",
-  HIGH: "Haute",
-  URGENT: "Urgente",
-};
-
-const PRIORITY_VARIANTS: Record<DeskRequestPriority, "quiet" | "default" | "amber" | "coral"> = {
-  LOW: "quiet",
-  NORMAL: "default",
-  HIGH: "amber",
-  URGENT: "coral",
-};
-
-const BOOKING_STATUS_LABELS: Record<string, string> = {
-  PENDING: "En attente",
-  QUOTE_SENT: "Devis envoyé",
-  QUOTE_ACCEPTED: "Devis accepté",
-  CONFIRMED: "Confirmée",
-  IN_PROGRESS: "En cours",
-  COMPLETED: "Terminée",
-  AWAITING_PAYMENT: "À encaisser",
-  PAID: "Payée",
-  CANCELLED: "Annulée",
-};
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const FILTERS: FilterDefinition[] = [
   {
@@ -115,26 +102,29 @@ const FILTERS: FilterDefinition[] = [
   {
     key: "priority",
     label: "Toutes priorités",
-    options: [
-      { label: PRIORITY_LABELS.LOW, value: "LOW" },
-      { label: PRIORITY_LABELS.NORMAL, value: "NORMAL" },
-      { label: PRIORITY_LABELS.HIGH, value: "HIGH" },
-      { label: PRIORITY_LABELS.URGENT, value: "URGENT" },
-    ],
+    options: (["LOW", "NORMAL", "HIGH", "URGENT"] as DeskRequestPriority[]).map((p) => ({
+      label: getDeskPriorityLabel(p),
+      value: p,
+    })),
   },
   {
     key: "status",
     label: "Tous les statuts",
-    options: [
-      { label: STATUS_LABELS.OPEN, value: "OPEN" },
-      { label: STATUS_LABELS.IN_PROGRESS, value: "IN_PROGRESS" },
-      { label: STATUS_LABELS.ANSWERED, value: "ANSWERED" },
-      { label: STATUS_LABELS.CLOSED, value: "CLOSED" },
-    ],
+    options: (["OPEN", "IN_PROGRESS", "ANSWERED", "CLOSED"] as DeskRequestStatus[]).map((s) => ({
+      label: getDeskStatusLabel(s),
+      value: s,
+    })),
   },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function safeFormatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "Date à confirmer";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return "Date à confirmer";
+  return dateFormatter.format(date);
+}
 
 function getRequesterName(requester: DeskRequestRow["requester"]): string {
   if (requester.profile) {
@@ -143,7 +133,9 @@ function getRequesterName(requester: DeskRequestRow["requester"]): string {
   return requester.email;
 }
 
-function getAdminName(admin: NonNullable<DeskRequestRow["assignedToAdmin"]> | AdminUserRow): string {
+function getAdminName(
+  admin: NonNullable<DeskRequestRow["assignedToAdmin"]> | AdminUserRow,
+): string {
   if ("name" in admin) return admin.name;
   if (admin.profile) {
     return `${admin.profile.firstName} ${admin.profile.lastName}`.trim();
@@ -151,11 +143,24 @@ function getAdminName(admin: NonNullable<DeskRequestRow["assignedToAdmin"]> | Ad
   return admin.email;
 }
 
-function getBookingContext(booking: DeskRequestRow["booking"]): string | null {
+function getBookingTitle(booking: NonNullable<DeskRequestRow["booking"]>): string {
+  return booking.reliefMission?.title ?? booking.service?.title ?? `Réservation ${booking.id}`;
+}
+
+function getEstablishmentName(
+  establishment: NonNullable<NonNullable<DeskRequestRow["booking"]>["establishment"]>,
+): string {
+  if (establishment.profile) {
+    return `${establishment.profile.firstName} ${establishment.profile.lastName}`.trim();
+  }
+  return establishment.email;
+}
+
+function getBookingContextSummary(booking: DeskRequestRow["booking"]): string | null {
   if (!booking) return null;
   const title = booking.reliefMission?.title ?? booking.service?.title ?? null;
-  const statusLabel = BOOKING_STATUS_LABELS[booking.status] ?? booking.status;
-  return title ? `${title} — ${statusLabel}` : `Booking ${statusLabel}`;
+  const statusLabel = getBookingStatusLabel(booking.status);
+  return title ? `${title} — ${statusLabel}` : `Réservation — ${statusLabel}`;
 }
 
 // ─── Create Incident Sheet ────────────────────────────────────────────────────
@@ -172,13 +177,19 @@ function CreateIncidentSheet({ open, onClose }: CreateSheetProps) {
   const [type, setType] = useState<FinanceIncidentType>("PAYMENT_ISSUE");
   const [priority, setPriority] = useState<DeskRequestPriority>("NORMAL");
   const [requesterEmail, setRequesterEmail] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [bookingId, setBookingId] = useState("");
   const [message, setMessage] = useState("");
+
+  const isValidEmail = EMAIL_REGEX.test(requesterEmail.trim());
+  const canSubmit = !isPending && isValidEmail && message.trim().length >= 5;
+  const showEmailError = emailTouched && !isValidEmail;
 
   const resetForm = () => {
     setType("PAYMENT_ISSUE");
     setPriority("NORMAL");
     setRequesterEmail("");
+    setEmailTouched(false);
     setBookingId("");
     setMessage("");
   };
@@ -187,9 +198,6 @@ function CreateIncidentSheet({ open, onClose }: CreateSheetProps) {
     resetForm();
     onClose();
   };
-
-  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(requesterEmail.trim());
-  const canSubmit = !isPending && isValidEmail && message.trim().length >= 5;
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -251,9 +259,9 @@ function CreateIncidentSheet({ open, onClose }: CreateSheetProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(PRIORITY_LABELS) as DeskRequestPriority[]).map((key) => (
+                {(["LOW", "NORMAL", "HIGH", "URGENT"] as DeskRequestPriority[]).map((key) => (
                   <SelectItem key={key} value={key}>
-                    {PRIORITY_LABELS[key]}
+                    {getDeskPriorityLabel(key)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -273,7 +281,14 @@ function CreateIncidentSheet({ open, onClose }: CreateSheetProps) {
               placeholder="utilisateur@domaine.fr"
               value={requesterEmail}
               onChange={(e) => setRequesterEmail(e.target.value)}
+              onBlur={() => setEmailTouched(true)}
+              aria-invalid={showEmailError}
             />
+            {showEmailError && (
+              <p role="alert" className="text-xs text-destructive">
+                Saisissez une adresse email valide (ex&nbsp;: utilisateur@domaine.fr).
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -281,7 +296,10 @@ function CreateIncidentSheet({ open, onClose }: CreateSheetProps) {
               htmlFor="bookingId"
               className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
             >
-              ID Réservation (optionnel)
+              ID Réservation{" "}
+              <span className="font-normal text-muted-foreground/60 normal-case tracking-normal">
+                (optionnel)
+              </span>
             </Label>
             <Input
               id="bookingId"
@@ -289,15 +307,27 @@ function CreateIncidentSheet({ open, onClose }: CreateSheetProps) {
               value={bookingId}
               onChange={(e) => setBookingId(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground">
+              Permet de lier l&apos;incident à une réservation existante.
+            </p>
           </div>
 
           <div className="space-y-2">
-            <Label
-              htmlFor="message"
-              className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
-            >
-              Description de l&apos;incident
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor="message"
+                className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+              >
+                Description de l&apos;incident
+              </Label>
+              <span
+                className={`text-xs ${
+                  message.trim().length < 5 ? "text-muted-foreground/60" : "text-emerald-500"
+                }`}
+              >
+                {message.trim().length}&nbsp;/ 5 min.
+              </span>
+            </div>
             <Textarea
               id="message"
               rows={5}
@@ -310,7 +340,7 @@ function CreateIncidentSheet({ open, onClose }: CreateSheetProps) {
 
           <Button className="w-full gap-2" disabled={!canSubmit} onClick={handleSubmit}>
             <Plus className="h-4 w-4" aria-hidden="true" />
-            {isPending ? "Création…" : "Créer l'incident"}
+            {isPending ? "Création en cours…" : "Créer l'incident"}
           </Button>
         </div>
       </SheetContent>
@@ -323,13 +353,19 @@ function CreateIncidentSheet({ open, onClose }: CreateSheetProps) {
 type DetailSheetProps = {
   selected: DeskRequestRow | null;
   admins: AdminUserRow[];
+  currentAdminId?: string;
   onClose: () => void;
 };
 
-function IncidentDetailSheet({ selected, admins, onClose }: DetailSheetProps) {
+function IncidentDetailSheet({ selected, admins, currentAdminId, onClose }: DetailSheetProps) {
   const router = useRouter();
+  const now = useMemo(() => new Date(), []);
   const [replyText, setReplyText] = useState(selected?.response ?? "");
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setReplyText(selected?.response ?? "");
+  }, [selected?.id]);
 
   const handleStatusChange = (id: string, status: DeskRequestStatus) => {
     startTransition(async () => {
@@ -371,8 +407,8 @@ function IncidentDetailSheet({ selected, admins, onClose }: DetailSheetProps) {
 
   if (!selected) return null;
 
-  const bookingContext = getBookingContext(selected.booking);
   const typeLabel = getDeskRequestTypeLabel(selected.type);
+  const isLate = isDeskRequestLate(selected, now);
 
   return (
     <Sheet open={!!selected} onOpenChange={(open) => !open && onClose()}>
@@ -383,16 +419,120 @@ function IncidentDetailSheet({ selected, admins, onClose }: DetailSheetProps) {
         </SheetHeader>
 
         <div className="mt-6 space-y-5">
-          {/* Contexte booking */}
-          {bookingContext && (
-            <div className="rounded-lg border bg-muted/20 p-3 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">
-                Réservation liée
+          {/* Contexte */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <Badge variant={getDeskPriorityVariant(selected.priority)}>
+              {getDeskPriorityLabel(selected.priority)}
+            </Badge>
+            <Badge variant={getDeskStatusVariant(selected.status)}>
+              {getDeskStatusLabel(selected.status)}
+            </Badge>
+            {isLate && (
+              <span className="flex items-center gap-1 text-xs text-amber-500">
+                <Clock className="h-3 w-3" aria-hidden="true" />
+                En retard
+              </span>
+            )}
+          </div>
+
+          {/* Actions rapides */}
+          <div className="flex flex-wrap gap-2">
+            {selected.status === "OPEN" && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isPending}
+                className="gap-1.5"
+                onClick={() => handleStatusChange(selected.id, "IN_PROGRESS")}
+              >
+                <Zap className="h-3.5 w-3.5" aria-hidden="true" />
+                Marquer en cours
+              </Button>
+            )}
+            {selected.status !== "CLOSED" && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isPending}
+                onClick={() => handleStatusChange(selected.id, "CLOSED")}
+              >
+                Clôturer
+              </Button>
+            )}
+          </div>
+
+          {/* Contexte finance / booking */}
+          {selected.booking && (
+            <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Contexte finance
               </p>
-              <p className="text-sm">{bookingContext}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">ID : {selected.booking?.id}</p>
+              <p className="text-sm font-medium">{getBookingTitle(selected.booking)}</p>
+              <div className="flex flex-wrap gap-1.5">
+                <Badge variant="outline" className="text-xs">
+                  {getBookingStatusLabel(selected.booking.status)}
+                </Badge>
+                <Badge variant="quiet" className="text-xs">
+                  {PAYMENT_STATUS_LABELS[selected.booking.paymentStatus] ??
+                    selected.booking.paymentStatus}
+                </Badge>
+              </div>
+              {selected.booking.establishment && (
+                <p className="text-xs text-muted-foreground">
+                  Établissement&nbsp;: {getEstablishmentName(selected.booking.establishment)}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground font-mono">ID&nbsp;: {selected.booking.id}</p>
             </div>
           )}
+
+          {/* Description incident */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Description de l&apos;incident
+            </p>
+            <div className="rounded-lg border bg-muted/30 p-4 text-sm whitespace-pre-wrap">
+              {selected.message}
+            </div>
+          </div>
+
+          {/* Assignation */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Assignation
+            </p>
+            <div className="flex gap-2">
+              <Select
+                value={selected.assignedToAdminId ?? "UNASSIGNED"}
+                disabled={isPending}
+                onValueChange={(value) =>
+                  handleAssign(selected.id, value === "UNASSIGNED" ? null : value)
+                }
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Assigner à un admin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="UNASSIGNED">Non assigné</SelectItem>
+                  {admins.map((admin) => (
+                    <SelectItem key={admin.id} value={admin.id}>
+                      {admin.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {currentAdminId && selected.assignedToAdminId !== currentAdminId && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={isPending}
+                  onClick={() => handleAssign(selected.id, currentAdminId)}
+                >
+                  Me l'assigner
+                </Button>
+              )}
+            </div>
+          </div>
 
           {/* Statut */}
           <div className="space-y-2">
@@ -408,61 +548,25 @@ function IncidentDetailSheet({ selected, admins, onClose }: DetailSheetProps) {
                   disabled={isPending}
                   onClick={() => handleStatusChange(selected.id, s)}
                 >
-                  {STATUS_LABELS[s]}
+                  {getDeskStatusLabel(s)}
                 </Button>
               ))}
             </div>
           </div>
 
-          {/* Assignation */}
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Assignation
-            </p>
-            <Select
-              value={selected.assignedToAdminId ?? "UNASSIGNED"}
-              disabled={isPending}
-              onValueChange={(value) =>
-                handleAssign(selected.id, value === "UNASSIGNED" ? null : value)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Assigner à un admin" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="UNASSIGNED">Non assigné</SelectItem>
-                {admins.map((admin) => (
-                  <SelectItem key={admin.id} value={admin.id}>
-                    {admin.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Message */}
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Description de l&apos;incident
-            </p>
-            <div className="rounded-lg border bg-muted/30 p-4 text-sm whitespace-pre-wrap">
-              {selected.message}
-            </div>
-          </div>
-
-          {/* Réponse existante */}
+          {/* Historique réponse */}
           {selected.response && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
                 <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
-                Réponse envoyée
+                Historique de réponse
               </p>
               <div className="rounded-lg border bg-emerald-500/5 border-emerald-500/20 p-4 text-sm whitespace-pre-wrap">
                 {selected.response}
               </div>
               {selected.answeredAt && (
                 <p className="text-xs text-muted-foreground">
-                  {dateFormatter.format(new Date(selected.answeredAt))}
+                  {safeFormatDate(selected.answeredAt)}
                   {selected.answeredBy?.profile
                     ? ` — ${selected.answeredBy.profile.firstName} ${selected.answeredBy.profile.lastName}`
                     : ""}
@@ -501,7 +605,7 @@ function IncidentDetailSheet({ selected, admins, onClose }: DetailSheetProps) {
             </p>
             <p className="text-muted-foreground">{selected.requester.email}</p>
             <p className="text-xs text-muted-foreground">
-              Incident créé le {dateFormatter.format(new Date(selected.createdAt))}
+              Incident créé le {safeFormatDate(selected.createdAt)}
             </p>
           </div>
         </div>
@@ -512,21 +616,23 @@ function IncidentDetailSheet({ selected, admins, onClose }: DetailSheetProps) {
 
 // ─── Main Table ───────────────────────────────────────────────────────────────
 
-export function FinanceIncidentsTable({ requests, admins }: FinanceIncidentsTableProps) {
+export function FinanceIncidentsTable({ requests, admins, currentAdminId }: FinanceIncidentsTableProps) {
+  const now = useMemo(() => new Date(), []);
   const [selected, setSelected] = useState<DeskRequestRow | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [priorityFilter, setPriorityFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
-  const filteredRequests = useMemo(() => {
-    return requests.filter((req) => {
+  const sortedAndFiltered = useMemo(() => {
+    const filtered = requests.filter((req) => {
       if (typeFilter !== "ALL" && req.type !== typeFilter) return false;
       if (priorityFilter !== "ALL" && req.priority !== priorityFilter) return false;
       if (statusFilter !== "ALL" && req.status !== statusFilter) return false;
       return true;
     });
-  }, [requests, typeFilter, priorityFilter, statusFilter]);
+    return sortDeskRequestsByPriority(filtered, now);
+  }, [requests, typeFilter, priorityFilter, statusFilter, now]);
 
   const handleFilterChange = (key: string, value: string) => {
     if (key === "type") setTypeFilter(value);
@@ -556,13 +662,19 @@ export function FinanceIncidentsTable({ requests, admins }: FinanceIncidentsTabl
           />
           <Button size="sm" className="shrink-0 gap-1.5" onClick={() => setCreateOpen(true)}>
             <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-            Créer
+            Créer un incident
           </Button>
         </div>
 
         {requests.length === 0 ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">
-            Aucun incident finance / commerce pour le moment.
+          <div className="p-10 text-center space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Aucun incident finance / commerce pour le moment.
+            </p>
+            <Button size="sm" variant="outline" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
+              Créer le premier incident
+            </Button>
           </div>
         ) : (
           <Table>
@@ -579,15 +691,19 @@ export function FinanceIncidentsTable({ requests, admins }: FinanceIncidentsTabl
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredRequests.length === 0 ? (
+              {sortedAndFiltered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
+                  <TableCell
+                    colSpan={8}
+                    className="py-8 text-center text-sm text-muted-foreground"
+                  >
                     Aucun incident ne correspond aux filtres.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredRequests.map((req) => {
-                  const bookingContext = getBookingContext(req.booking);
+                sortedAndFiltered.map((req) => {
+                  const bookingContext = getBookingContextSummary(req.booking);
+                  const isLate = isDeskRequestLate(req, now);
                   return (
                     <TableRow key={req.id}>
                       <TableCell className="font-medium text-sm whitespace-nowrap">
@@ -603,25 +719,33 @@ export function FinanceIncidentsTable({ requests, admins }: FinanceIncidentsTabl
                         {bookingContext ?? "—"}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={PRIORITY_VARIANTS[req.priority]}>
-                          {PRIORITY_LABELS[req.priority]}
+                        <Badge variant={getDeskPriorityVariant(req.priority)}>
+                          {getDeskPriorityLabel(req.priority)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={STATUS_VARIANTS[req.status]}>
-                          {STATUS_LABELS[req.status]}
-                        </Badge>
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant={getDeskStatusVariant(req.status)}>
+                            {getDeskStatusLabel(req.status)}
+                          </Badge>
+                          {isLate && (
+                            <AlertTriangle
+                              className="h-3.5 w-3.5 text-amber-500 shrink-0"
+                              aria-label="En retard"
+                            />
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="max-w-[120px] truncate text-sm text-muted-foreground">
                         {req.assignedToAdmin ? getAdminName(req.assignedToAdmin) : "—"}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                        {dateFormatter.format(new Date(req.createdAt))}
+                        {safeFormatDate(req.createdAt)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant={isDeskRequestOpen(req.status) ? "default" : "outline"}
                           className="gap-1.5"
                           onClick={() => setSelected(req)}
                         >
@@ -647,6 +771,7 @@ export function FinanceIncidentsTable({ requests, admins }: FinanceIncidentsTabl
       <IncidentDetailSheet
         selected={selected}
         admins={admins}
+        currentAdminId={currentAdminId}
         onClose={() => setSelected(null)}
       />
     </>
