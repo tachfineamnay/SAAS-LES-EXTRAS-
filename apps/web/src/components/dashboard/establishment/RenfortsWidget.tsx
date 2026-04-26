@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Calendar, Clock, Users, MapPin, Sun, Moon } from "lucide-react";
+import { AlertTriangle, Calendar, Clock, Users, MapPin, Sun, Moon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -17,18 +17,34 @@ interface RenfortsWidgetProps {
     error?: string | null;
 }
 
-const STATUS_LABEL: Record<string, string> = {
-    OPEN: "Ouverte",
-    ASSIGNED: "Attribuée",
-    COMPLETED: "Terminée",
-    CANCELLED: "Annulée",
-};
-
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-    OPEN: "secondary",
-    ASSIGNED: "default",
-    COMPLETED: "outline",
-    CANCELLED: "destructive",
+const STATUS_META: Record<
+    string,
+    {
+        label: string;
+        variant: "amber" | "teal" | "emerald" | "red" | "quiet";
+        borderClassName: string;
+    }
+> = {
+    OPEN: {
+        label: "Ouverte",
+        variant: "amber",
+        borderClassName: "border-l-[hsl(var(--amber))]",
+    },
+    ASSIGNED: {
+        label: "Assignée",
+        variant: "teal",
+        borderClassName: "border-l-[hsl(var(--teal))]",
+    },
+    COMPLETED: {
+        label: "Terminée",
+        variant: "emerald",
+        borderClassName: "border-l-[hsl(var(--emerald))]",
+    },
+    CANCELLED: {
+        label: "Annulée",
+        variant: "red",
+        borderClassName: "border-l-[hsl(var(--color-red-500))]",
+    },
 };
 
 export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
@@ -49,6 +65,11 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
                 icon={Users}
                 title="Aucun renfort actif"
                 description="Publiez votre premier renfort pour recevoir des candidatures."
+                primaryAction={{
+                    label: "Publier un renfort",
+                    href: "/dashboard/renforts",
+                    variant: "coral",
+                }}
                 className="py-8"
             />
         );
@@ -57,7 +78,14 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
     return (
         <div className="space-y-3">
             {missions.slice(0, 5).map((mission) => {
-                const candidatureCount = mission.bookings?.length ?? 0;
+                const statusMeta = STATUS_META[mission.status] ?? {
+                    label: mission.status,
+                    variant: "quiet" as const,
+                    borderClassName: "border-l-border",
+                };
+                const candidatureCount = mission.bookings?.filter(
+                    (b) => b.status !== "CANCELLED",
+                ).length ?? 0;
                 const pendingCount = mission.bookings?.filter(
                     (b) => b.status === "PENDING"
                 ).length ?? 0;
@@ -67,7 +95,10 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
                     <Link
                         key={mission.id}
                         href="/dashboard/renforts"
-                        className="block rounded-xl border border-border/60 p-4 hover:border-border hover:bg-muted/30 transition-colors"
+                        className={cn(
+                            "block rounded-xl border border-l-4 border-border/60 p-4 transition-colors hover:border-border hover:bg-muted/30",
+                            statusMeta.borderClassName,
+                        )}
                     >
                         <div className="flex items-start justify-between gap-3">
                             <div className="flex-1 min-w-0 space-y-1.5">
@@ -75,9 +106,15 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
                                     <span className="font-semibold text-sm truncate">
                                         {getMissionDisplayTitle(mission)}
                                     </span>
-                                    <Badge variant={STATUS_VARIANT[mission.status] ?? "secondary"}>
-                                        {STATUS_LABEL[mission.status] ?? mission.status}
+                                    <Badge variant={statusMeta.variant}>
+                                        {statusMeta.label}
                                     </Badge>
+                                    {mission.isUrgent && (
+                                        <Badge variant="coral" className="gap-1">
+                                            <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+                                            Urgent
+                                        </Badge>
+                                    )}
                                     {mission.shift && (
                                         <Badge
                                             variant="outline"
@@ -98,15 +135,22 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
                                     )}
                                 </div>
                                 <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                                    {planning.visibleSlots.map((slot) => (
-                                        <span key={slot.key} className="flex items-center gap-1">
+                                    {planning.visibleSlots.length > 0 ? (
+                                        planning.visibleSlots.map((slot) => (
+                                            <span key={slot.key} className="flex items-center gap-1">
+                                                <Calendar className="h-3 w-3" />
+                                                {format(slot.start, "dd MMM", { locale: fr })} · {slot.heureDebut} –{" "}
+                                                {isMissionPlanningLineMultiDay(slot)
+                                                    ? `${format(slot.end, "dd MMM", { locale: fr })} ${slot.heureFin}`
+                                                    : slot.heureFin}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span className="flex items-center gap-1">
                                             <Calendar className="h-3 w-3" />
-                                            {format(slot.start, "dd MMM", { locale: fr })} · {slot.heureDebut} –{" "}
-                                            {isMissionPlanningLineMultiDay(slot)
-                                                ? `${format(slot.end, "dd MMM", { locale: fr })} ${slot.heureFin}`
-                                                : slot.heureFin}
+                                            Date à confirmer
                                         </span>
-                                    ))}
+                                    )}
                                     {planning.extraCount > 0 && (
                                         <span className="flex items-center gap-1">
                                             <Clock className="h-3 w-3" />

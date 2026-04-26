@@ -69,9 +69,23 @@ describe("RenfortsWidget", () => {
     expect(screen.getByText("Ouverte")).toBeInTheDocument();
   });
 
-  it("affiche le badge de statut ASSIGNED comme 'Attribuée'", () => {
+  it("affiche le badge de statut ASSIGNED comme 'Assignée'", () => {
     render(<RenfortsWidget missions={[makeMission({ status: "ASSIGNED" })]} />);
-    expect(screen.getByText("Attribuée")).toBeInTheDocument();
+    expect(screen.getByText("Assignée")).toBeInTheDocument();
+  });
+
+  it("distingue les statuts terminés et annulés", () => {
+    render(
+      <RenfortsWidget
+        missions={[
+          makeMission({ id: "completed", title: "Mission terminée", status: "COMPLETED" }),
+          makeMission({ id: "cancelled", title: "Mission annulée", status: "CANCELLED" }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Terminée")).toBeInTheDocument();
+    expect(screen.getByText("Annulée")).toBeInTheDocument();
   });
 
   it("affiche toutes les missions jusqu'à 5", () => {
@@ -97,5 +111,22 @@ describe("RenfortsWidget", () => {
     expect(screen.getByText(/01 mai/i)).toBeInTheDocument();
     expect(screen.getByText(/03 mai/i)).toBeInTheDocument();
     expect(screen.getByText(/\+1 plage\(s\)/i)).toBeInTheDocument();
+  });
+
+  it("affiche un libellé neutre quand la date est invalide", () => {
+    render(
+      <RenfortsWidget
+        missions={[
+          makeMission({
+            id: "invalid-date",
+            title: "Mission sans date fiable",
+            dateStart: "not-a-date",
+            planning: null,
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Date à confirmer")).toBeInTheDocument();
   });
 });

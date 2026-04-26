@@ -59,6 +59,26 @@ const assignedMission: EstablishmentMission = {
   bookings: [{ id: "booking-assigned", status: "CONFIRMED", freelanceId: "free-1" }],
 };
 
+const openMission: EstablishmentMission = {
+  id: "mission-open",
+  title: "Renfort cuisine",
+  dateStart: "2099-04-13T10:00:00.000Z",
+  dateEnd: "2099-04-13T18:00:00.000Z",
+  address: "Marseille",
+  hourlyRate: 24,
+  status: "OPEN",
+  isRenfort: true,
+  city: "Marseille",
+  bookings: [],
+};
+
+const pendingCandidateMission: EstablishmentMission = {
+  ...openMission,
+  id: "mission-pending-candidate",
+  title: "Mission avec candidat",
+  bookings: [{ id: "booking-pending", status: "PENDING", freelanceId: "free-2" }],
+};
+
 const awaitingPaymentBooking: BookingLine = {
   lineId: "line-awaiting-payment",
   lineType: "MISSION",
@@ -92,6 +112,8 @@ function renderDashboard(overrides: Partial<EstablishmentDashboardProps> = {}) {
     openDeskRequests: [],
     deskRequestsError: null,
     renfortsToFill: 1,
+    renfortsToFillMissions: [],
+    missionsWithPendingCandidates: [],
     upcomingInterventions: 3,
     ...overrides,
   };
@@ -103,14 +125,16 @@ describe("EstablishmentDashboard", () => {
   it("affiche les KPI actionnables sans Note moyenne", () => {
     renderDashboard();
 
-    expect(screen.getByRole("link", { name: /renforts à pourvoir/i })).toHaveAttribute(
-      "href",
-      "/dashboard/renforts",
-    );
-    expect(screen.getByRole("link", { name: /candidatures à décider/i })).toHaveAttribute(
-      "href",
-      "/dashboard/renforts",
-    );
+    expect(
+      screen
+        .getAllByRole("link", { name: /renforts à pourvoir/i })
+        .some((link) => link.getAttribute("href") === "/dashboard/renforts"),
+    ).toBe(true);
+    expect(
+      screen
+        .getAllByRole("link", { name: /candidatures à décider/i })
+        .some((link) => link.getAttribute("href") === "/dashboard/renforts"),
+    ).toBe(true);
     expect(screen.getByRole("link", { name: /interventions à venir/i })).toHaveAttribute(
       "href",
       "/bookings",
@@ -157,5 +181,42 @@ describe("EstablishmentDashboard", () => {
 
     expect(screen.getByRole("button", { name: /valider les heures/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /valider le paiement/i })).not.toBeInTheDocument();
+  });
+
+  it("affiche les candidatures à décider quand une mission a une candidature PENDING", () => {
+    renderDashboard({
+      pendingCandidatures: 1,
+      missionsWithPendingCandidates: [pendingCandidateMission],
+    });
+
+    expect(screen.getByText("Mission avec candidat")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /voir les candidatures pour mission avec candidat/i })).toHaveAttribute(
+      "href",
+      "/dashboard/renforts",
+    );
+  });
+
+  it("affiche les renforts OPEN à pourvoir", () => {
+    renderDashboard({
+      renfortsToFill: 1,
+      renfortsToFillMissions: [openMission],
+    });
+
+    expect(screen.getByText("Renfort cuisine")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /gérer les candidatures pour renfort cuisine/i })).toHaveAttribute(
+      "href",
+      "/dashboard/renforts",
+    );
+  });
+
+  it("n'affiche pas une mission assignée dans Renforts à pourvoir", () => {
+    renderDashboard({
+      renfortsToFill: 1,
+      renfortsToFillMissions: [openMission],
+      nextMission: null,
+    });
+
+    expect(screen.getByText("Renfort cuisine")).toBeInTheDocument();
+    expect(screen.queryByText("Renfort éducateur spécialisé")).not.toBeInTheDocument();
   });
 });

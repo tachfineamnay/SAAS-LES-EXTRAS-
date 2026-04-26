@@ -18,8 +18,8 @@ import { EstablishmentChecklistWidget } from "@/components/dashboard/establishme
 import { NextMissionCard } from "@/components/dashboard/NextMissionCard";
 import { RecentReviewsWidget } from "@/components/dashboard/RecentReviewsWidget";
 import { DashboardWidget } from "./DashboardWidget";
+import { Badge } from "@/components/ui/badge";
 import {
-    Users,
     Briefcase,
     Calendar,
     FileText,
@@ -31,6 +31,8 @@ import {
     CreditCard,
     LifeBuoy,
     Inbox,
+    AlertTriangle,
+    MapPin,
 } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -57,7 +59,88 @@ export interface EstablishmentDashboardProps {
     openDeskRequests: MyDeskRequest[];
     deskRequestsError: string | null;
     renfortsToFill: number;
+    renfortsToFillMissions: EstablishmentMission[];
+    missionsWithPendingCandidates: EstablishmentMission[];
     upcomingInterventions: number;
+}
+
+function getPendingCandidateCount(mission: EstablishmentMission) {
+    return mission.bookings?.filter((booking) => booking.status === "PENDING").length ?? 0;
+}
+
+function getMissionDateDisplay(mission: EstablishmentMission) {
+    const planning = getMissionPlanning(mission);
+    const slot = planning.nextSlot ?? planning.firstSlot;
+
+    if (!slot || !isValid(slot.start)) {
+        return {
+            date: "Date à confirmer",
+            time: null,
+        };
+    }
+
+    return {
+        date: format(slot.start, "EEEE d MMMM", { locale: fr }),
+        time: `${slot.heureDebut} – ${
+            isMissionPlanningLineMultiDay(slot)
+                ? `${format(slot.end, "d MMM", { locale: fr })} ${slot.heureFin}`
+                : slot.heureFin
+        }`,
+    };
+}
+
+function MissionPipelineCard({
+    mission,
+    ctaLabel,
+    countSuffix,
+}: {
+    mission: EstablishmentMission;
+    ctaLabel: string;
+    countSuffix: string;
+}) {
+    const title = getMissionDisplayTitle(mission);
+    const pendingCount = getPendingCandidateCount(mission);
+    const missionDate = getMissionDateDisplay(mission);
+    const city = mission.city ?? mission.address ?? "Lieu à confirmer";
+
+    return (
+        <article className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate text-sm font-semibold">{title}</h3>
+                        {mission.isUrgent && (
+                            <Badge variant="coral" className="gap-1">
+                                <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+                                Urgent
+                            </Badge>
+                        )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+                            {missionDate.date}
+                            {missionDate.time ? ` · ${missionDate.time}` : ""}
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                            <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+                            {city}
+                        </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                        {pendingCount} candidature{pendingCount > 1 ? "s" : ""} {countSuffix}
+                    </p>
+                </div>
+                <Link
+                    href="/dashboard/renforts"
+                    aria-label={`${ctaLabel} pour ${title}`}
+                    className="shrink-0 rounded-full border border-[hsl(var(--teal)/0.35)] px-3 py-1.5 text-xs font-semibold text-[hsl(var(--teal))] transition-colors hover:bg-[hsl(var(--teal)/0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--teal))]"
+                >
+                    {ctaLabel}
+                </Link>
+            </div>
+        </article>
+    );
 }
 
 export function EstablishmentDashboard({
@@ -80,6 +163,8 @@ export function EstablishmentDashboard({
     openDeskRequests,
     deskRequestsError,
     renfortsToFill,
+    renfortsToFillMissions,
+    missionsWithPendingCandidates,
     upcomingInterventions,
 }: EstablishmentDashboardProps) {
     const confirmedMissionBookings = confirmedBookings.filter((b) => b.lineType === "MISSION");
@@ -107,6 +192,8 @@ export function EstablishmentDashboard({
         ? "Freelance assigné"
         : "Intervention assignée";
     const showPendingQuotes = pendingQuotes.length > 0 || Boolean(quotesError);
+    const candidateMissionsPreview = missionsWithPendingCandidates.slice(0, 3);
+    const renfortsToFillPreview = renfortsToFillMissions.slice(0, 3);
 
     return (
         <div className="space-y-10">
@@ -181,60 +268,28 @@ export function EstablishmentDashboard({
                 </div>
             </section>
 
+            {/* KPI row */}
+            <EstablishmentKpiGrid
+                renfortsToFill={renfortsToFill}
+                pendingApplications={pendingCandidatures}
+                upcomingInterventions={upcomingInterventions}
+                availableCredits={availableCredits}
+            />
+
             {/* ── Zone 2 : À traiter ── */}
             <section className="space-y-4">
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     À traiter
                 </p>
-                {/* Alerte missions à valider */}
-                <MissionsToValidateWidget bookings={awaitingPaymentBookings} />
-
-                {/* Prochaine mission (full-width si présente) */}
-                {nextMission && (
-                    <NextMissionCard
-                        detailsHref="/dashboard/renforts"
-                        title={getMissionDisplayTitle(nextMission)}
-                        establishment={nextMissionFreelance}
-                        city={nextMission.city ?? nextMission.address ?? ""}
-                        scheduledAt={nextMissionDate?.toISOString() ?? nextMission.dateStart}
-                        dateDisplay={nextMissionDateDisplay}
-                        timeRange={nextMissionTimeRange}
-                    />
+                {awaitingPaymentBookings.length > 0 ? (
+                    <MissionsToValidateWidget bookings={awaitingPaymentBookings} />
+                ) : (
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+                        Aucune mission terminée à valider.
+                    </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                    {/* Candidatures en attente */}
-                    <DashboardWidget
-                        icon={Users}
-                        iconColor="coral"
-                        title="Candidatures en attente"
-                        subtitle="En attente de décision"
-                        viewAllHref="/dashboard/renforts"
-                        viewAllLabel="Voir toutes les candidatures en attente"
-                    >
-                        {pendingCandidatures > 0 ? (
-                            <div className="space-y-3">
-                                <p className="text-3xl font-bold text-[hsl(var(--coral))]">
-                                    {pendingCandidatures}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    candidature{pendingCandidatures > 1 ? "s" : ""} en attente de
-                                    votre décision
-                                </p>
-                                <Link
-                                    href="/dashboard/renforts"
-                                    className="block w-full text-center text-xs font-medium text-[hsl(var(--teal))] hover:underline"
-                                >
-                                    Gérer les candidatures →
-                                </Link>
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">
-                                Aucune candidature en attente.
-                            </p>
-                        )}
-                    </DashboardWidget>
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* TODO(Sprint finance): réintroduire un flux paiement distinct quand le cycle métier sera clarifié. */}
                     {showPendingQuotes && (
                         <DashboardWidget
@@ -247,7 +302,6 @@ export function EstablishmentDashboard({
                         </DashboardWidget>
                     )}
 
-                    {/* Demandes Desk ouvertes */}
                     <DashboardWidget
                         icon={Inbox}
                         iconColor="teal"
@@ -283,15 +337,99 @@ export function EstablishmentDashboard({
                 </div>
             </section>
 
-            {/* KPI row */}
-            <EstablishmentKpiGrid
-                renfortsToFill={renfortsToFill}
-                pendingApplications={pendingCandidatures}
-                upcomingInterventions={upcomingInterventions}
-                availableCredits={availableCredits}
-            />
+            {/* ── Zone 3 : Candidatures à décider ── */}
+            <section className="space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                            Candidatures à décider
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            Les missions avec candidatures en attente, classées par urgence.
+                        </p>
+                    </div>
+                    <Link
+                        href="/dashboard/renforts"
+                        aria-label="Voir toutes les candidatures à décider"
+                        className="shrink-0 text-xs font-semibold text-[hsl(var(--teal))] hover:underline"
+                    >
+                        Voir tout →
+                    </Link>
+                </div>
+                {candidateMissionsPreview.length > 0 ? (
+                    <div className="grid gap-3">
+                        {candidateMissionsPreview.map((mission) => (
+                            <MissionPipelineCard
+                                key={mission.id}
+                                mission={mission}
+                                ctaLabel="Voir les candidatures"
+                                countSuffix="à examiner"
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+                        Aucune candidature à décider pour le moment.
+                    </div>
+                )}
+            </section>
 
-            {/* ── Zone 3 : Mes activités ── */}
+            {/* ── Zone 4 : Renforts à pourvoir ── */}
+            <section className="space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                            Renforts à pourvoir
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            Missions ouvertes sans freelance assigné.
+                        </p>
+                    </div>
+                    <Link
+                        href="/dashboard/renforts"
+                        aria-label="Voir tous les renforts à pourvoir"
+                        className="shrink-0 text-xs font-semibold text-[hsl(var(--teal))] hover:underline"
+                    >
+                        Voir tout →
+                    </Link>
+                </div>
+                {renfortsToFillPreview.length > 0 ? (
+                    <div className="grid gap-3">
+                        {renfortsToFillPreview.map((mission) => (
+                            <MissionPipelineCard
+                                key={mission.id}
+                                mission={mission}
+                                ctaLabel="Gérer les candidatures"
+                                countSuffix="reçue"
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+                        Aucun renfort à pourvoir pour le moment.
+                    </div>
+                )}
+            </section>
+
+            {/* ── Zone 5 : Prochaine intervention assignée ── */}
+            {nextMission && (
+                <section className="space-y-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                        Prochaine intervention assignée
+                    </p>
+                    <NextMissionCard
+                        detailsHref="/dashboard/renforts"
+                        title={getMissionDisplayTitle(nextMission)}
+                        establishment={nextMissionFreelance}
+                        city={nextMission.city ?? nextMission.address ?? ""}
+                        scheduledAt={nextMissionDate?.toISOString() ?? nextMission.dateStart}
+                        dateDisplay={nextMissionDateDisplay}
+                        timeRange={nextMissionTimeRange}
+                    />
+                </section>
+            )}
+
+            {/* ── Zone 6 : Mes activités ── */}
             <section className="space-y-4">
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     Mes activités

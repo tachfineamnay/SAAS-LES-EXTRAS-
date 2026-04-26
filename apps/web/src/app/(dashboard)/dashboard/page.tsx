@@ -23,7 +23,11 @@ import type { ReviewItem } from "./_components/FreelanceDashboard";
 import { getMissionPlanning } from "@/lib/mission-planning";
 import { getMissionDisplayTitle } from "@/lib/mission-display";
 import { getNextUpcomingBooking, isUpcomingBooking } from "@/lib/dashboard-bookings";
-import { getNextAssignedMission } from "@/lib/establishment-dashboard";
+import {
+    getAssignedUpcomingMissions,
+    getMissionsWithPendingCandidates,
+    getRenfortsToFill,
+} from "@/lib/establishment-renforts";
 import { computeFreelanceTrustProfile } from "@/lib/freelance-trust";
 import { getTopMatchingMissions } from "@/lib/mission-matching";
 
@@ -75,7 +79,7 @@ async function fetchEstablishmentData(token: string, userId: string) {
             ),
         ]);
 
-    // TODO(Sprint établissement 2): brancher les devis réels ou supprimer ce flux.
+    // TODO(Sprint établissement 3): brancher les devis réels ou supprimer ce flux.
     const quotesResult = { data: [] as SerializedQuote[], error: null };
 
     const lines = bookingsResult.data?.lines ?? [];
@@ -85,8 +89,11 @@ async function fetchEstablishmentData(token: string, userId: string) {
     const activeMissions = missions.filter(
         (m) => m.status === "OPEN" || m.status === "ASSIGNED",
     );
-    const renfortsToFill = missions.filter((mission) => mission.status === "OPEN").length;
-    const pendingCandidatures = missions.reduce(
+    const renfortsToFillMissions = getRenfortsToFill(missions, now);
+    const missionsWithPendingCandidates = getMissionsWithPendingCandidates(missions, now);
+    const assignedUpcomingMissions = getAssignedUpcomingMissions(missions, now);
+    const renfortsToFill = renfortsToFillMissions.length;
+    const pendingCandidatures = missionsWithPendingCandidates.reduce(
         (acc, m) => acc + (m.bookings?.filter((b) => b.status === "PENDING").length ?? 0),
         0,
     );
@@ -121,12 +128,14 @@ async function fetchEstablishmentData(token: string, userId: string) {
         confirmedBookings,
         completedBookings,
         bookingsError: bookingsResult.error,
-        nextMission: getNextAssignedMission(missions, now),
+        nextMission: assignedUpcomingMissions[0] ?? null,
         recentReviews: reviewsResult.data,
         recentReviewsError: reviewsResult.error,
         openDeskRequests,
         deskRequestsError: deskRequestsResult.error,
         renfortsToFill,
+        renfortsToFillMissions,
+        missionsWithPendingCandidates,
         upcomingInterventions,
     };
 }
