@@ -71,6 +71,20 @@ describe("BookingDetailsPage", () => {
     expect(screen.getByText("contact@ehpad.fr")).toBeInTheDocument();
   });
 
+  it("affiche le libellé centralisé du statut", async () => {
+    mockGetBookingsPageData.mockResolvedValue({
+      ok: true,
+      data: {
+        lines: [{ ...mockLine, status: "QUOTE_ACCEPTED" }],
+        nextStep: null,
+      },
+    });
+
+    render(await BookingDetailsPage({ params: { lineType: "MISSION", lineId: "line-1" } }));
+
+    expect(screen.getByText("Devis accepté")).toBeInTheDocument();
+  });
+
   it("appelle getBookingLineDetails avec les bons paramètres", async () => {
     await BookingDetailsPage({ params: { lineType: "MISSION", lineId: "line-1" } });
 

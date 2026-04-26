@@ -6,36 +6,14 @@ import {
     getBookingsPageDataSafe,
     getBookingLineDetailsSafe,
     type BookingLineType,
-    type BookingLineStatus,
 } from "@/app/actions/bookings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getBookingStatusLabel, getBookingStatusVariant } from "@/lib/booking-status";
 
 export const dynamic = "force-dynamic";
 
 const VALID_LINE_TYPES = new Set<string>(["MISSION", "SERVICE_BOOKING"]);
-
-const STATUS_LABELS: Partial<Record<BookingLineStatus, string>> = {
-    PENDING: "En attente",
-    CONFIRMED: "Confirmé",
-    ASSIGNED: "Assigné",
-    COMPLETED: "Terminé",
-    COMPLETED_AWAITING_PAYMENT: "Paiement en attente",
-    CANCELLED: "Annulé",
-    PAID: "Payé",
-};
-
-const STATUS_VARIANTS: Partial<
-    Record<BookingLineStatus, "amber" | "teal" | "outline" | "emerald" | "red" | "info">
-> = {
-    PENDING: "amber",
-    CONFIRMED: "teal",
-    ASSIGNED: "info",
-    COMPLETED: "outline",
-    COMPLETED_AWAITING_PAYMENT: "amber",
-    CANCELLED: "red",
-    PAID: "emerald",
-};
 
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
     dateStyle: "full",
@@ -96,8 +74,8 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     if (!line) notFound();
     const details = detailsResult.ok ? detailsResult.data : null;
 
-    const statusLabel = STATUS_LABELS[line.status] ?? line.status;
-    const statusVariant = STATUS_VARIANTS[line.status] ?? "outline";
+    const statusLabel = getBookingStatusLabel(line.status);
+    const statusVariant = getBookingStatusVariant(line.status);
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">

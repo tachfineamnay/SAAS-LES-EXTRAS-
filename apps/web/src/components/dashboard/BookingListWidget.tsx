@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { EASE_PREMIUM, STAGGER_DEFAULT } from "@/lib/motion";
+import { getBookingStatusLabel, getBookingStatusVariant } from "@/lib/booking-status";
 import type { Variants } from "framer-motion";
 
 const listContainer: Variants = {
@@ -69,8 +70,8 @@ export function BookingListWidget({
                                         <span className="font-medium">
                                             {booking.typeLabel === "Mission SOS" ? "Renfort" : booking.typeLabel}
                                         </span>
-                                        <Badge variant={booking.status === "CONFIRMED" ? "default" : "secondary"}>
-                                            {booking.status === "CONFIRMED" ? "Confirmé" : "En attente"}
+                                        <Badge variant={getBookingStatusVariant(booking.status)}>
+                                            {getBookingStatusLabel(booking.status)}
                                         </Badge>
                                     </div>
                                     <div className="flex items-center gap-4 text-sm text-muted-foreground">

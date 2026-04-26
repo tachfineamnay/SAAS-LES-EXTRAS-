@@ -106,6 +106,31 @@ describe("BookingsPageClient", () => {
     });
   });
 
+  it("affiche le libellé centralisé des statuts booking", async () => {
+    render(
+      <BookingsPageClient
+        initialData={{
+          nextStep: null,
+          lines: [
+            {
+              lineId: "line-quote",
+              lineType: "SERVICE_BOOKING",
+              date: "2026-03-21T09:00:00.000Z",
+              typeLabel: "Atelier",
+              interlocutor: "Prestataire B",
+              status: "QUOTE_SENT",
+              address: "10 rue de test",
+              contactEmail: "contact@test.com",
+              relatedBookingId: "booking-quote",
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(await screen.findByText("Devis envoyé")).toBeInTheDocument();
+  });
+
   it("affiche une erreur non bloquante quand le chargement initial échoue", () => {
     render(
       <BookingsPageClient

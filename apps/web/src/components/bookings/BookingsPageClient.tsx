@@ -25,7 +25,6 @@ import {
   getBookingsPageDataSafe,
   type BookingDetails,
   type BookingLine,
-  type BookingLineStatus,
   type BookingsPageData,
   type DashboardRole,
 } from "@/app/actions/bookings";
@@ -43,6 +42,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useUIStore } from "@/lib/stores/useUIStore";
+import {
+  getBookingStatusLabel,
+  getBookingStatusVariant,
+  isBookingCancellable,
+} from "@/lib/booking-status";
 
 type BookingsPageClientProps = {
   initialData: BookingsPageData;
@@ -54,29 +58,12 @@ const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   timeStyle: "short",
 });
 
-function getStatusBadge(status: BookingLineStatus) {
-  switch (status) {
-    case "PENDING":
-      return <Badge variant="amber" size="sm">En attente</Badge>;
-    case "ASSIGNED":
-      return <Badge variant="info" size="sm">Assigné</Badge>;
-    case "CONFIRMED":
-      return <Badge variant="teal" size="sm">Confirmé</Badge>;
-    case "PAID":
-      return <Badge variant="emerald" size="sm">Payé</Badge>;
-    case "COMPLETED":
-      return <Badge variant="outline" size="sm">Terminé</Badge>;
-    case "COMPLETED_AWAITING_PAYMENT":
-      return <Badge variant="amber" size="sm">Paiement en attente</Badge>;
-    case "CANCELLED":
-      return <Badge variant="red" size="sm">Annulé</Badge>;
-    default:
-      return <Badge variant="outline" size="sm">{status}</Badge>;
-  }
-}
-
-function canCancel(status: BookingLineStatus): boolean {
-  return status !== "CANCELLED" && status !== "COMPLETED";
+function getStatusBadge(status: BookingLine["status"]) {
+  return (
+    <Badge variant={getBookingStatusVariant(status)} size="sm">
+      {getBookingStatusLabel(status)}
+    </Badge>
+  );
 }
 
 export function BookingsPageClient({ initialData, initialError = null }: BookingsPageClientProps) {
@@ -364,7 +351,7 @@ export function BookingsPageClient({ initialData, initialError = null }: Booking
                       Détails
                     </Button>
 
-                    {canCancel(line.status) && (
+                    {isBookingCancellable(line.status) && (
                       <Button
                         variant="ghost"
                         size="sm"

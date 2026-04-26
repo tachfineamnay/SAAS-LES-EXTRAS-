@@ -26,4 +26,11 @@ describe("BookingListWidget", () => {
 
     expect(detailsLink).toBeDefined();
   });
+
+  it("affiche le libellé centralisé du statut", () => {
+    render(<BookingListWidget bookings={[{ ...booking, status: "QUOTE_SENT" }]} />);
+
+    expect(screen.getByText("Devis envoyé")).toBeInTheDocument();
+    expect(screen.queryByText("En attente")).not.toBeInTheDocument();
+  });
 });
