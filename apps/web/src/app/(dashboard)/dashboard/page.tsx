@@ -189,9 +189,10 @@ async function fetchFreelanceData(token: string, userId: string) {
     const now = new Date();
     const upcomingMissions = confirmedBookings.filter((booking) => isUpcomingBooking(booking, now)).length;
     const pendingApplications = missionBookings.filter((booking) => booking.status === "PENDING").length;
-    // TODO(Sprint métier): confirmer si QUOTE_ACCEPTED doit aussi être considéré comme "à traiter" côté PROVIDER.
     const pendingServiceRequests = serviceBookings.filter(
-        (booking) => booking.viewerSide === "PROVIDER" && booking.status === "PENDING",
+        (booking) =>
+            booking.viewerSide === "PROVIDER" &&
+            (booking.status === "PENDING" || booking.status === "QUOTE_ACCEPTED"),
     ).length;
     const currentUser = userResult.data;
     const services = servicesResult.data ?? [];
@@ -267,6 +268,7 @@ async function fetchReviews(
             return {
                 id: review.id,
                 authorName,
+                authorRole: authorProfile?.jobTitle ?? undefined,
                 rating: review.rating,
                 text: review.comment ?? "Avis sans commentaire.",
                 context: new Date(review.createdAt).toLocaleDateString("fr-FR", {

@@ -3,8 +3,6 @@ import { redirect } from "next/navigation";
 import { getInvoices } from "@/actions/finance";
 import { RevenueOverviewWidget } from "@/components/finance/RevenueOverviewWidget";
 import { InvoiceListWidget } from "@/components/finance/InvoiceListWidget";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -32,10 +30,6 @@ export default async function FinancePage() {
                     <h1 className="font-display text-heading-xl tracking-tight">Mes Finances</h1>
                     <p className="text-body-md text-muted-foreground">Suivez vos revenus et factures.</p>
                 </div>
-                <Button variant="glass" className="gap-2 min-h-[44px]">
-                    <Download className="h-4 w-4" aria-hidden="true" />
-                    Exporter (CSV)
-                </Button>
             </div>
 
             {loadError && (

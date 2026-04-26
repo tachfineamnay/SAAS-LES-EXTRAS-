@@ -80,7 +80,7 @@ export async function declineCandidate(bookingId: string): Promise<{ ok: boolean
         await apiRequest(`/bookings/cancel`, {
             method: "POST",
             token: session.token,
-            body: { lineType: "BOOKING", lineId: bookingId },
+            body: { lineType: "MISSION", lineId: bookingId },
             label: "missions.decline-candidate",
         });
 

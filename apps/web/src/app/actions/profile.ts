@@ -17,8 +17,10 @@ const profileSchema = z.object({
     city: z.string().optional(),
     zipCode: z.string().optional(),
     siret: z.string().optional(), // We could add regex for SIRET validation
-    tvaNumber: z.string().optional(),    isAvailable: z.boolean().optional(),
-    availableDays: z.array(z.string()).optional(),});
+    tvaNumber: z.string().optional(),
+    isAvailable: z.boolean().optional(),
+    availableDays: z.array(z.string()).optional(),
+});
 
 export type ProfileFormValues = z.infer<typeof profileSchema>;
 
