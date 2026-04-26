@@ -90,10 +90,9 @@ describe("getDeskRequests (admin)", () => {
     expect(first.requester.email).toBe("karim@test.fr");
   });
 
-  it("retourne un tableau vide si l'API échoue", async () => {
+  it("propage l'erreur si l'API admin échoue", async () => {
     mockApiRequest.mockRejectedValue(new Error("Unauthorized"));
-    const result = await getDeskRequests();
-    expect(result).toEqual([]);
+    await expect(getDeskRequests()).rejects.toThrow("Unauthorized");
   });
 });
 

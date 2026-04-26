@@ -1,18 +1,23 @@
 import { getDeskRequests, getAdminUsers } from "@/app/actions/admin";
 import { FinanceIncidentsTable } from "@/components/admin/FinanceIncidentsTable";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FINANCE_DESK_REQUEST_TYPES } from "@/lib/desk-labels";
+import { fetchAdminSafe } from "@/lib/admin-safe-fetch";
 
 export const dynamic = "force-dynamic";
 
 const FINANCE_TYPES = new Set<string>(FINANCE_DESK_REQUEST_TYPES);
 
 export default async function AdminIncidentsPage() {
-  const [allRequests, admins] = await Promise.all([
-    getDeskRequests(),
-    getAdminUsers({ role: "ADMIN" }),
+  const [requestsResult, adminsResult] = await Promise.all([
+    fetchAdminSafe(getDeskRequests, [], "Incidents Desk"),
+    fetchAdminSafe(() => getAdminUsers({ role: "ADMIN" }), [], "Administrateurs Desk"),
   ]);
 
-  const incidents = allRequests.filter((r) => FINANCE_TYPES.has(r.type));
+  const incidents = requestsResult.data.filter((r) => FINANCE_TYPES.has(r.type));
+  const errors = [requestsResult.error, adminsResult.error].filter(
+    (error): error is string => Boolean(error),
+  );
 
   return (
     <section className="space-y-5">
@@ -27,7 +32,14 @@ export default async function AdminIncidentsPage() {
         </p>
       </header>
 
-      <FinanceIncidentsTable requests={incidents} admins={admins} />
+      {errors.length > 0 && (
+        <Alert className="border-amber-500/40 bg-amber-500/10">
+          <AlertTitle>Données Desk partiellement indisponibles</AlertTitle>
+          <AlertDescription>{errors.join(" ")}</AlertDescription>
+        </Alert>
+      )}
+
+      <FinanceIncidentsTable requests={incidents} admins={adminsResult.data} />
     </section>
   );
 }

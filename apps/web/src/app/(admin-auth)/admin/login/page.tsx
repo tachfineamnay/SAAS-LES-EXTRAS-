@@ -49,8 +49,8 @@ export default function AdminLoginPage() {
                 LesExtras
               </span>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Le Desk</h1>
-            <p className="text-sm text-muted-foreground">Connexion administrateur</p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Connexion Desk</h1>
+            <p className="text-sm text-muted-foreground">Accès réservé à l’équipe admin Les Extras.</p>
           </div>
 
           <form className="space-y-4" onSubmit={onSubmit}>

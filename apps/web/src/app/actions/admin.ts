@@ -652,15 +652,11 @@ export type ContactBypassEventRow = {
 };
 
 export async function getDeskRequests(): Promise<DeskRequestRow[]> {
-  try {
-    const token = await getAdminToken();
-    return await apiRequest<DeskRequestRow[]>("/admin/desk-requests", {
-      method: "GET",
-      token,
-    });
-  } catch {
-    return [];
-  }
+  const token = await getAdminToken();
+  return apiRequest<DeskRequestRow[]>("/admin/desk-requests", {
+    method: "GET",
+    token,
+  });
 }
 
 export async function getContactBypassEvents(): Promise<ContactBypassEventRow[]> {

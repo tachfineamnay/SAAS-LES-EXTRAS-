@@ -95,3 +95,35 @@ describe("middleware — front runtime", () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe("middleware — desk runtime", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubEnv("APP_RUNTIME", "desk");
+    vi.stubEnv("JWT_SECRET", "test-secret");
+    jwtVerifyMock.mockResolvedValue({ payload: { role: "ADMIN" } });
+  });
+
+  it("redirige / vers /admin", async () => {
+    const res = await middleware(makeRequest("/"));
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get("location")!).pathname).toBe("/admin");
+  });
+
+  it("redirige /admin vers /admin/login sans session admin", async () => {
+    const res = await middleware(makeRequest("/admin"));
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get("location")!).pathname).toBe("/admin/login");
+  });
+
+  it("laisse passer /admin/login sans session admin", async () => {
+    const res = await middleware(makeRequest("/admin/login"));
+    expect(res.status).toBe(200);
+  });
+
+  it("redirige /admin/login vers /admin si la session admin est valide", async () => {
+    const res = await middleware(makeRequest("/admin/login", { lesextras_admin_token: "jwt" }));
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get("location")!).pathname).toBe("/admin");
+  });
+});

@@ -2,16 +2,35 @@ import { getAdminOverview, getAdminUsers, getDeskRequests } from "@/app/actions/
 import { AdminStats } from "@/components/admin/AdminStats";
 import { RequiredActions } from "@/components/admin/RequiredActions";
 import { BentoSection } from "@/components/layout/BentoSection";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { fetchAdminSafe } from "@/lib/admin-safe-fetch";
 
 export const dynamic = "force-dynamic";
 const OPEN_DESK_REQUEST_STATUSES = new Set(["OPEN", "IN_PROGRESS"]);
+const OVERVIEW_FALLBACK = {
+  pendingUsersCount: 0,
+  openDeskRequestsCount: 0,
+  urgentOpenMissionsCount: 0,
+  featuredServicesCount: 0,
+  hiddenServicesCount: 0,
+  awaitingPaymentCount: 0,
+};
 
 export default async function AdminOverviewPage() {
-  const [overview, users, deskRequests] = await Promise.all([
-    getAdminOverview(),
-    getAdminUsers(),
-    getDeskRequests(),
+  const [overviewResult, usersResult, deskRequestsResult] = await Promise.all([
+    fetchAdminSafe(getAdminOverview, OVERVIEW_FALLBACK, "Synthèse Desk"),
+    fetchAdminSafe(() => getAdminUsers(), [], "Utilisateurs Desk"),
+    fetchAdminSafe(getDeskRequests, [], "Demandes Desk"),
   ]);
+  const overview = overviewResult.data;
+  const users = usersResult.data;
+  const deskRequests = deskRequestsResult.data;
+  const widgetErrors = [
+    overviewResult.error,
+    usersResult.error,
+    deskRequestsResult.error,
+  ].filter((error): error is string => Boolean(error));
+
   const pendingUsers = users.filter((user) => user.status === "PENDING");
   const openDeskRequests = deskRequests.filter((request) =>
     OPEN_DESK_REQUEST_STATUSES.has(request.status),
@@ -30,6 +49,19 @@ export default async function AdminOverviewPage() {
           </p>
         </div>
       </header>
+
+      {widgetErrors.length > 0 && (
+        <Alert className="border-amber-500/40 bg-amber-500/10">
+          <AlertTitle>Données Desk partiellement indisponibles</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc space-y-1 pl-4">
+              {widgetErrors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <AdminStats data={overview} />
 
