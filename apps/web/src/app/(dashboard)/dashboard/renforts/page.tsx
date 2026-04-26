@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
 import { getMissionDisplayTitle } from "@/lib/mission-display";
+import { getMissionStatusLabel, getMissionStatusVariant } from "@/lib/mission-status";
 
 export const dynamic = "force-dynamic";
 
@@ -88,11 +89,9 @@ export default async function SosDashboardPage() {
                           {getMissionDisplayTitle(mission)}
                         </h2>
                         <Badge
-                          variant={
-                            mission.status === "ASSIGNED" ? "default" : "secondary"
-                          }
+                          variant={getMissionStatusVariant(mission.status)}
                         >
-                          {mission.status === "ASSIGNED" ? "Attribuée" : "Ouverte"}
+                          {getMissionStatusLabel(mission.status)}
                         </Badge>
                         {mission.shift && (
                           <Badge

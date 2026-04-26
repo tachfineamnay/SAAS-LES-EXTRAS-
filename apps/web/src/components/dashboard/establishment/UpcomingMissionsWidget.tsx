@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Phone, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getBookingStatusLabel, getBookingStatusVariant } from "@/lib/booking-status";
 
 interface UpcomingMissionsWidgetProps {
     bookings: BookingLine[];
@@ -33,7 +34,9 @@ export function UpcomingMissionsWidget({ bookings }: UpcomingMissionsWidgetProps
                                 <span className="font-semibold text-sm">{booking.date}</span>
                                 {/* We could parse date to check if it is today */}
                             </div>
-                            <Badge variant="teal" className="text-xs">Confirmé</Badge>
+                            <Badge variant={getBookingStatusVariant(booking.status)} className="text-xs">
+                                {getBookingStatusLabel(booking.status)}
+                            </Badge>
                         </div>
 
                         <div className="flex items-center gap-3">

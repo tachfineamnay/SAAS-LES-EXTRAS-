@@ -45,7 +45,9 @@ import { useUIStore } from "@/lib/stores/useUIStore";
 import {
   getBookingStatusLabel,
   getBookingStatusVariant,
+  isBookingAwaitingPayment,
   isBookingCancellable,
+  isBookingPendingDecision,
 } from "@/lib/booking-status";
 
 type BookingsPageClientProps = {
@@ -364,7 +366,7 @@ export function BookingsPageClient({ initialData, initialError = null }: Booking
                       </Button>
                     )}
 
-                    {userRole === "ESTABLISHMENT" && line.lineType === "MISSION" && line.status === "PENDING" && (
+                    {userRole === "ESTABLISHMENT" && line.lineType === "MISSION" && isBookingPendingDecision(line.status) && (
                       <Button
                         variant="teal"
                         size="sm"
@@ -403,7 +405,7 @@ export function BookingsPageClient({ initialData, initialError = null }: Booking
                       </Button>
                     )}
 
-                    {userRole === "ESTABLISHMENT" && line.lineType === "MISSION" && line.status === "COMPLETED_AWAITING_PAYMENT" && (
+                    {userRole === "ESTABLISHMENT" && line.lineType === "MISSION" && isBookingAwaitingPayment(line.status) && (
                       <Button
                         variant="teal"
                         size="sm"

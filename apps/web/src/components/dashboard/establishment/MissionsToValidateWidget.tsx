@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { formatFinanceDate, getBookingActionId } from "@/lib/establishment-finance";
+import { getBookingStatusLabel, getBookingStatusVariant } from "@/lib/booking-status";
 
 interface MissionsToValidateWidgetProps {
     bookings: BookingLine[];
@@ -61,7 +62,9 @@ export function MissionsToValidateWidget({ bookings }: MissionsToValidateWidgetP
                                 <div className="space-y-2">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <h4 className="font-semibold">Mission terminée à valider</h4>
-                                        <Badge variant="amber">Action requise</Badge>
+                                        <Badge variant={getBookingStatusVariant(booking.status)}>
+                                            {getBookingStatusLabel(booking.status)}
+                                        </Badge>
                                     </div>
                                     <p className="text-sm text-muted-foreground">
                                         {booking.typeLabel} avec {booking.interlocutor}

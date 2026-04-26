@@ -15,23 +15,21 @@ import type {
 import { ReviewModal } from "@/components/modals/ReviewModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  isBookingAwaitingPayment,
+  isBookingCompleted,
+} from "@/lib/booking-status";
 import { toast } from "sonner";
 
-const REVIEWABLE_STATUSES: BookingLineStatus[] = [
-  "COMPLETED",
-  "COMPLETED_AWAITING_PAYMENT",
-  "PAID",
-];
-
 function isReviewableStatus(status: BookingLineStatus): boolean {
-  return REVIEWABLE_STATUSES.includes(status);
+  return isBookingCompleted(status);
 }
 
 function getPaymentStatusLabel(status: BookingLineStatus): {
   label: string;
   variant: "amber" | "emerald" | "outline";
 } | null {
-  if (status === "COMPLETED_AWAITING_PAYMENT") {
+  if (isBookingAwaitingPayment(status)) {
     return {
       label: "Règlement: en attente de validation par l'association",
       variant: "amber",

@@ -30,6 +30,13 @@ describe("BookingListWidget", () => {
     expect(screen.queryByText("En attente")).not.toBeInTheDocument();
   });
 
+  it("affiche PAID comme Payé et non En attente", () => {
+    render(<BookingListWidget bookings={[{ ...booking, status: "PAID" }]} />);
+
+    expect(screen.getByText("Payé")).toBeInTheDocument();
+    expect(screen.queryByText("En attente")).not.toBeInTheDocument();
+  });
+
   it("expose un libellé accessible contextualisé pour le lien Voir tout", () => {
     render(
       <BookingListWidget

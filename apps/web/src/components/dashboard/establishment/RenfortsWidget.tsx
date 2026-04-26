@@ -11,40 +11,21 @@ import { cn } from "@/lib/utils";
 import type { EstablishmentMission } from "@/app/actions/missions";
 import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
 import { getMissionDisplayTitle } from "@/lib/mission-display";
+import { getMissionStatusLabel, getMissionStatusVariant } from "@/lib/mission-status";
 
 interface RenfortsWidgetProps {
     missions: EstablishmentMission[];
     error?: string | null;
 }
 
-const STATUS_META: Record<
-    string,
-    {
-        label: string;
-        variant: "amber" | "teal" | "emerald" | "red" | "quiet";
-        borderClassName: string;
-    }
-> = {
-    OPEN: {
-        label: "Ouverte",
-        variant: "amber",
-        borderClassName: "border-l-[hsl(var(--amber))]",
-    },
-    ASSIGNED: {
-        label: "Assignée",
-        variant: "teal",
-        borderClassName: "border-l-[hsl(var(--teal))]",
-    },
-    COMPLETED: {
-        label: "Terminée",
-        variant: "emerald",
-        borderClassName: "border-l-[hsl(var(--emerald))]",
-    },
-    CANCELLED: {
-        label: "Annulée",
-        variant: "red",
-        borderClassName: "border-l-[hsl(var(--color-red-500))]",
-    },
+const STATUS_BORDER_CLASS = {
+    amber: "border-l-[hsl(var(--amber))]",
+    teal: "border-l-[hsl(var(--teal))]",
+    emerald: "border-l-[hsl(var(--emerald))]",
+    red: "border-l-[hsl(var(--color-red-500))]",
+    info: "border-l-[hsl(var(--teal))]",
+    outline: "border-l-border",
+    quiet: "border-l-border",
 };
 
 export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
@@ -78,11 +59,7 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
     return (
         <div className="space-y-3">
             {missions.slice(0, 5).map((mission) => {
-                const statusMeta = STATUS_META[mission.status] ?? {
-                    label: mission.status,
-                    variant: "quiet" as const,
-                    borderClassName: "border-l-border",
-                };
+                const statusVariant = getMissionStatusVariant(mission.status);
                 const candidatureCount = mission.bookings?.filter(
                     (b) => b.status !== "CANCELLED",
                 ).length ?? 0;
@@ -97,7 +74,7 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
                         href="/dashboard/renforts"
                         className={cn(
                             "block rounded-xl border border-l-4 border-border/60 p-4 transition-colors hover:border-border hover:bg-muted/30",
-                            statusMeta.borderClassName,
+                            STATUS_BORDER_CLASS[statusVariant],
                         )}
                     >
                         <div className="flex items-start justify-between gap-3">
@@ -106,8 +83,8 @@ export function RenfortsWidget({ missions, error }: RenfortsWidgetProps) {
                                     <span className="font-semibold text-sm truncate">
                                         {getMissionDisplayTitle(mission)}
                                     </span>
-                                    <Badge variant={statusMeta.variant}>
-                                        {statusMeta.label}
+                                    <Badge variant={statusVariant}>
+                                        {getMissionStatusLabel(mission.status)}
                                     </Badge>
                                     {mission.isUrgent && (
                                         <Badge variant="coral" className="gap-1">
