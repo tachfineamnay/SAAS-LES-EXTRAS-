@@ -61,13 +61,13 @@ describe("declineCandidate", () => {
     mockApiRequest.mockResolvedValue({});
   });
 
-  it("appelle POST /bookings/cancel avec lineType BOOKING et le bookingId", async () => {
+  it("appelle POST /bookings/cancel avec lineType MISSION et le bookingId", async () => {
     await declineCandidate("booking-99");
     expect(mockApiRequest).toHaveBeenCalledWith(
       "/bookings/cancel",
       expect.objectContaining({
         method: "POST",
-        body: { lineType: "BOOKING", lineId: "booking-99" },
+        body: { lineType: "MISSION", lineId: "booking-99" },
       }),
     );
   });

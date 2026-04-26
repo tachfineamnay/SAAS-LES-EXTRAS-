@@ -23,6 +23,7 @@ import type { ReviewItem } from "./_components/FreelanceDashboard";
 import { getMissionPlanning } from "@/lib/mission-planning";
 import { getMissionDisplayTitle } from "@/lib/mission-display";
 import { getNextUpcomingBooking, isUpcomingBooking } from "@/lib/dashboard-bookings";
+import { getNextAssignedMission } from "@/lib/establishment-dashboard";
 import { computeFreelanceTrustProfile } from "@/lib/freelance-trust";
 import { getTopMatchingMissions } from "@/lib/mission-matching";
 
@@ -74,15 +75,17 @@ async function fetchEstablishmentData(token: string, userId: string) {
             ),
         ]);
 
-    // Quotes endpoint not yet implemented — use empty placeholder
+    // TODO(Sprint établissement 2): brancher les devis réels ou supprimer ce flux.
     const quotesResult = { data: [] as SerializedQuote[], error: null };
 
     const lines = bookingsResult.data?.lines ?? [];
     const missions = missionsResult.data;
+    const now = new Date();
 
     const activeMissions = missions.filter(
         (m) => m.status === "OPEN" || m.status === "ASSIGNED",
     );
+    const renfortsToFill = missions.filter((mission) => mission.status === "OPEN").length;
     const pendingCandidatures = missions.reduce(
         (acc, m) => acc + (m.bookings?.filter((b) => b.status === "PENDING").length ?? 0),
         0,
@@ -96,24 +99,13 @@ async function fetchEstablishmentData(token: string, userId: string) {
     const completedBookings = lines.filter(
         (b) => b.status === "COMPLETED" || b.status === "PAID",
     );
+    const upcomingInterventions = confirmedBookings.filter((booking) =>
+        isUpcomingBooking(booking, now),
+    ).length;
     const pendingQuotes = (quotesResult.data ?? []).filter((q) => q.status === "PENDING");
     const openDeskRequests = (deskRequestsResult.data ?? []).filter(
         (request) => request.status === "OPEN" || request.status === "IN_PROGRESS",
     );
-
-    // Find the next upcoming mission (earliest dateStart among ASSIGNED or OPEN)
-    const now = new Date();
-    const sortedMissions = [...activeMissions].sort((a, b) => {
-        const leftPlanning = getMissionPlanning(a, now);
-        const rightPlanning = getMissionPlanning(b, now);
-        const leftDate = leftPlanning.nextSlot?.start ?? leftPlanning.firstSlot?.start ?? new Date(a.dateStart);
-        const rightDate = rightPlanning.nextSlot?.start ?? rightPlanning.firstSlot?.start ?? new Date(b.dateStart);
-        return leftDate.getTime() - rightDate.getTime();
-    });
-    const nextMission =
-        sortedMissions.find((mission) => Boolean(getMissionPlanning(mission, now).nextSlot)) ??
-        sortedMissions[0] ??
-        null;
 
     return {
         activeMissions,
@@ -129,11 +121,13 @@ async function fetchEstablishmentData(token: string, userId: string) {
         confirmedBookings,
         completedBookings,
         bookingsError: bookingsResult.error,
-        nextMission,
+        nextMission: getNextAssignedMission(missions, now),
         recentReviews: reviewsResult.data,
         recentReviewsError: reviewsResult.error,
         openDeskRequests,
         deskRequestsError: deskRequestsResult.error,
+        renfortsToFill,
+        upcomingInterventions,
     };
 }
 

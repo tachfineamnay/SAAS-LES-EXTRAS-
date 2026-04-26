@@ -1,53 +1,53 @@
 "use client";
 
-import { Briefcase, Calendar, DollarSign, Star } from "lucide-react";
+import { Briefcase, CalendarClock, CreditCard, Users } from "lucide-react";
 import { KpiTile } from "./KpiTile";
 
 interface EstablishmentKpiGridProps {
-    activeMissions: number;
-    ongoingBookings: number;
+    renfortsToFill: number;
+    pendingApplications: number;
+    upcomingInterventions: number;
     availableCredits: number | null;
-    averageRating: number | null;
-    completedThisMonth?: number;
 }
 
 export function EstablishmentKpiGrid({
-    activeMissions,
-    ongoingBookings,
+    renfortsToFill,
+    pendingApplications,
+    upcomingInterventions,
     availableCredits,
-    averageRating,
-    completedThisMonth,
 }: EstablishmentKpiGridProps) {
     return (
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
             <KpiTile
-                label="Missions actives"
-                value={activeMissions}
+                label="Renforts à pourvoir"
+                value={renfortsToFill}
                 icon={Briefcase}
                 iconColor="teal"
+                href="/dashboard/renforts"
                 index={0}
             />
             <KpiTile
-                label="Candidatures en attente"
-                value={ongoingBookings}
-                icon={Calendar}
-                iconColor="coral"
-                trend={ongoingBookings > 0 ? "up" : undefined}
-                trendLabel={ongoingBookings > 0 ? `${ongoingBookings} nouvelle${ongoingBookings > 1 ? "s" : ""}` : undefined}
+                label="Candidatures à décider"
+                value={pendingApplications}
+                icon={Users}
+                iconColor="amber"
+                href="/dashboard/renforts"
                 index={1}
+            />
+            <KpiTile
+                label="Interventions à venir"
+                value={upcomingInterventions}
+                icon={CalendarClock}
+                iconColor="teal"
+                href="/bookings"
+                index={2}
             />
             <KpiTile
                 label="Crédits disponibles"
                 value={availableCredits ?? "—"}
-                icon={DollarSign}
+                icon={CreditCard}
                 iconColor="emerald"
-                index={2}
-            />
-            <KpiTile
-                label="Note moyenne"
-                value={averageRating != null ? `${averageRating.toFixed(1)}/5` : "–"}
-                icon={Star}
-                iconColor="amber"
+                href="/dashboard/packs"
                 index={3}
             />
         </div>

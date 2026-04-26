@@ -10,7 +10,6 @@ import { EstablishmentKpiGrid } from "@/components/dashboard/EstablishmentKpiGri
 import { CreditsWidget } from "@/components/dashboard/CreditsWidget";
 import { QuoteListWidget } from "@/components/dashboard/QuoteListWidget";
 import { BookingListWidget } from "@/components/dashboard/BookingListWidget";
-import { PaymentValidationWidget } from "@/components/dashboard/PaymentValidationWidget";
 import { MissionsToValidateWidget } from "@/components/dashboard/establishment/MissionsToValidateWidget";
 import { EstablishmentInvoicesWidget } from "@/components/dashboard/establishment/EstablishmentInvoicesWidget";
 import { RenfortsWidget } from "@/components/dashboard/establishment/RenfortsWidget";
@@ -20,7 +19,6 @@ import { NextMissionCard } from "@/components/dashboard/NextMissionCard";
 import { RecentReviewsWidget } from "@/components/dashboard/RecentReviewsWidget";
 import { DashboardWidget } from "./DashboardWidget";
 import {
-    DollarSign,
     Users,
     Briefcase,
     Calendar,
@@ -58,6 +56,8 @@ export interface EstablishmentDashboardProps {
     recentReviewsError: string | null;
     openDeskRequests: MyDeskRequest[];
     deskRequestsError: string | null;
+    renfortsToFill: number;
+    upcomingInterventions: number;
 }
 
 export function EstablishmentDashboard({
@@ -79,6 +79,8 @@ export function EstablishmentDashboard({
     recentReviewsError,
     openDeskRequests,
     deskRequestsError,
+    renfortsToFill,
+    upcomingInterventions,
 }: EstablishmentDashboardProps) {
     const confirmedMissionBookings = confirmedBookings.filter((b) => b.lineType === "MISSION");
     const confirmedServiceBookings = confirmedBookings.filter((b) => b.lineType === "SERVICE_BOOKING");
@@ -98,10 +100,13 @@ export function EstablishmentDashboard({
                   : nextMissionSlot.heureFin
           }`
         : undefined;
-    const nextMissionFreelance =
-        nextMission?.bookings?.find((b) => b.status === "CONFIRMED" || b.status === "ASSIGNED")
-            ? "Freelance assigné"
-            : `${nextMission?.bookings?.filter((b) => b.status === "PENDING").length ?? 0} candidature(s)`;
+    const nextMissionHasAssignedFreelance =
+        nextMission?.status === "ASSIGNED" ||
+        nextMission?.bookings?.some((b) => b.status === "CONFIRMED" || b.status === "ASSIGNED");
+    const nextMissionFreelance = nextMissionHasAssignedFreelance
+        ? "Freelance assigné"
+        : "Intervention assignée";
+    const showPendingQuotes = pendingQuotes.length > 0 || Boolean(quotesError);
 
     return (
         <div className="space-y-10">
@@ -230,25 +235,17 @@ export function EstablishmentDashboard({
                         )}
                     </DashboardWidget>
 
-                    {/* Paiements à valider */}
-                    <DashboardWidget
-                        icon={DollarSign}
-                        iconColor="amber"
-                        title="Paiements à valider"
-                        subtitle="Heures à confirmer"
-                    >
-                        <PaymentValidationWidget bookings={awaitingPaymentBookings} />
-                    </DashboardWidget>
-
-                    {/* Propositions reçues */}
-                    <DashboardWidget
-                        icon={FileText}
-                        iconColor="teal"
-                        title="Propositions reçues"
-                        subtitle="Devis en attente"
-                    >
-                        <QuoteListWidget quotes={pendingQuotes} error={quotesError} />
-                    </DashboardWidget>
+                    {/* TODO(Sprint finance): réintroduire un flux paiement distinct quand le cycle métier sera clarifié. */}
+                    {showPendingQuotes && (
+                        <DashboardWidget
+                            icon={FileText}
+                            iconColor="teal"
+                            title="Propositions reçues"
+                            subtitle="Devis en attente"
+                        >
+                            <QuoteListWidget quotes={pendingQuotes} error={quotesError} />
+                        </DashboardWidget>
+                    )}
 
                     {/* Demandes Desk ouvertes */}
                     <DashboardWidget
@@ -288,11 +285,10 @@ export function EstablishmentDashboard({
 
             {/* KPI row */}
             <EstablishmentKpiGrid
-                activeMissions={activeMissions.length}
-                ongoingBookings={pendingCandidatures}
+                renfortsToFill={renfortsToFill}
+                pendingApplications={pendingCandidatures}
+                upcomingInterventions={upcomingInterventions}
                 availableCredits={availableCredits}
-                averageRating={null}
-                completedThisMonth={completedBookings.length}
             />
 
             {/* ── Zone 3 : Mes activités ── */}
