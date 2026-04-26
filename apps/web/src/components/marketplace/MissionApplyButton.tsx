@@ -10,8 +10,9 @@ interface MissionApplyButtonProps {
 }
 
 export function MissionApplyButton({ missionId, className }: MissionApplyButtonProps) {
-  const { apply, isPending, hasApplied } = useApplyToMission();
+  const { apply, pendingMissionId, hasApplied } = useApplyToMission();
   const applied = hasApplied(missionId);
+  const isThisPending = pendingMissionId === missionId;
 
   if (applied) {
     return (
@@ -31,16 +32,16 @@ export function MissionApplyButton({ missionId, className }: MissionApplyButtonP
     <Button
       variant="action"
       size="lg"
-      disabled={isPending}
+      disabled={isThisPending}
       className={`w-full gap-2 font-bold ${className ?? ""}`}
       onClick={() => apply(missionId)}
     >
-      {isPending ? (
+      {isThisPending ? (
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
       ) : (
         <Zap className="h-4 w-4 fill-current" aria-hidden="true" />
       )}
-      {isPending ? "Envoi…" : "Postuler à cette mission"}
+      {isThisPending ? "Envoi…" : "Postuler à cette mission"}
     </Button>
   );
 }

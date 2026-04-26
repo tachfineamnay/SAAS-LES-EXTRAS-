@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { CalendarDays, Clock3, MapPin, Building2, Zap, CheckCircle2, Loader2 } from "lucide-react";
 import type { SerializedMission } from "@/app/actions/marketplace";
 import { useApplyToMission } from "@/lib/hooks/useApplyToMission";
@@ -42,17 +43,22 @@ const moneyFormatter = new Intl.NumberFormat("fr-FR", {
 });
 
 export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
-  const { apply, isPending, hasApplied } = useApplyToMission();
+  const { apply, pendingMissionId, hasApplied } = useApplyToMission();
   const planning = getMissionPlanning(mission);
   const applied = hasApplied(mission.id);
+  const isThisPending = pendingMissionId === mission.id;
   const displayLocation =
     mission.city ||
     mission.establishment?.profile?.city ||
     "Localisation communiquée après validation";
+  const displayEstablishment =
+    mission.establishmentName ||
+    mission.establishment?.profile?.companyName ||
+    "Établissement";
   const displayTitle = getMissionDisplayTitle(mission);
 
   const handleApply = () => {
-    if (!isVerified || applied || isPending) return;
+    if (!isVerified || applied || isThisPending) return;
     apply(mission.id);
   };
 
@@ -66,12 +72,17 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
       <CardHeader className="space-y-4 pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1">
-            <h3 className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors">
-              {displayTitle}
-            </h3>
+            <Link
+              href={`/marketplace/missions/${mission.id}`}
+              className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <h3 className="font-semibold text-lg leading-tight hover:text-primary transition-colors">
+                {displayTitle}
+              </h3>
+            </Link>
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Building2 className="h-3.5 w-3.5" />
-              <span>{mission.establishmentName || "Établissement"}</span>
+              <span>{displayEstablishment}</span>
             </div>
           </div>
           {mission.isUrgent && (
@@ -142,7 +153,7 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
             className="w-full gap-2"
             onClick={handleApply}
             size="lg"
-            disabled={isPending || applied}
+            disabled={isThisPending || applied}
             variant={applied ? "secondary" : "default"}
           >
             {applied ? (
@@ -150,7 +161,7 @@ export function MissionCard({ mission, isVerified = true }: MissionCardProps) {
                 <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                 Candidature envoyée
               </>
-            ) : isPending ? (
+            ) : isThisPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 Envoi…

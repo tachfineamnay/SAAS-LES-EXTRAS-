@@ -5,6 +5,7 @@ import type { MatchingMission } from "@/components/dashboard/MatchingMissionsWid
 
 const mockApplyToMission = vi.fn();
 const mockRefresh = vi.fn();
+let resolveApply: ((value: { ok: boolean; error?: string }) => void) | null = null;
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mockRefresh }),
@@ -76,6 +77,31 @@ describe("MatchingMissionsWidget", () => {
       expect(
         screen.getByRole("button", { name: /candidature envoyée/i }),
       ).toBeDisabled();
+    });
+  });
+
+  it("met seulement la carte cliquée en état Envoi", async () => {
+    mockApplyToMission.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveApply = resolve;
+        }),
+    );
+
+    render(<MatchingMissionsWidget missions={missions} />);
+    const buttons = screen.getAllByRole("button", { name: /postuler/i });
+
+    fireEvent.click(buttons[0]!);
+
+    expect(await screen.findByRole("button", { name: /envoi/i })).toBeDisabled();
+    expect(screen.getAllByRole("button", { name: /postuler/i })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: /postuler/i })[0]).not.toBeDisabled();
+    expect(screen.getAllByRole("button", { name: /postuler/i })[1]).not.toBeDisabled();
+
+    resolveApply?.({ ok: true });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /candidature envoyée/i })).toBeDisabled();
     });
   });
 

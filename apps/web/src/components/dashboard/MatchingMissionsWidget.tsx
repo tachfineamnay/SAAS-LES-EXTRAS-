@@ -37,7 +37,7 @@ const DISPLAY_MATCH_REASONS = new Set([
 ]);
 
 export function MatchingMissionsWidget({ missions, error }: MatchingMissionsWidgetProps) {
-  const { apply, isPending, hasApplied } = useApplyToMission();
+  const { apply, pendingMissionId, hasApplied } = useApplyToMission();
 
   if (error) {
     return (
@@ -66,6 +66,7 @@ export function MatchingMissionsWidget({ missions, error }: MatchingMissionsWidg
       <div className="space-y-4">
         {missions.slice(0, 3).map((m) => {
           const applied = hasApplied(m.id);
+          const isThisPending = pendingMissionId === m.id;
           return (
             <RenfortCard
               key={m.id}
@@ -77,10 +78,10 @@ export function MatchingMissionsWidget({ missions, error }: MatchingMissionsWidg
               hours={m.hours}
               rate={m.rate}
               badges={m.matchReasons?.filter((reason) => DISPLAY_MATCH_REASONS.has(reason)).slice(0, 2)}
-              actionLabel={applied ? "Candidature envoyée" : isPending ? "Envoi…" : "Postuler"}
-              actionDisabled={applied || isPending}
+              actionLabel={applied ? "Candidature envoyée" : isThisPending ? "Envoi…" : "Postuler"}
+              actionDisabled={applied || isThisPending}
               onAction={() => {
-                if (applied || isPending) return;
+                if (applied || isThisPending) return;
                 apply(m.id);
               }}
               href={`/marketplace/missions/${m.id}`}

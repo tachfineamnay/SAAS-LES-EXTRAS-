@@ -7,45 +7,53 @@ import { applyToMission } from "@/app/actions/missions";
 
 export function useApplyToMission() {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isTransitionPending, startTransition] = useTransition();
+  const [pendingMissionId, setPendingMissionId] = useState<string | null>(null);
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
 
   const apply = (missionId: string) => {
+    setPendingMissionId(missionId);
+
     startTransition(async () => {
-      const result = await applyToMission(missionId);
+      try {
+        const result = await applyToMission(missionId);
 
-      if (result.ok) {
-        setAppliedIds((prev) => {
-          const next = new Set(prev);
-          next.add(missionId);
-          return next;
+        if (result.ok) {
+          setAppliedIds((prev) => {
+            const next = new Set(prev);
+            next.add(missionId);
+            return next;
+          });
+          toast.success("Candidature envoyée !", {
+            description: "L'établissement a été notifié de votre intérêt.",
+          });
+          router.refresh();
+          return;
+        }
+
+        if (result.error?.includes("déjà postulé")) {
+          setAppliedIds((prev) => {
+            const next = new Set(prev);
+            next.add(missionId);
+            return next;
+          });
+          toast.info("Déjà postulé", { description: result.error });
+          return;
+        }
+
+        toast.error("Impossible de postuler", {
+          description: result.error ?? "Une erreur est survenue.",
         });
-        toast.success("Candidature envoyée !", {
-          description: "L'établissement a été notifié de votre intérêt.",
-        });
-        router.refresh();
-        return;
+      } finally {
+        setPendingMissionId(null);
       }
-
-      if (result.error?.includes("déjà postulé")) {
-        setAppliedIds((prev) => {
-          const next = new Set(prev);
-          next.add(missionId);
-          return next;
-        });
-        toast.info("Déjà postulé", { description: result.error });
-        return;
-      }
-
-      toast.error("Impossible de postuler", {
-        description: result.error ?? "Une erreur est survenue.",
-      });
     });
   };
 
   return {
     apply,
-    isPending,
+    pendingMissionId,
+    isPending: pendingMissionId !== null || isTransitionPending,
     hasApplied: (missionId: string) => appliedIds.has(missionId),
   };
 }
