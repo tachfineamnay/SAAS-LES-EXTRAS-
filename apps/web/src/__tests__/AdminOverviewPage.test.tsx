@@ -5,8 +5,10 @@ import type { ReactNode } from "react";
 const getAdminOverviewMock = vi.hoisted(() => vi.fn());
 const getAdminUsersMock = vi.hoisted(() => vi.fn());
 const getDeskRequestsMock = vi.hoisted(() => vi.fn());
+const getAdminMissionsMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/app/actions/admin", () => ({
+  getAdminMissions: getAdminMissionsMock,
   getAdminOverview: getAdminOverviewMock,
   getAdminUsers: getAdminUsersMock,
   getDeskRequests: getDeskRequestsMock,
@@ -25,13 +27,19 @@ vi.mock("@/components/admin/RequiredActions", () => ({
   RequiredActions: ({
     pendingUsers,
     openDeskRequests,
+    financeIncidents,
+    urgentMissions,
   }: {
     pendingUsers: unknown[];
     openDeskRequests: unknown[];
+    financeIncidents?: unknown[];
+    urgentMissions?: unknown[];
   }) => (
     <div>
       <span>Pending users: {pendingUsers.length}</span>
       <span>Open desk requests: {openDeskRequests.length}</span>
+      <span>Finance incidents: {financeIncidents?.length ?? 0}</span>
+      <span>Urgent missions: {urgentMissions?.length ?? 0}</span>
     </div>
   ),
 }));
@@ -76,6 +84,7 @@ describe("AdminOverviewPage", () => {
         requester: { id: "user-2", email: "user@test.fr", profile: null },
       },
     ]);
+    getAdminMissionsMock.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -95,6 +104,7 @@ describe("AdminOverviewPage", () => {
     getAdminOverviewMock.mockRejectedValueOnce(new Error("API request failed (503)"));
     getAdminUsersMock.mockRejectedValueOnce(new Error("API request failed (503)"));
     getDeskRequestsMock.mockRejectedValueOnce(new Error("API request failed (503)"));
+    getAdminMissionsMock.mockRejectedValueOnce(new Error("API request failed (503)"));
 
     render(await AdminOverviewPage());
 

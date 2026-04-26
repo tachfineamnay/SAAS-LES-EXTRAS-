@@ -16,36 +16,42 @@ export function AdminStats({ data }: AdminStatsProps) {
         value={data.pendingUsersCount}
         icon={UserCheck}
         iconColor="teal"
+        href="/admin/users"
       />
       <KpiTile
         label="Demandes Desk ouvertes"
         value={data.openDeskRequestsCount}
         icon={Inbox}
         iconColor="violet"
+        href="/admin/demandes"
       />
       <KpiTile
         label="Missions urgentes 48h"
         value={data.urgentOpenMissionsCount}
         icon={AlertTriangle}
         iconColor="coral"
+        href="/admin/missions"
       />
       <KpiTile
         label="Services mis en avant"
         value={data.featuredServicesCount}
         icon={Star}
         iconColor="amber"
+        href="/admin/services"
       />
       <KpiTile
         label="Services masqués"
         value={data.hiddenServicesCount}
         icon={EyeOff}
         iconColor="gray"
+        href="/admin/services"
       />
       <KpiTile
         label="Paiements en attente"
         value={data.awaitingPaymentCount}
         icon={Receipt}
         iconColor="emerald"
+        href="/admin/finance"
       />
     </div>
   );
