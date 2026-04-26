@@ -1,9 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import type { BookingLine } from "@/app/actions/bookings";
 import type { EstablishmentMission } from "@/app/actions/missions";
 import type { EstablishmentDashboardProps } from "@/app/(dashboard)/dashboard/_components/EstablishmentDashboard";
+import type { EstablishmentTrustProfile } from "@/lib/establishment-trust";
+
+const establishmentChecklistWidgetSpy = vi.hoisted(() => vi.fn());
 
 vi.mock("@/components/dashboard/NextMissionCard", () => ({
   NextMissionCard: ({ title }: { title: string }) => (
@@ -30,7 +33,18 @@ vi.mock("@/components/dashboard/establishment/EstablishmentInvoicesWidget", () =
 }));
 
 vi.mock("@/components/dashboard/establishment/EstablishmentChecklistWidget", () => ({
-  EstablishmentChecklistWidget: () => <div>Checklist établissement</div>,
+  EstablishmentChecklistWidget: (props: { trustProfile: EstablishmentTrustProfile }) => {
+    establishmentChecklistWidgetSpy(props);
+
+    return (
+      <div>
+        <a href="/account/establishment">Compléter ma fiche</a>
+        {props.trustProfile.steps.map((step) => (
+          <span key={step.id}>{step.label}</span>
+        ))}
+      </div>
+    );
+  },
 }));
 
 vi.mock("@/components/dashboard/CreditsWidget", () => ({
@@ -91,6 +105,20 @@ const awaitingPaymentBooking: BookingLine = {
   relatedBookingId: "booking-assigned",
 };
 
+const establishmentTrustProfile: EstablishmentTrustProfile = {
+  progress: 50,
+  completedCount: 3,
+  totalCount: 6,
+  steps: [
+    { id: "companyName", label: "Nom de l'établissement renseigné", status: "COMPLETED" },
+    { id: "bio", label: "Description de la structure renseignée", status: "MISSING", actionLabel: "Compléter", href: "/account/establishment" },
+    { id: "contact", label: "Coordonnées complètes", status: "MISSING", actionLabel: "Compléter", href: "/account/establishment" },
+    { id: "siret", label: "SIRET renseigné", status: "COMPLETED" },
+    { id: "firstRenfort", label: "Premier renfort publié", status: "COMPLETED" },
+    { id: "credits", label: "Crédits disponibles", status: "MISSING", actionLabel: "Ajouter", href: "/dashboard/packs" },
+  ],
+};
+
 function renderDashboard(overrides: Partial<EstablishmentDashboardProps> = {}) {
   const props: EstablishmentDashboardProps = {
     activeMissions: [],
@@ -115,6 +143,7 @@ function renderDashboard(overrides: Partial<EstablishmentDashboardProps> = {}) {
     renfortsToFillMissions: [],
     missionsWithPendingCandidates: [],
     upcomingInterventions: 3,
+    establishmentTrustProfile,
     ...overrides,
   };
 
@@ -122,6 +151,10 @@ function renderDashboard(overrides: Partial<EstablishmentDashboardProps> = {}) {
 }
 
 describe("EstablishmentDashboard", () => {
+  beforeEach(() => {
+    establishmentChecklistWidgetSpy.mockClear();
+  });
+
   it("affiche les KPI actionnables sans Note moyenne", () => {
     renderDashboard();
 
@@ -218,5 +251,37 @@ describe("EstablishmentDashboard", () => {
 
     expect(screen.getByText("Renfort cuisine")).toBeInTheDocument();
     expect(screen.queryByText("Renfort éducateur spécialisé")).not.toBeInTheDocument();
+  });
+
+  it("transmet un profil de confiance établissement dynamique au widget", () => {
+    const dynamicTrustProfile: EstablishmentTrustProfile = {
+      progress: 17,
+      completedCount: 1,
+      totalCount: 6,
+      steps: [
+        { id: "companyName", label: "Nom API", status: "COMPLETED" },
+        { id: "bio", label: "Bio API", status: "MISSING", actionLabel: "Compléter", href: "/account/establishment" },
+        { id: "contact", label: "Coordonnées API", status: "MISSING", actionLabel: "Compléter", href: "/account/establishment" },
+        { id: "siret", label: "SIRET renseigné", status: "MISSING", actionLabel: "Compléter", href: "/account/establishment" },
+        { id: "firstRenfort", label: "Renfort API", status: "MISSING", actionLabel: "Publier", href: "/dashboard/renforts" },
+        { id: "credits", label: "Crédits API", status: "MISSING", actionLabel: "Ajouter", href: "/dashboard/packs" },
+      ],
+    };
+
+    renderDashboard({ establishmentTrustProfile: dynamicTrustProfile });
+
+    expect(establishmentChecklistWidgetSpy).toHaveBeenCalledWith({
+      trustProfile: dynamicTrustProfile,
+    });
+  });
+
+  it("n'affiche plus SIRET vérifié et propose le CTA fiche établissement", () => {
+    renderDashboard();
+
+    expect(screen.queryByText(/SIRET vérifié/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /compléter ma fiche/i })).toHaveAttribute(
+      "href",
+      "/account/establishment",
+    );
   });
 });

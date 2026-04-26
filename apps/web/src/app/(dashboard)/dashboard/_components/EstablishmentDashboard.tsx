@@ -38,6 +38,7 @@ import { format, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMissionPlanning, isMissionPlanningLineMultiDay } from "@/lib/mission-planning";
 import { getMissionDisplayTitle } from "@/lib/mission-display";
+import type { EstablishmentTrustProfile } from "@/lib/establishment-trust";
 
 export interface EstablishmentDashboardProps {
     activeMissions: EstablishmentMission[];
@@ -62,6 +63,7 @@ export interface EstablishmentDashboardProps {
     renfortsToFillMissions: EstablishmentMission[];
     missionsWithPendingCandidates: EstablishmentMission[];
     upcomingInterventions: number;
+    establishmentTrustProfile: EstablishmentTrustProfile;
 }
 
 function getPendingCandidateCount(mission: EstablishmentMission) {
@@ -166,6 +168,7 @@ export function EstablishmentDashboard({
     renfortsToFillMissions,
     missionsWithPendingCandidates,
     upcomingInterventions,
+    establishmentTrustProfile,
 }: EstablishmentDashboardProps) {
     const confirmedMissionBookings = confirmedBookings.filter((b) => b.lineType === "MISSION");
     const confirmedServiceBookings = confirmedBookings.filter((b) => b.lineType === "SERVICE_BOOKING");
@@ -545,7 +548,7 @@ export function EstablishmentDashboard({
                         iconColor="emerald"
                         title="Fiche établissement"
                     >
-                        <EstablishmentChecklistWidget />
+                        <EstablishmentChecklistWidget trustProfile={establishmentTrustProfile} />
                     </DashboardWidget>
 
                     {/* Historique & Archives */}

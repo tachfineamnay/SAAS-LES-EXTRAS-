@@ -29,6 +29,7 @@ import {
     getRenfortsToFill,
 } from "@/lib/establishment-renforts";
 import { computeFreelanceTrustProfile } from "@/lib/freelance-trust";
+import { computeEstablishmentTrustProfile } from "@/lib/establishment-trust";
 import { getTopMatchingMissions } from "@/lib/mission-matching";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +44,7 @@ async function fetchEstablishmentData(token: string, userId: string) {
         creditsResult,
         reviewsResult,
         deskRequestsResult,
+        userResult,
     ] =
         await Promise.all([
             fetchSafe<BookingsPageData>(
@@ -77,6 +79,11 @@ async function fetchEstablishmentData(token: string, userId: string) {
                 [],
                 "Demandes",
             ),
+            fetchSafe(
+                () => getCurrentUser(),
+                null,
+                "Profil établissement",
+            ),
         ]);
 
     // TODO(Sprint établissement 3): brancher les devis réels ou supprimer ce flux.
@@ -84,6 +91,17 @@ async function fetchEstablishmentData(token: string, userId: string) {
 
     const lines = bookingsResult.data?.lines ?? [];
     const missions = missionsResult.data;
+    const currentUser = userResult.data;
+    const establishmentTrustUser =
+        currentUser?.profile && creditsResult.data !== null
+            ? {
+                  ...currentUser,
+                  profile: {
+                      ...currentUser.profile,
+                      availableCredits: creditsResult.data,
+                  },
+              }
+            : currentUser;
     const now = new Date();
 
     const activeMissions = missions.filter(
@@ -137,6 +155,7 @@ async function fetchEstablishmentData(token: string, userId: string) {
         renfortsToFillMissions,
         missionsWithPendingCandidates,
         upcomingInterventions,
+        establishmentTrustProfile: computeEstablishmentTrustProfile(establishmentTrustUser, missions),
     };
 }
 
